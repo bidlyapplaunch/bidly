@@ -1,0 +1,399 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Card,
+  DataTable,
+  Button,
+  Badge,
+  Modal,
+  Text,
+  ButtonGroup,
+  Toast,
+  Frame,
+  Banner,
+  EmptyState,
+  Pagination,
+  Filters,
+  ChoiceList,
+  TextField,
+  Select
+} from '@shopify/polaris';
+import { EditIcon, DeleteIcon, ViewIcon } from '@shopify/polaris-icons';
+import { format } from 'date-fns';
+import { auctionAPI } from '../services/api';
+
+const AuctionTable = ({ onEdit, onView, onRefresh }) => {
+  const [auctions, setAuctions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const [selectedAuction, setSelectedAuction] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize] = useState(10);
+  
+  // Filters state
+  const [filters, setFilters] = useState({
+    status: '',
+    shopifyProductId: ''
+  });
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchAuctions();
+  }, [currentPage, filters]);
+
+  const fetchAuctions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = {
+        page: currentPage,
+        limit: pageSize,
+        ...(filters.status && { status: filters.status }),
+        ...(filters.shopifyProductId && { shopifyProductId: filters.shopifyProductId })
+      };
+      
+      const response = await auctionAPI.getAllAuctions(params);
+      setAuctions(response.data || []);
+      setTotalPages(response.pagination?.pages || 1);
+      setTotalItems(response.pagination?.total || 0);
+    } catch (err) {
+      setError('Failed to fetch auctions');
+      console.error('Error fetching auctions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await auctionAPI.deleteAuction(selectedAuction.id);
+      setToastMessage('Auction deleted successfully');
+      setShowToast(true);
+      setDeleteModalOpen(false);
+      setSelectedAuction(null);
+      fetchAuctions();
+      onRefresh?.();
+    } catch (err) {
+      setError('Failed to delete auction');
+      console.error('Error deleting auction:', err);
+    }
+  };
+
+  const handleClose = async () => {
+    try {
+      await auctionAPI.closeAuction(selectedAuction.id);
+      setToastMessage('Auction closed successfully');
+      setShowToast(true);
+      setCloseModalOpen(false);
+      setSelectedAuction(null);
+      fetchAuctions();
+      onRefresh?.();
+    } catch (err) {
+      setError('Failed to close auction');
+      console.error('Error closing auction:', err);
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      active: { status: 'success', children: 'Active' },
+      closed: { status: 'critical', children: 'Closed' }
+    };
+    return <Badge {...statusMap[status]} />;
+  };
+
+  const getTimeStatus = (startTime, endTime) => {
+    const now = new Date();
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    
+    if (now < start) {
+      return <Badge status="info">Not Started</Badge>;
+    } else if (now > end) {
+      return <Badge status="critical">Ended</Badge>;
+    } else {
+      return <Badge status="success">Live</Badge>;
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  const formatDate = (date) => {
+    return format(new Date(date), 'MMM dd, yyyy HH:mm');
+  };
+
+  const rows = auctions.map((auction) => [
+    auction.shopifyProductId,
+    formatDate(auction.startTime),
+    formatDate(auction.endTime),
+    formatCurrency(auction.startingBid),
+    formatCurrency(auction.currentBid),
+    auction.buyNowPrice ? formatCurrency(auction.buyNowPrice) : '-',
+    getStatusBadge(auction.status),
+    getTimeStatus(auction.startTime, auction.endTime),
+    auction.bidHistory?.length || 0,
+    <ButtonGroup key={auction.id}>
+      <Button
+        icon={ViewIcon}
+        onClick={() => onView(auction)}
+        size="slim"
+      >
+        View
+      </Button>
+      <Button
+        icon={EditIcon}
+        onClick={() => onEdit(auction)}
+        size="slim"
+        disabled={auction.bidHistory?.length > 0}
+      >
+        Edit
+      </Button>
+      <Button
+        icon={DeleteIcon}
+        onClick={() => {
+          setSelectedAuction(auction);
+          setDeleteModalOpen(true);
+        }}
+        size="slim"
+        destructive
+        disabled={auction.bidHistory?.length > 0}
+      >
+        Delete
+      </Button>
+      {auction.status === 'active' && (
+        <Button
+          onClick={() => {
+            setSelectedAuction(auction);
+            setCloseModalOpen(true);
+          }}
+          size="slim"
+        >
+          Close
+        </Button>
+      )}
+    </ButtonGroup>
+  ]);
+
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+    setFilterModalOpen(false);
+  };
+
+  const clearFilters = () => {
+    setFilters({ status: '', shopifyProductId: '' });
+    setCurrentPage(1);
+  };
+
+  if (error) {
+    return (
+      <Card>
+        <Banner status="critical">
+          <Text variant="bodyMd">{error}</Text>
+        </Banner>
+      </Card>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <Text variant="bodyMd">Loading auctions...</Text>
+        </div>
+      </Card>
+    );
+  }
+
+  if (auctions.length === 0) {
+    return (
+      <Card>
+        <EmptyState
+          heading="No auctions found"
+          action={{
+            content: 'Create auction',
+            onAction: () => onEdit(null)
+          }}
+          image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+        >
+          <Text variant="bodyMd">
+            Get started by creating your first auction.
+          </Text>
+        </EmptyState>
+      </Card>
+    );
+  }
+
+  return (
+    <Frame>
+      <Card>
+        <div style={{ marginBottom: '1rem' }}>
+          <Button onClick={() => setFilterModalOpen(true)}>
+            Filter
+          </Button>
+          {(filters.status || filters.shopifyProductId) && (
+            <Button onClick={clearFilters} style={{ marginLeft: '0.5rem' }}>
+              Clear filters
+            </Button>
+          )}
+        </div>
+
+        <DataTable
+          columnContentTypes={[
+            'text',
+            'text',
+            'text',
+            'text',
+            'text',
+            'text',
+            'text',
+            'text',
+            'numeric',
+            'text'
+          ]}
+          headings={[
+            'Product ID',
+            'Start Time',
+            'End Time',
+            'Starting Bid',
+            'Current Bid',
+            'Buy Now Price',
+            'Status',
+            'Time Status',
+            'Bids',
+            'Actions'
+          ]}
+          rows={rows}
+          footerContent={`Showing ${auctions.length} of ${totalItems} auctions`}
+        />
+
+        {totalPages > 1 && (
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <Pagination
+              hasPrevious={currentPage > 1}
+              onPrevious={() => setCurrentPage(currentPage - 1)}
+              hasNext={currentPage < totalPages}
+              onNext={() => setCurrentPage(currentPage + 1)}
+              label={`Page ${currentPage} of ${totalPages}`}
+            />
+          </div>
+        )}
+      </Card>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Auction"
+        primaryAction={{
+          content: 'Delete',
+          onAction: handleDelete,
+          destructive: true
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setDeleteModalOpen(false)
+          }
+        ]}
+      >
+        <Modal.Section>
+          <Text variant="bodyMd">
+            Are you sure you want to delete this auction? This action cannot be undone.
+            {selectedAuction?.bidHistory?.length > 0 && (
+              <Text variant="bodyMd" color="critical">
+                Note: This auction has bids and cannot be deleted.
+              </Text>
+            )}
+          </Text>
+        </Modal.Section>
+      </Modal>
+
+      {/* Close Auction Modal */}
+      <Modal
+        open={closeModalOpen}
+        onClose={() => setCloseModalOpen(false)}
+        title="Close Auction"
+        primaryAction={{
+          content: 'Close Auction',
+          onAction: handleClose
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setCloseModalOpen(false)
+          }
+        ]}
+      >
+        <Modal.Section>
+          <Text variant="bodyMd">
+            Are you sure you want to close this auction? This will prevent new bids from being placed.
+          </Text>
+        </Modal.Section>
+      </Modal>
+
+      {/* Filter Modal */}
+      <Modal
+        open={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        title="Filter Auctions"
+        primaryAction={{
+          content: 'Apply Filters',
+          onAction: () => handleFiltersChange(filters)
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setFilterModalOpen(false)
+          }
+        ]}
+      >
+        <Modal.Section>
+          <div style={{ marginBottom: '1rem' }}>
+            <Text variant="headingMd">Status</Text>
+            <ChoiceList
+              title=""
+              choices={[
+                { label: 'Active', value: 'active' },
+                { label: 'Closed', value: 'closed' }
+              ]}
+              selected={filters.status ? [filters.status] : []}
+              onChange={(value) => setFilters({ ...filters, status: value[0] || '' })}
+            />
+          </div>
+          <div>
+            <TextField
+              label="Shopify Product ID"
+              value={filters.shopifyProductId}
+              onChange={(value) => setFilters({ ...filters, shopifyProductId: value })}
+              placeholder="Enter product ID"
+            />
+          </div>
+        </Modal.Section>
+      </Modal>
+
+      {/* Toast */}
+      {showToast && (
+        <Toast
+          content={toastMessage}
+          onDismiss={() => setShowToast(false)}
+        />
+      )}
+    </Frame>
+  );
+};
+
+export default AuctionTable;
