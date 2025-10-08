@@ -56,7 +56,7 @@ const auctionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'active', 'closed'],
+    enum: ['pending', 'active', 'ended', 'closed'],
     default: 'pending',
     index: true
   },

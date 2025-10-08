@@ -6,6 +6,7 @@ import {
   updateAuction,
   deleteAuction,
   placeBid,
+  buyNow,
   getAuctionStats,
   relistAuction
 } from '../controllers/auctionController.js';
@@ -13,6 +14,7 @@ import {
   validateCreateAuction,
   validateUpdateAuction,
   validatePlaceBid,
+  validateBuyNow,
   validateId
 } from '../middleware/validation.js';
 
@@ -28,6 +30,9 @@ router.delete('/:id', validateId, deleteAuction);
 
 // Bid placement route
 router.post('/:id/bid', validatePlaceBid, placeBid);
+
+// Buy now route
+router.post('/:id/buy-now', validateBuyNow, buyNow);
 
 // Relist auction route
 router.put('/:id/relist', validateCreateAuction, relistAuction);

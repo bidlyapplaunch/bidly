@@ -40,14 +40,22 @@ function App() {
             ? {
                 ...auction,
                 currentBid: bidData.currentBid,
-                bidHistory: bidData.bidHistory
+                bidHistory: bidData.bidHistory,
+                status: bidData.auctionEnded ? 'ended' : auction.status,
+                endTime: bidData.auctionEnded ? new Date().toISOString() : auction.endTime
               }
             : auction
         )
       );
       
-      // Show notification for new bid
-      setToastMessage(`New bid: $${bidData.amount} by ${bidData.bidder}`);
+      // Show notification for new bid or buy now
+      if (bidData.buyNow) {
+        setToastMessage(`🎉 ${bidData.bidder} bought it now for $${bidData.amount}! Auction ended.`);
+      } else if (bidData.auctionEnded) {
+        setToastMessage(`🏆 ${bidData.bidder} won the auction with $${bidData.amount}!`);
+      } else {
+        setToastMessage(`New bid: $${bidData.amount} by ${bidData.bidder}`);
+      }
       setShowToast(true);
     };
     
@@ -64,9 +72,9 @@ function App() {
       setLoading(true);
       setError(null);
       const response = await auctionAPI.getVisibleAuctions();
-      // Filter to show only pending and active auctions (exclude closed)
+      // Filter to show pending, active, and ended auctions (exclude only closed)
       const visibleAuctions = (response.data || []).filter(auction => 
-        auction.status === 'pending' || auction.status === 'active'
+        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
       );
       setAuctions(visibleAuctions);
     } catch (err) {
@@ -106,6 +114,29 @@ function App() {
     }
   };
 
+  const handleBuyNow = async (data) => {
+    try {
+      setBidLoading(true);
+      setError(null);
+      
+      const { bidder, auctionId } = data;
+      
+      await auctionAPI.buyNow(auctionId, bidder);
+      
+      setToastMessage(`Buy now successful! You won the auction!`);
+      setShowToast(true);
+      
+      // Refresh auctions to get updated data
+      await fetchVisibleAuctions();
+      
+    } catch (err) {
+      console.error('Error buying now:', err);
+      setError(err.response?.data?.message || 'Failed to buy now. Please try again.');
+    } finally {
+      setBidLoading(false);
+    }
+  };
+
   const handleRefresh = () => {
     fetchVisibleAuctions();
   };
@@ -128,8 +159,8 @@ function App() {
     <AppProvider>
       <Frame>
         <Page 
-          title="Live Auctions" 
-          subtitle="Browse upcoming and active auctions"
+          title="Auction Marketplace" 
+          subtitle="Browse pending, active, and ended auctions"
           primaryAction={{
             content: 'Refresh',
             onAction: handleRefresh
@@ -148,7 +179,7 @@ function App() {
               <div style={{ textAlign: 'center', padding: '2rem' }}>
                 <Text variant="headingLg" as="h2">No Auctions Available</Text>
                 <Text variant="bodyMd" color="subdued">
-                  There are currently no pending or active auctions. Check back later!
+                  There are currently no pending, active, or ended auctions. Check back later!
                 </Text>
                 <div style={{ marginTop: '1rem' }}>
                   <Button onClick={handleRefresh}>Refresh</Button>
@@ -162,6 +193,7 @@ function App() {
                   <AuctionCard 
                     auction={auction} 
                     onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
+                    onBuyNow={(bidder) => handleBuyNow({ bidder, auctionId: auction._id || auction.id })}
                     isLoading={bidLoading}
                   />
                 </Layout.Section>

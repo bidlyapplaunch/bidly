@@ -183,9 +183,13 @@ export const placeBid = async (req, res, next) => {
     }
     
     // Validate bid amount
-    const minBid = auction.currentBid > 0 ? auction.currentBid : auction.startingBid;
-    if (amount <= minBid) {
-      throw new AppError(`Bid must be higher than current bid (${minBid})`, 400);
+    const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
+    if (amount < minBid) {
+      if (auction.currentBid > 0) {
+        throw new AppError(`Bid must be higher than current bid (${auction.currentBid})`, 400);
+      } else {
+        throw new AppError(`Bid must be at least the starting bid (${auction.startingBid})`, 400);
+      }
     }
     
     // Add the bid
@@ -193,6 +197,15 @@ export const placeBid = async (req, res, next) => {
     
     // Refresh auction data
     const updatedAuction = await Auction.findById(req.params.id);
+    
+    // Check if bid matches buy now price
+    let auctionEnded = false;
+    if (amount >= auction.buyNowPrice) {
+      updatedAuction.status = 'ended';
+      updatedAuction.endTime = new Date(); // End immediately
+      await updatedAuction.save();
+      auctionEnded = true;
+    }
     
     // Broadcast real-time update to all clients watching this auction
     const io = req.app.get('io');
@@ -203,7 +216,9 @@ export const placeBid = async (req, res, next) => {
         bidHistory: updatedAuction.bidHistory,
         bidder: bidder,
         amount: amount,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        auctionEnded: auctionEnded,
+        winner: auctionEnded ? bidder : null
       });
     }
     
@@ -218,6 +233,62 @@ export const placeBid = async (req, res, next) => {
 };
 
 // Get auction statistics
+export const buyNow = async (req, res, next) => {
+  try {
+    const { bidder } = req.body;
+    
+    if (!bidder || !bidder.trim()) {
+      throw new AppError('Bidder name is required', 400);
+    }
+    
+    const auction = await Auction.findById(req.params.id);
+    if (!auction) {
+      throw new AppError('Auction not found', 404);
+    }
+    
+    if (auction.status !== 'active') {
+      throw new AppError('Auction is not active', 400);
+    }
+    
+    const now = new Date();
+    if (now < auction.startTime || now > auction.endTime) {
+      throw new AppError('Auction is not currently active', 400);
+    }
+    
+    // Add the buy now bid
+    await auction.addBid(bidder.trim(), auction.buyNowPrice);
+    
+    // End the auction immediately
+    auction.status = 'ended';
+    auction.endTime = new Date();
+    await auction.save();
+    
+    // Broadcast real-time update to all clients watching this auction
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`auction-${req.params.id}`).emit('bid-update', {
+        auctionId: req.params.id,
+        currentBid: auction.buyNowPrice,
+        bidHistory: auction.bidHistory,
+        bidder: bidder.trim(),
+        amount: auction.buyNowPrice,
+        timestamp: new Date().toISOString(),
+        auctionEnded: true,
+        winner: bidder.trim(),
+        buyNow: true
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Buy now successful! Auction ended.',
+      data: auction
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getAuctionStats = async (req, res, next) => {
   try {
     const stats = await Auction.aggregate([
@@ -234,6 +305,7 @@ export const getAuctionStats = async (req, res, next) => {
     const totalAuctions = await Auction.countDocuments();
     const pendingAuctions = await Auction.countDocuments({ status: 'pending' });
     const activeAuctions = await Auction.countDocuments({ status: 'active' });
+    const endedAuctions = await Auction.countDocuments({ status: 'ended' });
     const closedAuctions = await Auction.countDocuments({ status: 'closed' });
     
     res.json({
@@ -242,6 +314,7 @@ export const getAuctionStats = async (req, res, next) => {
         totalAuctions,
         pendingAuctions,
         activeAuctions,
+        endedAuctions,
         closedAuctions,
         statusBreakdown: stats
       }
@@ -260,14 +333,14 @@ export const relistAuction = async (req, res, next) => {
       throw new AppError('Auction not found', 404);
     }
     
-    // Check if auction is closed
-    if (auction.status !== 'closed') {
-      throw new AppError('Only closed auctions can be relisted', 400);
+    // Check if auction can be relisted (closed or ended without bids)
+    if (auction.status !== 'closed' && auction.status !== 'ended') {
+      throw new AppError('Only closed or ended auctions can be relisted', 400);
     }
     
-    // Check if auction has bids
+    // Check if auction has bids (cannot relist if there were bidders/buyers)
     if (auction.bidHistory && auction.bidHistory.length > 0) {
-      throw new AppError('Cannot relist auction that has bids', 400);
+      throw new AppError('Cannot relist auction that has bids or buyers', 400);
     }
     
     // Validate that end time is after start time
@@ -275,12 +348,17 @@ export const relistAuction = async (req, res, next) => {
       throw new AppError('End time must be after start time', 400);
     }
     
+    // Determine the correct status based on start time
+    const newStartTime = new Date(req.body.startTime);
+    const now = new Date();
+    const newStatus = newStartTime > now ? 'pending' : 'active';
+    
     // Update auction with new data and reactivate
     const updatedAuction = await Auction.findByIdAndUpdate(
       req.params.id,
       {
         ...req.body,
-        status: 'active',
+        status: newStatus,
         bidHistory: [], // Reset bid history
         currentBid: 0 // Reset current bid to 0 (no bids yet)
       },

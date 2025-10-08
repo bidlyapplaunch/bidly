@@ -49,6 +49,12 @@ export const auctionAPI = {
   placeBid: async (id, bidData) => {
     const response = await api.post(`/auctions/${id}/bid`, bidData);
     return response.data;
+  },
+
+  // Buy now
+  buyNow: async (id, bidder) => {
+    const response = await api.post(`/auctions/${id}/buy-now`, { bidder });
+    return response.data;
   }
 };
 

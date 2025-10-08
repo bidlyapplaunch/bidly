@@ -110,9 +110,10 @@ function Dashboard() {
         for (const auction of expiredAuctions) {
           try {
             const auctionId = auction._id || auction.id;
-            await auctionAPI.closeAuction(auctionId);
+            // Set status to 'ended' for auctions that ended naturally
+            await auctionAPI.updateAuction(auctionId, { status: 'ended' });
           } catch (err) {
-            console.error(`Failed to close auction ${auction.shopifyProductId}:`, err);
+            console.error(`Failed to end auction ${auction.shopifyProductId}:`, err);
           }
         }
         
@@ -121,9 +122,9 @@ function Dashboard() {
         await fetchStats();
         
         if (expiredAuctions.length === 1) {
-          setToastMessage(`1 auction has ended and been closed automatically`);
+          setToastMessage(`1 auction has ended automatically`);
         } else {
-          setToastMessage(`${expiredAuctions.length} auctions have ended and been closed automatically`);
+          setToastMessage(`${expiredAuctions.length} auctions have ended automatically`);
         }
         setShowToast(true);
       }
@@ -341,8 +342,8 @@ function Dashboard() {
         console.log('Updating auction with ID:', auctionId);
         console.log('Editing auction:', editingAuction);
         
-        // Check if this is a relist operation (auction is closed and has no bids)
-        const isRelist = editingAuction.status === 'closed' && 
+        // Check if this is a relist operation (auction is ended/closed and has no bids)
+        const isRelist = (editingAuction.status === 'ended' || editingAuction.status === 'closed') && 
                         (!editingAuction.bidHistory || editingAuction.bidHistory.length === 0);
         
         if (isRelist) {
@@ -415,32 +416,28 @@ function Dashboard() {
         {/* Statistics Section */}
         {stats && (
           <Layout.Section>
-            <Layout>
-              <Layout.Section oneFourth>
-                <Card sectioned>
-                  <Text variant="headingMd">Total Auctions</Text>
-                  <Text variant="headingLg">{stats.totalAuctions || 0}</Text>
-                </Card>
-              </Layout.Section>
-              <Layout.Section oneFourth>
-                <Card sectioned>
-                  <Text variant="headingMd">Pending Auctions</Text>
-                  <Text variant="headingLg">{stats.pendingAuctions || 0}</Text>
-                </Card>
-              </Layout.Section>
-              <Layout.Section oneFourth>
-                <Card sectioned>
-                  <Text variant="headingMd">Active Auctions</Text>
-                  <Text variant="headingLg">{stats.activeAuctions || 0}</Text>
-                </Card>
-              </Layout.Section>
-              <Layout.Section oneFourth>
-                <Card sectioned>
-                  <Text variant="headingMd">Closed Auctions</Text>
-                  <Text variant="headingLg">{stats.closedAuctions || 0}</Text>
-                </Card>
-              </Layout.Section>
-            </Layout>
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+              <Card sectioned style={{ flex: 1, padding: '0.75rem' }}>
+                <Text variant="bodyMd" fontWeight="bold">Total</Text>
+                <Text variant="headingMd">{stats.totalAuctions || 0}</Text>
+              </Card>
+              <Card sectioned style={{ flex: 1, padding: '0.75rem' }}>
+                <Text variant="bodyMd" fontWeight="bold">Pending</Text>
+                <Text variant="headingMd">{stats.pendingAuctions || 0}</Text>
+              </Card>
+              <Card sectioned style={{ flex: 1, padding: '0.75rem' }}>
+                <Text variant="bodyMd" fontWeight="bold">Active</Text>
+                <Text variant="headingMd">{stats.activeAuctions || 0}</Text>
+              </Card>
+              <Card sectioned style={{ flex: 1, padding: '0.75rem' }}>
+                <Text variant="bodyMd" fontWeight="bold">Ended</Text>
+                <Text variant="headingMd">{stats.endedAuctions || 0}</Text>
+              </Card>
+              <Card sectioned style={{ flex: 1, padding: '0.75rem' }}>
+                <Text variant="bodyMd" fontWeight="bold">Closed</Text>
+                <Text variant="headingMd">{stats.closedAuctions || 0}</Text>
+              </Card>
+            </div>
           </Layout.Section>
         )}
         
@@ -491,12 +488,14 @@ function Dashboard() {
                               status={
                                 auction.status === 'active' ? 'success' : 
                                 auction.status === 'pending' ? 'info' : 
+                                auction.status === 'ended' ? 'success' :
                                 'critical'
                               }
                               style={{
                                 backgroundColor: 
                                   auction.status === 'pending' ? '#FFA500' : 
                                   auction.status === 'active' ? '#4CAF50' : 
+                                  auction.status === 'ended' ? '#2196F3' :
                                   '#F44336',
                                 color: 'white',
                                 fontWeight: 'bold'
@@ -561,8 +560,38 @@ function Dashboard() {
                                 Delete
                               </Button>
                             </>
+                          ) : auction.status === 'ended' ? (
+                            // For ended auctions (naturally ended with bids)
+                            <>
+                              {(!auction.bidHistory || auction.bidHistory.length === 0) ? (
+                                <>
+                                  <Button 
+                                    size="slim" 
+                                    onClick={() => handleRelistAuction(auction)}
+                                  >
+                                    Relist
+                                  </Button>
+                                  <Button 
+                                    size="slim" 
+                                    destructive
+                                    onClick={() => handleDeleteAuction(auction)}
+                                  >
+                                    Delete
+                                  </Button>
+                                </>
+                              ) : (
+                                // Ended auction with bids - only view and delete
+                                <Button 
+                                  size="slim" 
+                                  destructive
+                                  onClick={() => handleDeleteAuction(auction)}
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                            </>
                           ) : (
-                            // For closed auctions
+                            // For closed auctions (manually closed by admin)
                             <>
                               {(!auction.bidHistory || auction.bidHistory.length === 0) ? (
                                 <>
@@ -608,12 +637,12 @@ function Dashboard() {
         open={formModalOpen}
         onClose={() => setFormModalOpen(false)}
         title={editingAuction ? 
-          (editingAuction.status === 'closed' && (!editingAuction.bidHistory || editingAuction.bidHistory.length === 0) ? 
+          ((editingAuction.status === 'ended' || editingAuction.status === 'closed') && (!editingAuction.bidHistory || editingAuction.bidHistory.length === 0) ? 
             "Relist Auction" : "Edit Auction") : 
           "Create New Auction"}
         primaryAction={{
           content: editingAuction ? 
-            (editingAuction.status === 'closed' && (!editingAuction.bidHistory || editingAuction.bidHistory.length === 0) ? 
+            ((editingAuction.status === 'ended' || editingAuction.status === 'closed') && (!editingAuction.bidHistory || editingAuction.bidHistory.length === 0) ? 
               'Relist Auction' : 'Update Auction') : 
             'Create Auction',
           onAction: handleFormSubmit,
@@ -690,6 +719,7 @@ function Dashboard() {
                       status={
                         selectedAuction.status === 'active' ? 'success' : 
                         selectedAuction.status === 'pending' ? 'info' : 
+                        selectedAuction.status === 'ended' ? 'success' :
                         'critical'
                       } 
                       style={{ 
@@ -697,6 +727,7 @@ function Dashboard() {
                         backgroundColor: 
                           selectedAuction.status === 'pending' ? '#FFA500' : 
                           selectedAuction.status === 'active' ? '#4CAF50' : 
+                          selectedAuction.status === 'ended' ? '#2196F3' :
                           '#F44336',
                         color: 'white',
                         fontWeight: 'bold'

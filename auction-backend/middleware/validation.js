@@ -106,8 +106,8 @@ export const validateUpdateAuction = [
   
   body('status')
     .optional()
-    .isIn(['pending', 'active', 'closed'])
-    .withMessage('Status must be either pending, active, or closed'),
+    .isIn(['pending', 'active', 'ended', 'closed'])
+    .withMessage('Status must be either pending, active, ended, or closed'),
   
   handleValidationErrors
 ];
@@ -134,6 +134,24 @@ export const validatePlaceBid = [
     .withMessage('Bid amount must be a number')
     .isFloat({ min: 0 })
     .withMessage('Bid amount must be a positive number'),
+  
+  handleValidationErrors
+];
+
+// Buy now validation (only needs bidder name)
+export const validateBuyNow = [
+  param('id')
+    .isMongoId()
+    .withMessage('Invalid auction ID'),
+  
+  body('bidder')
+    .notEmpty()
+    .withMessage('Bidder name is required')
+    .isString()
+    .withMessage('Bidder name must be a string')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Bidder name must be between 1 and 100 characters'),
   
   handleValidationErrors
 ];

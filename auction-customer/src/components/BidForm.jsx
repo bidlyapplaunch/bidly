@@ -6,13 +6,15 @@ import {
   Button, 
   Text, 
   Banner,
-  Spinner
+  Spinner,
+  Modal
 } from '@shopify/polaris';
 
-const BidForm = ({ auction, onBidPlaced, isLoading }) => {
+const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   const [bidder, setBidder] = useState('');
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false);
 
   const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
   const suggestedBid = minBid + 5; // Suggest $5 more than minimum
@@ -27,7 +29,11 @@ const BidForm = ({ auction, onBidPlaced, isLoading }) => {
     }
 
     if (!amount || isNaN(amount) || parseFloat(amount) < minBid) {
-      setError(`Bid must be at least $${minBid}`);
+      if (auction.currentBid > 0) {
+        setError(`Bid must be higher than current bid ($${auction.currentBid})`);
+      } else {
+        setError(`Bid must be at least the starting bid ($${auction.startingBid})`);
+      }
       return;
     }
 
@@ -35,6 +41,25 @@ const BidForm = ({ auction, onBidPlaced, isLoading }) => {
       bidder: bidder.trim(),
       amount: parseFloat(amount)
     });
+
+    // Reset form
+    setBidder('');
+    setAmount('');
+  };
+
+  const handleBuyNow = () => {
+    if (!bidder.trim()) {
+      setError('Please enter your name first');
+      return;
+    }
+    setShowBuyNowModal(true);
+  };
+
+  const confirmBuyNow = () => {
+    onBuyNow(bidder.trim());
+    setShowBuyNowModal(false);
+    setBidder('');
+    setAmount('');
   };
 
   const handleQuickBid = (quickAmount) => {
@@ -76,7 +101,10 @@ const BidForm = ({ auction, onBidPlaced, isLoading }) => {
             prefix="$"
             required
             disabled={isLoading}
-            helpText={`Current highest bid: $${auction.currentBid || 0}`}
+            helpText={auction.currentBid > 0 ? 
+              `Current highest bid: $${auction.currentBid}` : 
+              `Starting bid: $${auction.startingBid}`
+            }
           />
 
           {/* Quick bid buttons */}
@@ -107,16 +135,59 @@ const BidForm = ({ auction, onBidPlaced, isLoading }) => {
             </div>
           </div>
 
-          <Button 
-            primary 
-            submit 
-            loading={isLoading}
-            disabled={!bidder.trim() || !amount}
-          >
-            {isLoading ? 'Placing Bid...' : 'Place Bid'}
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button 
+              primary 
+              submit 
+              loading={isLoading}
+              disabled={!bidder.trim() || !amount}
+            >
+              {isLoading ? 'Placing Bid...' : 'Place Bid'}
+            </Button>
+            
+            <Button 
+              onClick={handleBuyNow}
+              loading={isLoading}
+              disabled={!bidder.trim()}
+              tone="critical"
+            >
+              Buy Now (${auction.buyNowPrice})
+            </Button>
+          </div>
         </FormLayout>
       </form>
+
+      {/* Buy Now Confirmation Modal */}
+      <Modal
+        open={showBuyNowModal}
+        onClose={() => setShowBuyNowModal(false)}
+        title="Confirm Buy Now"
+        primaryAction={{
+          content: 'Yes, Buy Now',
+          onAction: confirmBuyNow,
+          loading: isLoading,
+          tone: 'critical'
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setShowBuyNowModal(false)
+          }
+        ]}
+      >
+        <Modal.Section>
+          <div>
+            <Text variant="bodyMd">
+              Are you sure you want to buy this item for <Text variant="bodyMd" fontWeight="bold">${auction.buyNowPrice}</Text>?
+            </Text>
+            <div style={{ marginTop: '0.5rem' }}>
+              <Text variant="bodyMd" color="subdued">
+                This will end the auction immediately and you will be the winner.
+              </Text>
+            </div>
+          </div>
+        </Modal.Section>
+      </Modal>
     </Card>
   );
 };

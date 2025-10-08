@@ -12,7 +12,7 @@ import {
 import CountdownTimer from './CountdownTimer';
 import BidForm from './BidForm';
 
-const AuctionCard = ({ auction, onBidPlaced, isLoading }) => {
+const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   const [modalOpen, setModalOpen] = React.useState(false);
 
   const formatCurrency = (amount) => {
@@ -84,6 +84,11 @@ const AuctionCard = ({ auction, onBidPlaced, isLoading }) => {
               <Text variant="headingLg" as="p">
                 {formatCurrency(auction.currentBid || 0)}
               </Text>
+              {auction.status === 'ended' && auction.bidHistory && auction.bidHistory.length > 0 && (
+                <Text variant="bodySm" color="success" fontWeight="bold">
+                  Winner: {auction.bidHistory[auction.bidHistory.length - 1].bidder}
+                </Text>
+              )}
             </div>
           </Layout.Section>
           <Layout.Section oneHalf>
@@ -207,6 +212,7 @@ const AuctionCard = ({ auction, onBidPlaced, isLoading }) => {
               <BidForm 
                 auction={auction} 
                 onBidPlaced={onBidPlaced}
+                onBuyNow={onBuyNow}
                 isLoading={isLoading}
               />
             )}
