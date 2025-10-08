@@ -74,6 +74,12 @@ export const validateUpdateAuction = [
     .isMongoId()
     .withMessage('Invalid auction ID'),
   
+  body('shopifyProductId')
+    .optional()
+    .isString()
+    .withMessage('Shopify Product ID must be a string')
+    .trim(),
+  
   body('startTime')
     .optional()
     .isISO8601()
@@ -100,8 +106,8 @@ export const validateUpdateAuction = [
   
   body('status')
     .optional()
-    .isIn(['active', 'closed'])
-    .withMessage('Status must be either active or closed'),
+    .isIn(['pending', 'active', 'closed'])
+    .withMessage('Status must be either pending, active, or closed'),
   
   handleValidationErrors
 ];

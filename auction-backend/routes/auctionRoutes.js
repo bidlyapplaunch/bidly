@@ -6,7 +6,8 @@ import {
   updateAuction,
   deleteAuction,
   placeBid,
-  getAuctionStats
+  getAuctionStats,
+  relistAuction
 } from '../controllers/auctionController.js';
 import {
   validateCreateAuction,
@@ -27,5 +28,8 @@ router.delete('/:id', validateId, deleteAuction);
 
 // Bid placement route
 router.post('/:id/bid', validatePlaceBid, placeBid);
+
+// Relist auction route
+router.put('/:id/relist', validateCreateAuction, relistAuction);
 
 export default router;

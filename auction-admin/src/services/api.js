@@ -79,6 +79,12 @@ export const auctionAPI = {
   closeAuction: async (id) => {
     const response = await api.put(`/auctions/${id}`, { status: 'closed' });
     return response.data;
+  },
+
+  // Relist auction (reactivate ended auction without bids)
+  relistAuction: async (id, auctionData) => {
+    const response = await api.put(`/auctions/${id}/relist`, auctionData);
+    return response.data;
   }
 };
 

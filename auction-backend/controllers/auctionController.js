@@ -4,7 +4,10 @@ import { AppError } from '../middleware/errorHandler.js';
 // Create a new auction
 export const createAuction = async (req, res, next) => {
   try {
-    const auction = new Auction(req.body);
+    const auction = new Auction({
+      ...req.body,
+      currentBid: 0 // Ensure currentBid starts at 0
+    });
     const savedAuction = await auction.save();
     
     res.status(201).json({
@@ -81,7 +84,7 @@ export const updateAuction = async (req, res, next) => {
     
     // Prevent updating certain fields if auction has bids
     if (auction.bidHistory.length > 0) {
-      const restrictedFields = ['startingBid', 'startTime', 'endTime'];
+      const restrictedFields = ['shopifyProductId', 'startingBid', 'startTime', 'endTime'];
       for (const field of restrictedFields) {
         if (req.body[field] !== undefined) {
           throw new AppError(`Cannot update ${field} after bids have been placed`, 400);
@@ -90,7 +93,7 @@ export const updateAuction = async (req, res, next) => {
     }
     
     // Update allowed fields
-    const allowedUpdates = ['startTime', 'endTime', 'startingBid', 'buyNowPrice', 'status'];
+    const allowedUpdates = ['shopifyProductId', 'startTime', 'endTime', 'startingBid', 'buyNowPrice', 'status'];
     const updates = {};
     
     for (const field of allowedUpdates) {
@@ -99,10 +102,27 @@ export const updateAuction = async (req, res, next) => {
       }
     }
     
+    // Custom validation for start/end time relationship
+    if (updates.startTime && updates.endTime) {
+      if (new Date(updates.endTime) <= new Date(updates.startTime)) {
+        throw new AppError('End time must be after start time', 400);
+      }
+    } else if (updates.endTime) {
+      // If only end time is being updated, compare with current start time
+      if (new Date(updates.endTime) <= auction.startTime) {
+        throw new AppError('End time must be after start time', 400);
+      }
+    } else if (updates.startTime) {
+      // If only start time is being updated, compare with current end time
+      if (new Date(updates.startTime) >= auction.endTime) {
+        throw new AppError('Start time must be before end time', 400);
+      }
+    }
+    
     const updatedAuction = await Auction.findByIdAndUpdate(
       req.params.id,
       updates,
-      { new: true, runValidators: true }
+      { new: true, runValidators: false } // Disable schema validators since we're doing custom validation
     );
     
     res.json({
@@ -174,6 +194,19 @@ export const placeBid = async (req, res, next) => {
     // Refresh auction data
     const updatedAuction = await Auction.findById(req.params.id);
     
+    // Broadcast real-time update to all clients watching this auction
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`auction-${req.params.id}`).emit('bid-update', {
+        auctionId: req.params.id,
+        currentBid: updatedAuction.currentBid,
+        bidHistory: updatedAuction.bidHistory,
+        bidder: bidder,
+        amount: amount,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     res.json({
       success: true,
       message: 'Bid placed successfully',
@@ -199,6 +232,7 @@ export const getAuctionStats = async (req, res, next) => {
     ]);
     
     const totalAuctions = await Auction.countDocuments();
+    const pendingAuctions = await Auction.countDocuments({ status: 'pending' });
     const activeAuctions = await Auction.countDocuments({ status: 'active' });
     const closedAuctions = await Auction.countDocuments({ status: 'closed' });
     
@@ -206,11 +240,59 @@ export const getAuctionStats = async (req, res, next) => {
       success: true,
       data: {
         totalAuctions,
+        pendingAuctions,
         activeAuctions,
         closedAuctions,
         statusBreakdown: stats
       }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Relist auction (reactivate ended auction without bids)
+export const relistAuction = async (req, res, next) => {
+  try {
+    const auction = await Auction.findById(req.params.id);
+    
+    if (!auction) {
+      throw new AppError('Auction not found', 404);
+    }
+    
+    // Check if auction is closed
+    if (auction.status !== 'closed') {
+      throw new AppError('Only closed auctions can be relisted', 400);
+    }
+    
+    // Check if auction has bids
+    if (auction.bidHistory && auction.bidHistory.length > 0) {
+      throw new AppError('Cannot relist auction that has bids', 400);
+    }
+    
+    // Validate that end time is after start time
+    if (new Date(req.body.endTime) <= new Date(req.body.startTime)) {
+      throw new AppError('End time must be after start time', 400);
+    }
+    
+    // Update auction with new data and reactivate
+    const updatedAuction = await Auction.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body,
+        status: 'active',
+        bidHistory: [], // Reset bid history
+        currentBid: 0 // Reset current bid to 0 (no bids yet)
+      },
+      { new: true, runValidators: false }
+    );
+    
+    res.json({
+      success: true,
+      message: 'Auction relisted successfully',
+      data: updatedAuction
+    });
+    
   } catch (error) {
     next(error);
   }
