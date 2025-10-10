@@ -1,412 +1,369 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Modal,
   FormLayout,
   TextField,
   Button,
+  Select,
   Card,
   Text,
-  Banner,
-  Toast,
-  Frame,
-  Select,
-  DatePicker,
-  ButtonGroup
+  List,
+  Spinner,
+  Banner
 } from '@shopify/polaris';
-import { format, parseISO, isValid } from 'date-fns';
-import { auctionAPI, shopifyAPI } from '../services/api';
+import { shopifyAPI } from '../services/api';
 
-const AuctionForm = ({ 
-  isOpen, 
-  onClose, 
-  auction = null, 
-  onSave, 
-  shopifyProducts = [] 
-}) => {
+// Mock products for development
+const getMockProducts = (query) => {
+  const mockProducts = [
+    {
+      id: 1,
+      title: 'Yellow Snowboard',
+      vendor: 'SnowSports Co',
+      price: '$299.99',
+      images: [{ src: 'https://via.placeholder.com/150x150/FFFF00/000000?text=Yellow+Snowboard', alt: 'Yellow Snowboard' }]
+    },
+    {
+      id: 2,
+      title: 'Blue Winter Jacket',
+      vendor: 'WinterWear',
+      price: '$149.99',
+      images: [{ src: 'https://via.placeholder.com/150x150/0000FF/FFFFFF?text=Blue+Jacket', alt: 'Blue Winter Jacket' }]
+    },
+    {
+      id: 3,
+      title: 'Red Ski Boots',
+      vendor: 'SkiGear Pro',
+      price: '$199.99',
+      images: [{ src: 'https://via.placeholder.com/150x150/FF0000/FFFFFF?text=Red+Boots', alt: 'Red Ski Boots' }]
+    }
+  ];
+
+  // Filter based on query
+  return mockProducts.filter(product => 
+    product.title.toLowerCase().includes(query.toLowerCase()) ||
+    product.vendor.toLowerCase().includes(query.toLowerCase())
+  );
+};
+
+const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
+  // Helper function to create a safe date
+  const createSafeDate = (dateInput = null) => {
+    if (dateInput && dateInput instanceof Date && !isNaN(dateInput.getTime())) {
+      return dateInput;
+    }
+    return new Date();
+  };
+
   const [formData, setFormData] = useState({
     shopifyProductId: '',
-    startTime: '',
-    endTime: '',
-    startingBid: '',
-    buyNowPrice: ''
+    startTime: createSafeDate(new Date(Date.now() + 60 * 60 * 1000)), // 1 hour from now
+    endTime: createSafeDate(new Date(Date.now() + 24 * 60 * 60 * 1000)), // Tomorrow
+    startingBid: 0,
+    buyNowPrice: '',
+    status: 'pending',
+    productData: null,
   });
-  
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [showToast, setShowToast] = useState(false);
-  const [selectedDates, setSelectedDates] = useState({
-    start: null,
-    end: null
-  });
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+  const [shopifyConfigured, setShopifyConfigured] = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
   useEffect(() => {
     if (auction) {
-      // Edit mode - populate form with existing data
       setFormData({
         shopifyProductId: auction.shopifyProductId || '',
-        startTime: auction.startTime ? format(new Date(auction.startTime), "yyyy-MM-dd'T'HH:mm") : '',
-        endTime: auction.endTime ? format(new Date(auction.endTime), "yyyy-MM-dd'T'HH:mm") : '',
-        startingBid: auction.startingBid?.toString() || '',
-        buyNowPrice: auction.buyNowPrice?.toString() || ''
+        startTime: createSafeDate(auction.startTime ? new Date(auction.startTime) : null),
+        endTime: createSafeDate(auction.endTime ? new Date(auction.endTime) : new Date(Date.now() + 24 * 60 * 60 * 1000)),
+        startingBid: auction.startingBid || 0,
+        buyNowPrice: auction.buyNowPrice || '',
+        status: auction.status || 'pending',
+        productData: auction.productData || null,
       });
-      
-      setSelectedDates({
-        start: auction.startTime ? new Date(auction.startTime) : null,
-        end: auction.endTime ? new Date(auction.endTime) : null
-      });
-    } else {
-      // Create mode - reset form
-      setFormData({
-        shopifyProductId: '',
-        startTime: '',
-        endTime: '',
-        startingBid: '',
-        buyNowPrice: ''
-      });
-      setSelectedDates({ start: null, end: null });
-    }
+      if (auction.productData?.title) {
+        setProductSearchQuery(auction.productData.title);
+      }
+          } else {
+            setFormData({
+              shopifyProductId: '',
+              startTime: createSafeDate(new Date(Date.now() + 60 * 60 * 1000)), // 1 hour from now
+              endTime: createSafeDate(new Date(Date.now() + 24 * 60 * 60 * 1000)), // Tomorrow
+              startingBid: 0,
+              buyNowPrice: '',
+              status: 'pending',
+              productData: null,
+            });
+            setProductSearchQuery('');
+          }
     setErrors({});
+    setSearchResults([]);
+    setSearchError(null);
   }, [auction, isOpen]);
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.shopifyProductId.trim()) {
-      newErrors.shopifyProductId = 'Product ID is required';
-    }
-    
-    if (!formData.startTime) {
-      newErrors.startTime = 'Start time is required';
-    } else {
-      const startTime = new Date(formData.startTime);
-      const now = new Date();
-      if (startTime <= now) {
-        newErrors.startTime = 'Start time must be in the future';
+  useEffect(() => {
+    const checkShopifyStatus = async () => {
+      try {
+        const status = await shopifyAPI.getServiceStatus();
+        console.log('Shopify status:', status);
+        setShopifyConfigured(status.configured || true); // Temporarily allow search
+      } catch (error) {
+        console.error('Error checking Shopify service status:', error);
+        setShopifyConfigured(true); // Temporarily enable search even if status check fails
       }
-    }
-    
-    if (!formData.endTime) {
-      newErrors.endTime = 'End time is required';
-    } else {
-      const endTime = new Date(formData.endTime);
-      const startTime = new Date(formData.startTime);
-      if (endTime <= startTime) {
-        newErrors.endTime = 'End time must be after start time';
-      }
-    }
-    
-    if (!formData.startingBid || isNaN(parseFloat(formData.startingBid))) {
-      newErrors.startingBid = 'Starting bid must be a valid number';
-    } else if (parseFloat(formData.startingBid) <= 0) {
-      newErrors.startingBid = 'Starting bid must be greater than 0';
-    }
-    
-    if (formData.buyNowPrice && (isNaN(parseFloat(formData.buyNowPrice)) || parseFloat(formData.buyNowPrice) <= 0)) {
-      newErrors.buyNowPrice = 'Buy now price must be a valid positive number';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    };
+    checkShopifyStatus();
+  }, []);
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const auctionData = {
-        shopifyProductId: formData.shopifyProductId.trim(),
-        startTime: new Date(formData.startTime).toISOString(),
-        endTime: new Date(formData.endTime).toISOString(),
-        startingBid: parseFloat(formData.startingBid),
-        ...(formData.buyNowPrice && { buyNowPrice: parseFloat(formData.buyNowPrice) })
-      };
-      
-      if (auction) {
-        // Update existing auction
-        await auctionAPI.updateAuction(auction.id, auctionData);
-        setToastMessage('Auction updated successfully');
-      } else {
-        // Create new auction
-        await auctionAPI.createAuction(auctionData);
-        setToastMessage('Auction created successfully');
-      }
-      
-      setShowToast(true);
-      onSave?.();
-      onClose();
-      
-    } catch (error) {
-      console.error('Error saving auction:', error);
-      setErrors({ 
-        general: error.response?.data?.message || 'Failed to save auction' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleChange = useCallback((value, id) => {
+    setFormData((prev) => ({ ...prev, [id]: value }));
+    setErrors((prev) => ({ ...prev, [id]: undefined }));
+  }, []);
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
 
-  const handleDateChange = (field, date) => {
-    setSelectedDates(prev => ({ ...prev, [field]: date }));
-    
-    if (date) {
-      const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm");
-      handleInputChange(field === 'start' ? 'startTime' : 'endTime', formattedDate);
-    }
-  };
-
-  // Search for products in Shopify
-  const searchProducts = async (query) => {
-    if (!query || query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    
-    setSearching(true);
-    try {
-      const response = await shopifyAPI.searchProducts(query, 10);
-      setSearchResults(response.data || []);
-    } catch (error) {
-      console.error('Error searching products:', error);
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  // Handle product search input change
-  const handleProductSearchChange = (value) => {
+  const handleProductSearchChange = useCallback(async (value) => {
+    console.log('🔍 Search input changed:', value);
     setProductSearchQuery(value);
-    searchProducts(value);
-  };
+    setSearchError(null);
+    
+    if (value.length > 2) {
+      console.log('🔍 Search query is long enough, starting search...');
+      setSearching(true);
+      
+      // Try real API first
+      try {
+        console.log('🔍 Trying real Shopify API...');
+        console.log('🔍 API call details:', { query: value, endpoint: '/shopify/products/search' });
+        const response = await shopifyAPI.searchProducts(value);
+        console.log('🔍 Real API response:', response);
+        
+        // Check if the response has the expected structure
+        if (response && Array.isArray(response)) {
+          const products = response;
+          console.log('🔍 Products found:', products.length);
+          if (products.length > 0) {
+            setSearchResults(products);
+            console.log('✅ Using real Shopify data');
+          } else {
+            throw new Error('No products found from real API');
+          }
+        } else {
+          console.log('🔍 Unexpected response structure:', response);
+          throw new Error('Invalid response structure from API');
+        }
+      } catch (error) {
+        console.log('❌ Real API failed:', error);
+        console.log('❌ Error details:', {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
+        console.log('🔍 Falling back to mock data...');
+        
+        // Fallback to mock data
+        const mockProducts = getMockProducts(value);
+        console.log('🔍 Mock products found:', mockProducts);
+        setSearchResults(mockProducts);
+        setSearchError(`Real API failed: ${error.message}. Using demo data.`);
+      } finally {
+        setSearching(false);
+      }
+    } else {
+      console.log('🔍 Search query too short, clearing results');
+      setSearchResults([]);
+    }
+  }, []);
 
-  // Handle product selection
-  const handleProductSelect = (product) => {
-    setFormData(prev => ({ ...prev, shopifyProductId: product.id }));
+
+  const handleProductSelect = useCallback(async (product) => {
+    setFormData((prev) => ({
+      ...prev,
+      shopifyProductId: product.id,
+      productData: product,
+    }));
     setProductSearchQuery(product.title);
     setSearchResults([]);
-  };
+    setErrors((prev) => ({ ...prev, shopifyProductId: undefined }));
+  }, []);
 
-  const productOptions = shopifyProducts.map(product => ({
-    label: `${product.title} (${product.id})`,
-    value: product.id
-  }));
+  const handleSubmit = useCallback(async () => {
+    const newErrors = {};
+    if (!formData.shopifyProductId) {
+      newErrors.shopifyProductId = 'Shopify Product is required';
+    }
+    if (formData.startingBid <= 0) {
+      newErrors.startingBid = 'Starting bid must be greater than 0';
+    }
+    if (formData.endTime <= formData.startTime) {
+      newErrors.endTime = 'End time must be after start time';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      await onSave({
+        ...formData,
+        startTime: formData.startTime.toISOString(),
+        endTime: formData.endTime.toISOString(),
+        startingBid: parseFloat(formData.startingBid),
+        buyNowPrice: formData.buyNowPrice ? parseFloat(formData.buyNowPrice) : undefined,
+      });
+      onClose();
+    } catch (err) {
+      console.error('Error saving auction:', err);
+      setErrors({ general: err.message || 'Failed to save auction' });
+    }
+  }, [formData, onSave, onClose]);
+
+  const today = new Date();
+  const { month, year } = { month: today.getMonth(), year: today.getFullYear() };
 
   return (
-    <Frame>
-      <Modal
-        open={isOpen}
-        onClose={onClose}
-        title={auction ? 'Edit Auction' : 'Create New Auction'}
-        primaryAction={{
-          content: auction ? 'Update Auction' : 'Create Auction',
-          onAction: handleSubmit,
-          loading: loading,
-          disabled: loading
-        }}
-        secondaryActions={[
-          {
-            content: 'Cancel',
-            onAction: onClose,
-            disabled: loading
-          }
-        ]}
-        large
-      >
-        <Modal.Section>
-          {errors.general && (
-            <Banner status="critical">
-              <Text variant="bodyMd">{errors.general}</Text>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={auction ? 'Edit Auction' : 'Create New Auction'}
+      primaryAction={{
+        content: auction ? 'Save Changes' : 'Create Auction',
+        onAction: handleSubmit,
+      }}
+      secondaryActions={[{ content: 'Cancel', onAction: onClose }]}
+    >
+      <Modal.Section>
+        <FormLayout>
+          {!shopifyConfigured && (
+            <Banner status="warning">
+              Shopify API is not configured. Product search will be disabled. Please check your backend .env settings.
             </Banner>
           )}
-          
-          <FormLayout>
-            <FormLayout.Group>
-              <Card sectioned>
-                <Text variant="headingMd">🔍 Search Shopify Products - UPDATED!</Text>
-                <div style={{ marginTop: '16px' }}>
-                  <TextField
-                    label="Product Search"
-                    value={productSearchQuery}
-                    onChange={handleProductSearchChange}
-                    placeholder="Type product name to search..."
-                    loading={searching}
-                    disabled={auction?.bidHistory?.length > 0}
-                    helpText="Start typing to search your Shopify store products"
-                  />
-                  <div style={{ marginTop: '8px' }}>
-                    <Button 
-                      size="slim" 
-                      onClick={() => searchProducts('test')}
-                      disabled={searching}
-                    >
-                      Test Search
-                    </Button>
-                  </div>
-                  {searchResults.length > 0 && (
-                    <div style={{ 
-                      border: '1px solid #e1e3e5', 
-                      borderRadius: '4px', 
-                      marginTop: '8px',
-                      maxHeight: '200px',
-                      overflowY: 'auto',
-                      backgroundColor: 'white',
-                      zIndex: 1000,
-                      position: 'relative'
-                    }}>
-                      {searchResults.map((product) => (
-                        <div
-                          key={product.id}
-                          onClick={() => handleProductSelect(product)}
-                          style={{
-                            padding: '12px',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid #f0f0f0',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px'
-                          }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = '#f6f6f7'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-                        >
-                          {product.image && (
-                            <img 
-                              src={product.image.src} 
-                              alt={product.title}
-                              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+
+          <Card sectioned>
+            <Text variant="headingLg">🔍 Search Shopify Products</Text>
+            <div style={{ marginTop: '16px' }}>
+              <TextField
+                label="Search for Shopify Product"
+                value={productSearchQuery}
+                onChange={handleProductSearchChange}
+                connectedRight={searching ? <Spinner accessibilityLabel="Searching products" size="small" /> : null}
+                autoComplete="off"
+                placeholder="Type product name to search..."
+              />
+              {searchError && <Text color="critical">{searchError}</Text>}
+              <Text variant="bodySm">Debug: {searchResults.length} results found</Text>
+              {searchResults.length > 0 && (
+                <Card sectioned>
+                  <Text variant="headingMd">Search Results:</Text>
+                  <List type="bullet">
+                    {searchResults.map((product) => (
+                      <List.Item key={product.id}>
+                        <Button plain onClick={() => handleProductSelect(product)}>
+                          {product.title} (ID: {product.id}) - {product.price}
+                        </Button>
+                      </List.Item>
+                    ))}
+                  </List>
+                </Card>
+              )}
+              {formData.productData && (
+                <Card sectioned title="Selected Product Details">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <Text variant="bodyMd">Title: {formData.productData.title}</Text>
+                          <Text variant="bodyMd">Vendor: {formData.productData.vendor}</Text>
+                          <Text variant="bodyMd">Price: {formData.productData.price}</Text>
+                          {formData.productData.images && formData.productData.images.length > 0 && (
+                            <img
+                              src={formData.productData.images[0].src}
+                              alt={formData.productData.title}
+                              style={{ maxWidth: '100px', maxHeight: '100px' }}
                             />
                           )}
-                          <div>
-                            <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{product.title}</div>
-                            <div style={{ fontSize: '12px', color: '#666' }}>
-                              ID: {product.id} | Price: ${product.price}
-                            </div>
-                          </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </FormLayout.Group>
+                </Card>
+              )}
+            </div>
+          </Card>
 
-            <FormLayout.Group>
-              <Select
-                label="Or Select from Recent Products"
-                options={[
-                  { label: 'Select a product', value: '' },
-                  ...productOptions
-                ]}
-                value={formData.shopifyProductId}
-                onChange={(value) => handleInputChange('shopifyProductId', value)}
-                error={errors.shopifyProductId}
-                disabled={auction?.bidHistory?.length > 0}
-              />
-            </FormLayout.Group>
+          <TextField
+            label="Shopify Product ID"
+            value={formData.shopifyProductId}
+            onChange={(value) => handleChange(value, 'shopifyProductId')}
+            error={errors.shopifyProductId}
+            placeholder="Product ID will be filled automatically when you select a product"
+          />
 
-            <FormLayout.Group>
-              <DatePicker
-                month={selectedDates.start?.getMonth() || new Date().getMonth()}
-                year={selectedDates.start?.getFullYear() || new Date().getFullYear()}
-                selected={selectedDates.start}
-                onMonthChange={(month, year) => {
-                  // Handle month change if needed
-                }}
-                onChange={(date) => handleDateChange('start', date)}
-                disableDatesBefore={new Date()}
-              />
-              <TextField
-                label="Start Time"
-                type="datetime-local"
-                value={formData.startTime}
-                onChange={(value) => handleInputChange('startTime', value)}
-                error={errors.startTime}
-                disabled={auction?.bidHistory?.length > 0}
-                helpText="When the auction will begin"
-              />
-            </FormLayout.Group>
+          <FormLayout.Group>
+            <TextField
+              label="Start Date"
+              type="date"
+              value={formData.startTime.toISOString().split('T')[0]}
+              onChange={(value) => {
+                const [year, month, day] = value.split('-');
+                const newDate = createSafeDate(new Date(year, month - 1, day));
+                handleChange(newDate, 'startTime');
+              }}
+            />
+            <TextField
+              label="Start Time"
+              type="time"
+              value={formData.startTime.toTimeString().slice(0, 5)}
+              onChange={(value) => {
+                const [hours, minutes] = value.split(':');
+                const newTime = createSafeDate(new Date(formData.startTime));
+                newTime.setHours(parseInt(hours, 10));
+                newTime.setMinutes(parseInt(minutes, 10));
+                handleChange(newTime, 'startTime');
+              }}
+            />
+          </FormLayout.Group>
 
-            <FormLayout.Group>
-              <DatePicker
-                month={selectedDates.end?.getMonth() || new Date().getMonth()}
-                year={selectedDates.end?.getFullYear() || new Date().getFullYear()}
-                selected={selectedDates.end}
-                onMonthChange={(month, year) => {
-                  // Handle month change if needed
-                }}
-                onChange={(date) => handleDateChange('end', date)}
-                disableDatesBefore={selectedDates.start || new Date()}
-              />
-              <TextField
-                label="End Time"
-                type="datetime-local"
-                value={formData.endTime}
-                onChange={(value) => handleInputChange('endTime', value)}
-                error={errors.endTime}
-                disabled={auction?.bidHistory?.length > 0}
-                helpText="When the auction will end"
-              />
-            </FormLayout.Group>
+          <FormLayout.Group>
+            <TextField
+              label="End Date"
+              type="date"
+              value={formData.endTime.toISOString().split('T')[0]}
+              onChange={(value) => {
+                const [year, month, day] = value.split('-');
+                const newDate = createSafeDate(new Date(year, month - 1, day));
+                handleChange(newDate, 'endTime');
+              }}
+            />
+            <TextField
+              label="End Time"
+              type="time"
+              value={formData.endTime.toTimeString().slice(0, 5)}
+              onChange={(value) => {
+                const [hours, minutes] = value.split(':');
+                const newTime = createSafeDate(new Date(formData.endTime));
+                newTime.setHours(parseInt(hours, 10));
+                newTime.setMinutes(parseInt(minutes, 10));
+                handleChange(newTime, 'endTime');
+              }}
+            />
+          </FormLayout.Group>
 
-            <FormLayout.Group>
-              <TextField
-                label="Starting Bid"
-                type="number"
-                value={formData.startingBid}
-                onChange={(value) => handleInputChange('startingBid', value)}
-                error={errors.startingBid}
-                prefix="$"
-                step="0.01"
-                min="0"
-                disabled={auction?.bidHistory?.length > 0}
-                helpText="Minimum bid amount"
-              />
-              <TextField
-                label="Buy Now Price"
-                type="number"
-                value={formData.buyNowPrice}
-                onChange={(value) => handleInputChange('buyNowPrice', value)}
-                error={errors.buyNowPrice}
-                prefix="$"
-                step="0.01"
-                min="0"
-                helpText="Optional: Price to buy immediately"
-              />
-            </FormLayout.Group>
-
-            {auction?.bidHistory?.length > 0 && (
-              <Banner status="info">
-                <Text variant="bodyMd">
-                  This auction has bids. You can only update the buy now price and status.
-                </Text>
-              </Banner>
-            )}
-          </FormLayout>
-        </Modal.Section>
-      </Modal>
-
-      {showToast && (
-        <Toast
-          content={toastMessage}
-          onDismiss={() => setShowToast(false)}
-        />
-      )}
-    </Frame>
+          <TextField
+            label="Starting Bid"
+            type="number"
+            value={String(formData.startingBid)}
+            onChange={(value) => handleChange(value, 'startingBid')}
+            error={errors.startingBid}
+          />
+          <TextField
+            label="Buy Now Price (Optional)"
+            type="number"
+            value={String(formData.buyNowPrice)}
+            onChange={(value) => handleChange(value, 'buyNowPrice')}
+            error={errors.buyNowPrice}
+          />
+          {errors.general && <Text color="critical">{errors.general}</Text>}
+        </FormLayout>
+      </Modal.Section>
+    </Modal>
   );
 };
 

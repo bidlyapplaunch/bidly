@@ -17,11 +17,11 @@ import {
   TextField,
   Select
 } from '@shopify/polaris';
-import { EditIcon, DeleteIcon, ViewIcon } from '@shopify/polaris-icons';
+import { EditMinor, DeleteMinor, ViewMinor } from '@shopify/polaris-icons';
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
 
-const AuctionTable = ({ onEdit, onView, onRefresh }) => {
+const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +46,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh }) => {
 
   useEffect(() => {
     fetchAuctions();
-  }, [currentPage, filters]);
+  }, [currentPage, filters, refreshTrigger]);
 
   const fetchAuctions = async () => {
     try {
@@ -136,7 +136,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh }) => {
   };
 
   const rows = auctions.map((auction) => [
-    auction.shopifyProductId,
+    auction.productData?.title || auction.shopifyProductId || 'Unknown Product',
     formatDate(auction.startTime),
     formatDate(auction.endTime),
     formatCurrency(auction.startingBid),
@@ -147,14 +147,14 @@ const AuctionTable = ({ onEdit, onView, onRefresh }) => {
     auction.bidHistory?.length || 0,
     <ButtonGroup key={auction.id}>
       <Button
-        icon={ViewIcon}
+        icon={ViewMinor}
         onClick={() => onView(auction)}
         size="slim"
       >
         View
       </Button>
       <Button
-        icon={EditIcon}
+        icon={EditMinor}
         onClick={() => onEdit(auction)}
         size="slim"
         disabled={auction.bidHistory?.length > 0}
@@ -162,7 +162,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh }) => {
         Edit
       </Button>
       <Button
-        icon={DeleteIcon}
+        icon={DeleteMinor}
         onClick={() => {
           setSelectedAuction(auction);
           setDeleteModalOpen(true);
@@ -265,7 +265,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh }) => {
             'text'
           ]}
           headings={[
-            'Product ID',
+            'Product Name',
             'Start Time',
             'End Time',
             'Starting Bid',

@@ -50,7 +50,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
           <div>
             <Text variant="headingLg" as="h2">
-              {auction.shopifyProductId}
+              {auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}
             </Text>
             <Text variant="bodyMd" color="subdued">
               Product ID: {auction.shopifyProductId}
@@ -61,21 +61,35 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           </Badge>
         </div>
 
-        {/* Product Image Placeholder */}
-        <div style={{ 
-          width: '100%', 
-          height: '200px', 
-          backgroundColor: '#f6f6f7', 
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '1rem'
-        }}>
-          <Text variant="bodyMd" color="subdued">
-            Product Image
-          </Text>
-        </div>
+        {/* Product Image */}
+        {auction.productData?.image?.src ? (
+          <img
+            src={auction.productData.image.src}
+            alt={auction.productData?.title || 'Product image'}
+            style={{ 
+              width: '100%', 
+              height: '200px', 
+              objectFit: 'cover',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}
+          />
+        ) : (
+          <div style={{ 
+            width: '100%', 
+            height: '200px', 
+            backgroundColor: '#f6f6f7', 
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '1rem'
+          }}>
+            <Text variant="bodyMd" color="subdued">
+              Product Image
+            </Text>
+          </div>
+        )}
 
         <Layout>
           <Layout.Section oneHalf>
@@ -148,7 +162,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={`Auction: ${auction.shopifyProductId}`}
+        title={`Auction: ${auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}`}
         large
       >
         <Modal.Section>
@@ -186,6 +200,28 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                 </div>
               </Layout.Section>
             </Layout>
+
+            {/* Product Information */}
+            {auction.productData && (
+              <div style={{ marginBottom: '1rem' }}>
+                <Text variant="headingMd">Product Information</Text>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <Text variant="bodyMd"><strong>Title:</strong> {auction.productData.title}</Text>
+                  {auction.productData.vendor && (
+                    <Text variant="bodyMd"><strong>Vendor:</strong> {auction.productData.vendor}</Text>
+                  )}
+                  {auction.productData.productType && (
+                    <Text variant="bodyMd"><strong>Type:</strong> {auction.productData.productType}</Text>
+                  )}
+                  {auction.productData.price && (
+                    <Text variant="bodyMd"><strong>Shopify Price:</strong> {formatCurrency(auction.productData.price)}</Text>
+                  )}
+                  {auction.productData.description && (
+                    <Text variant="bodyMd"><strong>Description:</strong> {auction.productData.description}</Text>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Bid History */}
             {auction.bidHistory && auction.bidHistory.length > 0 && (

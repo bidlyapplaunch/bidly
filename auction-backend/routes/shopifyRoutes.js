@@ -11,7 +11,8 @@ import {
   getProductsByVendor,
   getProductsByType,
   getProductsByTags,
-  getServiceStatus
+  getServiceStatus,
+  testShopifyConnection
 } from '../controllers/shopifyController.js';
 import { validateId } from '../middleware/validation.js';
 
@@ -19,6 +20,9 @@ const router = express.Router();
 
 // Service status
 router.get('/status', getServiceStatus);
+
+// Test endpoint
+router.get('/test', testShopifyConnection);
 
 // Direct search route for convenience
 router.get('/search', searchProducts);

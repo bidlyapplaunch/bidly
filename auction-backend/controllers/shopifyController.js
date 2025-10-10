@@ -263,12 +263,42 @@ export const getProductsByTags = async (req, res, next) => {
 export const getServiceStatus = async (req, res, next) => {
   try {
     const status = getShopifyService().getConfigStatus();
-    
+
     res.json({
       success: true,
       ...status
     });
   } catch (error) {
     next(error);
+  }
+};
+
+/**
+ * Test endpoint to debug Shopify API issues
+ */
+export const testShopifyConnection = async (req, res, next) => {
+  try {
+    const service = getShopifyService();
+    console.log('🧪 Testing Shopify connection...');
+    
+    // Try to make a simple API call
+    const response = await service.client.get('/products.json?limit=1');
+    console.log('✅ Shopify API test successful');
+    
+    res.json({
+      success: true,
+      message: 'Shopify API connection successful',
+      productCount: response.data.products.length,
+      firstProduct: response.data.products[0]?.title || 'No products found'
+    });
+  } catch (error) {
+    console.error('❌ Shopify API test failed:', error.message);
+    res.json({
+      success: false,
+      message: 'Shopify API connection failed',
+      error: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText
+    });
   }
 };

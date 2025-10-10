@@ -11,7 +11,6 @@ import {
   Toast,
   ButtonGroup,
   Divider,
-  Stack,
   TextContainer
 } from '@shopify/polaris';
 import { format } from 'date-fns';
@@ -124,12 +123,12 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
         large
       >
         <Modal.Section>
-          <Stack vertical spacing="loose">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Auction Overview */}
             <Card sectioned>
-              <Stack vertical spacing="tight">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <Text variant="headingMd">Auction Overview</Text>
-                <Stack distribution="equalSpacing">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <Text variant="bodyMd" color="subdued">Product ID</Text>
                     <Text variant="bodyLg">{auctionData.shopifyProductId}</Text>
@@ -142,15 +141,15 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                     <Text variant="bodyMd" color="subdued">Time Status</Text>
                     <div>{getTimeStatus()}</div>
                   </div>
-                </Stack>
-              </Stack>
+                </div>
+              </div>
             </Card>
 
             {/* Auction Details */}
             <Card sectioned>
-              <Stack vertical spacing="tight">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <Text variant="headingMd">Auction Details</Text>
-                <Stack distribution="equalSpacing">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <Text variant="bodyMd" color="subdued">Start Time</Text>
                     <Text variant="bodyLg">{formatDate(auctionData.startTime)}</Text>
@@ -159,9 +158,9 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                     <Text variant="bodyMd" color="subdued">End Time</Text>
                     <Text variant="bodyLg">{formatDate(auctionData.endTime)}</Text>
                   </div>
-                </Stack>
+                </div>
                 <Divider />
-                <Stack distribution="equalSpacing">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <Text variant="bodyMd" color="subdued">Starting Bid</Text>
                     <Text variant="bodyLg">{formatCurrency(auctionData.startingBid)}</Text>
@@ -178,9 +177,9 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                       {auctionData.buyNowPrice ? formatCurrency(auctionData.buyNowPrice) : 'Not set'}
                     </Text>
                   </div>
-                </Stack>
+                </div>
                 <Divider />
-                <Stack distribution="equalSpacing">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <Text variant="bodyMd" color="subdued">Total Bids</Text>
                     <Text variant="bodyLg">{auctionData.bidHistory?.length || 0}</Text>
@@ -193,21 +192,21 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                     <Text variant="bodyMd" color="subdued">Last Updated</Text>
                     <Text variant="bodyLg">{formatDate(auctionData.updatedAt)}</Text>
                   </div>
-                </Stack>
-              </Stack>
+                </div>
+              </div>
             </Card>
 
             {/* Bid History */}
             {bidHistoryRows.length > 0 ? (
               <Card sectioned>
-                <Stack vertical spacing="tight">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <Text variant="headingMd">Bid History</Text>
                   <DataTable
                     columnContentTypes={['numeric', 'text', 'text', 'text']}
                     headings={['#', 'Bidder', 'Amount', 'Time']}
                     rows={bidHistoryRows}
                   />
-                </Stack>
+                </div>
               </Card>
             ) : (
               <Card sectioned>
@@ -222,7 +221,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
             {/* Actions */}
             {auctionData.status === 'active' && (
               <Card sectioned>
-                <Stack distribution="trailing">
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <ButtonGroup>
                     <Button onClick={fetchAuctionDetails} loading={loading}>
                       Refresh
@@ -231,10 +230,10 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                       Close Auction
                     </Button>
                   </ButtonGroup>
-                </Stack>
+                </div>
               </Card>
             )}
-          </Stack>
+          </div>
         </Modal.Section>
       </Modal>
 

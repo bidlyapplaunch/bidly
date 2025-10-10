@@ -111,7 +111,7 @@ export const shopifyAPI = {
     const response = await api.get('/shopify/products/search', {
       params: { q: query, limit }
     });
-    return response.data;
+    return response.data.data; // Return the actual products array
   },
 
   getProductSuggestions: async (query, limit = 20) => {

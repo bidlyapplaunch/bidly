@@ -8,20 +8,16 @@ import {
   Banner,
   Frame,
   Toast,
-  Stack,
-  DisplayText,
   ResourceList,
   ResourceItem,
   Avatar,
   Badge,
   ButtonGroup
 } from '@shopify/polaris';
-import { PlusIcon, AnalyticsIcon } from '@shopify/polaris-icons';
+import { PlusMinor, AnalyticsMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
-import AuctionFormNew from './AuctionFormNew';
+import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
-import TestShopify from './TestShopify';
-import TestComponent from './TestComponent';
 import { auctionAPI, shopifyAPI } from '../services/api';
 
 const Dashboard = () => {
@@ -34,6 +30,7 @@ const Dashboard = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [shopifyProducts, setShopifyProducts] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     fetchStats();
@@ -80,15 +77,51 @@ const Dashboard = () => {
     setDetailsModalOpen(true);
   };
 
-  const handleFormSave = () => {
-    setFormModalOpen(false);
-    setSelectedAuction(null);
-    setToastMessage('Auction saved successfully');
-    setShowToast(true);
+  const handleFormSave = async (auctionData) => {
+    try {
+      console.log('💾 Saving auction:', auctionData);
+      console.log('💾 Data types:', {
+        shopifyProductId: typeof auctionData.shopifyProductId,
+        startTime: typeof auctionData.startTime,
+        endTime: typeof auctionData.endTime,
+        startingBid: typeof auctionData.startingBid,
+        buyNowPrice: typeof auctionData.buyNowPrice,
+        status: typeof auctionData.status
+      });
+      
+      if (selectedAuction) {
+        // Update existing auction
+        await auctionAPI.updateAuction(selectedAuction._id, auctionData);
+        setToastMessage('Auction updated successfully');
+      } else {
+        // Create new auction
+        await auctionAPI.createAuction(auctionData);
+        setToastMessage('Auction created successfully');
+      }
+      
+      // Refresh the statistics and trigger auction list refresh
+      await fetchStats();
+      setRefreshTrigger(prev => prev + 1);
+      
+      setFormModalOpen(false);
+      setSelectedAuction(null);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error saving auction:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      setToastMessage(`Error saving auction: ${error.response?.data?.message || error.message || error}`);
+      setShowToast(true);
+    }
   };
 
   const handleRefresh = () => {
     fetchStats();
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const formatCurrency = (amount) => {
@@ -113,11 +146,11 @@ const Dashboard = () => {
   return (
     <Frame>
       <Page
-        title="🔥 AUCTION DASHBOARD - CHANGES WORKING! 🔥"
+        title="Auction Dashboard"
         subtitle="Manage your auctions and monitor performance"
         primaryAction={{
           content: 'Create Auction',
-          icon: PlusIcon,
+          icon: PlusMinor,
           onAction: handleCreateAuction
         }}
         secondaryActions={[
@@ -128,32 +161,28 @@ const Dashboard = () => {
         ]}
       >
         <Layout>
-          {/* Test Component */}
-          <Layout.Section>
-            <TestComponent />
-          </Layout.Section>
           
           {/* Statistics Cards */}
           <Layout.Section>
             <Layout>
               <Layout.Section oneHalf>
                 <Card sectioned>
-                  <Stack vertical spacing="tight">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <Text variant="headingMd">Total Auctions</Text>
-                    <DisplayText size="large">
+                    <Text variant="heading2xl" as="div">
                       {stats?.totalAuctions || 0}
-                    </DisplayText>
-                  </Stack>
+                    </Text>
+                  </div>
                 </Card>
               </Layout.Section>
               <Layout.Section oneHalf>
                 <Card sectioned>
-                  <Stack vertical spacing="tight">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <Text variant="headingMd">Active Auctions</Text>
-                    <DisplayText size="large">
+                    <Text variant="heading2xl" as="div">
                       {stats?.activeAuctions || 0}
-                    </DisplayText>
-                  </Stack>
+                    </Text>
+                  </div>
                 </Card>
               </Layout.Section>
             </Layout>
@@ -162,42 +191,35 @@ const Dashboard = () => {
           {/* Quick Stats */}
           <Layout.Section>
             <Card sectioned>
-              <Stack vertical spacing="loose">
-                <Text variant="headingMd">Auction Statistics - TESTING CHANGES</Text>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <Text variant="headingMd">Auction Statistics</Text>
                 <Layout>
                   <Layout.Section oneThird>
-                    <Stack vertical spacing="tight">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <Text variant="bodyMd" color="subdued">Active Auctions</Text>
                       <Text variant="headingLg">{stats?.activeAuctions || 0}</Text>
-                    </Stack>
+                    </div>
                   </Layout.Section>
                   <Layout.Section oneThird>
-                    <Stack vertical spacing="tight">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <Text variant="bodyMd" color="subdued">Closed Auctions</Text>
                       <Text variant="headingLg">{stats?.closedAuctions || 0}</Text>
-                    </Stack>
+                    </div>
                   </Layout.Section>
                   <Layout.Section oneThird>
-                    <Stack vertical spacing="tight">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <Text variant="bodyMd" color="subdued">Total Bids</Text>
                       <Text variant="headingLg">
                         {stats?.statusBreakdown?.reduce((total, status) => 
                           total + (status.totalBids || 0), 0) || 0}
                       </Text>
-                    </Stack>
+                    </div>
                   </Layout.Section>
                 </Layout>
-              </Stack>
+              </div>
             </Card>
           </Layout.Section>
 
-          {/* Test Shopify Component */}
-          <Layout.Section>
-            <Card sectioned>
-              <Text variant="headingLg">🧪 SHOPIFY TEST COMPONENT - IF YOU SEE THIS, CHANGES ARE WORKING!</Text>
-              <TestShopify />
-            </Card>
-          </Layout.Section>
 
           {/* Auctions Table */}
           <Layout.Section>
@@ -205,12 +227,13 @@ const Dashboard = () => {
               onEdit={handleEditAuction}
               onView={handleViewAuction}
               onRefresh={handleRefresh}
+              refreshTrigger={refreshTrigger}
             />
           </Layout.Section>
         </Layout>
 
         {/* Modals */}
-        <AuctionFormNew
+        <AuctionForm
           isOpen={formModalOpen}
           onClose={() => setFormModalOpen(false)}
           auction={selectedAuction}

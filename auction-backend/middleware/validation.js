@@ -27,11 +27,14 @@ export const validateCreateAuction = [
     .withMessage('Start time is required')
     .isISO8601()
     .withMessage('Start time must be a valid ISO 8601 date')
-    .custom((value) => {
+    .custom((value, { req }) => {
       const startTime = new Date(value);
       const now = new Date();
-      if (startTime <= now) {
-        throw new Error('Start time must be in the future');
+      const status = req.body.status || 'pending';
+      
+      // Only require future start time for active auctions
+      if (status === 'active' && startTime <= now) {
+        throw new Error('Start time must be in the future for active auctions');
       }
       return true;
     }),
