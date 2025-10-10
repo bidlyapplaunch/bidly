@@ -166,7 +166,7 @@ function Dashboard() {
       setAuctions(response.data || []);
     } catch (err) {
       console.error('Error fetching auctions:', err);
-      setError('Failed to fetch auctions. Make sure the backend is running on port 5000.');
+      setError('Failed to fetch auctions. Make sure the backend is running on port 5001.');
       setAuctions([]); // Set empty array on error
     } finally {
       setLoading(false);

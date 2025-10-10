@@ -80,12 +80,12 @@ A React-based customer-facing auction page for Shopify auctions with real-time b
 
 3. **Access the App**
    - Open http://localhost:3002
-   - Make sure backend is running on port 5000
+   - Make sure backend is running on port 5001
 
 ## Environment Setup
 
-- **Backend API**: http://localhost:5000/api
-- **WebSocket Server**: http://localhost:5000
+- **Backend API**: http://localhost:5001/api
+- **WebSocket Server**: http://localhost:5001
 - **Frontend Port**: 3002
 
 ## Future Enhancements

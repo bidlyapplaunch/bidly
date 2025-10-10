@@ -1,12 +1,25 @@
 import Auction from '../models/Auction.js';
 import { AppError } from '../middleware/errorHandler.js';
+import shopifyService from '../services/shopifyService.js';
 
 // Create a new auction
 export const createAuction = async (req, res, next) => {
   try {
+    const { shopifyProductId } = req.body;
+    
+    // Fetch product data from Shopify
+    let productData = null;
+    try {
+      productData = await shopifyService.getProduct(shopifyProductId);
+    } catch (shopifyError) {
+      console.warn(`Failed to fetch Shopify product ${shopifyProductId}:`, shopifyError.message);
+      // Continue without product data - auction can still be created
+    }
+    
     const auction = new Auction({
       ...req.body,
-      currentBid: 0 // Ensure currentBid starts at 0
+      currentBid: 0, // Ensure currentBid starts at 0
+      productData: productData // Cache the product data
     });
     const savedAuction = await auction.save();
     
@@ -283,6 +296,68 @@ export const buyNow = async (req, res, next) => {
       success: true,
       message: 'Buy now successful! Auction ended.',
       data: auction
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Refresh Shopify product data for an auction
+export const refreshProductData = async (req, res, next) => {
+  try {
+    const auction = await Auction.findById(req.params.id);
+    
+    if (!auction) {
+      throw new AppError('Auction not found', 404);
+    }
+    
+    // Fetch fresh product data from Shopify
+    let productData = null;
+    try {
+      productData = await shopifyService.getProduct(auction.shopifyProductId);
+    } catch (shopifyError) {
+      throw new AppError(`Failed to fetch Shopify product: ${shopifyError.message}`, 400);
+    }
+    
+    // Update auction with fresh product data
+    auction.productData = productData;
+    const updatedAuction = await auction.save();
+    
+    res.json({
+      success: true,
+      message: 'Product data refreshed successfully',
+      data: updatedAuction
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Refresh product data for multiple auctions
+export const refreshAllProductData = async (req, res, next) => {
+  try {
+    const auctions = await Auction.find({});
+    const results = [];
+    
+    for (const auction of auctions) {
+      try {
+        const productData = await shopifyService.getProduct(auction.shopifyProductId);
+        auction.productData = productData;
+        await auction.save();
+        results.push({ auctionId: auction._id, success: true });
+      } catch (error) {
+        results.push({ 
+          auctionId: auction._id, 
+          success: false, 
+          error: error.message 
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'Product data refresh completed',
+      data: results
     });
   } catch (error) {
     next(error);
