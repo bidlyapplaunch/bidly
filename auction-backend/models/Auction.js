@@ -24,6 +24,42 @@ const auctionSchema = new mongoose.Schema({
     trim: true,
     index: true
   },
+  // Cached Shopify product data
+  productData: {
+    id: String,
+    title: String,
+    handle: String,
+    description: String,
+    price: Number,
+    compareAtPrice: Number,
+    image: {
+      src: String,
+      alt: String,
+      width: Number,
+      height: Number
+    },
+    images: [{
+      src: String,
+      alt: String,
+      width: Number,
+      height: Number
+    }],
+    vendor: String,
+    productType: String,
+    tags: [String],
+    status: String,
+    createdAt: Date,
+    updatedAt: Date,
+    variants: [{
+      id: String,
+      title: String,
+      price: Number,
+      compareAtPrice: Number,
+      sku: String,
+      inventory: Number,
+      available: Boolean
+    }]
+  },
   startTime: {
     type: Date,
     required: true,

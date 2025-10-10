@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5002/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -54,6 +54,21 @@ export const auctionAPI = {
   // Buy now
   buyNow: async (id, bidder) => {
     const response = await api.post(`/auctions/${id}/buy-now`, { bidder });
+    return response.data;
+  }
+};
+
+// Shopify API endpoints for customer frontend
+export const shopifyAPI = {
+  getProduct: async (productId) => {
+    const response = await api.get(`/shopify/products/${productId}`);
+    return response.data;
+  },
+
+  searchProducts: async (query, limit = 10) => {
+    const response = await api.get('/shopify/products/search', {
+      params: { q: query, limit }
+    });
     return response.data;
   }
 };

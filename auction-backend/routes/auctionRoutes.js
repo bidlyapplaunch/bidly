@@ -8,7 +8,10 @@ import {
   placeBid,
   buyNow,
   getAuctionStats,
-  relistAuction
+  relistAuction,
+  refreshProductData,
+  refreshAllProductData,
+  getAuctionsWithProductData
 } from '../controllers/auctionController.js';
 import {
   validateCreateAuction,
@@ -36,5 +39,10 @@ router.post('/:id/buy-now', validateBuyNow, buyNow);
 
 // Relist auction route
 router.put('/:id/relist', validateCreateAuction, relistAuction);
+
+// Shopify product data routes
+router.get('/with-product-data', getAuctionsWithProductData);
+router.put('/:id/refresh-product', validateId, refreshProductData);
+router.put('/refresh-all-products', refreshAllProductData);
 
 export default router;

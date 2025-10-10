@@ -14,7 +14,7 @@ import {
   ButtonGroup
 } from '@shopify/polaris';
 import { format, parseISO, isValid } from 'date-fns';
-import { auctionAPI } from '../services/api';
+import { auctionAPI, shopifyAPI } from '../services/api';
 
 const AuctionForm = ({ 
   isOpen, 
@@ -39,6 +39,9 @@ const AuctionForm = ({
     start: null,
     end: null
   });
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     if (auction) {
@@ -167,6 +170,38 @@ const AuctionForm = ({
     }
   };
 
+  // Search for products in Shopify
+  const searchProducts = async (query) => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setSearching(true);
+    try {
+      const response = await shopifyAPI.searchProducts(query, 10);
+      setSearchResults(response.data || []);
+    } catch (error) {
+      console.error('Error searching products:', error);
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Handle product search input change
+  const handleProductSearchChange = (value) => {
+    setProductSearchQuery(value);
+    searchProducts(value);
+  };
+
+  // Handle product selection
+  const handleProductSelect = (product) => {
+    setFormData(prev => ({ ...prev, shopifyProductId: product.id }));
+    setProductSearchQuery(product.title);
+    setSearchResults([]);
+  };
+
   const productOptions = shopifyProducts.map(product => ({
     label: `${product.title} (${product.id})`,
     value: product.id
@@ -202,8 +237,77 @@ const AuctionForm = ({
           
           <FormLayout>
             <FormLayout.Group>
+              <Card sectioned>
+                <Text variant="headingMd">🔍 Search Shopify Products - UPDATED!</Text>
+                <div style={{ marginTop: '16px' }}>
+                  <TextField
+                    label="Product Search"
+                    value={productSearchQuery}
+                    onChange={handleProductSearchChange}
+                    placeholder="Type product name to search..."
+                    loading={searching}
+                    disabled={auction?.bidHistory?.length > 0}
+                    helpText="Start typing to search your Shopify store products"
+                  />
+                  <div style={{ marginTop: '8px' }}>
+                    <Button 
+                      size="slim" 
+                      onClick={() => searchProducts('test')}
+                      disabled={searching}
+                    >
+                      Test Search
+                    </Button>
+                  </div>
+                  {searchResults.length > 0 && (
+                    <div style={{ 
+                      border: '1px solid #e1e3e5', 
+                      borderRadius: '4px', 
+                      marginTop: '8px',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      backgroundColor: 'white',
+                      zIndex: 1000,
+                      position: 'relative'
+                    }}>
+                      {searchResults.map((product) => (
+                        <div
+                          key={product.id}
+                          onClick={() => handleProductSelect(product)}
+                          style={{
+                            padding: '12px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #f0f0f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#f6f6f7'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
+                        >
+                          {product.image && (
+                            <img 
+                              src={product.image.src} 
+                              alt={product.title}
+                              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
+                            />
+                          )}
+                          <div>
+                            <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{product.title}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              ID: {product.id} | Price: ${product.price}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </FormLayout.Group>
+
+            <FormLayout.Group>
               <Select
-                label="Shopify Product"
+                label="Or Select from Recent Products"
                 options={[
                   { label: 'Select a product', value: '' },
                   ...productOptions

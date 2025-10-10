@@ -5,16 +5,20 @@ class ShopifyService {
     this.shopDomain = process.env.SHOPIFY_SHOP_DOMAIN;
     this.accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
     this.apiVersion = '2024-01';
-    this.baseURL = `https://${this.shopDomain}/admin/api/${this.apiVersion}`;
     
-    // Axios instance for Shopify API calls
-    this.client = axios.create({
-      baseURL: this.baseURL,
-      headers: {
-        'X-Shopify-Access-Token': this.accessToken,
-        'Content-Type': 'application/json',
-      },
-    });
+    
+    if (!this.shopDomain || !this.accessToken) {
+      console.warn('Shopify credentials not configured. Product data fetching will be disabled.');
+      this.client = null;
+    } else {
+      this.client = axios.create({
+        baseURL: `https://${this.shopDomain}/admin/api/${this.apiVersion}`,
+        headers: {
+          'X-Shopify-Access-Token': this.accessToken,
+          'Content-Type': 'application/json',
+        },
+      });
+    }
   }
 
   /**
@@ -23,6 +27,10 @@ class ShopifyService {
    * @returns {Object} Product data with title, images, and price
    */
   async getProduct(productId) {
+    if (!this.client) {
+      throw new Error('Shopify service not configured');
+    }
+    
     try {
       const response = await this.client.get(`/products/${productId}.json`);
       const product = response.data.product;
@@ -155,16 +163,6 @@ class ShopifyService {
   }
 
   /**
-   * Strip HTML tags from product description
-   * @param {string} html - HTML string
-   * @returns {string} Plain text
-   */
-  stripHtml(html) {
-    if (!html) return '';
-    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-  }
-
-  /**
    * Extract pagination information from response headers
    * @param {Object} headers - Response headers
    * @returns {Object} Pagination info
@@ -283,8 +281,140 @@ class ShopifyService {
       throw new Error(`Failed to fetch product suggestions: ${error.response?.data?.errors || error.message}`);
     }
   }
+
+  /**
+   * Strip HTML tags from product description
+   * @param {string} html - HTML string
+   * @returns {string} Plain text
+   */
+  stripHtml(html) {
+    if (!html) return '';
+    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Get product by handle (URL-friendly identifier)
+   * @param {string} handle - Product handle
+   * @returns {Object} Product data
+   */
+  async getProductByHandle(handle) {
+    try {
+      const response = await this.client.get('/products.json', {
+        params: { handle: handle }
+      });
+      
+      const products = response.data.products;
+      if (products.length === 0) {
+        throw new Error(`Product with handle "${handle}" not found`);
+      }
+      
+      return this.formatProductData(products[0]);
+    } catch (error) {
+      console.error('Error fetching product by handle:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch product by handle: ${error.response?.data?.errors || error.message}`);
+    }
+  }
+
+  /**
+   * Get products by vendor
+   * @param {string} vendor - Vendor name
+   * @param {number} limit - Number of results
+   * @returns {Array} Array of products
+   */
+  async getProductsByVendor(vendor, limit = 50) {
+    try {
+      const response = await this.client.get('/products.json', {
+        params: {
+          vendor: vendor,
+          limit: limit,
+        },
+      });
+      
+      const products = response.data.products;
+      return products.map(product => this.formatProductData(product));
+    } catch (error) {
+      console.error('Error fetching products by vendor:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch products by vendor: ${error.response?.data?.errors || error.message}`);
+    }
+  }
+
+  /**
+   * Get products by product type
+   * @param {string} productType - Product type
+   * @param {number} limit - Number of results
+   * @returns {Array} Array of products
+   */
+  async getProductsByType(productType, limit = 50) {
+    try {
+      const response = await this.client.get('/products.json', {
+        params: {
+          product_type: productType,
+          limit: limit,
+        },
+      });
+      
+      const products = response.data.products;
+      return products.map(product => this.formatProductData(product));
+    } catch (error) {
+      console.error('Error fetching products by type:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch products by type: ${error.response?.data?.errors || error.message}`);
+    }
+  }
+
+  /**
+   * Get products with specific tags
+   * @param {Array} tags - Array of tags
+   * @param {number} limit - Number of results
+   * @returns {Array} Array of products
+   */
+  async getProductsByTags(tags, limit = 50) {
+    try {
+      const tagQuery = tags.join(',');
+      const response = await this.client.get('/products.json', {
+        params: {
+          tags: tagQuery,
+          limit: limit,
+        },
+      });
+      
+      const products = response.data.products;
+      return products.map(product => this.formatProductData(product));
+    } catch (error) {
+      console.error('Error fetching products by tags:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch products by tags: ${error.response?.data?.errors || error.message}`);
+    }
+  }
+
+  /**
+   * Check if Shopify service is properly configured
+   * @returns {boolean} True if configured
+   */
+  isConfigured() {
+    return !!(this.shopDomain && this.accessToken);
+  }
+
+  /**
+   * Get service configuration status
+   * @returns {Object} Configuration status
+   */
+  getConfigStatus() {
+    return {
+      configured: this.isConfigured(),
+      shopDomain: this.shopDomain,
+      hasAccessToken: !!this.accessToken,
+      apiVersion: this.apiVersion,
+    };
+  }
 }
 
-// Create and export a singleton instance
-const shopifyService = new ShopifyService();
-export default shopifyService;
+// Create a singleton instance with lazy initialization
+let shopifyServiceInstance = null;
+
+const getShopifyService = () => {
+  if (!shopifyServiceInstance) {
+    shopifyServiceInstance = new ShopifyService();
+  }
+  return shopifyServiceInstance;
+};
+
+export default getShopifyService;

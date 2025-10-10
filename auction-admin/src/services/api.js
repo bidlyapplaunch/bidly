@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5002/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -84,6 +84,98 @@ export const auctionAPI = {
   // Relist auction (reactivate ended auction without bids)
   relistAuction: async (id, auctionData) => {
     const response = await api.put(`/auctions/${id}/relist`, auctionData);
+    return response.data;
+  },
+
+  // Shopify product data operations
+  refreshProductData: async (auctionId) => {
+    const response = await api.put(`/auctions/${auctionId}/refresh-product`);
+    return response.data;
+  },
+
+  refreshAllProductData: async () => {
+    const response = await api.put('/auctions/refresh-all-products');
+    return response.data;
+  },
+
+  getAuctionsWithProductData: async (params = {}) => {
+    const response = await api.get('/auctions/with-product-data', { params });
+    return response.data;
+  }
+};
+
+// Shopify API endpoints
+export const shopifyAPI = {
+  // Product operations
+  searchProducts: async (query, limit = 10) => {
+    const response = await api.get('/shopify/products/search', {
+      params: { q: query, limit }
+    });
+    return response.data;
+  },
+
+  getProductSuggestions: async (query, limit = 20) => {
+    const response = await api.get('/shopify/products/suggestions', {
+      params: { q: query, limit }
+    });
+    return response.data;
+  },
+
+  getProduct: async (productId) => {
+    const response = await api.get(`/shopify/products/${productId}`);
+    return response.data;
+  },
+
+  getAllProducts: async (limit = 50, pageInfo = null) => {
+    const params = { limit };
+    if (pageInfo) params.page_info = pageInfo;
+    const response = await api.get('/shopify/products', { params });
+    return response.data;
+  },
+
+  validateProduct: async (productId) => {
+    const response = await api.get(`/shopify/products/${productId}/validate`);
+    return response.data;
+  },
+
+  getProductInventory: async (productId) => {
+    const response = await api.get(`/shopify/products/${productId}/inventory`);
+    return response.data;
+  },
+
+  getProducts: async (productIds) => {
+    const response = await api.post('/shopify/products/batch', { productIds });
+    return response.data;
+  },
+
+  getProductByHandle: async (handle) => {
+    const response = await api.get(`/shopify/products/handle/${handle}`);
+    return response.data;
+  },
+
+  getProductsByVendor: async (vendor, limit = 50) => {
+    const response = await api.get(`/shopify/products/vendor/${vendor}`, {
+      params: { limit }
+    });
+    return response.data;
+  },
+
+  getProductsByType: async (productType, limit = 50) => {
+    const response = await api.get(`/shopify/products/type/${productType}`, {
+      params: { limit }
+    });
+    return response.data;
+  },
+
+  getProductsByTags: async (tags, limit = 50) => {
+    const response = await api.post('/shopify/products/tags', { tags }, {
+      params: { limit }
+    });
+    return response.data;
+  },
+
+  getServiceStatus: async () => {
+    const response = await api.get('/shopify/status');
     return response.data;
   }
 };

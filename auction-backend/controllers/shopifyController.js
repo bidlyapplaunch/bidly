@@ -1,5 +1,5 @@
-import shopifyService from '../services/shopifyService.js';
-import AppError from '../utils/AppError.js';
+import getShopifyService from '../services/shopifyService.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 /**
  * Get a single product by ID
@@ -12,7 +12,7 @@ export const getProduct = async (req, res, next) => {
       throw new AppError('Product ID is required', 400);
     }
 
-    const product = await shopifyService.getProduct(productId);
+    const product = await getShopifyService().getProduct(productId);
     
     if (!product) {
       throw new AppError('Product not found', 404);
@@ -34,18 +34,14 @@ export const getProducts = async (req, res, next) => {
   try {
     const { productIds } = req.body;
     
-    if (!productIds || !Array.isArray(productIds)) {
-      throw new AppError('Product IDs array is required', 400);
-    }
-
-    if (productIds.length === 0) {
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
       return res.json({
         success: true,
         data: []
       });
     }
 
-    const products = await shopifyService.getProducts(productIds);
+    const products = await getShopifyService().getProducts(productIds);
     
     res.json({
       success: true,
@@ -57,17 +53,18 @@ export const getProducts = async (req, res, next) => {
 };
 
 /**
- * Search products by query
+ * Search products
  */
 export const searchProducts = async (req, res, next) => {
   try {
-    const { q: query, limit = 10 } = req.query;
+    const { q, query, limit } = req.query;
+    const searchQuery = q || query;
     
-    if (!query || query.trim().length === 0) {
+    if (!searchQuery || searchQuery.trim().length === 0) {
       throw new AppError('Search query is required', 400);
     }
 
-    const products = await shopifyService.searchProducts(query.trim(), parseInt(limit));
+    const products = await getShopifyService().searchProducts(searchQuery.trim(), parseInt(limit));
     
     res.json({
       success: true,
@@ -86,7 +83,7 @@ export const getAllProducts = async (req, res, next) => {
   try {
     const { limit = 50, page_info } = req.query;
     
-    const result = await shopifyService.getAllProducts(parseInt(limit), page_info);
+    const result = await getShopifyService().getAllProducts(parseInt(limit), page_info);
     
     res.json({
       success: true,
@@ -110,7 +107,7 @@ export const validateProduct = async (req, res, next) => {
       throw new AppError('Product ID is required', 400);
     }
 
-    const exists = await shopifyService.validateProduct(productId);
+    const exists = await getShopifyService().validateProduct(productId);
     
     res.json({
       success: true,
@@ -132,7 +129,7 @@ export const getProductInventory = async (req, res, next) => {
       throw new AppError('Product ID is required', 400);
     }
 
-    const inventory = await shopifyService.getProductInventory(productId);
+    const inventory = await getShopifyService().getProductInventory(productId);
     
     res.json({
       success: true,
@@ -144,26 +141,132 @@ export const getProductInventory = async (req, res, next) => {
 };
 
 /**
- * Get product suggestions for auction creation
+ * Get product suggestions for autocomplete
  */
 export const getProductSuggestions = async (req, res, next) => {
   try {
-    const { q: query, limit = 20 } = req.query;
+    const { q, limit } = req.query;
     
-    if (!query || query.trim().length < 2) {
-      return res.json({
-        success: true,
-        data: [],
-        message: 'Query must be at least 2 characters long'
-      });
+    if (!q || q.trim().length === 0) {
+      throw new AppError('Search query is required', 400);
     }
 
-    const suggestions = await shopifyService.getProductSuggestions(query.trim(), parseInt(limit));
+    const suggestions = await getShopifyService().getProductSuggestions(q.trim(), parseInt(limit));
     
     res.json({
       success: true,
       data: suggestions,
       count: suggestions.length
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get product by handle
+ */
+export const getProductByHandle = async (req, res, next) => {
+  try {
+    const { handle } = req.params;
+    
+    if (!handle) {
+      throw new AppError('Product handle is required', 400);
+    }
+
+    const product = await getShopifyService().getProductByHandle(handle);
+    
+    res.json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get products by vendor
+ */
+export const getProductsByVendor = async (req, res, next) => {
+  try {
+    const { vendor } = req.params;
+    const { limit } = req.query;
+    
+    if (!vendor) {
+      throw new AppError('Vendor name is required', 400);
+    }
+
+    const products = await getShopifyService().getProductsByVendor(vendor, parseInt(limit));
+    
+    res.json({
+      success: true,
+      data: products,
+      count: products.length
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get products by product type
+ */
+export const getProductsByType = async (req, res, next) => {
+  try {
+    const { productType } = req.params;
+    const { limit } = req.query;
+    
+    if (!productType) {
+      throw new AppError('Product type is required', 400);
+    }
+
+    const products = await getShopifyService().getProductsByType(productType, parseInt(limit));
+    
+    res.json({
+      success: true,
+      data: products,
+      count: products.length
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get products by tags
+ */
+export const getProductsByTags = async (req, res, next) => {
+  try {
+    const { tags } = req.body;
+    const { limit } = req.query;
+    
+    if (!tags || !Array.isArray(tags) || tags.length === 0) {
+      throw new AppError('Tags array is required', 400);
+    }
+
+    const products = await getShopifyService().getProductsByTags(tags, parseInt(limit));
+    
+    res.json({
+      success: true,
+      data: products,
+      count: products.length
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get Shopify service configuration status
+ */
+export const getServiceStatus = async (req, res, next) => {
+  try {
+    const status = getShopifyService().getConfigStatus();
+    
+    res.json({
+      success: true,
+      ...status
     });
   } catch (error) {
     next(error);

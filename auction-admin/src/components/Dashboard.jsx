@@ -18,9 +18,11 @@ import {
 } from '@shopify/polaris';
 import { PlusIcon, AnalyticsIcon } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
-import AuctionForm from './AuctionForm';
+import AuctionFormNew from './AuctionFormNew';
 import AuctionDetails from './AuctionDetails';
-import { auctionAPI } from '../services/api';
+import TestShopify from './TestShopify';
+import TestComponent from './TestComponent';
+import { auctionAPI, shopifyAPI } from '../services/api';
 
 const Dashboard = () => {
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -52,15 +54,15 @@ const Dashboard = () => {
   };
 
   const fetchShopifyProducts = async () => {
-    // Mock Shopify products - in a real app, this would come from Shopify API
-    const mockProducts = [
-      { id: 'prod_123', title: 'Vintage Guitar' },
-      { id: 'prod_456', title: 'Art Painting' },
-      { id: 'prod_789', title: 'Antique Watch' },
-      { id: 'prod_101', title: 'Rare Book' },
-      { id: 'prod_202', title: 'Collectible Coin' }
-    ];
-    setShopifyProducts(mockProducts);
+    try {
+      // Fetch real products from Shopify API
+      const response = await shopifyAPI.getAllProducts(20);
+      setShopifyProducts(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch Shopify products:', error);
+      // Fallback to empty array if Shopify API fails
+      setShopifyProducts([]);
+    }
   };
 
   const handleCreateAuction = () => {
@@ -111,7 +113,7 @@ const Dashboard = () => {
   return (
     <Frame>
       <Page
-        title="Auction Dashboard"
+        title="🔥 AUCTION DASHBOARD - CHANGES WORKING! 🔥"
         subtitle="Manage your auctions and monitor performance"
         primaryAction={{
           content: 'Create Auction',
@@ -126,6 +128,11 @@ const Dashboard = () => {
         ]}
       >
         <Layout>
+          {/* Test Component */}
+          <Layout.Section>
+            <TestComponent />
+          </Layout.Section>
+          
           {/* Statistics Cards */}
           <Layout.Section>
             <Layout>
@@ -156,7 +163,7 @@ const Dashboard = () => {
           <Layout.Section>
             <Card sectioned>
               <Stack vertical spacing="loose">
-                <Text variant="headingMd">Auction Statistics</Text>
+                <Text variant="headingMd">Auction Statistics - TESTING CHANGES</Text>
                 <Layout>
                   <Layout.Section oneThird>
                     <Stack vertical spacing="tight">
@@ -184,6 +191,14 @@ const Dashboard = () => {
             </Card>
           </Layout.Section>
 
+          {/* Test Shopify Component */}
+          <Layout.Section>
+            <Card sectioned>
+              <Text variant="headingLg">🧪 SHOPIFY TEST COMPONENT - IF YOU SEE THIS, CHANGES ARE WORKING!</Text>
+              <TestShopify />
+            </Card>
+          </Layout.Section>
+
           {/* Auctions Table */}
           <Layout.Section>
             <AuctionTable
@@ -195,12 +210,11 @@ const Dashboard = () => {
         </Layout>
 
         {/* Modals */}
-        <AuctionForm
+        <AuctionFormNew
           isOpen={formModalOpen}
           onClose={() => setFormModalOpen(false)}
           auction={selectedAuction}
           onSave={handleFormSave}
-          shopifyProducts={shopifyProducts}
         />
 
         <AuctionDetails

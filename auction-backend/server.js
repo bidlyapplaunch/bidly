@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/database.js';
 import auctionRoutes from './routes/auctionRoutes.js';
+import shopifyRoutes from './routes/shopifyRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 // Load environment variables
@@ -52,6 +53,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auctions', auctionRoutes);
+app.use('/api/shopify', shopifyRoutes);
 
 // 404 handler
 app.use(notFound);

@@ -1,6 +1,6 @@
 import Auction from '../models/Auction.js';
 import { AppError } from '../middleware/errorHandler.js';
-import shopifyService from '../services/shopifyService.js';
+import getShopifyService from '../services/shopifyService.js';
 
 // Create a new auction
 export const createAuction = async (req, res, next) => {
@@ -10,7 +10,7 @@ export const createAuction = async (req, res, next) => {
     // Fetch product data from Shopify
     let productData = null;
     try {
-      productData = await shopifyService.getProduct(shopifyProductId);
+      productData = await getShopifyService().getProduct(shopifyProductId);
     } catch (shopifyError) {
       console.warn(`Failed to fetch Shopify product ${shopifyProductId}:`, shopifyError.message);
       // Continue without product data - auction can still be created
@@ -314,7 +314,7 @@ export const refreshProductData = async (req, res, next) => {
     // Fetch fresh product data from Shopify
     let productData = null;
     try {
-      productData = await shopifyService.getProduct(auction.shopifyProductId);
+      productData = await getShopifyService().getProduct(auction.shopifyProductId);
     } catch (shopifyError) {
       throw new AppError(`Failed to fetch Shopify product: ${shopifyError.message}`, 400);
     }
@@ -341,7 +341,7 @@ export const refreshAllProductData = async (req, res, next) => {
     
     for (const auction of auctions) {
       try {
-        const productData = await shopifyService.getProduct(auction.shopifyProductId);
+        const productData = await getShopifyService().getProduct(auction.shopifyProductId);
         auction.productData = productData;
         await auction.save();
         results.push({ auctionId: auction._id, success: true });
@@ -358,6 +358,56 @@ export const refreshAllProductData = async (req, res, next) => {
       success: true,
       message: 'Product data refresh completed',
       data: results
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get auctions with fresh product data
+export const getAuctionsWithProductData = async (req, res, next) => {
+  try {
+    const { status, shopifyProductId, page = 1, limit = 10, refresh = false } = req.query;
+    
+    // Build filter object
+    const filter = {};
+    if (status) filter.status = status;
+    if (shopifyProductId) filter.shopifyProductId = shopifyProductId;
+    
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    let auctions = await Auction.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+    
+    // If refresh is requested, fetch fresh product data
+    if (refresh === 'true') {
+      for (let auction of auctions) {
+        try {
+          const productData = await getShopifyService().getProduct(auction.shopifyProductId);
+          auction.productData = productData;
+          
+          // Update in database
+          await Auction.findByIdAndUpdate(auction._id, { productData });
+        } catch (error) {
+          console.warn(`Failed to refresh product data for auction ${auction._id}:`, error.message);
+        }
+      }
+    }
+    
+    const total = await Auction.countDocuments(filter);
+    
+    res.json({
+      success: true,
+      data: auctions,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total
+      }
     });
   } catch (error) {
     next(error);

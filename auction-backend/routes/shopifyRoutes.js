@@ -6,19 +6,34 @@ import {
   getAllProducts,
   validateProduct,
   getProductInventory,
-  getProductSuggestions
+  getProductSuggestions,
+  getProductByHandle,
+  getProductsByVendor,
+  getProductsByType,
+  getProductsByTags,
+  getServiceStatus
 } from '../controllers/shopifyController.js';
 import { validateId } from '../middleware/validation.js';
 
 const router = express.Router();
 
-// Product routes
+// Service status
+router.get('/status', getServiceStatus);
+
+// Direct search route for convenience
+router.get('/search', searchProducts);
+
+// Product operations
 router.get('/products/search', searchProducts);
 router.get('/products/suggestions', getProductSuggestions);
 router.get('/products', getAllProducts);
 router.get('/products/:productId', validateId, getProduct);
-router.get('/products/:productId/inventory', validateId, getProductInventory);
 router.get('/products/:productId/validate', validateId, validateProduct);
+router.get('/products/:productId/inventory', validateId, getProductInventory);
+router.get('/products/handle/:handle', getProductByHandle);
+router.get('/products/vendor/:vendor', getProductsByVendor);
+router.get('/products/type/:productType', getProductsByType);
 router.post('/products/batch', getProducts);
+router.post('/products/tags', getProductsByTags);
 
 export default router;
