@@ -28,11 +28,34 @@ export const getAnalytics = async (req, res, next) => {
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
-    // Basic auction statistics
-    const totalAuctions = await Auction.countDocuments();
-    const activeAuctions = await Auction.countDocuments({ status: 'active' });
-    const endedAuctions = await Auction.countDocuments({ status: 'ended' });
-    const pendingAuctions = await Auction.countDocuments({ status: 'pending' });
+    // Basic auction statistics - get all auctions and compute real-time status
+    const allAuctions = await Auction.find({});
+    
+    // Compute real-time status for each auction
+    const computeAuctionStatus = (auction) => {
+      // If auction is manually closed by admin, keep it closed
+      if (auction.status === 'closed') {
+        return 'closed';
+      }
+      
+      const now = new Date();
+      const startTime = new Date(auction.startTime);
+      const endTime = new Date(auction.endTime);
+      
+      if (now < startTime) {
+        return 'pending';
+      } else if (now >= startTime && now < endTime) {
+        return 'active';
+      } else {
+        return 'ended';
+      }
+    };
+    
+    const totalAuctions = allAuctions.length;
+    const activeAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'active').length;
+    const endedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'ended').length;
+    const pendingAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'pending').length;
+    const closedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'closed').length;
 
     // Revenue analytics
     const auctionsWithBids = await Auction.find({
@@ -88,14 +111,21 @@ export const getAnalytics = async (req, res, next) => {
     const statusBreakdown = {
       pending: pendingAuctions,
       active: activeAuctions,
-      ended: endedAuctions
+      ended: endedAuctions,
+      closed: closedAuctions
     };
 
     // Recent activity
     const recentAuctions = await Auction.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .select('shopifyProductId productData status currentBid createdAt');
+      .select('shopifyProductId productData status currentBid createdAt startTime endTime');
+    
+    // Add computed status to recent auctions
+    const recentActivity = recentAuctions.map(auction => ({
+      ...auction.toObject(),
+      status: computeAuctionStatus(auction)
+    }));
 
     res.json({
       success: true,
@@ -105,6 +135,7 @@ export const getAnalytics = async (req, res, next) => {
           activeAuctions,
           endedAuctions,
           pendingAuctions,
+          closedAuctions,
           totalUsers,
           activeUsers,
           adminUsers
@@ -122,7 +153,7 @@ export const getAnalytics = async (req, res, next) => {
         dailyStats,
         topAuctions,
         statusBreakdown,
-        recentActivity: recentAuctions,
+        recentActivity: recentActivity,
         period,
         generatedAt: new Date().toISOString()
       }

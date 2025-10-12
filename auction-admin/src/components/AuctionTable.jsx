@@ -109,24 +109,12 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   const getStatusBadge = (status) => {
     const statusMap = {
+      pending: { status: 'warning', children: 'Pending' },
       active: { status: 'success', children: 'Active' },
+      ended: { status: 'info', children: 'Ended' },
       closed: { status: 'critical', children: 'Closed' }
     };
     return <Badge {...statusMap[status]} />;
-  };
-
-  const getTimeStatus = (startTime, endTime) => {
-    const now = new Date();
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    
-    if (now < start) {
-      return <Badge status="info">Not Started</Badge>;
-    } else if (now > end) {
-      return <Badge status="critical">Ended</Badge>;
-    } else {
-      return <Badge status="success">Live</Badge>;
-    }
   };
 
   const formatCurrency = (amount) => {
@@ -136,36 +124,42 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     }).format(amount);
   };
 
-  const formatDate = (date) => {
-    return format(new Date(date), 'MMM dd, yyyy HH:mm');
+  const formatDate = (date, formatStr = 'MMM dd, yyyy HH:mm') => {
+    return format(new Date(date), formatStr);
   };
 
   const rows = auctions.map((auction) => [
-    auction.productData?.title || auction.shopifyProductId || 'Unknown Product',
-    formatDate(auction.startTime),
-    formatDate(auction.endTime),
+    // Product Name - truncated for better fit
+    (auction.productData?.title || auction.shopifyProductId || 'Unknown Product').substring(0, 30) + 
+    ((auction.productData?.title || auction.shopifyProductId || 'Unknown Product').length > 30 ? '...' : ''),
+    // Start Date - more compact format
+    formatDate(auction.startTime, 'dd/MM HH:mm'),
+    // End Date - more compact format
+    formatDate(auction.endTime, 'dd/MM HH:mm'),
+    // Starting Bid
     formatCurrency(auction.startingBid),
+    // Current Bid
     formatCurrency(auction.currentBid),
+    // Buy Now Price
     auction.buyNowPrice ? formatCurrency(auction.buyNowPrice) : '-',
+    // Status
     getStatusBadge(auction.status),
-    getTimeStatus(auction.startTime, auction.endTime),
+    // Bid Count
     auction.bidHistory?.length || 0,
     <ButtonGroup key={auction.id}>
       <Button
         icon={ViewMinor}
         onClick={() => onView(auction)}
         size="slim"
-      >
-        View
-      </Button>
+        accessibilityLabel="View auction details"
+      />
       <Button
         icon={EditMinor}
         onClick={() => onEdit(auction)}
         size="slim"
         disabled={auction.bidHistory?.length > 0}
-      >
-        Edit
-      </Button>
+        accessibilityLabel="Edit auction"
+      />
       <Button
         icon={DeleteMinor}
         onClick={() => {
@@ -175,9 +169,8 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         size="slim"
         destructive
         disabled={auction.bidHistory?.length > 0}
-      >
-        Delete
-      </Button>
+        accessibilityLabel="Delete auction"
+      />
       {auction.status === 'active' && (
         <Button
           onClick={() => {
@@ -185,6 +178,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
             setCloseModalOpen(true);
           }}
           size="slim"
+          accessibilityLabel="Close auction"
         >
           Close
         </Button>
@@ -256,34 +250,34 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
           )}
         </div>
 
-        <DataTable
-          columnContentTypes={[
-            'text',
-            'text',
-            'text',
-            'text',
-            'text',
-            'text',
-            'text',
-            'text',
-            'numeric',
-            'text'
-          ]}
-          headings={[
-            'Product Name',
-            'Start Time',
-            'End Time',
-            'Starting Bid',
-            'Current Bid',
-            'Buy Now Price',
-            'Status',
-            'Time Status',
-            'Bids',
-            'Actions'
-          ]}
-          rows={rows}
-          footerContent={`Showing ${auctions.length} of ${totalItems} auctions`}
-        />
+        <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+          <DataTable
+            columnContentTypes={[
+              'text',
+              'text',
+              'text',
+              'text',
+              'text',
+              'text',
+              'text',
+              'numeric',
+              'text'
+            ]}
+            headings={[
+              'Product',
+              'Start',
+              'End',
+              'Start Bid',
+              'Current Bid',
+              'Buy Now',
+              'Status',
+              'Bids',
+              'Actions'
+            ]}
+            rows={rows}
+            footerContent={`Showing ${auctions.length} of ${totalItems} auctions`}
+          />
+        </div>
 
         {totalPages > 1 && (
           <div style={{ marginTop: '1rem', textAlign: 'center' }}>

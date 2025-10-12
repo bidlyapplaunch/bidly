@@ -5,6 +5,11 @@ import emailService from '../services/emailService.js';
 
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
+  // If auction is manually closed by admin, keep it closed
+  if (auction.status === 'closed') {
+    return 'closed';
+  }
+  
   const now = new Date();
   const startTime = new Date(auction.startTime);
   const endTime = new Date(auction.endTime);
@@ -76,6 +81,7 @@ export const createAuction = async (req, res, next) => {
   }
 };
 
+
 // Get all auctions with optional filtering
 export const getAllAuctions = async (req, res, next) => {
   try {
@@ -117,6 +123,7 @@ export const getAllAuctions = async (req, res, next) => {
   }
 };
 
+
 // Get single auction by ID
 export const getAuctionById = async (req, res, next) => {
   try {
@@ -140,6 +147,7 @@ export const getAuctionById = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Update auction
 export const updateAuction = async (req, res, next) => {
@@ -203,6 +211,7 @@ export const updateAuction = async (req, res, next) => {
   }
 };
 
+
 // Delete auction
 export const deleteAuction = async (req, res, next) => {
   try {
@@ -228,16 +237,34 @@ export const deleteAuction = async (req, res, next) => {
   }
 };
 
+
 // Place a bid on an auction
 export const placeBid = async (req, res, next) => {
   try {
+    const { bidder, amount } = req.body;
+    
+    // Input sanitization and validation
+    const sanitizedBidder = bidder?.trim();
+    const sanitizedAmount = parseFloat(amount);
+    
+    // Basic validation
+    if (!sanitizedBidder || sanitizedBidder.length === 0) {
+      throw new AppError('Bidder name is required', 400);
+    }
+    
+    if (sanitizedBidder.length > 100) {
+      throw new AppError('Bidder name must be 100 characters or less', 400);
+    }
+    
+    if (!amount || isNaN(sanitizedAmount) || sanitizedAmount <= 0) {
+      throw new AppError('Valid bid amount is required', 400);
+    }
+    
     const auction = await Auction.findById(req.params.id);
     
     if (!auction) {
       throw new AppError('Auction not found', 404);
     }
-    
-    const { bidder, amount } = req.body;
     
     // Validate auction is active using real-time status
     const realTimeStatus = computeAuctionStatus(auction);
@@ -248,8 +275,8 @@ export const placeBid = async (req, res, next) => {
       startTime: auction.startTime,
       endTime: auction.endTime,
       currentTime: new Date(),
-      bidder: bidder,
-      amount: amount
+      bidder: sanitizedBidder,
+      amount: sanitizedAmount
     });
     
     if (realTimeStatus !== 'active') {
@@ -264,11 +291,11 @@ export const placeBid = async (req, res, next) => {
     
     // Validate bid amount
     const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
-    if (amount < minBid) {
+    if (sanitizedAmount < minBid) {
       if (auction.currentBid > 0) {
-        throw new AppError(`Bid must be higher than current bid (${auction.currentBid})`, 400);
+        throw new AppError(`Bid must be higher than current bid ($${auction.currentBid})`, 400);
       } else {
-        throw new AppError(`Bid must be at least the starting bid (${auction.startingBid})`, 400);
+        throw new AppError(`Bid must be at least the starting bid ($${auction.startingBid})`, 400);
       }
     }
     
@@ -282,7 +309,7 @@ export const placeBid = async (req, res, next) => {
     
     try {
       // Add the bid
-      await auction.addBid(bidder, amount);
+      await auction.addBid(sanitizedBidder, sanitizedAmount);
     } catch (error) {
       // Restore original status if bid fails
       if (originalStatus !== auction.status) {
@@ -353,8 +380,7 @@ export const placeBid = async (req, res, next) => {
     // Broadcast real-time update to all clients watching this auction
     const io = req.app.get('io');
     if (io) {
-      // Send to auction-specific room
-      io.to(`auction-${req.params.id}`).emit('bid-update', {
+      const bidUpdateData = {
         auctionId: req.params.id,
         currentBid: updatedAuction.currentBid,
         bidHistory: updatedAuction.bidHistory,
@@ -364,7 +390,13 @@ export const placeBid = async (req, res, next) => {
         auctionEnded: auctionEnded,
         winner: auctionEnded ? bidder : null,
         productTitle: updatedAuction.productData?.title || 'Unknown Product'
-      });
+      };
+
+      // Send to auction-specific room
+      io.to(`auction-${req.params.id}`).emit('bid-update', bidUpdateData);
+      
+      // Also broadcast globally to ensure all clients receive updates
+      io.emit('bid-update', bidUpdateData);
 
       // Send to admin room for admin notifications
       io.to('admin-room').emit('admin-notification', {
@@ -400,6 +432,7 @@ export const placeBid = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Get auction statistics
 export const buyNow = async (req, res, next) => {
@@ -454,7 +487,7 @@ export const buyNow = async (req, res, next) => {
     // Broadcast real-time update to all clients watching this auction
     const io = req.app.get('io');
     if (io) {
-      io.to(`auction-${req.params.id}`).emit('bid-update', {
+      const buyNowData = {
         auctionId: req.params.id,
         currentBid: auction.buyNowPrice,
         bidHistory: auction.bidHistory,
@@ -463,8 +496,15 @@ export const buyNow = async (req, res, next) => {
         timestamp: new Date().toISOString(),
         auctionEnded: true,
         winner: bidder.trim(),
-        buyNow: true
-      });
+        buyNow: true,
+        productTitle: auction.productData?.title || 'Unknown Product'
+      };
+
+      // Send to auction-specific room
+      io.to(`auction-${req.params.id}`).emit('bid-update', buyNowData);
+      
+      // Also broadcast globally to ensure all clients receive updates
+      io.emit('bid-update', buyNowData);
     }
     
     res.json({
@@ -476,6 +516,7 @@ export const buyNow = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Refresh Shopify product data for an auction
 export const refreshProductData = async (req, res, next) => {
@@ -508,6 +549,7 @@ export const refreshProductData = async (req, res, next) => {
   }
 };
 
+
 // Refresh product data for multiple auctions
 export const refreshAllProductData = async (req, res, next) => {
   try {
@@ -538,6 +580,7 @@ export const refreshAllProductData = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // Get auctions with fresh product data
 export const getAuctionsWithProductData = async (req, res, next) => {
@@ -589,24 +632,20 @@ export const getAuctionsWithProductData = async (req, res, next) => {
   }
 };
 
+
 export const getAuctionStats = async (req, res, next) => {
   try {
-    const stats = await Auction.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalBids: { $sum: { $size: '$bidHistory' } },
-          avgBids: { $avg: { $size: '$bidHistory' } }
-        }
-      }
-    ]);
+    // Get all auctions and compute real-time status
+    const allAuctions = await Auction.find({});
     
-    const totalAuctions = await Auction.countDocuments();
-    const pendingAuctions = await Auction.countDocuments({ status: 'pending' });
-    const activeAuctions = await Auction.countDocuments({ status: 'active' });
-    const endedAuctions = await Auction.countDocuments({ status: 'ended' });
-    const closedAuctions = await Auction.countDocuments({ status: 'closed' });
+    const totalAuctions = allAuctions.length;
+    const pendingAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'pending').length;
+    const activeAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'active').length;
+    const endedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'ended').length;
+    const closedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'closed').length;
+    
+    // Calculate total bids across all auctions
+    const totalBids = allAuctions.reduce((sum, auction) => sum + (auction.bidHistory?.length || 0), 0);
     
     res.json({
       success: true,
@@ -616,13 +655,20 @@ export const getAuctionStats = async (req, res, next) => {
         activeAuctions,
         endedAuctions,
         closedAuctions,
-        statusBreakdown: stats
+        totalBids,
+        statusBreakdown: [
+          { _id: 'pending', count: pendingAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'pending').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) },
+          { _id: 'active', count: activeAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'active').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) },
+          { _id: 'ended', count: endedAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'ended').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) },
+          { _id: 'closed', count: closedAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'closed').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) }
+        ]
       }
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Relist auction (reactivate ended auction without bids)
 export const relistAuction = async (req, res, next) => {
@@ -675,3 +721,5 @@ export const relistAuction = async (req, res, next) => {
     next(error);
   }
 };
+
+

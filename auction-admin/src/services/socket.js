@@ -13,17 +13,17 @@ class SocketService {
       });
 
       this.socket.on('connect', () => {
-        console.log('🔌 Connected to WebSocket server');
+        console.log('🔌 Admin WebSocket connected');
         this.isConnected = true;
       });
 
       this.socket.on('disconnect', () => {
-        console.log('🔌 Disconnected from WebSocket server');
+        console.log('🔌 Admin WebSocket disconnected');
         this.isConnected = false;
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
+        console.error('Admin WebSocket connection error:', error);
         this.isConnected = false;
       });
     }
@@ -38,17 +38,15 @@ class SocketService {
     }
   }
 
-  joinAuction(auctionId) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit('join-auction', auctionId);
-      console.log(`👥 Joined auction room: ${auctionId}`);
+  onStatusUpdate(callback) {
+    if (this.socket) {
+      this.socket.on('auction-status-update', callback);
     }
   }
 
-  leaveAuction(auctionId) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit('leave-auction', auctionId);
-      console.log(`👋 Left auction room: ${auctionId}`);
+  offStatusUpdate(callback) {
+    if (this.socket) {
+      this.socket.off('auction-status-update', callback);
     }
   }
 

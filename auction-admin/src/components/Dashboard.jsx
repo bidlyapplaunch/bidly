@@ -12,15 +12,18 @@ import {
   ResourceItem,
   Avatar,
   Badge,
-  ButtonGroup
+  ButtonGroup,
+  Tabs
 } from '@shopify/polaris';
 import { PlusMinor, AnalyticsMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
-import { auctionAPI, shopifyAPI } from '../services/api';
+import Analytics from './Analytics';
+import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
+import socketService from '../services/socket';
 
-const Dashboard = () => {
+const Dashboard = ({ onLogout }) => {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedAuction, setSelectedAuction] = useState(null);
@@ -31,10 +34,44 @@ const Dashboard = () => {
   const [showToast, setShowToast] = useState(false);
   const [shopifyProducts, setShopifyProducts] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedTab, setSelectedTab] = useState(0);
 
   useEffect(() => {
     fetchStats();
     fetchShopifyProducts();
+    
+    // Set up WebSocket connection for real-time updates
+    const socket = socketService.connect();
+    
+    // Listen for auction status updates
+    const handleStatusUpdate = (statusData) => {
+      console.log('📡 Admin received status update:', statusData);
+      
+      // Refresh stats and auction list when status changes
+      fetchStats();
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Show notification for status changes
+      setToastMessage(`🔄 Auction status updated: ${statusData.newStatus}`);
+      setShowToast(true);
+    };
+    
+    // Listen for bid updates
+    const handleBidUpdate = (bidData) => {
+      console.log('📡 Admin received bid update:', bidData);
+      
+      // Refresh stats and auction list when bids are placed
+      fetchStats();
+      setRefreshTrigger(prev => prev + 1);
+    };
+    
+    socketService.onStatusUpdate(handleStatusUpdate);
+    socketService.onBidUpdate(handleBidUpdate);
+    
+    return () => {
+      socketService.offStatusUpdate(handleStatusUpdate);
+      socketService.offBidUpdate(handleBidUpdate);
+    };
   }, []);
 
   const fetchStats = async () => {
@@ -159,6 +196,10 @@ const Dashboard = () => {
           {
             content: 'Refresh',
             onAction: handleRefresh
+          },
+          {
+            content: 'Logout',
+            onAction: onLogout
           }
         ]}
       >
@@ -166,71 +207,76 @@ const Dashboard = () => {
           
           {/* Statistics Cards */}
           <Layout.Section>
-            <Layout>
-              <Layout.Section oneHalf>
-                <Card sectioned>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <Text variant="headingMd">Total Auctions</Text>
+            <Card sectioned>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Text variant="headingMd">Auction Overview</Text>
+                <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <Text variant="bodyMd" color="subdued">Total Auctions</Text>
                     <Text variant="heading2xl" as="div">
                       {stats?.totalAuctions || 0}
                     </Text>
                   </div>
-                </Card>
-              </Layout.Section>
-              <Layout.Section oneHalf>
-                <Card sectioned>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <Text variant="headingMd">Active Auctions</Text>
-                    <Text variant="heading2xl" as="div">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <Text variant="bodyMd" color="subdued">Active Auctions</Text>
+                    <Text variant="heading2xl" as="div" style={{ color: '#008060' }}>
                       {stats?.activeAuctions || 0}
                     </Text>
                   </div>
-                </Card>
-              </Layout.Section>
-            </Layout>
+                </div>
+              </div>
+            </Card>
           </Layout.Section>
 
-          {/* Quick Stats */}
+          {/* Total Bids */}
           <Layout.Section>
             <Card sectioned>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Text variant="headingMd">Auction Statistics</Text>
-                <Layout>
-                  <Layout.Section oneThird>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <Text variant="bodyMd" color="subdued">Active Auctions</Text>
-                      <Text variant="headingLg">{stats?.activeAuctions || 0}</Text>
-                    </div>
-                  </Layout.Section>
-                  <Layout.Section oneThird>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <Text variant="bodyMd" color="subdued">Closed Auctions</Text>
-                      <Text variant="headingLg">{stats?.closedAuctions || 0}</Text>
-                    </div>
-                  </Layout.Section>
-                  <Layout.Section oneThird>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <Text variant="bodyMd" color="subdued">Total Bids</Text>
-                      <Text variant="headingLg">
-                        {stats?.statusBreakdown?.reduce((total, status) => 
-                          total + (status.totalBids || 0), 0) || 0}
-                      </Text>
-                    </div>
-                  </Layout.Section>
-                </Layout>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Text variant="headingMd">Total Bids</Text>
+                <Text variant="heading2xl" as="div">
+                  {stats?.totalBids || 0}
+                </Text>
               </div>
             </Card>
           </Layout.Section>
 
 
-          {/* Auctions Table */}
+          {/* Tabbed Interface */}
           <Layout.Section>
-            <AuctionTable
-              onEdit={handleEditAuction}
-              onView={handleViewAuction}
-              onRefresh={handleRefresh}
-              refreshTrigger={refreshTrigger}
-            />
+            <Card>
+              <Tabs
+                tabs={[
+                  {
+                    id: 'auctions',
+                    content: '📋 Auctions',
+                    panelID: 'auctions-panel'
+                  },
+                  {
+                    id: 'analytics',
+                    content: '📊 Analytics',
+                    panelID: 'analytics-panel'
+                  }
+                ]}
+                selected={selectedTab}
+                onSelect={setSelectedTab}
+              >
+                {selectedTab === 0 && (
+                  <div style={{ padding: '16px' }}>
+                    <AuctionTable
+                      onEdit={handleEditAuction}
+                      onView={handleViewAuction}
+                      onRefresh={handleRefresh}
+                      refreshTrigger={refreshTrigger}
+                    />
+                  </div>
+                )}
+                {selectedTab === 1 && (
+                  <div style={{ padding: '16px' }}>
+                    <Analytics />
+                  </div>
+                )}
+              </Tabs>
+            </Card>
           </Layout.Section>
         </Layout>
 

@@ -11,7 +11,7 @@ import {
   relistAuction,
   refreshProductData,
   refreshAllProductData,
-  getAuctionsWithProductData
+  getAuctionsWithProductData,
 } from '../controllers/auctionController.js';
 import {
   validateCreateAuction,
@@ -27,6 +27,7 @@ const router = express.Router();
 router.post('/', validateCreateAuction, createAuction);
 router.get('/', getAllAuctions);
 router.get('/stats', getAuctionStats);
+router.get('/with-product-data', getAuctionsWithProductData);
 router.get('/:id', validateId, getAuctionById);
 router.put('/:id', validateUpdateAuction, updateAuction);
 router.delete('/:id', validateId, deleteAuction);
@@ -41,7 +42,6 @@ router.post('/:id/buy-now', validateBuyNow, buyNow);
 router.put('/:id/relist', validateCreateAuction, relistAuction);
 
 // Shopify product data routes
-router.get('/with-product-data', getAuctionsWithProductData);
 router.put('/:id/refresh-product', validateId, refreshProductData);
 router.put('/refresh-all-products', refreshAllProductData);
 

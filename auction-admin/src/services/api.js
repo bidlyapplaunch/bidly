@@ -9,10 +9,26 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for logging
+// Request interceptor for logging and auth
 api.interceptors.request.use(
   (config) => {
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
+    
+    // Add authentication token if available
+    const token = localStorage.getItem('authToken');
+    console.log('🔐 Auth Debug:', {
+      hasToken: !!token,
+      tokenPreview: token ? token.substring(0, 20) + '...' : 'None',
+      url: config.url
+    });
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('✅ Added auth header to request');
+    } else {
+      console.log('⚠️ No auth token found for request');
+    }
+    
     return config;
   },
   (error) => {
@@ -176,6 +192,33 @@ export const shopifyAPI = {
 
   getServiceStatus: async () => {
     const response = await api.get('/shopify/status');
+    return response.data;
+  }
+};
+
+// Analytics API endpoints
+export const analyticsAPI = {
+  // Get comprehensive analytics
+  getAnalytics: async (period = '30d') => {
+    const response = await api.get('/analytics/', {
+      params: { period }
+    });
+    return response.data;
+  },
+
+  // Get revenue analytics
+  getRevenueAnalytics: async (period = '30d') => {
+    const response = await api.get('/analytics/revenue', {
+      params: { period }
+    });
+    return response.data;
+  },
+
+  // Get user analytics
+  getUserAnalytics: async (period = '30d') => {
+    const response = await api.get('/analytics/users', {
+      params: { period }
+    });
     return response.data;
   }
 };

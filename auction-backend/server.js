@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import connectDB from './config/database.js';
+import Auction from './models/Auction.js';
 import auctionRoutes from './routes/auctionRoutes.js';
 import shopifyRoutes from './routes/shopifyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -139,6 +140,82 @@ io.on('connection', (socket) => {
 
 // Make io available to other modules
 app.set('io', io);
+
+// Global function to broadcast auction status updates
+global.broadcastAuctionStatusUpdate = (auctionId, newStatus, auctionData) => {
+  if (io) {
+    const statusUpdateData = {
+      auctionId,
+      newStatus,
+      auctionData,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Broadcast to specific auction room
+    io.to(`auction-${auctionId}`).emit('auction-status-update', statusUpdateData);
+    
+    // Also broadcast globally for admin dashboard updates
+    io.emit('auction-status-update', statusUpdateData);
+    
+    console.log(`📡 Broadcasted status update: Auction ${auctionId} -> ${newStatus}`);
+  }
+};
+
+// Helper function to compute real-time auction status
+const computeAuctionStatus = (auction) => {
+  if (auction.status === 'closed') {
+    return 'closed';
+  }
+  const now = new Date();
+  const startTime = new Date(auction.startTime);
+  const endTime = new Date(auction.endTime);
+  if (now < startTime) {
+    return 'pending';
+  } else if (now >= startTime && now < endTime) {
+    return 'active';
+  } else {
+    return 'ended';
+  }
+};
+
+// Function to check and broadcast auction status changes
+const checkAuctionStatusChanges = async () => {
+  try {
+    const auctions = await Auction.find({ status: { $in: ['pending', 'active'] } });
+    
+    for (const auction of auctions) {
+      const computedStatus = computeAuctionStatus(auction);
+      
+      // If the computed status differs from the stored status, broadcast the change
+      if (computedStatus !== auction.status) {
+        console.log(`🔄 Status change detected: Auction ${auction._id} ${auction.status} -> ${computedStatus}`);
+        
+        // Update the auction status in the database
+        auction.status = computedStatus;
+        if (computedStatus === 'ended') {
+          auction.endTime = new Date(); // Set actual end time
+        }
+        await auction.save();
+        
+        // Broadcast the status change
+        global.broadcastAuctionStatusUpdate(auction._id, computedStatus, {
+          _id: auction._id,
+          shopifyProductId: auction.shopifyProductId,
+          productData: auction.productData,
+          status: computedStatus,
+          currentBid: auction.currentBid,
+          startTime: auction.startTime,
+          endTime: auction.endTime
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error checking auction status changes:', error);
+  }
+};
+
+// Check for status changes every 5 seconds for faster response
+setInterval(checkAuctionStatusChanges, 5000);
 
 // Start server
 server.listen(PORT, () => {

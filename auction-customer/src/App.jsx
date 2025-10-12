@@ -22,12 +22,29 @@ function App() {
   const [bidLoading, setBidLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
 
   useEffect(() => {
     fetchVisibleAuctions();
     
     // Set up WebSocket connection for real-time updates
-    socketService.connect();
+    const socket = socketService.connect();
+    
+    // Monitor connection status
+    socket.on('connect', () => {
+      console.log('🔌 WebSocket connected');
+      setConnectionStatus('connected');
+    });
+    
+    socket.on('disconnect', () => {
+      console.log('🔌 WebSocket disconnected');
+      setConnectionStatus('disconnected');
+    });
+    
+    socket.on('connect_error', (error) => {
+      console.error('🔌 WebSocket connection error:', error);
+      setConnectionStatus('error');
+    });
     
     // Listen for real-time bid updates
     const handleBidUpdate = (bidData) => {
@@ -50,7 +67,8 @@ function App() {
       
       // Show notification for new bid or buy now
       if (bidData.buyNow) {
-        setToastMessage(`🎉 ${bidData.bidder} bought it now for $${bidData.amount}! Auction ended.`);
+        const productName = bidData.productTitle || 'the item';
+        setToastMessage(`🎉 ${bidData.bidder} bought ${productName} now! Auction ended.`);
       } else if (bidData.auctionEnded) {
         setToastMessage(`🏆 ${bidData.bidder} won the auction with $${bidData.amount}!`);
       } else {
@@ -59,20 +77,72 @@ function App() {
       setShowToast(true);
     };
     
-    socketService.onBidUpdate(handleBidUpdate);
+    // Listen for auction status updates (pending -> active -> ended)
+    const handleStatusUpdate = (statusData) => {
+      console.log('📡 Received status update:', statusData);
+      
+      // Update the auction in the local state
+      setAuctions(prevAuctions => 
+        prevAuctions.map(auction => 
+          auction._id === statusData.auctionId || auction.id === statusData.auctionId
+            ? {
+                ...auction,
+                status: statusData.newStatus,
+                ...statusData.auctionData
+              }
+            : auction
+        )
+      );
+      
+      // Show notification for status changes
+      let statusMessage = '';
+      switch (statusData.newStatus) {
+        case 'active':
+          statusMessage = `🟢 Auction is now active! You can place bids.`;
+          break;
+        case 'ended':
+          statusMessage = `🔴 Auction has ended.`;
+          break;
+        case 'pending':
+          statusMessage = `⏳ Auction is pending.`;
+          break;
+        default:
+          statusMessage = `🔄 Auction status updated to ${statusData.newStatus}.`;
+      }
+      
+      setToastMessage(statusMessage);
+      setShowToast(true);
+    };
     
-    // Set up automatic refresh every 30 seconds to detect status changes
+    socketService.onBidUpdate(handleBidUpdate);
+    socketService.onStatusUpdate(handleStatusUpdate);
+    
+    // Set up automatic refresh every 10 seconds to detect status changes (as backup)
     const refreshInterval = setInterval(() => {
       console.log('🔄 Auto-refreshing auctions to check status changes...');
       fetchVisibleAuctionsSilent();
-    }, 30000); // 30 seconds
+    }, 10000); // 10 seconds
     
     return () => {
       socketService.offBidUpdate(handleBidUpdate);
+      socketService.offStatusUpdate(handleStatusUpdate);
       socketService.disconnect();
       clearInterval(refreshInterval);
     };
   }, []);
+
+  // Join auction rooms when auctions are loaded or updated
+  useEffect(() => {
+    if (auctions.length > 0 && socketService.isSocketConnected()) {
+      console.log('🔌 Joining auction rooms for real-time updates...');
+      auctions.forEach(auction => {
+        const auctionId = auction._id || auction.id;
+        if (auctionId) {
+          socketService.joinAuction(auctionId);
+        }
+      });
+    }
+  }, [auctions]);
 
   const fetchVisibleAuctions = async () => {
     try {
@@ -122,7 +192,7 @@ function App() {
         amount: bidData.amount
       });
       
-      setToastMessage(`Bid placed successfully! $${bidData.amount}`);
+      setToastMessage(`✅ Bid placed successfully! $${bidData.amount} by ${bidData.bidder}`);
       setShowToast(true);
       
       // Refresh auctions to get updated data
@@ -130,7 +200,25 @@ function App() {
       
     } catch (err) {
       console.error('Error placing bid:', err);
-      setError(err.response?.data?.message || 'Failed to place bid. Please try again.');
+      
+      // Better error handling with specific messages
+      let errorMessage = 'Failed to place bid. Please try again.';
+      
+      if (err.response?.status === 400) {
+        errorMessage = err.response?.data?.message || 'Invalid bid. Please check your bid amount.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Auction not found. It may have ended.';
+      } else if (err.response?.status === 409) {
+        errorMessage = 'Auction is not active. You cannot bid on this auction.';
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. Please try again in a moment.';
+      } else if (!navigator.onLine) {
+        errorMessage = 'No internet connection. Please check your network.';
+      }
+      
+      setError(errorMessage);
+      setToastMessage(`❌ ${errorMessage}`);
+      setShowToast(true);
     } finally {
       setBidLoading(false);
     }
@@ -145,7 +233,10 @@ function App() {
       
       await auctionAPI.buyNow(auctionId, bidder);
       
-      setToastMessage(`Buy now successful! You won the auction!`);
+      // Find the auction to get product name
+      const auction = auctions.find(a => (a._id || a.id) === auctionId);
+      const productName = auction?.productData?.title || 'the item';
+      setToastMessage(`🎉 Buy now successful! ${bidder} won ${productName}!`);
       setShowToast(true);
       
       // Refresh auctions to get updated data
@@ -153,7 +244,25 @@ function App() {
       
     } catch (err) {
       console.error('Error buying now:', err);
-      setError(err.response?.data?.message || 'Failed to buy now. Please try again.');
+      
+      // Better error handling for buy now
+      let errorMessage = 'Failed to buy now. Please try again.';
+      
+      if (err.response?.status === 400) {
+        errorMessage = err.response?.data?.message || 'Invalid buy now request.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Auction not found or already ended.';
+      } else if (err.response?.status === 409) {
+        errorMessage = 'Auction is not active. Buy now is not available.';
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. Please try again in a moment.';
+      } else if (!navigator.onLine) {
+        errorMessage = 'No internet connection. Please check your network.';
+      }
+      
+      setError(errorMessage);
+      setToastMessage(`❌ ${errorMessage}`);
+      setShowToast(true);
     } finally {
       setBidLoading(false);
     }
@@ -188,6 +297,29 @@ function App() {
             onAction: handleRefresh
           }}
         >
+          {/* Connection Status Indicator */}
+          <div style={{ marginBottom: '1rem' }}>
+            {connectionStatus === 'connected' && (
+              <Banner status="success">
+                <Text variant="bodyMd">🟢 Connected to live updates</Text>
+              </Banner>
+            )}
+            {connectionStatus === 'connecting' && (
+              <Banner status="info">
+                <Text variant="bodyMd">🟡 Connecting to live updates...</Text>
+              </Banner>
+            )}
+            {connectionStatus === 'disconnected' && (
+              <Banner status="warning">
+                <Text variant="bodyMd">🔴 Disconnected from live updates. Refreshing...</Text>
+              </Banner>
+            )}
+            {connectionStatus === 'error' && (
+              <Banner status="critical">
+                <Text variant="bodyMd">❌ Connection error. Some features may not work properly.</Text>
+              </Banner>
+            )}
+          </div>
           {error && (
             <div style={{ marginBottom: '1rem' }}>
               <Banner status="critical">

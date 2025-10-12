@@ -64,6 +64,18 @@ class SocketService {
     }
   }
 
+  onStatusUpdate(callback) {
+    if (this.socket) {
+      this.socket.on('auction-status-update', callback);
+    }
+  }
+
+  offStatusUpdate(callback) {
+    if (this.socket) {
+      this.socket.off('auction-status-update', callback);
+    }
+  }
+
   getSocket() {
     return this.socket;
   }
