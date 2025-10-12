@@ -61,6 +61,11 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       };
       
       const response = await auctionAPI.getAllAuctions(params);
+      console.log('🔍 Fetched auctions:', response.data);
+      if (response.data && response.data.length > 0) {
+        console.log('🔍 First auction structure:', response.data[0]);
+        console.log('🔍 First auction ID:', response.data[0]._id || response.data[0].id);
+      }
       setAuctions(response.data || []);
       setTotalPages(response.pagination?.pages || 1);
       setTotalItems(response.pagination?.total || 0);

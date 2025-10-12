@@ -61,9 +61,16 @@ function App() {
     
     socketService.onBidUpdate(handleBidUpdate);
     
+    // Set up automatic refresh every 30 seconds to detect status changes
+    const refreshInterval = setInterval(() => {
+      console.log('🔄 Auto-refreshing auctions to check status changes...');
+      fetchVisibleAuctionsSilent();
+    }, 30000); // 30 seconds
+    
     return () => {
       socketService.offBidUpdate(handleBidUpdate);
       socketService.disconnect();
+      clearInterval(refreshInterval);
     };
   }, []);
 
@@ -83,6 +90,21 @@ function App() {
       setAuctions([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Silent refresh for automatic status updates (no loading spinner)
+  const fetchVisibleAuctionsSilent = async () => {
+    try {
+      const response = await auctionAPI.getVisibleAuctions();
+      // Filter to show pending, active, and ended auctions (exclude only closed)
+      const visibleAuctions = (response.data || []).filter(auction => 
+        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
+      );
+      setAuctions(visibleAuctions);
+    } catch (err) {
+      console.error('Error in silent refresh:', err);
+      // Don't set error for silent refresh to avoid disrupting user experience
     }
   };
 

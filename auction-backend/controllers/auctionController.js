@@ -2,6 +2,21 @@ import Auction from '../models/Auction.js';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
 
+// Helper function to compute real-time auction status
+const computeAuctionStatus = (auction) => {
+  const now = new Date();
+  const startTime = new Date(auction.startTime);
+  const endTime = new Date(auction.endTime);
+  
+  if (now < startTime) {
+    return 'pending';
+  } else if (now >= startTime && now < endTime) {
+    return 'active';
+  } else {
+    return 'ended';
+  }
+};
+
 // Create a new auction
 export const createAuction = async (req, res, next) => {
   try {
@@ -52,11 +67,17 @@ export const getAllAuctions = async (req, res, next) => {
       .limit(parseInt(limit))
       .lean();
     
+    // Compute real-time status for each auction
+    const auctionsWithRealTimeStatus = auctions.map(auction => ({
+      ...auction,
+      status: computeAuctionStatus(auction)
+    }));
+    
     const total = await Auction.countDocuments(filter);
     
     res.json({
       success: true,
-      data: auctions,
+      data: auctionsWithRealTimeStatus,
       pagination: {
         current: parseInt(page),
         pages: Math.ceil(total / parseInt(limit)),
@@ -77,9 +98,15 @@ export const getAuctionById = async (req, res, next) => {
       throw new AppError('Auction not found', 404);
     }
     
+    // Compute real-time status
+    const auctionWithRealTimeStatus = {
+      ...auction.toObject(),
+      status: computeAuctionStatus(auction)
+    };
+    
     res.json({
       success: true,
-      data: auction
+      data: auctionWithRealTimeStatus
     });
   } catch (error) {
     next(error);
@@ -184,9 +211,21 @@ export const placeBid = async (req, res, next) => {
     
     const { bidder, amount } = req.body;
     
-    // Validate auction is active
-    if (auction.status !== 'active') {
-      throw new AppError('Auction is not active', 400);
+    // Validate auction is active using real-time status
+    const realTimeStatus = computeAuctionStatus(auction);
+    console.log('🎯 Bid placement debug:', {
+      auctionId: req.params.id,
+      databaseStatus: auction.status,
+      realTimeStatus: realTimeStatus,
+      startTime: auction.startTime,
+      endTime: auction.endTime,
+      currentTime: new Date(),
+      bidder: bidder,
+      amount: amount
+    });
+    
+    if (realTimeStatus !== 'active') {
+      throw new AppError(`Auction is not active (current status: ${realTimeStatus})`, 400);
     }
     
     // Validate auction time
@@ -205,8 +244,25 @@ export const placeBid = async (req, res, next) => {
       }
     }
     
-    // Add the bid
-    await auction.addBid(bidder, amount);
+    // Temporarily update auction status to 'active' if real-time status is 'active'
+    // This allows the addBid method to work properly
+    const originalStatus = auction.status;
+    if (realTimeStatus === 'active' && auction.status !== 'active') {
+      auction.status = 'active';
+      await auction.save();
+    }
+    
+    try {
+      // Add the bid
+      await auction.addBid(bidder, amount);
+    } catch (error) {
+      // Restore original status if bid fails
+      if (originalStatus !== auction.status) {
+        auction.status = originalStatus;
+        await auction.save();
+      }
+      throw error;
+    }
     
     // Refresh auction data
     const updatedAuction = await Auction.findById(req.params.id);
@@ -259,8 +315,10 @@ export const buyNow = async (req, res, next) => {
       throw new AppError('Auction not found', 404);
     }
     
-    if (auction.status !== 'active') {
-      throw new AppError('Auction is not active', 400);
+    // Validate auction is active using real-time status
+    const realTimeStatus = computeAuctionStatus(auction);
+    if (realTimeStatus !== 'active') {
+      throw new AppError(`Auction is not active (current status: ${realTimeStatus})`, 400);
     }
     
     const now = new Date();
@@ -268,8 +326,25 @@ export const buyNow = async (req, res, next) => {
       throw new AppError('Auction is not currently active', 400);
     }
     
-    // Add the buy now bid
-    await auction.addBid(bidder.trim(), auction.buyNowPrice);
+    // Temporarily update auction status to 'active' if real-time status is 'active'
+    // This allows the addBid method to work properly
+    const originalStatus = auction.status;
+    if (realTimeStatus === 'active' && auction.status !== 'active') {
+      auction.status = 'active';
+      await auction.save();
+    }
+    
+    try {
+      // Add the buy now bid
+      await auction.addBid(bidder.trim(), auction.buyNowPrice);
+    } catch (error) {
+      // Restore original status if bid fails
+      if (originalStatus !== auction.status) {
+        auction.status = originalStatus;
+        await auction.save();
+      }
+      throw error;
+    }
     
     // End the auction immediately
     auction.status = 'ended';

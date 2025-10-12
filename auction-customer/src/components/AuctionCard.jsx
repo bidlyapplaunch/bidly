@@ -13,7 +13,8 @@ import CountdownTimer from './CountdownTimer';
 import BidForm from './BidForm';
 
 const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
-  const [modalOpen, setModalOpen] = React.useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = React.useState(false);
+  const [bidModalOpen, setBidModalOpen] = React.useState(false);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -63,17 +64,27 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
         {/* Product Image */}
         {auction.productData?.image?.src ? (
-          <img
-            src={auction.productData.image.src}
-            alt={auction.productData?.title || 'Product image'}
-            style={{ 
-              width: '100%', 
-              height: '200px', 
-              objectFit: 'cover',
-              borderRadius: '8px',
-              marginBottom: '1rem'
-            }}
-          />
+          <div style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '1rem'
+          }}>
+            <img
+              src={auction.productData.image.src}
+              alt={auction.productData?.title || 'Product image'}
+              style={{ 
+                maxWidth: '100%',
+                maxHeight: '250px',
+                width: 'auto',
+                height: 'auto',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                border: '1px solid #e1e3e5',
+                backgroundColor: '#fafbfb'
+              }}
+            />
+          </div>
         ) : (
           <div style={{ 
             width: '100%', 
@@ -83,7 +94,8 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '1rem'
+            marginBottom: '1rem',
+            border: '1px solid #e1e3e5'
           }}>
             <Text variant="bodyMd" color="subdued">
               Product Image
@@ -146,24 +158,28 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Button 
             primary 
-            onClick={() => setModalOpen(true)}
+            onClick={() => setBidModalOpen(true)}
             disabled={auction.status !== 'active'}
           >
             {auction.status === 'active' ? 'Place Bid' : 
              auction.status === 'pending' ? 'Starting Soon' : 'View Details'}
           </Button>
-          <Button onClick={() => setModalOpen(true)}>
+          <Button onClick={() => setDetailsModalOpen(true)}>
             View Details
           </Button>
         </div>
       </Card>
 
-      {/* Auction Details Modal */}
+      {/* View Details Modal - Read-only information */}
       <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={`Auction: ${auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}`}
+        open={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        title={`Auction Details: ${auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}`}
         large
+        primaryAction={{
+          content: 'Close',
+          onAction: () => setDetailsModalOpen(false)
+        }}
       >
         <Modal.Section>
           <Frame>
@@ -242,15 +258,81 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                 </div>
               </div>
             )}
+          </Frame>
+        </Modal.Section>
+      </Modal>
 
-            {/* Bid Form */}
+      {/* Bid Modal - Contains bidding functionality */}
+      <Modal
+        open={bidModalOpen}
+        onClose={() => setBidModalOpen(false)}
+        title={`Place Bid: ${auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}`}
+        large
+        primaryAction={{
+          content: 'Close',
+          onAction: () => setBidModalOpen(false)
+        }}
+      >
+        <Modal.Section>
+          <Frame>
+            <Layout>
+              <Layout.Section oneHalf>
+                <div style={{ marginBottom: '1rem' }}>
+                  <Text variant="headingMd">Auction Information</Text>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <Text variant="bodyMd"><strong>Current Bid:</strong> {formatCurrency(auction.currentBid || 0)}</Text>
+                    <Text variant="bodyMd"><strong>Starting Bid:</strong> {formatCurrency(auction.startingBid)}</Text>
+                    {auction.buyNowPrice && (
+                      <Text variant="bodyMd"><strong>Buy Now Price:</strong> {formatCurrency(auction.buyNowPrice)}</Text>
+                    )}
+                  </div>
+                </div>
+              </Layout.Section>
+              <Layout.Section oneHalf>
+                <div style={{ marginBottom: '1rem' }}>
+                  <Text variant="headingMd">Time Remaining</Text>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <CountdownTimer 
+                      endTime={auction.endTime}
+                      startTime={auction.startTime}
+                      status={auction.status}
+                      onTimeUp={handleTimeUp}
+                    />
+                  </div>
+                </div>
+              </Layout.Section>
+            </Layout>
+
+            {/* Bid Form - Only shown for active auctions */}
             {auction.status === 'active' && (
               <BidForm 
                 auction={auction} 
-                onBidPlaced={onBidPlaced}
-                onBuyNow={onBuyNow}
+                onBidPlaced={(bidData) => {
+                  onBidPlaced(bidData);
+                  setBidModalOpen(false); // Close modal after successful bid
+                }}
+                onBuyNow={(bidder) => {
+                  onBuyNow(bidder);
+                  setBidModalOpen(false); // Close modal after buy now
+                }}
                 isLoading={isLoading}
               />
+            )}
+
+            {auction.status !== 'active' && (
+              <Card sectioned>
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <Text variant="headingMd" color="subdued">
+                    {auction.status === 'pending' ? 'Auction has not started yet' : 
+                     auction.status === 'ended' ? 'Auction has ended' : 'Auction is not available'}
+                  </Text>
+                  <div style={{ marginTop: '1rem' }}>
+                    <Button onClick={() => setBidModalOpen(false)}>
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             )}
           </Frame>
         </Modal.Section>

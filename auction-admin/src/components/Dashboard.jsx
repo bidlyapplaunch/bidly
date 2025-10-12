@@ -73,6 +73,8 @@ const Dashboard = () => {
   };
 
   const handleViewAuction = (auction) => {
+    console.log('🔍 View auction clicked:', auction);
+    console.log('🔍 Auction ID:', auction?.id || auction?._id);
     setSelectedAuction(auction);
     setDetailsModalOpen(true);
   };

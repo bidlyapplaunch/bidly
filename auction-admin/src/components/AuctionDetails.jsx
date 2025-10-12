@@ -29,14 +29,21 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   }, [auction, isOpen]);
 
   const fetchAuctionDetails = async () => {
-    if (!auction?.id) return;
+    const auctionId = auction?.id || auction?._id;
+    if (!auctionId) {
+      console.log('❌ No auction ID found:', auction);
+      return;
+    }
     
     try {
       setLoading(true);
-      const response = await auctionAPI.getAuctionById(auction.id);
+      console.log('🔍 Fetching auction details for ID:', auctionId);
+      const response = await auctionAPI.getAuctionById(auctionId);
+      console.log('✅ Auction details fetched:', response.data);
       setAuctionData(response.data);
     } catch (error) {
-      console.error('Error fetching auction details:', error);
+      console.error('❌ Error fetching auction details:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -44,7 +51,8 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
 
   const handleCloseAuction = async () => {
     try {
-      await auctionAPI.closeAuction(auctionData.id);
+      const auctionId = auctionData?.id || auctionData?._id;
+      await auctionAPI.closeAuction(auctionId);
       setToastMessage('Auction closed successfully');
       setShowToast(true);
       fetchAuctionDetails();
