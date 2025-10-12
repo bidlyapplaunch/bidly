@@ -1,6 +1,7 @@
 import Auction from '../models/Auction.js';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
+import emailService from '../services/emailService.js';
 
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
@@ -37,6 +38,33 @@ export const createAuction = async (req, res, next) => {
       productData: productData // Cache the product data
     });
     const savedAuction = await auction.save();
+    
+    // Send real-time notification about new auction
+    const io = req.app.get('io');
+    if (io) {
+      // Send to admin room
+      io.to('admin-room').emit('admin-notification', {
+        type: 'new-auction',
+        message: `New auction created: "${savedAuction.productData?.title || 'Unknown Product'}"`,
+        auctionId: savedAuction._id,
+        timestamp: new Date().toISOString(),
+        data: {
+          productTitle: savedAuction.productData?.title,
+          startTime: savedAuction.startTime,
+          endTime: savedAuction.endTime,
+          startingBid: savedAuction.startingBid
+        }
+      });
+
+      // Send global auction update
+      io.emit('auction-created', {
+        auctionId: savedAuction._id,
+        productTitle: savedAuction.productData?.title,
+        status: savedAuction.status,
+        startingBid: savedAuction.startingBid,
+        timestamp: new Date().toISOString()
+      });
+    }
     
     res.status(201).json({
       success: true,
@@ -276,9 +304,56 @@ export const placeBid = async (req, res, next) => {
       auctionEnded = true;
     }
     
+    // Send email notifications
+    try {
+      // Send bid confirmation to the bidder
+      await emailService.sendBidConfirmation(
+        `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Demo email
+        bidder,
+        updatedAuction,
+        amount
+      );
+
+      // Send outbid notification to previous highest bidder
+      if (updatedAuction.bidHistory.length > 1) {
+        const previousBid = updatedAuction.bidHistory[updatedAuction.bidHistory.length - 2];
+        if (previousBid.bidder !== bidder) {
+          await emailService.sendOutbidNotification(
+            `${previousBid.bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Demo email
+            previousBid.bidder,
+            updatedAuction,
+            amount
+          );
+        }
+      }
+
+      // Send auction won notification if buy now
+      if (auctionEnded) {
+        await emailService.sendAuctionWonNotification(
+          `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Demo email
+          bidder,
+          updatedAuction,
+          amount
+        );
+
+        // Send admin notification
+        await emailService.sendAdminNotification(
+          'Auction Won via Buy Now',
+          `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" was won by ${bidder} for $${amount}`,
+          updatedAuction
+        );
+      }
+
+      console.log('✅ Email notifications sent successfully');
+    } catch (emailError) {
+      console.error('⚠️ Email notification error (non-critical):', emailError);
+      // Don't fail the bid placement if email fails
+    }
+
     // Broadcast real-time update to all clients watching this auction
     const io = req.app.get('io');
     if (io) {
+      // Send to auction-specific room
       io.to(`auction-${req.params.id}`).emit('bid-update', {
         auctionId: req.params.id,
         currentBid: updatedAuction.currentBid,
@@ -287,7 +362,32 @@ export const placeBid = async (req, res, next) => {
         amount: amount,
         timestamp: new Date().toISOString(),
         auctionEnded: auctionEnded,
-        winner: auctionEnded ? bidder : null
+        winner: auctionEnded ? bidder : null,
+        productTitle: updatedAuction.productData?.title || 'Unknown Product'
+      });
+
+      // Send to admin room for admin notifications
+      io.to('admin-room').emit('admin-notification', {
+        type: auctionEnded ? 'auction-ended' : 'new-bid',
+        message: auctionEnded 
+          ? `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" ended with winning bid of $${amount} by ${bidder}`
+          : `New bid of $${amount} placed on "${updatedAuction.productData?.title || 'Unknown Product'}" by ${bidder}`,
+        auctionId: req.params.id,
+        timestamp: new Date().toISOString(),
+        data: {
+          productTitle: updatedAuction.productData?.title,
+          currentBid: updatedAuction.currentBid,
+          bidCount: updatedAuction.bidHistory?.length || 0
+        }
+      });
+
+      // Send global auction update to all connected clients
+      io.emit('auction-updated', {
+        auctionId: req.params.id,
+        status: updatedAuction.status,
+        currentBid: updatedAuction.currentBid,
+        productTitle: updatedAuction.productData?.title,
+        timestamp: new Date().toISOString()
       });
     }
     

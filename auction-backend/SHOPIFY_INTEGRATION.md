@@ -264,17 +264,17 @@ const results = await shopifyService.refreshAllProductData();
 
 1. **Check Shopify credentials**:
    ```bash
-   curl http://localhost:5002/api/shopify/status
+   curl http://localhost:5000/api/shopify/status
    ```
 
 2. **Verify product ID exists**:
    ```bash
-   curl http://localhost:5002/api/shopify/products/123/validate
+   curl http://localhost:5000/api/shopify/products/123/validate
    ```
 
 3. **Test direct product fetch**:
    ```bash
-   curl http://localhost:5002/api/shopify/products/123
+   curl http://localhost:5000/api/shopify/products/123
    ```
 
 ### Common Issues

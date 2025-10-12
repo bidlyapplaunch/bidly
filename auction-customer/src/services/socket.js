@@ -8,7 +8,7 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('http://localhost:5002', {
+      this.socket = io('http://localhost:5000', {
         transports: ['websocket', 'polling']
       });
 
