@@ -121,9 +121,9 @@ app.use('/webhooks/shopify', oauthRoutes);
 // App Bridge routes for embedded app functionality
 app.use('/app-bridge', appBridgeRoutes);
 
-// Serve static files from the admin frontend build (after API routes)
-const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
-console.log('📁 Serving frontend from:', frontendDistPath);
+// Serve static files from the customer frontend build (after API routes)
+const frontendDistPath = path.join(__dirname, '../auction-customer/dist');
+console.log('📁 Serving customer frontend from:', frontendDistPath);
 
 // Only serve static files for non-API routes
 app.use((req, res, next) => {

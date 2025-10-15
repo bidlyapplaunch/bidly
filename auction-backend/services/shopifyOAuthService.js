@@ -101,7 +101,9 @@ class ShopifyOAuthService {
       formData.append('code', code);
 
       console.log('  - Token URL:', tokenUrl);
-      console.log('  - Form data keys:', ['client_id', 'client_secret', 'code']);
+      console.log('  - Client ID:', this.clientId);
+      console.log('  - Client Secret present:', !!this.clientSecret);
+      console.log('  - Code length:', code ? code.length : 0);
 
       // Make the request to Shopify to exchange code for token
       const response = await axios.post(tokenUrl, formData, {
