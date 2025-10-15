@@ -23,6 +23,12 @@ const bidSchema = new mongoose.Schema({
 });
 
 const auctionSchema = new mongoose.Schema({
+  shopDomain: {
+    type: String,
+    required: true,
+    trim: true,
+    index: true
+  },
   shopifyProductId: {
     type: String,
     required: true,
@@ -113,8 +119,9 @@ const auctionSchema = new mongoose.Schema({
 });
 
 // Index for efficient queries
-auctionSchema.index({ shopifyProductId: 1, status: 1 });
-auctionSchema.index({ endTime: 1, status: 1 });
+auctionSchema.index({ shopDomain: 1, status: 1 });
+auctionSchema.index({ shopDomain: 1, shopifyProductId: 1 });
+auctionSchema.index({ shopDomain: 1, endTime: 1, status: 1 });
 
 // Virtual for checking if auction is currently active
 auctionSchema.virtual('isActive').get(function() {

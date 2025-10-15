@@ -20,8 +20,12 @@ import {
   validateBuyNow,
   validateId
 } from '../middleware/validation.js';
+import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
+
+// All auction routes require store identification
+router.use(identifyStore);
 
 // Auction CRUD routes
 router.post('/', validateCreateAuction, createAuction);

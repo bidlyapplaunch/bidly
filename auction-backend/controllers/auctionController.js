@@ -27,12 +27,15 @@ const computeAuctionStatus = (auction) => {
 export const createAuction = async (req, res, next) => {
   try {
     const { shopifyProductId } = req.body;
+    const shopDomain = req.shopDomain; // Get from store middleware
+    
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
     
     // Fetch product data from Shopify
     let productData = null;
     try {
-      // For now, use the default shop domain. In a multi-store setup, this would come from the request context
-      const shopDomain = 'ezza-auction.myshopify.com';
       productData = await getShopifyService().getProduct(shopDomain, shopifyProductId);
     } catch (shopifyError) {
       console.warn(`Failed to fetch Shopify product ${shopifyProductId}:`, shopifyError.message);
@@ -41,6 +44,7 @@ export const createAuction = async (req, res, next) => {
     
     const auction = new Auction({
       ...req.body,
+      shopDomain: shopDomain, // Add store domain for isolation
       currentBid: 0, // Ensure currentBid starts at 0
       productData: productData // Cache the product data
     });
@@ -88,9 +92,14 @@ export const createAuction = async (req, res, next) => {
 export const getAllAuctions = async (req, res, next) => {
   try {
     const { status, shopifyProductId, page = 1, limit = 10 } = req.query;
+    const shopDomain = req.shopDomain; // Get from store middleware
     
-    // Build filter object
-    const filter = {};
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
+    
+    // Build filter object - ALWAYS filter by store domain
+    const filter = { shopDomain: shopDomain };
     if (status) filter.status = status;
     if (shopifyProductId) filter.shopifyProductId = shopifyProductId;
     
@@ -129,7 +138,16 @@ export const getAllAuctions = async (req, res, next) => {
 // Get single auction by ID
 export const getAuctionById = async (req, res, next) => {
   try {
-    const auction = await Auction.findById(req.params.id);
+    const shopDomain = req.shopDomain; // Get from store middleware
+    
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
+    
+    const auction = await Auction.findOne({ 
+      _id: req.params.id, 
+      shopDomain: shopDomain 
+    });
     
     if (!auction) {
       throw new AppError('Auction not found', 404);
@@ -154,7 +172,16 @@ export const getAuctionById = async (req, res, next) => {
 // Update auction
 export const updateAuction = async (req, res, next) => {
   try {
-    const auction = await Auction.findById(req.params.id);
+    const shopDomain = req.shopDomain; // Get from store middleware
+    
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
+    
+    const auction = await Auction.findOne({ 
+      _id: req.params.id, 
+      shopDomain: shopDomain 
+    });
     
     if (!auction) {
       throw new AppError('Auction not found', 404);
@@ -217,8 +244,15 @@ export const updateAuction = async (req, res, next) => {
 // Delete auction
 export const deleteAuction = async (req, res, next) => {
   try {
+    const shopDomain = req.shopDomain; // Get from store middleware
+    
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
+    
     console.log('🗑️ Delete auction request:', {
       auctionId: req.params.id,
+      shopDomain: shopDomain,
       method: req.method,
       url: req.url,
       params: req.params
@@ -229,7 +263,10 @@ export const deleteAuction = async (req, res, next) => {
       throw new AppError('Auction ID is required', 400);
     }
     
-    const auction = await Auction.findById(req.params.id);
+    const auction = await Auction.findOne({ 
+      _id: req.params.id, 
+      shopDomain: shopDomain 
+    });
     
     if (!auction) {
       console.log('❌ Auction not found:', req.params.id);
@@ -267,6 +304,11 @@ export const deleteAuction = async (req, res, next) => {
 export const placeBid = async (req, res, next) => {
   try {
     const { bidder, amount, customerEmail } = req.body;
+    const shopDomain = req.shopDomain; // Get from store middleware
+    
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
     
     // Input sanitization and validation
     const sanitizedBidder = bidder?.trim();
@@ -285,7 +327,10 @@ export const placeBid = async (req, res, next) => {
       throw new AppError('Valid bid amount is required', 400);
     }
     
-    const auction = await Auction.findById(req.params.id);
+    const auction = await Auction.findOne({ 
+      _id: req.params.id, 
+      shopDomain: shopDomain 
+    });
     
     if (!auction) {
       throw new AppError('Auction not found', 404);
@@ -463,12 +508,20 @@ export const placeBid = async (req, res, next) => {
 export const buyNow = async (req, res, next) => {
   try {
     const { bidder, customerEmail } = req.body;
+    const shopDomain = req.shopDomain; // Get from store middleware
+    
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
     
     if (!bidder || !bidder.trim()) {
       throw new AppError('Bidder name is required', 400);
     }
     
-    const auction = await Auction.findById(req.params.id);
+    const auction = await Auction.findOne({ 
+      _id: req.params.id, 
+      shopDomain: shopDomain 
+    });
     if (!auction) {
       throw new AppError('Auction not found', 404);
     }
@@ -696,8 +749,14 @@ export const getAuctionsWithProductData = async (req, res, next) => {
 
 export const getAuctionStats = async (req, res, next) => {
   try {
-    // Get all auctions and compute real-time status
-    const allAuctions = await Auction.find({});
+    const shopDomain = req.shopDomain; // Get from store middleware
+    
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
+    
+    // Get all auctions for this store and compute real-time status
+    const allAuctions = await Auction.find({ shopDomain: shopDomain });
     
     const totalAuctions = allAuctions.length;
     const pendingAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'pending').length;
@@ -705,7 +764,7 @@ export const getAuctionStats = async (req, res, next) => {
     const endedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'ended').length;
     const closedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'closed').length;
     
-    // Calculate total bids across all auctions
+    // Calculate total bids across all auctions for this store
     const totalBids = allAuctions.reduce((sum, auction) => sum + (auction.bidHistory?.length || 0), 0);
     
     res.json({
