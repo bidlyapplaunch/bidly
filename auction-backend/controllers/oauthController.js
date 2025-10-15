@@ -80,7 +80,8 @@ export const handleCustomAppInstall = async (req, res, next) => {
     }
     
     // Redirect to the admin dashboard with shop parameter
-    const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+    const adminUrl = 'https://bidly-auction-admin.onrender.com';
+    console.log('🔄 Redirecting to admin dashboard (custom app):', `${adminUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
     res.redirect(`${adminUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
     
   } catch (error) {
@@ -119,7 +120,8 @@ export const initiateOAuth = async (req, res, next) => {
     if (existingStore && existingStore.isInstalled) {
       console.log('✅ Store already installed, redirecting to admin dashboard');
       // Store is already installed, redirect to the admin dashboard
-      const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+      const adminUrl = 'https://bidly-auction-admin.onrender.com';
+      console.log('🔄 Redirecting to admin dashboard (already installed):', `${adminUrl}?shop=${shop}&installed=true`);
       return res.redirect(`${adminUrl}?shop=${shop}&installed=true`);
     }
 
@@ -232,7 +234,8 @@ export const handleOAuthCallback = async (req, res, next) => {
     
     // For embedded apps, redirect to the admin dashboard URL with shop parameter
     // This will be handled by App Bridge in the frontend
-    const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+    const adminUrl = 'https://bidly-auction-admin.onrender.com';
+    console.log('🔄 Redirecting to admin dashboard:', `${adminUrl}?shop=${shop}&installed=true&success=true`);
     res.redirect(`${adminUrl}?shop=${shop}&installed=true&success=true`);
     
   } catch (error) {
@@ -240,7 +243,8 @@ export const handleOAuthCallback = async (req, res, next) => {
     
     // Redirect to error page or show error message
     const shop = req.query.shop || 'unknown';
-    const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+    const adminUrl = 'https://bidly-auction-admin.onrender.com';
+    console.log('🔄 Redirecting to admin dashboard (error):', `${adminUrl}?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
     res.redirect(`${adminUrl}?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
   }
 };
