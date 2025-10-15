@@ -104,6 +104,11 @@ class ShopifyOAuthService {
       console.log('  - Client ID:', this.clientId);
       console.log('  - Client Secret present:', !!this.clientSecret);
       console.log('  - Code length:', code ? code.length : 0);
+      console.log('  - Form data being sent:', {
+        client_id: this.clientId,
+        client_secret: this.clientSecret ? '***HIDDEN***' : 'MISSING',
+        code: code ? '***HIDDEN***' : 'MISSING'
+      });
 
       // Make the request to Shopify to exchange code for token
       const response = await axios.post(tokenUrl, formData, {
@@ -133,6 +138,8 @@ class ShopifyOAuthService {
       console.error('  - Status Text:', error.response?.statusText);
       console.error('  - Response Data:', error.response?.data);
       console.error('  - Error Message:', error.message);
+      console.error('  - Request URL:', error.config?.url);
+      console.error('  - Request Data:', error.config?.data);
       
       const errorMessage = error.response?.data?.error_description || 
                           error.response?.data?.error || 
