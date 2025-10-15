@@ -129,8 +129,18 @@ class ShopifyOAuthService {
     try {
       const { hmac, ...rest } = query;
       
+      console.log('🔐 HMAC verification debug:');
+      console.log('  - Provided HMAC:', hmac);
+      console.log('  - Client Secret present:', !!this.clientSecret);
+      console.log('  - Query params:', rest);
+      
       if (!hmac) {
         console.warn('⚠️ No HMAC signature provided');
+        return false;
+      }
+
+      if (!this.clientSecret) {
+        console.warn('⚠️ No client secret available for HMAC verification');
         return false;
       }
 
@@ -140,16 +150,21 @@ class ShopifyOAuthService {
         .map(key => `${key}=${rest[key]}`)
         .join('&');
 
+      console.log('  - Sorted params string:', sortedParams);
+
       // Generate HMAC using the client secret
       const calculatedHmac = crypto
         .createHmac('sha256', this.clientSecret)
         .update(sortedParams)
         .digest('hex');
 
+      console.log('  - Calculated HMAC:', calculatedHmac);
+      console.log('  - Provided HMAC:  ', hmac);
+
       // Compare the calculated HMAC with the provided one
       const isValid = calculatedHmac === hmac;
       
-      console.log('🔐 HMAC verification:', isValid ? 'Valid' : 'Invalid');
+      console.log('🔐 HMAC verification result:', isValid ? 'Valid' : 'Invalid');
       return isValid;
     } catch (error) {
       console.error('❌ Error verifying HMAC:', error.message);
