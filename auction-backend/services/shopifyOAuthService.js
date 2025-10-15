@@ -33,12 +33,14 @@ class ShopifyOAuthService {
     return this._clientSecret;
   }
 
-  get redirectUri() {
-    if (this._redirectUri === null) {
-      this._redirectUri = process.env.SHOPIFY_REDIRECT_URI;
-    }
-    return this._redirectUri;
-  }
+         get redirectUri() {
+           if (this._redirectUri === null) {
+             // Use Render URL for production, fallback to environment variable
+             this._redirectUri = process.env.SHOPIFY_REDIRECT_URI || 
+                                'https://bidly-auction-backend.onrender.com/auth/shopify/callback';
+           }
+           return this._redirectUri;
+         }
 
   /**
    * Initialize and log configuration (call this when needed)
@@ -85,21 +87,31 @@ class ShopifyOAuthService {
   async exchangeCodeForToken(shopDomain, code, state) {
     try {
       console.log('🔄 Exchanging code for access token for shop:', shopDomain);
+      console.log('  - Client ID:', this.clientId);
+      console.log('  - Client Secret present:', !!this.clientSecret);
+      console.log('  - Code length:', code ? code.length : 0);
       
       // Prepare the token exchange request
       const tokenUrl = `https://${shopDomain}/admin/oauth/access_token`;
-      const requestData = {
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        code: code,
-      };
+      
+      // Shopify expects form-encoded data, not JSON
+      const formData = new URLSearchParams();
+      formData.append('client_id', this.clientId);
+      formData.append('client_secret', this.clientSecret);
+      formData.append('code', code);
+
+      console.log('  - Token URL:', tokenUrl);
+      console.log('  - Form data keys:', ['client_id', 'client_secret', 'code']);
 
       // Make the request to Shopify to exchange code for token
-      const response = await axios.post(tokenUrl, requestData, {
+      const response = await axios.post(tokenUrl, formData, {
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
+
+      console.log('  - Response status:', response.status);
+      console.log('  - Response data keys:', Object.keys(response.data || {}));
 
       const { access_token, scope } = response.data;
       
@@ -114,8 +126,17 @@ class ShopifyOAuthService {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('❌ Error exchanging code for token:', error.response?.data || error.message);
-      throw new Error(`Failed to exchange code for token: ${error.response?.data?.error_description || error.message}`);
+      console.error('❌ Error exchanging code for token:');
+      console.error('  - Status:', error.response?.status);
+      console.error('  - Status Text:', error.response?.statusText);
+      console.error('  - Response Data:', error.response?.data);
+      console.error('  - Error Message:', error.message);
+      
+      const errorMessage = error.response?.data?.error_description || 
+                          error.response?.data?.error || 
+                          error.message;
+      
+      throw new Error(`Failed to exchange code for token: ${errorMessage}`);
     }
   }
 
