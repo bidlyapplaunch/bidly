@@ -46,19 +46,33 @@ export const handleCustomAppInstall = async (req, res, next) => {
       // Update existing store
       store.isInstalled = true;
       store.installedAt = new Date();
+      store.lastAccessAt = new Date();
+      
+      // Ensure all required fields are present
+      if (!store.shopifyStoreId) store.shopifyStoreId = Date.now();
+      if (!store.storeEmail) store.storeEmail = `${permanent_domain}@example.com`;
+      if (!store.planName) store.planName = 'Custom App';
+      if (!store.accessToken) store.accessToken = 'temp-token';
+      if (!store.currency) store.currency = 'USD';
+      if (!store.timezone) store.timezone = 'UTC';
+      
       await store.save();
       console.log('✅ Updated existing store for custom app');
     } else {
-      // Create new store record
+      // Create new store record with all required fields
       store = new Store({
         shopDomain: shopDomain,
+        shopifyStoreId: Date.now(), // Temporary ID until OAuth completes
         storeName: permanent_domain,
+        storeEmail: `${permanent_domain}@example.com`, // Temporary email until OAuth completes
+        currency: 'USD',
+        timezone: 'UTC',
+        planName: 'Custom App', // Temporary plan name until OAuth completes
+        accessToken: 'temp-token', // Temporary token until OAuth completes
+        scope: 'read_products,read_product_listings,read_orders,write_orders',
         isInstalled: true,
         installedAt: new Date(),
-        lastAccessAt: new Date(),
-        // Note: accessToken will be set when OAuth completes
-        accessToken: null,
-        scope: 'read_products,read_product_listings,read_orders,write_orders'
+        lastAccessAt: new Date()
       });
       
       await store.save();
