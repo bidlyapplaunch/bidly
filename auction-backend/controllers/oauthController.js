@@ -79,9 +79,9 @@ export const handleCustomAppInstall = async (req, res, next) => {
       console.log('✅ Created new store record for custom app');
     }
     
-    // Redirect to the app with shop parameter
-    const appUrl = process.env.APP_URL || 'http://localhost:3001';
-    res.redirect(`${appUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
+    // Redirect to the admin dashboard with shop parameter
+    const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+    res.redirect(`${adminUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
     
   } catch (error) {
     console.error('❌ Error handling custom app installation:', error.message);
@@ -117,10 +117,10 @@ export const initiateOAuth = async (req, res, next) => {
     // Check if store is already installed
     const existingStore = await Store.findByDomain(shop);
     if (existingStore && existingStore.isInstalled) {
-      console.log('✅ Store already installed, redirecting to app');
-      // Store is already installed, redirect to the app
-      const appUrl = process.env.APP_URL || 'http://localhost:3001';
-      return res.redirect(`${appUrl}?shop=${shop}&installed=true`);
+      console.log('✅ Store already installed, redirecting to admin dashboard');
+      // Store is already installed, redirect to the admin dashboard
+      const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+      return res.redirect(`${adminUrl}?shop=${shop}&installed=true`);
     }
 
     // Generate a random state parameter for security
@@ -230,18 +230,18 @@ export const handleOAuthCallback = async (req, res, next) => {
 
     console.log('✅ OAuth flow completed successfully for shop:', shop);
     
-    // For embedded apps, redirect to the app URL with shop parameter
+    // For embedded apps, redirect to the admin dashboard URL with shop parameter
     // This will be handled by App Bridge in the frontend
-    const appUrl = process.env.APP_URL || 'http://localhost:3001';
-    res.redirect(`${appUrl}?shop=${shop}&installed=true&success=true`);
+    const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+    res.redirect(`${adminUrl}?shop=${shop}&installed=true&success=true`);
     
   } catch (error) {
     console.error('❌ Error in OAuth callback:', error.message);
     
     // Redirect to error page or show error message
     const shop = req.query.shop || 'unknown';
-    const appUrl = process.env.APP_URL || 'http://localhost:3001';
-    res.redirect(`${appUrl}?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+    const adminUrl = process.env.ADMIN_URL || 'https://bidly-auction-admin.onrender.com';
+    res.redirect(`${adminUrl}?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
   }
 };
 
