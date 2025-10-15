@@ -71,22 +71,11 @@ const AppBridgeWrapper = ({ children }) => {
           idToken: idToken
         });
       } else {
-        // Fallback to backend configuration
-        const response = await fetch(`https://bidly-auction-backend.onrender.com/app-bridge/config?shop=${shop}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to get app configuration');
-        }
-
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to initialize app');
-        }
-
+        // Fallback to hardcoded configuration (bypass backend for now)
+        console.log('🔧 Using hardcoded App Bridge config for shop:', shop);
         setAppBridgeConfig({
-          apiKey: data.config.apiKey,
-          shopOrigin: data.config.shopOrigin,
+          apiKey: '4d6fd182c13268701d61dc45f76c735e', // New client ID
+          shopOrigin: `https://${shop}`,
           forceRedirect: true
         });
       }
