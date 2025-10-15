@@ -172,6 +172,28 @@ const Dashboard = ({ onLogout }) => {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const handleViewCustomerDashboard = () => {
+    // Get current shop information
+    const currentShop = shopInfo.shop;
+    
+    if (!currentShop) {
+      setToastMessage('Unable to determine store information');
+      setToastError(true);
+      setShowToast(true);
+      return;
+    }
+
+    // Generate customer dashboard URL with shop parameter
+    const customerUrl = `https://bidly-auction-customer.onrender.com?shop=${currentShop}`;
+    
+    // Open in new tab
+    window.open(customerUrl, '_blank');
+    
+    setToastMessage('Opening customer dashboard in new tab');
+    setToastError(false);
+    setShowToast(true);
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -202,6 +224,10 @@ const Dashboard = ({ onLogout }) => {
           onAction: handleCreateAuction
         }}
         secondaryActions={[
+          {
+            content: 'View Customer Dashboard',
+            onAction: handleViewCustomerDashboard
+          },
           {
             content: 'Refresh',
             onAction: handleRefresh

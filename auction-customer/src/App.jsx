@@ -31,6 +31,19 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authRequired, setAuthRequired] = useState(false);
 
+  // Get shop information from URL parameters
+  const getShopInfo = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shop = urlParams.get('shop');
+    if (shop) {
+      const shopName = shop.replace('.myshopify.com', '');
+      return { shop, shopName };
+    }
+    return { shop: null, shopName: null };
+  };
+
+  const { shop, shopName } = getShopInfo();
+
   useEffect(() => {
     // Initialize customer authentication
     if (customerAuthService.isAuthenticated()) {
@@ -341,8 +354,8 @@ function App() {
     <AppProvider>
       <Frame>
         <Page 
-          title="Auction Marketplace" 
-          subtitle="Browse pending, active, and ended auctions"
+          title={`Auction Marketplace${shopName ? ` - ${shopName}` : ''}`}
+          subtitle={shopName ? `Browse auctions from ${shopName}` : "Browse pending, active, and ended auctions"}
           primaryAction={{
             content: 'Refresh',
             onAction: handleRefresh
@@ -354,8 +367,13 @@ function App() {
             }
           ]}
         >
-          {/* Connection Status Indicator */}
+          {/* Shop Information and Connection Status */}
           <div style={{ marginBottom: '1rem' }}>
+            {shopName && (
+              <Banner status="info">
+                <Text variant="bodyMd">🏪 Viewing auctions from <strong>{shopName}</strong></Text>
+              </Banner>
+            )}
             {connectionStatus === 'connected' && (
               <Banner status="success">
                 <Text variant="bodyMd">🟢 Connected to live updates</Text>
