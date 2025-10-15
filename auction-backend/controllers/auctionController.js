@@ -31,7 +31,9 @@ export const createAuction = async (req, res, next) => {
     // Fetch product data from Shopify
     let productData = null;
     try {
-      productData = await getShopifyService().getProduct(shopifyProductId);
+      // For now, use the default shop domain. In a multi-store setup, this would come from the request context
+      const shopDomain = 'ezza-auction.myshopify.com';
+      productData = await getShopifyService().getProduct(shopDomain, shopifyProductId);
     } catch (shopifyError) {
       console.warn(`Failed to fetch Shopify product ${shopifyProductId}:`, shopifyError.message);
       // Continue without product data - auction can still be created
@@ -215,24 +217,47 @@ export const updateAuction = async (req, res, next) => {
 // Delete auction
 export const deleteAuction = async (req, res, next) => {
   try {
+    console.log('🗑️ Delete auction request:', {
+      auctionId: req.params.id,
+      method: req.method,
+      url: req.url,
+      params: req.params
+    });
+    
+    // Check if ID is provided
+    if (!req.params.id || req.params.id === 'undefined') {
+      throw new AppError('Auction ID is required', 400);
+    }
+    
     const auction = await Auction.findById(req.params.id);
     
     if (!auction) {
+      console.log('❌ Auction not found:', req.params.id);
       throw new AppError('Auction not found', 404);
     }
     
-    // Prevent deletion if auction has bids
+    console.log('📦 Found auction to delete:', {
+      id: auction._id,
+      productId: auction.shopifyProductId,
+      bidCount: auction.bidHistory.length,
+      status: auction.status
+    });
+    
+    // Allow deletion but warn if auction has bids
     if (auction.bidHistory.length > 0) {
-      throw new AppError('Cannot delete auction with existing bids', 400);
+      console.log(`⚠️ Deleting auction with ${auction.bidHistory.length} bids: ${auction._id}`);
     }
     
     await Auction.findByIdAndDelete(req.params.id);
+    
+    console.log('✅ Auction deleted successfully:', req.params.id);
     
     res.json({
       success: true,
       message: 'Auction deleted successfully'
     });
   } catch (error) {
+    console.error('❌ Delete auction error:', error.message);
     next(error);
   }
 };

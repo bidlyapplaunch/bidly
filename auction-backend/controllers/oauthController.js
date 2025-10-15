@@ -1,0 +1,270 @@
+import shopifyOAuthService from '../services/shopifyOAuthService.js';
+import Store from '../models/Store.js';
+import { AppError } from '../middleware/errorHandler.js';
+
+/**
+ * OAuth Controller
+ * Handles Shopify OAuth flow for app installation and authentication
+ * This controller manages the complete OAuth process from installation to token storage
+ */
+
+/**
+ * Initiate OAuth flow - redirect store owner to Shopify for app installation
+ * This is the entry point when a store owner wants to install your app
+ * GET /auth/shopify/install?shop=store.myshopify.com
+ */
+export const initiateOAuth = async (req, res, next) => {
+  try {
+    // Initialize OAuth service to ensure environment variables are loaded
+    shopifyOAuthService.initialize();
+    
+    const { shop } = req.query;
+    
+    // Validate shop parameter
+    if (!shop) {
+      throw new AppError('Shop parameter is required', 400);
+    }
+
+    // Validate shop domain format
+    const shopDomainRegex = /^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com$/;
+    if (!shopDomainRegex.test(shop)) {
+      throw new AppError('Invalid shop domain format', 400);
+    }
+
+    console.log('🚀 Initiating OAuth for shop:', shop);
+
+    // Check if store is already installed
+    const existingStore = await Store.findByDomain(shop);
+    if (existingStore && existingStore.isInstalled) {
+      console.log('✅ Store already installed, redirecting to app');
+      // Store is already installed, redirect to the admin dashboard
+      return res.redirect(`http://localhost:3001?shop=${shop}&installed=true`);
+    }
+
+    // Generate a random state parameter for security
+    const state = shopifyOAuthService.generateState();
+    
+    // Store the state temporarily (in production, use Redis or similar)
+    // For now, we'll include it in the redirect URL
+    const authUrl = shopifyOAuthService.generateAuthUrl(shop, state);
+    
+    console.log('🔗 Redirecting to Shopify OAuth:', authUrl);
+    
+    // Redirect the store owner to Shopify's OAuth page
+    res.redirect(authUrl);
+    
+  } catch (error) {
+    console.error('❌ Error initiating OAuth:', error.message);
+    next(error);
+  }
+};
+
+/**
+ * Handle OAuth callback from Shopify
+ * This is where Shopify redirects back after the store owner approves the app
+ * GET /auth/shopify/callback?code=...&state=...&shop=...
+ */
+export const handleOAuthCallback = async (req, res, next) => {
+  try {
+    // Initialize OAuth service to ensure environment variables are loaded
+    shopifyOAuthService.initialize();
+    
+    const { code, state, shop, hmac } = req.query;
+    
+    console.log('🔄 Processing OAuth callback for shop:', shop);
+    console.log('  - Code present:', !!code);
+    console.log('  - State present:', !!state);
+    console.log('  - HMAC present:', !!hmac);
+
+    // Validate required parameters
+    if (!code || !shop) {
+      throw new AppError('Missing required OAuth parameters', 400);
+    }
+
+    // Verify HMAC signature for security
+    if (!shopifyOAuthService.verifyHmac(req.query)) {
+      throw new AppError('Invalid HMAC signature', 401);
+    }
+
+    // Exchange authorization code for access token
+    const tokenData = await shopifyOAuthService.exchangeCodeForToken(shop, code, state);
+    
+    // Get additional shop information
+    const shopInfo = await shopifyOAuthService.getShopInfo(shop, tokenData.accessToken);
+    
+    console.log('🏪 Shop info retrieved:', {
+      name: shopInfo.name,
+      domain: shopInfo.domain,
+      plan: shopInfo.planName
+    });
+
+    // Check if store already exists
+    let store = await Store.findByDomain(shop);
+    
+    if (store) {
+      // Update existing store with new token
+      console.log('🔄 Updating existing store:', shop);
+      store.accessToken = tokenData.accessToken;
+      store.scope = tokenData.scope;
+      store.isInstalled = true;
+      store.installedAt = new Date();
+      
+      // Update shop info
+      store.storeName = shopInfo.name;
+      store.storeEmail = shopInfo.email;
+      store.currency = shopInfo.currency;
+      store.timezone = shopInfo.timezone;
+      store.planName = shopInfo.planName;
+      
+      await store.save();
+    } else {
+      // Create new store record
+      console.log('🆕 Creating new store record:', shop);
+      store = new Store({
+        shopDomain: shop,
+        shopifyStoreId: shopInfo.id,
+        storeName: shopInfo.name,
+        storeEmail: shopInfo.email,
+        currency: shopInfo.currency,
+        timezone: shopInfo.timezone,
+        planName: shopInfo.planName,
+        accessToken: tokenData.accessToken,
+        scope: tokenData.scope,
+        isInstalled: true,
+        installedAt: new Date(),
+        lastAccessAt: new Date()
+      });
+      
+      await store.save();
+    }
+
+    console.log('✅ OAuth flow completed successfully for shop:', shop);
+    
+    // Redirect to the admin dashboard with success message
+    // Redirect to your admin frontend (assuming it's running on port 3001)
+    res.redirect(`http://localhost:3001?shop=${shop}&installed=true&success=true`);
+    
+  } catch (error) {
+    console.error('❌ Error in OAuth callback:', error.message);
+    
+    // Redirect to error page or show error message
+    const shop = req.query.shop || 'unknown';
+    res.redirect(`http://localhost:3001?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+  }
+};
+
+/**
+ * Uninstall webhook handler
+ * This is called by Shopify when a store uninstalls your app
+ * POST /webhooks/shopify/uninstall
+ */
+export const handleUninstall = async (req, res, next) => {
+  try {
+    const { shop_domain } = req.body;
+    
+    console.log('🗑️ Processing uninstall for shop:', shop_domain);
+    
+    if (!shop_domain) {
+      throw new AppError('Shop domain is required', 400);
+    }
+
+    // Find and mark store as uninstalled
+    const store = await Store.findByDomain(shop_domain);
+    if (store) {
+      store.isInstalled = false;
+      await store.save();
+      console.log('✅ Store marked as uninstalled:', shop_domain);
+    } else {
+      console.log('⚠️ Store not found for uninstall:', shop_domain);
+    }
+
+    // Always return 200 to acknowledge webhook
+    res.status(200).json({ success: true, message: 'Uninstall processed' });
+    
+  } catch (error) {
+    console.error('❌ Error processing uninstall:', error.message);
+    // Still return 200 to prevent Shopify from retrying
+    res.status(200).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * Get current store information
+ * This endpoint provides information about the currently authenticated store
+ * GET /auth/shopify/store
+ */
+export const getCurrentStore = async (req, res, next) => {
+  try {
+    const { shop } = req.query;
+    
+    if (!shop) {
+      throw new AppError('Shop parameter is required', 400);
+    }
+
+    const store = await Store.findByDomain(shop);
+    
+    if (!store || !store.isInstalled) {
+      throw new AppError('Store not found or not installed', 404);
+    }
+
+    // Update last access time
+    await store.updateLastAccess();
+
+    console.log('📊 Returning store info for:', shop);
+    
+    res.json({
+      success: true,
+      data: {
+        id: store._id,
+        shopDomain: store.shopDomain,
+        storeName: store.storeName,
+        storeEmail: store.storeEmail,
+        currency: store.currency,
+        timezone: store.timezone,
+        planName: store.planName,
+        isInstalled: store.isInstalled,
+        installedAt: store.installedAt,
+        lastAccessAt: store.lastAccessAt,
+        settings: store.settings,
+        stats: store.stats
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error getting store info:', error.message);
+    next(error);
+  }
+};
+
+/**
+ * Check if store is installed
+ * This endpoint checks if a store has completed the OAuth flow
+ * GET /auth/shopify/status?shop=store.myshopify.com
+ */
+export const checkInstallationStatus = async (req, res, next) => {
+  try {
+    const { shop } = req.query;
+    
+    if (!shop) {
+      throw new AppError('Shop parameter is required', 400);
+    }
+
+    const store = await Store.findByDomain(shop);
+    const isInstalled = store && store.isInstalled;
+    
+    console.log('🔍 Installation status for', shop, ':', isInstalled ? 'Installed' : 'Not installed');
+    
+    res.json({
+      success: true,
+      data: {
+        shop: shop,
+        isInstalled: isInstalled,
+        installedAt: store?.installedAt || null
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error checking installation status:', error.message);
+    next(error);
+  }
+};

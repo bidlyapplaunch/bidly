@@ -159,11 +159,25 @@ export const validateBuyNow = [
   handleValidationErrors
 ];
 
-// ID parameter validation
+// ID parameter validation (for MongoDB ObjectIds)
 export const validateId = [
   param('id')
+    .notEmpty()
+    .withMessage('Auction ID is required')
     .isMongoId()
-    .withMessage('Invalid auction ID'),
+    .withMessage('Invalid auction ID format'),
+  
+  handleValidationErrors
+];
+
+// Shopify Product ID validation
+export const validateShopifyProductId = [
+  param('productId')
+    .notEmpty()
+    .withMessage('Product ID is required')
+    .isString()
+    .withMessage('Product ID must be a string')
+    .trim(),
   
   handleValidationErrors
 ];

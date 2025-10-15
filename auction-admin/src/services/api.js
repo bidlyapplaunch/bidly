@@ -124,75 +124,85 @@ export const auctionAPI = {
 // Shopify API endpoints
 export const shopifyAPI = {
   // Product operations
-  searchProducts: async (query, limit = 10) => {
+  searchProducts: async (query, limit = 10, shop = 'ezza-auction.myshopify.com') => {
     const response = await api.get('/shopify/products/search', {
-      params: { q: query, limit }
+      params: { q: query, limit, shop }
     });
     return response.data.data; // Return the actual products array
   },
 
-  getProductSuggestions: async (query, limit = 20) => {
+  getProductSuggestions: async (query, limit = 20, shop = 'ezza-auction.myshopify.com') => {
     const response = await api.get('/shopify/products/suggestions', {
-      params: { q: query, limit }
+      params: { q: query, limit, shop }
     });
     return response.data;
   },
 
-  getProduct: async (productId) => {
-    const response = await api.get(`/shopify/products/${productId}`);
+  getProduct: async (productId, shop = 'ezza-auction.myshopify.com') => {
+    const response = await api.get(`/shopify/products/${productId}`, {
+      params: { shop }
+    });
     return response.data;
   },
 
-  getAllProducts: async (limit = 50, pageInfo = null) => {
-    const params = { limit };
+  getAllProducts: async (limit = 50, pageInfo = null, shop = 'ezza-auction.myshopify.com') => {
+    const params = { limit, shop };
     if (pageInfo) params.page_info = pageInfo;
     const response = await api.get('/shopify/products', { params });
     return response.data;
   },
 
-  validateProduct: async (productId) => {
-    const response = await api.get(`/shopify/products/${productId}/validate`);
+  validateProduct: async (productId, shop = 'ezza-auction.myshopify.com') => {
+    const response = await api.get(`/shopify/products/${productId}/validate`, {
+      params: { shop }
+    });
     return response.data;
   },
 
-  getProductInventory: async (productId) => {
-    const response = await api.get(`/shopify/products/${productId}/inventory`);
+  getProductInventory: async (productId, shop = 'ezza-auction.myshopify.com') => {
+    const response = await api.get(`/shopify/products/${productId}/inventory`, {
+      params: { shop }
+    });
     return response.data;
   },
 
-  getProducts: async (productIds) => {
-    const response = await api.post('/shopify/products/batch', { productIds });
+  getProducts: async (productIds, shop = 'ezza-auction.myshopify.com') => {
+    const response = await api.post('/shopify/products/batch', { productIds, shop });
     return response.data;
   },
 
-  getProductByHandle: async (handle) => {
-    const response = await api.get(`/shopify/products/handle/${handle}`);
+  getProductByHandle: async (handle, shop = 'ezza-auction.myshopify.com') => {
+    const response = await api.get(`/shopify/products/handle/${handle}`, {
+      params: { shop }
+    });
     return response.data;
   },
 
-  getProductsByVendor: async (vendor, limit = 50) => {
+  getProductsByVendor: async (vendor, limit = 50, shop = 'ezza-auction.myshopify.com') => {
     const response = await api.get(`/shopify/products/vendor/${vendor}`, {
-      params: { limit }
+      params: { limit, shop }
     });
     return response.data;
   },
 
-  getProductsByType: async (productType, limit = 50) => {
+  getProductsByType: async (productType, limit = 50, shop = 'ezza-auction.myshopify.com') => {
     const response = await api.get(`/shopify/products/type/${productType}`, {
+      params: { limit, shop }
+    });
+    return response.data;
+  },
+
+  getProductsByTags: async (tags, limit = 50, shop = 'ezza-auction.myshopify.com') => {
+    const response = await api.post('/shopify/products/tags', { tags, shop }, {
       params: { limit }
     });
     return response.data;
   },
 
-  getProductsByTags: async (tags, limit = 50) => {
-    const response = await api.post('/shopify/products/tags', { tags }, {
-      params: { limit }
+  getServiceStatus: async (shop = 'ezza-auction.myshopify.com') => {
+    const response = await api.get('/shopify/status', {
+      params: { shop }
     });
-    return response.data;
-  },
-
-  getServiceStatus: async () => {
-    const response = await api.get('/shopify/status');
     return response.data;
   }
 };

@@ -79,7 +79,18 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   const handleDelete = async () => {
     try {
-      await auctionAPI.deleteAuction(selectedAuction.id);
+      console.log('🗑️ Delete auction debug:', {
+        selectedAuction,
+        auctionId: selectedAuction?.id,
+        auctionIdAlt: selectedAuction?._id
+      });
+      
+      const auctionId = selectedAuction?.id || selectedAuction?._id;
+      if (!auctionId) {
+        throw new Error('No auction ID found');
+      }
+      
+      await auctionAPI.deleteAuction(auctionId);
       setToastMessage('Auction deleted successfully');
       setShowToast(true);
       setDeleteModalOpen(false);

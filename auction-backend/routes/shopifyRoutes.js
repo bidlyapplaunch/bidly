@@ -14,30 +14,31 @@ import {
   getServiceStatus,
   testShopifyConnection
 } from '../controllers/shopifyController.js';
-import { validateId } from '../middleware/validation.js';
+import { validateId, validateShopifyProductId } from '../middleware/validation.js';
+import { identifyStore, optionalStoreIdentification } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
-// Service status
-router.get('/status', getServiceStatus);
+// Service status - requires store context
+router.get('/status', identifyStore, getServiceStatus);
 
-// Test endpoint
-router.get('/test', testShopifyConnection);
+// Test endpoint - requires store context
+router.get('/test', identifyStore, testShopifyConnection);
 
-// Direct search route for convenience
-router.get('/search', searchProducts);
+// Direct search route for convenience - requires store context
+router.get('/search', identifyStore, searchProducts);
 
-// Product operations
-router.get('/products/search', searchProducts);
-router.get('/products/suggestions', getProductSuggestions);
-router.get('/products', getAllProducts);
-router.get('/products/:productId', validateId, getProduct);
-router.get('/products/:productId/validate', validateId, validateProduct);
-router.get('/products/:productId/inventory', validateId, getProductInventory);
-router.get('/products/handle/:handle', getProductByHandle);
-router.get('/products/vendor/:vendor', getProductsByVendor);
-router.get('/products/type/:productType', getProductsByType);
-router.post('/products/batch', getProducts);
-router.post('/products/tags', getProductsByTags);
+// Product operations - all require store context
+router.get('/products/search', identifyStore, searchProducts);
+router.get('/products/suggestions', identifyStore, getProductSuggestions);
+router.get('/products', identifyStore, getAllProducts);
+router.get('/products/:productId', identifyStore, validateShopifyProductId, getProduct);
+router.get('/products/:productId/validate', identifyStore, validateShopifyProductId, validateProduct);
+router.get('/products/:productId/inventory', identifyStore, validateShopifyProductId, getProductInventory);
+router.get('/products/handle/:handle', identifyStore, getProductByHandle);
+router.get('/products/vendor/:vendor', identifyStore, getProductsByVendor);
+router.get('/products/type/:productType', identifyStore, getProductsByType);
+router.post('/products/batch', identifyStore, getProducts);
+router.post('/products/tags', identifyStore, getProductsByTags);
 
 export default router;

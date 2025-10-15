@@ -11,6 +11,7 @@ import auctionRoutes from './routes/auctionRoutes.js';
 import shopifyRoutes from './routes/shopifyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import oauthRoutes from './routes/oauthRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 // Load environment variables
@@ -65,6 +66,10 @@ app.use('/api/auctions', auctionRoutes);
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
+
+// OAuth routes for Shopify app installation
+app.use('/auth/shopify', oauthRoutes);
+app.use('/webhooks/shopify', oauthRoutes);
 
 // 404 handler
 app.use(notFound);

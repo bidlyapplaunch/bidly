@@ -1,44 +1,92 @@
 import axios from 'axios';
+import Store from '../models/Store.js';
 
+/**
+ * Enhanced Shopify Service with OAuth Support
+ * This service now works with store-specific access tokens from the OAuth flow
+ * Each store has its own token stored in the database
+ */
 class ShopifyService {
   constructor() {
-    this.shopDomain = process.env.SHOPIFY_SHOP_DOMAIN;
-    this.accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
     this.apiVersion = '2024-10';
     
-    console.log('🔧 ShopifyService Debug:');
-    console.log('  - shopDomain:', this.shopDomain);
-    console.log('  - accessToken:', this.accessToken ? 'Present' : 'Missing');
-    console.log('  - apiVersion:', this.apiVersion);
+    console.log('🔧 ShopifyService initialized with OAuth support');
+    console.log('  - API Version:', this.apiVersion);
+    console.log('  - Mode: Store-specific tokens (OAuth)');
+  }
+
+  /**
+   * Create an authenticated client for a specific store
+   * This method creates a new axios client with the store's access token
+   * @param {string} shopDomain - The shop's domain
+   * @param {string} accessToken - The store's access token
+   * @returns {Object} Configured axios client
+   */
+  createClient(shopDomain, accessToken) {
+    const cleanDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
     
-    if (!this.shopDomain || !this.accessToken) {
-      console.warn('❌ Shopify credentials not configured. Product data fetching will be disabled.');
-      this.client = null;
-    } else {
-      console.log('✅ Shopify credentials found, creating API client...');
-      this.client = axios.create({
-        baseURL: `https://${this.shopDomain}/admin/api/${this.apiVersion}`,
-        headers: {
-          'X-Shopify-Access-Token': this.accessToken,
-          'Content-Type': 'application/json',
-        },
-      });
-      console.log('✅ Shopify API client created');
+    return axios.create({
+      baseURL: `https://${cleanDomain}/admin/api/${this.apiVersion}`,
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
+  /**
+   * Get store information and create authenticated client
+   * This is the main method to get a working client for a specific store
+   * @param {string} shopDomain - The shop's domain
+   * @returns {Object} Object with client and store info
+   */
+  async getStoreClient(shopDomain) {
+    try {
+      console.log('🏪 Getting store client for:', shopDomain);
+      
+      // Find the store in the database
+      const store = await Store.findByDomain(shopDomain);
+      
+      if (!store || !store.isInstalled) {
+        throw new Error(`Store ${shopDomain} not found or not installed`);
+      }
+
+      // Get the access token (this method handles security)
+      const accessToken = store.getAccessToken();
+      
+      if (!accessToken) {
+        throw new Error(`No access token found for store ${shopDomain}`);
+      }
+
+      // Create and return the authenticated client
+      const client = this.createClient(shopDomain, accessToken);
+      
+      console.log('✅ Store client created for:', shopDomain);
+      
+      return {
+        client,
+        store,
+        shopDomain: store.shopDomain,
+        accessToken
+      };
+      
+    } catch (error) {
+      console.error('❌ Error getting store client:', error.message);
+      throw error;
     }
   }
 
   /**
-   * Fetch a single product by ID
+   * Fetch a single product by ID for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {string} productId - Shopify product ID
    * @returns {Object} Product data with title, images, and price
    */
-  async getProduct(productId) {
-    if (!this.client) {
-      throw new Error('Shopify service not configured');
-    }
-    
+  async getProduct(shopDomain, productId) {
     try {
-      const response = await this.client.get(`/products/${productId}.json`);
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      const response = await client.get(`/products/${productId}.json`);
       const product = response.data.product;
       
       return this.formatProductData(product);
@@ -49,13 +97,14 @@ class ShopifyService {
   }
 
   /**
-   * Fetch multiple products by IDs
+   * Fetch multiple products by IDs for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {Array} productIds - Array of Shopify product IDs
    * @returns {Array} Array of formatted product data
    */
-  async getProducts(productIds) {
+  async getProducts(shopDomain, productIds) {
     try {
-      const promises = productIds.map(id => this.getProduct(id));
+      const promises = productIds.map(id => this.getProduct(shopDomain, id));
       const products = await Promise.all(promises);
       return products;
     } catch (error) {
@@ -65,24 +114,21 @@ class ShopifyService {
   }
 
   /**
-   * Search products by title or handle
+   * Search products by title or handle for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {string} query - Search query
    * @param {number} limit - Number of results to return (default: 10)
    * @returns {Array} Array of matching products
    */
-  async searchProducts(query, limit = 10) {
-    if (!this.client) {
-      console.log('Shopify service not configured, returning mock data for:', query);
-      // Return mock data for development
-      return this.getMockProducts(query, limit);
-    }
-
+  async searchProducts(shopDomain, query, limit = 10) {
     try {
+      const { client } = await this.getStoreClient(shopDomain);
+      
       // Shopify REST API doesn't support text search directly
       // We need to fetch products and filter them client-side
-      console.log(`🔍 Searching for: "${query}"`);
+      console.log(`🔍 Searching for: "${query}" in store: ${shopDomain}`);
       
-      const response = await this.client.get('/products.json', {
+      const response = await client.get('/products.json', {
         params: {
           limit: 250, // Get more products to search through
         },
@@ -93,25 +139,40 @@ class ShopifyService {
       
       // Filter products based on query
       const searchQuery = query.toLowerCase();
+      console.log(`🔍 Search query: "${searchQuery}"`);
+      
       const filteredProducts = allProducts.filter(product => {
         const title = product.title?.toLowerCase() || '';
         const body = product.body_html?.toLowerCase() || '';
         const tags = product.tags?.toLowerCase() || '';
         const vendor = product.vendor?.toLowerCase() || '';
         
-        return title.includes(searchQuery) || 
+        const matches = title.includes(searchQuery) || 
                body.includes(searchQuery) || 
                tags.includes(searchQuery) || 
                vendor.includes(searchQuery);
+        
+        if (matches) {
+          console.log(`✅ Match found: "${product.title}" (title: "${title}", vendor: "${vendor}")`);
+        }
+        
+        return matches;
       });
       
-      console.log(`✅ Found ${filteredProducts.length} matching products`);
+      console.log(`✅ Found ${filteredProducts.length} matching products out of ${allProducts.length} total`);
       
       // Take only the requested limit
       const limitedProducts = filteredProducts.slice(0, limit);
       return limitedProducts.map(product => this.formatProductData(product));
     } catch (error) {
       console.error('Error searching products:', error.response?.data || error.message);
+      
+      // If store is not found or not installed, return mock data
+      if (error.message.includes('not found') || error.message.includes('not installed')) {
+        console.log('Store not found, returning mock data for:', query);
+        return this.getMockProducts(query, limit);
+      }
+      
       throw new Error(`Failed to search products: ${error.response?.data?.errors || error.message}`);
     }
   }
@@ -206,19 +267,22 @@ class ShopifyService {
   }
 
   /**
-   * Get all products with pagination
+   * Get all products with pagination for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {number} limit - Number of products per page (default: 50)
    * @param {string} pageInfo - Pagination cursor (optional)
    * @returns {Object} Object with products array and pagination info
    */
-  async getAllProducts(limit = 50, pageInfo = null) {
+  async getAllProducts(shopDomain, limit = 50, pageInfo = null) {
     try {
+      const { client } = await this.getStoreClient(shopDomain);
+      
       const params = { limit };
       if (pageInfo) {
         params.page_info = pageInfo;
       }
 
-      const response = await this.client.get('/products.json', { params });
+      const response = await client.get('/products.json', { params });
       const products = response.data.products;
       const pagination = this.extractPaginationInfo(response.headers);
 
@@ -327,13 +391,14 @@ class ShopifyService {
   }
 
   /**
-   * Validate if a product ID exists in Shopify
+   * Validate if a product ID exists in Shopify for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {string} productId - Shopify product ID
    * @returns {boolean} True if product exists
    */
-  async validateProduct(productId) {
+  async validateProduct(shopDomain, productId) {
     try {
-      await this.getProduct(productId);
+      await this.getProduct(shopDomain, productId);
       return true;
     } catch (error) {
       return false;
@@ -341,13 +406,16 @@ class ShopifyService {
   }
 
   /**
-   * Get product inventory information
+   * Get product inventory information for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {string} productId - Shopify product ID
    * @returns {Object} Inventory data
    */
-  async getProductInventory(productId) {
+  async getProductInventory(shopDomain, productId) {
     try {
-      const response = await this.client.get(`/products/${productId}.json`);
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      const response = await client.get(`/products/${productId}.json`);
       const product = response.data.product;
       
       if (!product.variants || product.variants.length === 0) {
@@ -375,23 +443,39 @@ class ShopifyService {
   }
 
   /**
-   * Get product suggestions for autocomplete
+   * Get product suggestions for autocomplete for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {string} query - Search query
    * @param {number} limit - Number of suggestions
    * @returns {Array} Array of product suggestions
    */
-  async getProductSuggestions(query, limit = 20) {
+  async getProductSuggestions(shopDomain, query, limit = 20) {
     try {
-      const response = await this.client.get('/products.json', {
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      // Fetch all products and filter client-side (same as search)
+      const response = await client.get('/products.json', {
         params: {
-          title: query,
-          limit: limit,
+          limit: 250, // Get more products to search through
           fields: 'id,title,handle,images,variants,vendor,product_type',
         },
       });
       
-      const products = response.data.products;
-      return products.map(product => ({
+      const allProducts = response.data.products;
+      const searchQuery = query.toLowerCase();
+      
+      // Filter products based on query
+      const filteredProducts = allProducts.filter(product => {
+        const title = product.title?.toLowerCase() || '';
+        const vendor = product.vendor?.toLowerCase() || '';
+        
+        return title.includes(searchQuery) || vendor.includes(searchQuery);
+      });
+      
+      // Take only the requested limit
+      const limitedProducts = filteredProducts.slice(0, limit);
+      
+      return limitedProducts.map(product => ({
         id: product.id.toString(),
         title: product.title,
         handle: product.handle,
@@ -417,13 +501,16 @@ class ShopifyService {
   }
 
   /**
-   * Get product by handle (URL-friendly identifier)
+   * Get product by handle (URL-friendly identifier) for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @param {string} handle - Product handle
    * @returns {Object} Product data
    */
-  async getProductByHandle(handle) {
+  async getProductByHandle(shopDomain, handle) {
     try {
-      const response = await this.client.get('/products.json', {
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      const response = await client.get('/products.json', {
         params: { handle: handle }
       });
       
@@ -445,9 +532,11 @@ class ShopifyService {
    * @param {number} limit - Number of results
    * @returns {Array} Array of products
    */
-  async getProductsByVendor(vendor, limit = 50) {
+  async getProductsByVendor(shopDomain, vendor, limit = 50) {
     try {
-      const response = await this.client.get('/products.json', {
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      const response = await client.get('/products.json', {
         params: {
           vendor: vendor,
           limit: limit,
@@ -468,9 +557,11 @@ class ShopifyService {
    * @param {number} limit - Number of results
    * @returns {Array} Array of products
    */
-  async getProductsByType(productType, limit = 50) {
+  async getProductsByType(shopDomain, productType, limit = 50) {
     try {
-      const response = await this.client.get('/products.json', {
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      const response = await client.get('/products.json', {
         params: {
           product_type: productType,
           limit: limit,
@@ -491,10 +582,12 @@ class ShopifyService {
    * @param {number} limit - Number of results
    * @returns {Array} Array of products
    */
-  async getProductsByTags(tags, limit = 50) {
+  async getProductsByTags(shopDomain, tags, limit = 50) {
     try {
+      const { client } = await this.getStoreClient(shopDomain);
+      
       const tagQuery = tags.join(',');
-      const response = await this.client.get('/products.json', {
+      const response = await client.get('/products.json', {
         params: {
           tags: tagQuery,
           limit: limit,
@@ -510,25 +603,101 @@ class ShopifyService {
   }
 
   /**
-   * Check if Shopify service is properly configured
-   * @returns {boolean} True if configured
+   * Check if a specific store is properly configured
+   * @param {string} shopDomain - The shop's domain
+   * @returns {boolean} True if store is installed and configured
    */
-  isConfigured() {
-    return !!(this.shopDomain && this.accessToken);
+  async isStoreConfigured(shopDomain) {
+    try {
+      const store = await Store.findByDomain(shopDomain);
+      return !!(store && store.isInstalled && store.accessToken);
+    } catch (error) {
+      console.error('Error checking store configuration:', error.message);
+      return false;
+    }
   }
 
   /**
-   * Get service configuration status
+   * Get service configuration status for a specific store
+   * @param {string} shopDomain - The shop's domain
    * @returns {Object} Configuration status
    */
-  getConfigStatus() {
-    return {
-      configured: this.isConfigured(),
-      shopDomain: this.shopDomain || 'mock-shop.myshopify.com',
-      hasAccessToken: !!this.accessToken,
-      apiVersion: this.apiVersion,
-      mockMode: !this.isConfigured(),
-    };
+  async getStoreConfigStatus(shopDomain) {
+    try {
+      const store = await Store.findByDomain(shopDomain);
+      
+      if (!store) {
+        return {
+          configured: false,
+          shopDomain: shopDomain,
+          hasAccessToken: false,
+          isInstalled: false,
+          apiVersion: this.apiVersion,
+          mockMode: true,
+          error: 'Store not found'
+        };
+      }
+
+      return {
+        configured: store.isInstalled && !!store.accessToken,
+        shopDomain: store.shopDomain,
+        storeName: store.storeName,
+        hasAccessToken: !!store.accessToken,
+        isInstalled: store.isInstalled,
+        apiVersion: this.apiVersion,
+        mockMode: !store.isInstalled || !store.accessToken,
+        installedAt: store.installedAt,
+        lastAccessAt: store.lastAccessAt
+      };
+    } catch (error) {
+      console.error('Error getting store config status:', error.message);
+      return {
+        configured: false,
+        shopDomain: shopDomain,
+        hasAccessToken: false,
+        isInstalled: false,
+        apiVersion: this.apiVersion,
+        mockMode: true,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Test connection to a specific store
+   * @param {string} shopDomain - The shop's domain
+   * @returns {Object} Test result
+   */
+  async testStoreConnection(shopDomain) {
+    try {
+      const { client, store } = await this.getStoreClient(shopDomain);
+      
+      // Test the connection by fetching shop info
+      const response = await client.get('/shop.json');
+      const shopInfo = response.data.shop;
+      
+      return {
+        success: true,
+        shopDomain: shopDomain,
+        storeName: store.storeName,
+        shopInfo: {
+          name: shopInfo.name,
+          domain: shopInfo.domain,
+          email: shopInfo.email,
+          currency: shopInfo.currency,
+          planName: shopInfo.plan_name
+        },
+        message: 'Connection successful'
+      };
+    } catch (error) {
+      console.error('Error testing store connection:', error.message);
+      return {
+        success: false,
+        shopDomain: shopDomain,
+        error: error.message,
+        message: 'Connection failed'
+      };
+    }
   }
 }
 
