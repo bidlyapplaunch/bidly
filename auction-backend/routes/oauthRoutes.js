@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  handleCustomAppInstall,
   initiateOAuth,
   handleOAuthCallback,
   handleUninstall,
@@ -13,6 +14,11 @@ const router = express.Router();
  * OAuth Routes for Shopify App Installation
  * These routes handle the complete OAuth flow for your Shopify app
  */
+
+// Custom App Installation
+// GET /auth/shopify/install-custom?client_id=...&signature=...&permanent_domain=...
+// This handles custom app installation from Shopify admin
+router.get('/install-custom', handleCustomAppInstall);
 
 // OAuth Installation Flow
 // GET /auth/shopify/install?shop=store.myshopify.com

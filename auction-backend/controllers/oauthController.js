@@ -9,6 +9,73 @@ import { AppError } from '../middleware/errorHandler.js';
  */
 
 /**
+ * Handle custom app installation
+ * This handles the custom app installation flow from Shopify admin
+ * GET /auth/shopify/install-custom?client_id=...&signature=...
+ */
+export const handleCustomAppInstall = async (req, res, next) => {
+  try {
+    const { client_id, signature, permanent_domain } = req.query;
+    
+    console.log('🔧 Custom app installation request:', {
+      client_id,
+      hasSignature: !!signature,
+      permanent_domain
+    });
+    
+    // Validate required parameters
+    if (!client_id || !signature || !permanent_domain) {
+      throw new AppError('Missing required custom app parameters', 400);
+    }
+    
+    // Verify the client_id matches our app
+    if (client_id !== process.env.SHOPIFY_API_KEY) {
+      throw new AppError('Invalid client ID', 400);
+    }
+    
+    // For custom apps, we need to create a store record with a placeholder token
+    // The actual token will be obtained through the standard OAuth flow
+    const shopDomain = `${permanent_domain}.myshopify.com`;
+    
+    console.log('🏪 Processing custom app installation for:', shopDomain);
+    
+    // Check if store already exists
+    let store = await Store.findByDomain(shopDomain);
+    
+    if (store) {
+      // Update existing store
+      store.isInstalled = true;
+      store.installedAt = new Date();
+      await store.save();
+      console.log('✅ Updated existing store for custom app');
+    } else {
+      // Create new store record
+      store = new Store({
+        shopDomain: shopDomain,
+        storeName: permanent_domain,
+        isInstalled: true,
+        installedAt: new Date(),
+        lastAccessAt: new Date(),
+        // Note: accessToken will be set when OAuth completes
+        accessToken: null,
+        scope: 'read_products,read_product_listings,read_orders,write_orders'
+      });
+      
+      await store.save();
+      console.log('✅ Created new store record for custom app');
+    }
+    
+    // Redirect to the app with shop parameter
+    const appUrl = process.env.APP_URL || 'http://localhost:3001';
+    res.redirect(`${appUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
+    
+  } catch (error) {
+    console.error('❌ Error handling custom app installation:', error.message);
+    next(error);
+  }
+};
+
+/**
  * Initiate OAuth flow - redirect store owner to Shopify for app installation
  * This is the entry point when a store owner wants to install your app
  * GET /auth/shopify/install?shop=store.myshopify.com
