@@ -21,14 +21,14 @@ class ShopifyOAuthService {
    */
   get clientId() {
     if (this._clientId === null) {
-      this._clientId = process.env.SHOPIFY_API_KEY;
+      this._clientId = process.env.SHOPIFY_CLIENT_ID || process.env.SHOPIFY_API_KEY;
     }
     return this._clientId;
   }
 
   get clientSecret() {
     if (this._clientSecret === null) {
-      this._clientSecret = process.env.SHOPIFY_API_SECRET;
+      this._clientSecret = process.env.SHOPIFY_CLIENT_SECRET || process.env.SHOPIFY_API_SECRET;
     }
     return this._clientSecret;
   }
