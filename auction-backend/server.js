@@ -131,6 +131,7 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/app-bridge/') || req.path.startsWith('/auth/')) {
     return next();
   }
+  console.log('📁 Serving static file:', req.path, 'from admin frontend');
   express.static(frontendDistPath)(req, res, next);
 });
 
