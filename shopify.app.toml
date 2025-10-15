@@ -2,7 +2,7 @@
 
 name = "bidly-app"
 client_id = "1f94308027df312cd5f038e7fb75cc16"
-application_url = "https://unsynchronous-theresia-indefinite.ngrok-free.dev"
+application_url = "https://bidly-auction-backend.onrender.com"
 embedded = true
 
 [access_scopes]
@@ -11,7 +11,7 @@ scopes = "read_products,read_product_listings,read_orders,write_orders"
 
 [auth]
 redirect_urls = [
-  "https://unsynchronous-theresia-indefinite.ngrok-free.dev/auth/shopify/callback"
+  "https://bidly-auction-backend.onrender.com/auth/shopify/callback"
 ]
 
 [webhooks]

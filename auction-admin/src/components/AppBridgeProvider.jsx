@@ -72,11 +72,7 @@ const AppBridgeWrapper = ({ children }) => {
         });
       } else {
         // Fallback to backend configuration
-        const response = await fetch(`https://unsynchronous-theresia-indefinite.ngrok-free.dev/app-bridge/config?shop=${shop}`, {
-          headers: {
-            'ngrok-skip-browser-warning': 'true'
-          }
-        });
+        const response = await fetch(`https://bidly-auction-backend.onrender.com/app-bridge/config?shop=${shop}`);
 
         if (!response.ok) {
           throw new Error('Failed to get app configuration');

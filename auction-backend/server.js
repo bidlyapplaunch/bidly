@@ -65,17 +65,21 @@ app.use(helmet({
   frameguard: false
 }));
 
-// CORS configuration - Allow all origins for development with ngrok
+// CORS configuration - Production setup for Render
 app.use(cors({
-  origin: true, // Allow all origins for ngrok development
+  origin: [
+    'https://bidly-auction-admin.onrender.com',
+    'https://bidly-auction-customer.onrender.com',
+    'https://admin.shopify.com',
+    'https://*.myshopify.com'
+  ],
   credentials: true,
-  // Additional headers for iframe compatibility and ngrok
+  // Production headers for iframe compatibility
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
     'X-Requested-With', 
-    'X-Shopify-Shop-Domain',
-    'ngrok-skip-browser-warning' // Allow ngrok header
+    'X-Shopify-Shop-Domain'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
