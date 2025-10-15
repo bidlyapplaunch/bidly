@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3002,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://unsynchronous-theresia-indefinite.ngrok-free.dev/',
         changeOrigin: true,
         secure: false,
       }

@@ -8,7 +8,7 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('http://localhost:5000', {
+      this.socket = io('https://unsynchronous-theresia-indefinite.ngrok-free.dev', {
         transports: ['websocket', 'polling']
       });
 

@@ -13,6 +13,10 @@ class AuthService {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password
+      }, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
       });
 
       if (response.data.success) {
@@ -38,6 +42,10 @@ class AuthService {
         email,
         password,
         role
+      }, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
       });
 
       if (response.data.success) {

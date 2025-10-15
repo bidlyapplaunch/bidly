@@ -29,7 +29,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+    origin: true, // Allow all origins for ngrok development
     methods: ['GET', 'POST']
   }
 });
@@ -38,9 +38,9 @@ const PORT = process.env.PORT || 5000;
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration - Allow all origins for development with ngrok
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+  origin: true, // Allow all origins for ngrok development
   credentials: true
 }));
 
