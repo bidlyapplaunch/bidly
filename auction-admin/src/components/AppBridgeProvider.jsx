@@ -59,26 +59,13 @@ const AppBridgeWrapper = ({ children }) => {
         return;
       }
 
-      // For embedded apps, use the parameters directly from Shopify
-      if (embedded === '1' && idToken && host) {
-        console.log('🔐 Using Shopify embedded app authentication');
-        setAppBridgeConfig({
-          apiKey: '1f94308027df312cd5f038e7fb75cc16', // Your API key
-          shopOrigin: `https://${shop}`,
-          forceRedirect: true,
-          // Shopify embedded app specific config
-          host: host,
-          idToken: idToken
-        });
-      } else {
-        // Fallback to hardcoded configuration (bypass backend for now)
-        console.log('🔧 Using hardcoded App Bridge config for shop:', shop);
-        setAppBridgeConfig({
-          apiKey: '4d6fd182c13268701d61dc45f76c735e', // New client ID
-          shopOrigin: `https://${shop}`,
-          forceRedirect: true
-        });
-      }
+      // Always use hardcoded configuration (bypass backend completely)
+      console.log('🔧 Using hardcoded App Bridge config for shop:', shop);
+      setAppBridgeConfig({
+        apiKey: '4d6fd182c13268701d61dc45f76c735e', // New client ID
+        shopOrigin: `https://${shop}`,
+        forceRedirect: true
+      });
 
       console.log('✅ App Bridge initialized for shop:', shop);
       setLoading(false);
