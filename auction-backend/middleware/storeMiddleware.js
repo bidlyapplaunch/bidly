@@ -52,6 +52,12 @@ export const identifyStore = async (req, res, next) => {
     
     if (!shopDomain) {
       console.log('❌ No shop domain found in request');
+      console.log('🔍 Request details:', {
+        query: req.query,
+        headers: req.headers,
+        body: req.body,
+        url: req.url
+      });
       return next(new AppError('Shop domain is required', 400));
     }
     

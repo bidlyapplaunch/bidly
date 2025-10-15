@@ -2,6 +2,12 @@ import axios from 'axios';
 
 const API_BASE_URL = 'https://bidly-auction-backend.onrender.com/api';
 
+// Helper function to get shop from URL parameters
+const getShopFromURL = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('shop') || 'ezza-auction.myshopify.com';
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -9,10 +15,18 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for logging
+// Request interceptor for logging and shop parameter
 api.interceptors.request.use(
   (config) => {
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
+    
+    // Add shop parameter to all requests
+    const shopDomain = getShopFromURL();
+    if (shopDomain && !config.params?.shop) {
+      config.params = { ...config.params, shop: shopDomain };
+      console.log('🏪 Added shop parameter:', shopDomain);
+    }
+    
     return config;
   },
   (error) => {

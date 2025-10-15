@@ -20,12 +20,20 @@ api.interceptors.request.use(
   (config) => {
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`);
     
+    // Add shop parameter to all requests
+    const shopDomain = getShopFromURL();
+    if (shopDomain && !config.params?.shop) {
+      config.params = { ...config.params, shop: shopDomain };
+      console.log('🏪 Added shop parameter:', shopDomain);
+    }
+    
     // Add authentication token if available
     const token = localStorage.getItem('authToken');
     console.log('🔐 Auth Debug:', {
       hasToken: !!token,
       tokenPreview: token ? token.substring(0, 20) + '...' : 'None',
-      url: config.url
+      url: config.url,
+      shop: shopDomain
     });
     
     if (token) {
