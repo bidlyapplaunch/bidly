@@ -3,6 +3,7 @@ import { AppProvider } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
+import AppBridgeProvider from './components/AppBridgeProvider';
 import authService from './services/auth';
 
 function App() {
@@ -34,14 +35,16 @@ function App() {
   if (loading) {
     return (
       <AppProvider>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh' 
-        }}>
-          <div>Loading...</div>
-        </div>
+        <AppBridgeProvider>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            height: '100vh' 
+          }}>
+            <div>Loading...</div>
+          </div>
+        </AppBridgeProvider>
       </AppProvider>
     );
   }
@@ -49,14 +52,18 @@ function App() {
   if (!user) {
     return (
       <AppProvider>
-        <Login onLogin={handleLogin} />
+        <AppBridgeProvider>
+          <Login onLogin={handleLogin} />
+        </AppBridgeProvider>
       </AppProvider>
     );
   }
 
   return (
     <AppProvider>
-      <Dashboard onLogout={handleLogout} />
+      <AppBridgeProvider>
+        <Dashboard onLogout={handleLogout} />
+      </AppBridgeProvider>
     </AppProvider>
   );
 }

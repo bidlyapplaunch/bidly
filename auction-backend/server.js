@@ -3,8 +3,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import connectDB from './config/database.js';
 import Auction from './models/Auction.js';
 import auctionRoutes from './routes/auctionRoutes.js';
@@ -12,6 +18,7 @@ import shopifyRoutes from './routes/shopifyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';
+import appBridgeRoutes from './routes/appBridgeRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 // Load environment variables
@@ -36,14 +43,43 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5000;
 
-// Security middleware
-app.use(helmet());
+// Security middleware - Configured for Shopify embedded apps
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.shopify.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.shopify.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https:", "wss:", "ws:"],
+      fontSrc: ["'self'", "https://cdn.shopify.com"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'self'", "https://admin.shopify.com", "https://*.myshopify.com"],
+      // Allow iframe embedding from Shopify admin
+      frameAncestors: ["'self'", "https://admin.shopify.com", "https://*.myshopify.com"]
+    }
+  },
+  // Disable X-Frame-Options to allow iframe embedding
+  frameguard: false
+}));
 
 // CORS configuration - Allow all origins for development with ngrok
 app.use(cors({
   origin: true, // Allow all origins for ngrok development
-  credentials: true
+  credentials: true,
+  // Additional headers for iframe compatibility
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Shopify-Shop-Domain'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
+
+// Middleware to allow iframe embedding for Shopify admin
+app.use((req, res, next) => {
+  // Allow iframe embedding from Shopify admin domains
+  res.setHeader('X-Frame-Options', 'ALLOWALL');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://admin.shopify.com https://*.myshopify.com");
+  next();
+});
 
 // Logging middleware
 app.use(morgan('combined'));
@@ -70,6 +106,33 @@ app.use('/api/analytics', analyticsRoutes);
 // OAuth routes for Shopify app installation
 app.use('/auth/shopify', oauthRoutes);
 app.use('/webhooks/shopify', oauthRoutes);
+
+// App Bridge routes for embedded app functionality
+app.use('/app-bridge', appBridgeRoutes);
+
+// Serve static files from the admin frontend build
+const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
+console.log('📁 Serving frontend from:', frontendDistPath);
+app.use(express.static(frontendDistPath));
+
+// Shopify embedded app entry point - serve the frontend
+app.get('/', (req, res) => {
+  const { shop, embedded, hmac, host, id_token, session } = req.query;
+  
+  console.log('🏪 Shopify embedded app access:', {
+    shop,
+    embedded,
+    hasHmac: !!hmac,
+    hasHost: !!host,
+    hasIdToken: !!id_token,
+    hasSession: !!session
+  });
+  
+  // Serve the frontend index.html with all parameters preserved
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  console.log('📄 Serving index.html from:', indexPath);
+  res.sendFile(indexPath);
+});
 
 // 404 handler
 app.use(notFound);

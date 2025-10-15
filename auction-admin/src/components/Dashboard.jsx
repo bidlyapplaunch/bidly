@@ -20,18 +20,27 @@ import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
+import AppBridgeToast from './AppBridgeToast';
 import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
 import socketService from '../services/socket';
+import { useAppBridgeActions } from '../hooks/useAppBridge';
 
 const Dashboard = ({ onLogout }) => {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedAuction, setSelectedAuction] = useState(null);
+  
+  // App Bridge functionality
+  const { getShopInfo } = useAppBridgeActions();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [toastError, setToastError] = useState(false);
+  
+  // Get shop information from App Bridge
+  const shopInfo = getShopInfo();
   const [shopifyProducts, setShopifyProducts] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -185,8 +194,8 @@ const Dashboard = ({ onLogout }) => {
   return (
     <Frame>
       <Page
-        title="Auction Dashboard"
-        subtitle="Manage your auctions and monitor performance"
+        title={`Auction Dashboard${shopInfo.shop ? ` - ${shopInfo.shop}` : ''}`}
+        subtitle={shopInfo.storeName ? `Store: ${shopInfo.storeName}` : 'Manage your auctions and monitor performance'}
         primaryAction={{
           content: 'Create Auction',
           icon: PlusMinor,
@@ -295,11 +304,12 @@ const Dashboard = ({ onLogout }) => {
           onRefresh={handleRefresh}
         />
 
-        {/* Toast */}
+        {/* App Bridge Toast */}
         {showToast && (
-          <Toast
-            content={toastMessage}
-            onDismiss={() => setShowToast(false)}
+          <AppBridgeToast 
+            message={toastMessage}
+            isError={toastError}
+            duration={5000}
           />
         )}
       </Page>

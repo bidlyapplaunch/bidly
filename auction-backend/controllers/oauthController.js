@@ -37,8 +37,9 @@ export const initiateOAuth = async (req, res, next) => {
     const existingStore = await Store.findByDomain(shop);
     if (existingStore && existingStore.isInstalled) {
       console.log('✅ Store already installed, redirecting to app');
-      // Store is already installed, redirect to the admin dashboard
-      return res.redirect(`http://localhost:3001?shop=${shop}&installed=true`);
+      // Store is already installed, redirect to the app
+      const appUrl = process.env.APP_URL || 'http://localhost:3001';
+      return res.redirect(`${appUrl}?shop=${shop}&installed=true`);
     }
 
     // Generate a random state parameter for security
@@ -140,16 +141,18 @@ export const handleOAuthCallback = async (req, res, next) => {
 
     console.log('✅ OAuth flow completed successfully for shop:', shop);
     
-    // Redirect to the admin dashboard with success message
-    // Redirect to your admin frontend (assuming it's running on port 3001)
-    res.redirect(`http://localhost:3001?shop=${shop}&installed=true&success=true`);
+    // For embedded apps, redirect to the app URL with shop parameter
+    // This will be handled by App Bridge in the frontend
+    const appUrl = process.env.APP_URL || 'http://localhost:3001';
+    res.redirect(`${appUrl}?shop=${shop}&installed=true&success=true`);
     
   } catch (error) {
     console.error('❌ Error in OAuth callback:', error.message);
     
     // Redirect to error page or show error message
     const shop = req.query.shop || 'unknown';
-    res.redirect(`http://localhost:3001?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+    const appUrl = process.env.APP_URL || 'http://localhost:3001';
+    res.redirect(`${appUrl}?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
   }
 };
 
