@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3002,
     proxy: {
       '/api': {
-        target: 'https://unsynchronous-theresia-indefinite.ngrok-free.dev/',
+        target: 'https://bidly-auction-backend.onrender.com/',
         changeOrigin: true,
         secure: false,
       }

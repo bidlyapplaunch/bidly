@@ -8,11 +8,8 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('https://unsynchronous-theresia-indefinite.ngrok-free.dev', {
-        transports: ['websocket', 'polling'],
-        extraHeaders: {
-          'ngrok-skip-browser-warning': 'true'
-        }
+      this.socket = io('https://bidly-auction-backend.onrender.com', {
+        transports: ['websocket', 'polling']
       });
 
       this.socket.on('connect', () => {

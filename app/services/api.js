@@ -1,12 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://unsynchronous-theresia-indefinite.ngrok-free.dev/api';
+const API_BASE_URL = 'https://bidly-auction-backend.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
   },
 });
 

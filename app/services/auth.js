@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://unsynchronous-theresia-indefinite.ngrok-free.dev/api';
+const API_BASE_URL = 'https://bidly-auction-backend.onrender.com/api';
 
 class AuthService {
   constructor() {
@@ -14,9 +14,6 @@ class AuthService {
         email,
         password
       }, {
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
       });
 
       if (response.data.success) {
@@ -43,9 +40,6 @@ class AuthService {
         password,
         role
       }, {
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
       });
 
       if (response.data.success) {

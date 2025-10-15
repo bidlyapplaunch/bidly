@@ -1,6 +1,6 @@
 import { authenticate } from "../shopify.server";
 
-const BACKEND_URL = "https://unsynchronous-theresia-indefinite.ngrok-free.dev";
+const BACKEND_URL = "https://bidly-auction-backend.onrender.com";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -8,7 +8,6 @@ export const loader = async ({ request }) => {
   try {
     const response = await fetch(`${BACKEND_URL}/api/auctions/stats`, {
       headers: {
-        'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json'
       }
     });
