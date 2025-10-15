@@ -121,10 +121,18 @@ app.use('/webhooks/shopify', oauthRoutes);
 // App Bridge routes for embedded app functionality
 app.use('/app-bridge', appBridgeRoutes);
 
-// Serve static files from the admin frontend build
+// Serve static files from the admin frontend build (after API routes)
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
 console.log('📁 Serving frontend from:', frontendDistPath);
-app.use(express.static(frontendDistPath));
+
+// Only serve static files for non-API routes
+app.use((req, res, next) => {
+  // Skip static file serving for API routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/app-bridge/') || req.path.startsWith('/auth/')) {
+    return next();
+  }
+  express.static(frontendDistPath)(req, res, next);
+});
 
 // Shopify embedded app entry point - serve the frontend
 app.get('/', (req, res) => {
