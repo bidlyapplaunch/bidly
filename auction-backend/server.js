@@ -145,12 +145,15 @@ app.get('/', (req, res) => {
     hasHmac: !!hmac,
     hasHost: !!host,
     hasIdToken: !!id_token,
-    hasSession: !!session
+    hasSession: !!session,
+    referer: req.get('referer'),
+    origin: req.get('origin'),
+    userAgent: req.get('user-agent')
   });
   
-  // Serve the frontend index.html with all parameters preserved
+  // Serve the admin frontend index.html with all parameters preserved
   const indexPath = path.join(frontendDistPath, 'index.html');
-  console.log('📄 Serving index.html from:', indexPath);
+  console.log('📄 Serving ADMIN index.html from:', indexPath);
   res.sendFile(indexPath);
 });
 
