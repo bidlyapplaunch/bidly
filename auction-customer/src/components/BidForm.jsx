@@ -11,7 +11,6 @@ import {
 } from '@shopify/polaris';
 
 const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
-  const [bidder, setBidder] = useState('');
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
@@ -23,11 +22,6 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
     e.preventDefault();
     setError('');
 
-    if (!bidder.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-
     if (!amount || isNaN(amount) || parseFloat(amount) < minBid) {
       if (auction.currentBid > 0) {
         setError(`Bid must be higher than current bid ($${auction.currentBid})`);
@@ -38,27 +32,20 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
     }
 
     onBidPlaced({
-      bidder: bidder.trim(),
       amount: parseFloat(amount)
     });
 
     // Reset form
-    setBidder('');
     setAmount('');
   };
 
   const handleBuyNow = () => {
-    if (!bidder.trim()) {
-      setError('Please enter your name first');
-      return;
-    }
     setShowBuyNowModal(true);
   };
 
   const confirmBuyNow = () => {
-    onBuyNow(bidder.trim());
+    onBuyNow();
     setShowBuyNowModal(false);
-    setBidder('');
     setAmount('');
   };
 
@@ -81,15 +68,6 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
       <form onSubmit={handleSubmit}>
         <FormLayout>
-          <TextField
-            label="Your Name"
-            value={bidder}
-            onChange={setBidder}
-            placeholder="Enter your name"
-            required
-            disabled={isLoading}
-          />
-
           <TextField
             label="Bid Amount"
             type="number"
@@ -140,7 +118,7 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
               primary 
               submit 
               loading={isLoading}
-              disabled={!bidder.trim() || !amount}
+              disabled={!amount}
             >
               {isLoading ? 'Placing Bid...' : 'Place Bid'}
             </Button>
@@ -149,7 +127,6 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
               <Button 
                 onClick={handleBuyNow}
                 loading={isLoading}
-                disabled={!bidder.trim()}
                 tone="critical"
               >
                 Buy Now (${auction.buyNowPrice})

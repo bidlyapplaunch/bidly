@@ -2,6 +2,12 @@ import axios from 'axios';
 
 const API_BASE_URL = 'https://unsynchronous-theresia-indefinite.ngrok-free.dev/api';
 
+// Helper function to get shop from URL parameters
+const getShopFromURL = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('shop') || 'ezza-auction.myshopify.com';
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -124,84 +130,96 @@ export const auctionAPI = {
 // Shopify API endpoints
 export const shopifyAPI = {
   // Product operations
-  searchProducts: async (query, limit = 10, shop = 'ezza-auction.myshopify.com') => {
+  searchProducts: async (query, limit = 10, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get('/shopify/products/search', {
-      params: { q: query, limit, shop }
+      params: { q: query, limit, shop: shopDomain }
     });
     return response.data.data; // Return the actual products array
   },
 
-  getProductSuggestions: async (query, limit = 20, shop = 'ezza-auction.myshopify.com') => {
+  getProductSuggestions: async (query, limit = 20, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get('/shopify/products/suggestions', {
-      params: { q: query, limit, shop }
+      params: { q: query, limit, shop: shopDomain }
     });
     return response.data;
   },
 
-  getProduct: async (productId, shop = 'ezza-auction.myshopify.com') => {
+  getProduct: async (productId, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get(`/shopify/products/${productId}`, {
-      params: { shop }
+      params: { shop: shopDomain }
     });
     return response.data;
   },
 
-  getAllProducts: async (limit = 50, pageInfo = null, shop = 'ezza-auction.myshopify.com') => {
-    const params = { limit, shop };
+  getAllProducts: async (limit = 50, pageInfo = null, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
+    const params = { limit, shop: shopDomain };
     if (pageInfo) params.page_info = pageInfo;
     const response = await api.get('/shopify/products', { params });
     return response.data;
   },
 
-  validateProduct: async (productId, shop = 'ezza-auction.myshopify.com') => {
+  validateProduct: async (productId, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get(`/shopify/products/${productId}/validate`, {
-      params: { shop }
+      params: { shop: shopDomain }
     });
     return response.data;
   },
 
-  getProductInventory: async (productId, shop = 'ezza-auction.myshopify.com') => {
+  getProductInventory: async (productId, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get(`/shopify/products/${productId}/inventory`, {
-      params: { shop }
+      params: { shop: shopDomain }
     });
     return response.data;
   },
 
-  getProducts: async (productIds, shop = 'ezza-auction.myshopify.com') => {
-    const response = await api.post('/shopify/products/batch', { productIds, shop });
+  getProducts: async (productIds, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
+    const response = await api.post('/shopify/products/batch', { productIds, shop: shopDomain });
     return response.data;
   },
 
-  getProductByHandle: async (handle, shop = 'ezza-auction.myshopify.com') => {
+  getProductByHandle: async (handle, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get(`/shopify/products/handle/${handle}`, {
-      params: { shop }
+      params: { shop: shopDomain }
     });
     return response.data;
   },
 
-  getProductsByVendor: async (vendor, limit = 50, shop = 'ezza-auction.myshopify.com') => {
+  getProductsByVendor: async (vendor, limit = 50, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get(`/shopify/products/vendor/${vendor}`, {
-      params: { limit, shop }
+      params: { limit, shop: shopDomain }
     });
     return response.data;
   },
 
-  getProductsByType: async (productType, limit = 50, shop = 'ezza-auction.myshopify.com') => {
+  getProductsByType: async (productType, limit = 50, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get(`/shopify/products/type/${productType}`, {
-      params: { limit, shop }
+      params: { limit, shop: shopDomain }
     });
     return response.data;
   },
 
-  getProductsByTags: async (tags, limit = 50, shop = 'ezza-auction.myshopify.com') => {
-    const response = await api.post('/shopify/products/tags', { tags, shop }, {
+  getProductsByTags: async (tags, limit = 50, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
+    const response = await api.post('/shopify/products/tags', { tags, shop: shopDomain }, {
       params: { limit }
     });
     return response.data;
   },
 
-  getServiceStatus: async (shop = 'ezza-auction.myshopify.com') => {
+  getServiceStatus: async (shop = null) => {
+    const shopDomain = shop || getShopFromURL();
     const response = await api.get('/shopify/status', {
-      params: { shop }
+      params: { shop: shopDomain }
     });
     return response.data;
   }

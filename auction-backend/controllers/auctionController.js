@@ -266,7 +266,7 @@ export const deleteAuction = async (req, res, next) => {
 // Place a bid on an auction
 export const placeBid = async (req, res, next) => {
   try {
-    const { bidder, amount } = req.body;
+    const { bidder, amount, customerEmail } = req.body;
     
     // Input sanitization and validation
     const sanitizedBidder = bidder?.trim();
@@ -333,8 +333,8 @@ export const placeBid = async (req, res, next) => {
     }
     
     try {
-      // Add the bid
-      await auction.addBid(sanitizedBidder, sanitizedAmount);
+      // Add the bid with customer email
+      await auction.addBid(sanitizedBidder, sanitizedAmount, customerEmail);
     } catch (error) {
       // Restore original status if bid fails
       if (originalStatus !== auction.status) {
@@ -360,7 +360,7 @@ export const placeBid = async (req, res, next) => {
     try {
       // Send bid confirmation to the bidder
       await emailService.sendBidConfirmation(
-        `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Demo email
+        customerEmail || `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Use customer email or demo email
         bidder,
         updatedAuction,
         amount
@@ -369,9 +369,9 @@ export const placeBid = async (req, res, next) => {
       // Send outbid notification to previous highest bidder
       if (updatedAuction.bidHistory.length > 1) {
         const previousBid = updatedAuction.bidHistory[updatedAuction.bidHistory.length - 2];
-        if (previousBid.bidder !== bidder) {
+        if (previousBid.bidder !== bidder && previousBid.customerEmail) {
           await emailService.sendOutbidNotification(
-            `${previousBid.bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Demo email
+            previousBid.customerEmail, // Use actual customer email
             previousBid.bidder,
             updatedAuction,
             amount
@@ -382,7 +382,7 @@ export const placeBid = async (req, res, next) => {
       // Send auction won notification if buy now
       if (auctionEnded) {
         await emailService.sendAuctionWonNotification(
-          `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Demo email
+          customerEmail || `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Use customer email or demo email
           bidder,
           updatedAuction,
           amount
@@ -462,7 +462,7 @@ export const placeBid = async (req, res, next) => {
 // Get auction statistics
 export const buyNow = async (req, res, next) => {
   try {
-    const { bidder } = req.body;
+    const { bidder, customerEmail } = req.body;
     
     if (!bidder || !bidder.trim()) {
       throw new AppError('Bidder name is required', 400);
@@ -493,8 +493,8 @@ export const buyNow = async (req, res, next) => {
     }
     
     try {
-      // Add the buy now bid
-      await auction.addBid(bidder.trim(), auction.buyNowPrice);
+      // Add the buy now bid with customer email
+      await auction.addBid(bidder.trim(), auction.buyNowPrice, customerEmail);
     } catch (error) {
       // Restore original status if bid fails
       if (originalStatus !== auction.status) {
@@ -508,6 +508,42 @@ export const buyNow = async (req, res, next) => {
     auction.status = 'ended';
     auction.endTime = new Date();
     await auction.save();
+    
+    // Send email notifications
+    try {
+      // Send auction won notification to the buyer
+      await emailService.sendAuctionWonNotification(
+        customerEmail || `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Use customer email or demo email
+        bidder.trim(),
+        auction,
+        auction.buyNowPrice
+      );
+
+      // Send outbid notification to previous highest bidder (if any)
+      if (auction.bidHistory.length > 1) {
+        const previousBid = auction.bidHistory[auction.bidHistory.length - 2];
+        if (previousBid.bidder !== bidder.trim() && previousBid.customerEmail) {
+          await emailService.sendOutbidNotification(
+            previousBid.customerEmail, // Use actual customer email
+            previousBid.bidder,
+            auction,
+            auction.buyNowPrice
+          );
+        }
+      }
+
+      // Send admin notification
+      await emailService.sendAdminNotification(
+        'Auction Won via Buy Now',
+        `Auction "${auction.productData?.title || 'Unknown Product'}" was won by ${bidder.trim()} for $${auction.buyNowPrice}`,
+        auction
+      );
+
+      console.log('✅ Buy now email notifications sent successfully');
+    } catch (emailError) {
+      console.error('⚠️ Buy now email notification error (non-critical):', emailError);
+      // Don't fail the buy now if email fails
+    }
     
     // Broadcast real-time update to all clients watching this auction
     const io = req.app.get('io');

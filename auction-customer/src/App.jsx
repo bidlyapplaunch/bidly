@@ -13,7 +13,9 @@ import {
 } from '@shopify/polaris';
 import { auctionAPI } from './services/api';
 import socketService from './services/socket';
+import customerAuthService from './services/customerAuth';
 import AuctionCard from './components/AuctionCard';
+import CustomerAuth from './components/CustomerAuth';
 
 function App() {
   const [auctions, setAuctions] = useState([]);
@@ -23,8 +25,19 @@ function App() {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  
+  // Customer authentication state
+  const [customer, setCustomer] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
+    // Initialize customer authentication
+    if (customerAuthService.isAuthenticated()) {
+      setCustomer(customerAuthService.getCustomer());
+      console.log('👤 Customer authenticated:', customerAuthService.getCustomerName());
+    }
+    
     fetchVisibleAuctions();
     
     // Set up WebSocket connection for real-time updates
@@ -179,6 +192,11 @@ function App() {
   };
 
   const handleBidPlaced = async (bidData) => {
+    // Check if customer is authenticated
+    if (!requireAuth()) {
+      return;
+    }
+
     try {
       setBidLoading(true);
       setError(null);
@@ -186,13 +204,15 @@ function App() {
       // Find the auction ID (assuming we have it in the context)
       // For now, we'll need to pass the auction ID from the component
       const auctionId = bidData.auctionId;
+      const bidder = customer.name; // Use authenticated customer name
       
       await auctionAPI.placeBid(auctionId, {
-        bidder: bidData.bidder,
-        amount: bidData.amount
+        bidder: bidder,
+        amount: bidData.amount,
+        customerEmail: customer.email
       });
       
-      setToastMessage(`✅ Bid placed successfully! $${bidData.amount} by ${bidData.bidder}`);
+      setToastMessage(`✅ Bid placed successfully! $${bidData.amount} by ${bidder}`);
       setShowToast(true);
       
       // Refresh auctions to get updated data
@@ -225,13 +245,19 @@ function App() {
   };
 
   const handleBuyNow = async (data) => {
+    // Check if customer is authenticated
+    if (!requireAuth()) {
+      return;
+    }
+
     try {
       setBidLoading(true);
       setError(null);
       
-      const { bidder, auctionId } = data;
+      const { auctionId } = data;
+      const bidder = customer.name; // Use authenticated customer name
       
-      await auctionAPI.buyNow(auctionId, bidder);
+      await auctionAPI.buyNow(auctionId, bidder, customer.email);
       
       // Find the auction to get product name
       const auction = auctions.find(a => (a._id || a.id) === auctionId);
@@ -272,6 +298,31 @@ function App() {
     fetchVisibleAuctions();
   };
 
+  // Customer authentication handlers
+  const handleCustomerLogin = (customerData) => {
+    setCustomer(customerData);
+    setShowAuthModal(false);
+    setAuthRequired(false);
+    setToastMessage(`Welcome, ${customerData.name}! You can now place bids.`);
+    setShowToast(true);
+  };
+
+  const handleCustomerLogout = () => {
+    customerAuthService.logout();
+    setCustomer(null);
+    setToastMessage('You have been logged out.');
+    setShowToast(true);
+  };
+
+  const requireAuth = () => {
+    if (!customer) {
+      setAuthRequired(true);
+      setShowAuthModal(true);
+      return false;
+    }
+    return true;
+  };
+
   if (loading) {
     return (
       <AppProvider>
@@ -296,6 +347,12 @@ function App() {
             content: 'Refresh',
             onAction: handleRefresh
           }}
+          secondaryActions={[
+            {
+              content: customer ? `👤 ${customer.name}` : 'Login to Bid',
+              onAction: customer ? handleCustomerLogout : () => setShowAuthModal(true)
+            }
+          ]}
         >
           {/* Connection Status Indicator */}
           <div style={{ marginBottom: '1rem' }}>
@@ -363,6 +420,14 @@ function App() {
             />
           )}
         </Page>
+        
+        {/* Customer Authentication Modal */}
+        {showAuthModal && (
+          <CustomerAuth
+            onLogin={handleCustomerLogin}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
       </Frame>
     </AppProvider>
   );

@@ -6,6 +6,11 @@ const bidSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  customerEmail: {
+    type: String,
+    trim: true,
+    lowercase: true
+  },
   amount: {
     type: Number,
     required: true,
@@ -118,7 +123,7 @@ auctionSchema.virtual('isActive').get(function() {
 });
 
 // Method to add a bid
-auctionSchema.methods.addBid = function(bidder, amount) {
+auctionSchema.methods.addBid = function(bidder, amount, customerEmail) {
   if (this.status !== 'active') {
     throw new Error('Auction is not active');
   }
@@ -134,6 +139,7 @@ auctionSchema.methods.addBid = function(bidder, amount) {
   
   const bid = {
     bidder,
+    customerEmail,
     amount,
     timestamp: now
   };

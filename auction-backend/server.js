@@ -20,6 +20,7 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';
 import appBridgeRoutes from './routes/appBridgeRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+import emailService from './services/emailService.js';
 
 // Load environment variables
 dotenv.config({ path: './.env' });
@@ -68,8 +69,14 @@ app.use(helmet({
 app.use(cors({
   origin: true, // Allow all origins for ngrok development
   credentials: true,
-  // Additional headers for iframe compatibility
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Shopify-Shop-Domain'],
+  // Additional headers for iframe compatibility and ngrok
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'X-Shopify-Shop-Domain',
+    'ngrok-skip-browser-warning' // Allow ngrok header
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
@@ -264,6 +271,49 @@ const checkAuctionStatusChanges = async () => {
           auction.endTime = new Date(); // Set actual end time
         }
         await auction.save();
+        
+        // Send email notifications if auction ended
+        if (computedStatus === 'ended' && auction.bidHistory.length > 0) {
+          try {
+            // Get the winning bid (highest bid)
+            const winningBid = auction.bidHistory[auction.bidHistory.length - 1];
+            
+            // Send auction won notification to the winner
+            if (winningBid.customerEmail) {
+              await emailService.sendAuctionWonNotification(
+                winningBid.customerEmail,
+                winningBid.bidder,
+                auction,
+                winningBid.amount
+              );
+            }
+
+            // Send outbid notification to all other bidders
+            for (let i = 0; i < auction.bidHistory.length - 1; i++) {
+              const bid = auction.bidHistory[i];
+              if (bid.customerEmail && bid.bidder !== winningBid.bidder) {
+                await emailService.sendOutbidNotification(
+                  bid.customerEmail,
+                  bid.bidder,
+                  auction,
+                  winningBid.amount
+                );
+              }
+            }
+
+            // Send admin notification
+            await emailService.sendAdminNotification(
+              'Auction Ended',
+              `Auction "${auction.productData?.title || 'Unknown Product'}" ended. Winner: ${winningBid.bidder} with $${winningBid.amount}`,
+              auction
+            );
+
+            console.log(`✅ Auction end email notifications sent for auction ${auction._id}`);
+          } catch (emailError) {
+            console.error(`⚠️ Auction end email notification error for auction ${auction._id}:`, emailError);
+            // Don't fail the status update if email fails
+          }
+        }
         
         // Broadcast the status change
         global.broadcastAuctionStatusUpdate(auction._id, computedStatus, {

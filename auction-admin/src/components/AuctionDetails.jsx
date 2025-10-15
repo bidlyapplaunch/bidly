@@ -107,6 +107,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       .map((bid, index) => [
         index + 1,
         bid.bidder,
+        bid.customerEmail || 'N/A', // Show customer email for admin
         formatCurrency(bid.amount),
         formatDate(bid.timestamp)
       ]);
@@ -210,8 +211,8 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <Text variant="headingMd">Bid History</Text>
                   <DataTable
-                    columnContentTypes={['numeric', 'text', 'text', 'text']}
-                    headings={['#', 'Bidder', 'Amount', 'Time']}
+                    columnContentTypes={['numeric', 'text', 'text', 'text', 'text']}
+                    headings={['#', 'Bidder', 'Email', 'Amount', 'Time']}
                     rows={bidHistoryRows}
                   />
                 </div>
