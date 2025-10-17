@@ -325,8 +325,17 @@
         window.location.pathname.includes('editor')
       );
       
+      console.log('🎯 Featured Auction Block - Theme editor check:', {
+        isThemeEditor: isThemeEditor,
+        hasShopify: !!window.Shopify,
+        designMode: window.Shopify?.designMode,
+        search: window.location.search,
+        bodyClasses: document.body.classList.toString(),
+        pathname: window.location.pathname
+      });
+      
       if (isThemeEditor) {
-        console.log('Bidly: Theme editor detected, showing placeholder');
+        console.log('🎨 Featured Auction Block - Theme editor detected, showing placeholder');
         // Show placeholder immediately
         setTimeout(function() {
           const placeholder = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-theme-editor-placeholder`);
@@ -337,6 +346,8 @@
         }, 50);
         return;
       }
+      
+      console.log('🎯 Featured Auction Block - Not in theme editor, continuing with initialization');
       
       // Load the Bidly auction widget
       window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
