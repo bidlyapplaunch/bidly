@@ -352,6 +352,17 @@
         return;
       }
       
+      // Test App Proxy connection first
+      console.log('🧪 Testing App Proxy connection...');
+      fetch(`${appProxyUrl}/health?shop=${shopDomain}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log('✅ App Proxy health check:', data);
+        })
+        .catch(error => {
+          console.error('❌ App Proxy health check failed:', error);
+        });
+      
       // Load the Bidly auction widget
       window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
       

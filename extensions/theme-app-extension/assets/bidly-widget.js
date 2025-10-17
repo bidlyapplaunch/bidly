@@ -79,9 +79,25 @@
       if (containerEl) containerEl.style.display = 'none';
       
       // Fetch auctions via app proxy
-      fetch(`${instance.appProxyUrl}/api/auctions?shop=${instance.shopDomain}`)
-        .then(response => response.json())
+      console.log('🔍 Fetching auctions from:', `${instance.appProxyUrl}/api/auctions?shop=${instance.shopDomain}`);
+      
+      fetch(`${instance.appProxyUrl}/api/auctions?shop=${instance.shopDomain}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add timeout
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      })
+        .then(response => {
+          console.log('📡 Response status:', response.status);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
+          console.log('📦 Received data:', data);
           if (data.success && data.data) {
             this.renderAuctions(blockId, data.data);
             if (loadingEl) loadingEl.style.display = 'none';
@@ -91,9 +107,16 @@
           }
         })
         .catch(error => {
-          console.error('Error loading auctions:', error);
+          console.error('❌ Error loading auctions:', error);
           if (loadingEl) loadingEl.style.display = 'none';
-          if (errorEl) errorEl.style.display = 'block';
+          if (errorEl) {
+            errorEl.style.display = 'block';
+            // Show more detailed error message
+            const errorText = errorEl.querySelector('p');
+            if (errorText) {
+              errorText.textContent = `Error: ${error.message}`;
+            }
+          }
         });
     },
     
@@ -113,9 +136,24 @@
       if (containerEl) containerEl.style.display = 'none';
       
       // Fetch auction via app proxy
-      fetch(`${instance.appProxyUrl}/api/auctions/${auctionId}?shop=${instance.shopDomain}`)
-        .then(response => response.json())
+      console.log('🔍 Fetching auction from:', `${instance.appProxyUrl}/api/auctions/${auctionId}?shop=${instance.shopDomain}`);
+      
+      fetch(`${instance.appProxyUrl}/api/auctions/${auctionId}?shop=${instance.shopDomain}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(10000)
+      })
+        .then(response => {
+          console.log('📡 Response status:', response.status);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
+          console.log('📦 Received auction data:', data);
           if (data.success && data.data) {
             if (instance.type === 'featured') {
               this.renderFeaturedAuction(blockId, data.data);
@@ -129,9 +167,15 @@
           }
         })
         .catch(error => {
-          console.error('Error loading auction:', error);
+          console.error('❌ Error loading auction:', error);
           if (loadingEl) loadingEl.style.display = 'none';
-          if (errorEl) errorEl.style.display = 'block';
+          if (errorEl) {
+            errorEl.style.display = 'block';
+            const errorText = errorEl.querySelector('p');
+            if (errorText) {
+              errorText.textContent = `Error: ${error.message}`;
+            }
+          }
         });
     },
     
@@ -141,6 +185,16 @@
       if (!gridEl) return;
       
       gridEl.innerHTML = '';
+      
+      if (!auctions || auctions.length === 0) {
+        gridEl.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
+            <h3>No auctions available</h3>
+            <p>Check back later for new auctions!</p>
+          </div>
+        `;
+        return;
+      }
       
       auctions.forEach(auction => {
         const auctionCard = this.createAuctionCard(auction, blockId);
