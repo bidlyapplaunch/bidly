@@ -508,9 +508,11 @@
     
     // Place bid
     placeBid: function(auctionId, blockId) {
-      console.log('🎯 placeBid called:', { auctionId, blockId });
-      console.log('📋 Available instances:', Object.keys(this.instances));
-      console.log('📋 All instances:', this.instances);
+    console.log('🎯 placeBid called:', { auctionId, blockId });
+    console.log('📋 Available instances:', Object.keys(this.instances));
+    console.log('📋 All instances:', this.instances);
+    console.log('🔍 Looking for instance with blockId:', blockId);
+    console.log('🔍 Instance exists?', !!this.instances[blockId]);
       
       const instance = this.instances[blockId];
       if (!instance) {
@@ -1283,6 +1285,16 @@
     }
     
     console.log('📋 All instances after global init:', Object.keys(window.BidlyAuctionWidget.instances));
+    
+    // Add a check to see if the instance is still there after a delay
+    setTimeout(() => {
+      console.log('🔍 Checking instances after 1 second:', Object.keys(window.BidlyAuctionWidget.instances));
+      if (window.BidlyAuctionWidget.instances[blockId]) {
+        console.log('✅ Instance still exists:', blockId);
+      } else {
+        console.error('❌ Instance disappeared:', blockId);
+      }
+    }, 1000);
   };
 
 })();
