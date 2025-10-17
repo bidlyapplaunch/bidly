@@ -484,6 +484,9 @@
           if (window.initBidlyBlock) {
             window.BidlyAuctionWidget.loadedInstances.add(blockId);
             window.initBidlyBlock(blockId, shopDomain, appProxyUrl, null, 'list');
+          } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.init) {
+            window.BidlyAuctionWidget.loadedInstances.add(blockId);
+            window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
           }
         };
         script.onerror = function() {
@@ -496,6 +499,8 @@
         // Widget already loaded, initialize this block
         if (window.initBidlyBlock) {
           window.initBidlyBlock(blockId, shopDomain, appProxyUrl, null, 'list');
+        } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.init) {
+          window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
         }
       }
     }

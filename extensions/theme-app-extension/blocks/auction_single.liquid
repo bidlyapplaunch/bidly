@@ -347,6 +347,9 @@
           if (window.initBidlyBlock) {
             window.BidlyAuctionWidget.loadedInstances.add(blockId);
             window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'single');
+          } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initSingle) {
+            window.BidlyAuctionWidget.loadedInstances.add(blockId);
+            window.BidlyAuctionWidget.initSingle(blockId, shopDomain, appProxyUrl, auctionId);
           }
         };
         script.onerror = function() {
@@ -359,6 +362,8 @@
         // Widget already loaded, initialize this block
         if (window.initBidlyBlock) {
           window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'single');
+        } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initSingle) {
+          window.BidlyAuctionWidget.initSingle(blockId, shopDomain, appProxyUrl, auctionId);
         }
       }
     }
