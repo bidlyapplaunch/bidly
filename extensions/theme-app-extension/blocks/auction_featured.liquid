@@ -388,6 +388,7 @@
         console.log('🔄 window.BidlyAuctionWidget available:', !!window.BidlyAuctionWidget);
         console.log('🔄 window.BidlyAuctionWidget.initFeatured available:', !!(window.BidlyAuctionWidget && window.BidlyAuctionWidget.initFeatured));
         
+        // Force initialization by calling the global function directly
         if (window.initBidlyBlock) {
           console.log('✅ Using window.initBidlyBlock');
           window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'featured');
@@ -396,6 +397,22 @@
           window.BidlyAuctionWidget.initFeatured(blockId, shopDomain, appProxyUrl, auctionId);
         } else {
           console.error('❌ No initialization method available for featured block');
+          // Fallback: try to initialize manually
+          console.log('🔄 Attempting manual initialization...');
+          if (window.BidlyAuctionWidget) {
+            window.BidlyAuctionWidget.ensureLoadedInstances();
+            window.BidlyAuctionWidget.instances[blockId] = {
+              blockId: blockId,
+              shopDomain: shopDomain,
+              appProxyUrl: appProxyUrl,
+              auctionId: auctionId,
+              type: 'featured'
+            };
+            window.BidlyAuctionWidget.initializeCustomerAuth(blockId);
+            window.BidlyAuctionWidget.initializeSocket();
+            window.BidlyAuctionWidget.loadSingleAuction(blockId, auctionId);
+            console.log('✅ Manual initialization completed for featured block');
+          }
         }
       }
     }
