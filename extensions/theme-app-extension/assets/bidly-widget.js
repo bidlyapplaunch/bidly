@@ -1209,10 +1209,10 @@
         .then(response => response.json())
         .then(data => {
           console.log('📊 Auction list data received:', data);
-          if (data.success && data.auctions) {
-            console.log('✅ Updating', data.auctions.length, 'auctions');
+          if (data.success && data.data) {
+            console.log('✅ Updating', data.data.length, 'auctions');
             // Update each auction card individually without reloading
-            data.auctions.forEach(auction => {
+            data.data.forEach(auction => {
               this.updateAuctionCardSmoothly(blockId, auction);
             });
           } else {
@@ -1227,19 +1227,27 @@
     // Smoothly update single auction without reloading
     updateSingleAuctionSmoothly: function(blockId, auctionId) {
       const instance = this.instances[blockId];
-      if (!instance) return;
+      if (!instance) {
+        console.log('❌ No instance found for single auction block:', blockId);
+        return;
+      }
       
+      console.log('🔄 Fetching single auction for block:', blockId, 'auction:', auctionId);
       // Fetch updated auction data
       fetch(`${instance.appProxyUrl}/api/auctions/${auctionId}?shop=${instance.shopDomain}`)
         .then(response => response.json())
         .then(data => {
-          if (data.success && data.auction) {
+          console.log('📊 Single auction data received:', data);
+          if (data.success && data.data) {
+            console.log('✅ Updating single auction');
             // Update the auction display smoothly
-            this.updateSingleAuctionDisplay(blockId, data.auction);
+            this.updateSingleAuctionDisplay(blockId, data.data);
+          } else {
+            console.log('❌ No single auction data or success false');
           }
         })
         .catch(error => {
-          console.log('Error updating single auction:', error);
+          console.log('❌ Error updating single auction:', error);
         });
     },
     
