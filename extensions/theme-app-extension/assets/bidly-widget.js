@@ -1168,29 +1168,204 @@
       this.startTimerUpdates();
     },
     
-    // Start polling for updates every 5 seconds
+    // Start polling for updates every 10 seconds
     startPollingUpdates: function() {
       if (this.pollingInterval) return;
       
-      console.log('🔄 Starting polling updates every 5 seconds...');
+      console.log('🔄 Starting polling updates every 10 seconds...');
       this.pollingInterval = setInterval(() => {
         this.pollForUpdates();
-      }, 5000);
+      }, 10000);
     },
     
-    // Poll for auction updates
+    // Poll for auction updates (smooth updates without reloading)
     pollForUpdates: function() {
       Object.keys(this.instances).forEach(blockId => {
         const instance = this.instances[blockId];
         
         if (instance.type === 'list') {
-          // Poll for all auctions in list
-          this.loadAuctions(blockId);
+          // Smoothly update auction list without reloading
+          this.updateAuctionListSmoothly(blockId);
         } else if (instance.type === 'single' || instance.type === 'featured') {
-          // Poll for specific auction
-          this.loadSingleAuction(blockId, instance.auctionId);
+          // Smoothly update single auction without reloading
+          this.updateSingleAuctionSmoothly(blockId, instance.auctionId);
         }
       });
+    },
+    
+    // Smoothly update auction list without reloading the entire content
+    updateAuctionListSmoothly: function(blockId) {
+      const instance = this.instances[blockId];
+      if (!instance) return;
+      
+      // Fetch updated auction data
+      fetch(`${instance.appProxyUrl}/api/auctions?shop=${instance.shopDomain}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.auctions) {
+            // Update each auction card individually without reloading
+            data.auctions.forEach(auction => {
+              this.updateAuctionCardSmoothly(blockId, auction);
+            });
+          }
+        })
+        .catch(error => {
+          console.log('Error updating auction list:', error);
+        });
+    },
+    
+    // Smoothly update single auction without reloading
+    updateSingleAuctionSmoothly: function(blockId, auctionId) {
+      const instance = this.instances[blockId];
+      if (!instance) return;
+      
+      // Fetch updated auction data
+      fetch(`${instance.appProxyUrl}/api/auctions/${auctionId}?shop=${instance.shopDomain}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.auction) {
+            // Update the auction display smoothly
+            this.updateSingleAuctionDisplay(blockId, data.auction);
+          }
+        })
+        .catch(error => {
+          console.log('Error updating single auction:', error);
+        });
+    },
+    
+    // Update individual auction card smoothly
+    updateAuctionCardSmoothly: function(blockId, auction) {
+      const auctionCard = document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auction._id}"]`);
+      if (!auctionCard) return;
+      
+      // Update current bid amount
+      const priceElement = auctionCard.querySelector('.bidly-price-amount');
+      if (priceElement) {
+        const currentBid = auction.currentBid || 0;
+        const newPrice = currentBid > 0 ? `$${currentBid}` : `$${auction.startingBid}`;
+        if (priceElement.textContent !== newPrice) {
+          priceElement.style.transition = 'color 0.3s ease';
+          priceElement.textContent = newPrice;
+          priceElement.style.color = '#ff6b35'; // Highlight change
+          setTimeout(() => {
+            priceElement.style.color = '';
+          }, 1000);
+        }
+      }
+      
+      // Update minimum bid
+      const minBidElement = auctionCard.querySelector('.bidly-min-bid');
+      if (minBidElement) {
+        const minBid = (auction.currentBid || 0) + 1;
+        const newMinBid = `Min: $${minBid}`;
+        if (minBidElement.textContent !== newMinBid) {
+          minBidElement.style.transition = 'color 0.3s ease';
+          minBidElement.textContent = newMinBid;
+          minBidElement.style.color = '#ff6b35'; // Highlight change
+          setTimeout(() => {
+            minBidElement.style.color = '';
+          }, 1000);
+        }
+      }
+      
+      // Update bidder info
+      const bidderElement = auctionCard.querySelector('.bidly-bidder');
+      if (bidderElement && auction.currentBidder) {
+        const newBidder = `by ${auction.currentBidder}`;
+        if (bidderElement.textContent !== newBidder) {
+          bidderElement.style.transition = 'opacity 0.3s ease';
+          bidderElement.textContent = newBidder;
+          bidderElement.style.opacity = '0.7';
+          setTimeout(() => {
+            bidderElement.style.opacity = '1';
+          }, 500);
+        }
+      }
+      
+      // Update bid input placeholder
+      const bidInput = auctionCard.querySelector('.bidly-bid-input');
+      if (bidInput) {
+        const minBid = (auction.currentBid || 0) + 1;
+        const newPlaceholder = `Min: $${minBid}`;
+        if (bidInput.placeholder !== newPlaceholder) {
+          bidInput.placeholder = newPlaceholder;
+        }
+      }
+      
+      // Update timer
+      const timeElement = auctionCard.querySelector('.bidly-auction-time');
+      if (timeElement && auction.endTime) {
+        const newTime = this.formatTimeLeft(auction.endTime);
+        if (timeElement.textContent !== newTime) {
+          timeElement.textContent = newTime;
+        }
+      }
+    },
+    
+    // Update single auction display smoothly
+    updateSingleAuctionDisplay: function(blockId, auction) {
+      // Update current bid
+      const priceElement = document.querySelector(`#bidly-auction-${blockId} .bidly-price-amount`);
+      if (priceElement) {
+        const currentBid = auction.currentBid || 0;
+        const newPrice = currentBid > 0 ? `$${currentBid}` : `$${auction.startingBid}`;
+        if (priceElement.textContent !== newPrice) {
+          priceElement.style.transition = 'color 0.3s ease';
+          priceElement.textContent = newPrice;
+          priceElement.style.color = '#ff6b35'; // Highlight change
+          setTimeout(() => {
+            priceElement.style.color = '';
+          }, 1000);
+        }
+      }
+      
+      // Update minimum bid
+      const minBidElement = document.querySelector(`#bidly-auction-${blockId} .bidly-min-bid`);
+      if (minBidElement) {
+        const minBid = (auction.currentBid || 0) + 1;
+        const newMinBid = `Min: $${minBid}`;
+        if (minBidElement.textContent !== newMinBid) {
+          minBidElement.style.transition = 'color 0.3s ease';
+          minBidElement.textContent = newMinBid;
+          minBidElement.style.color = '#ff6b35'; // Highlight change
+          setTimeout(() => {
+            minBidElement.style.color = '';
+          }, 1000);
+        }
+      }
+      
+      // Update bidder info
+      const bidderElement = document.querySelector(`#bidly-auction-${blockId} .bidly-bidder`);
+      if (bidderElement && auction.currentBidder) {
+        const newBidder = `by ${auction.currentBidder}`;
+        if (bidderElement.textContent !== newBidder) {
+          bidderElement.style.transition = 'opacity 0.3s ease';
+          bidderElement.textContent = newBidder;
+          bidderElement.style.opacity = '0.7';
+          setTimeout(() => {
+            bidderElement.style.opacity = '1';
+          }, 500);
+        }
+      }
+      
+      // Update bid input placeholder
+      const bidInput = document.querySelector(`#bidly-auction-${blockId} .bidly-bid-input`);
+      if (bidInput) {
+        const minBid = (auction.currentBid || 0) + 1;
+        const newPlaceholder = `Min: $${minBid}`;
+        if (bidInput.placeholder !== newPlaceholder) {
+          bidInput.placeholder = newPlaceholder;
+        }
+      }
+      
+      // Update timer
+      const timeElement = document.querySelector(`#bidly-auction-${blockId} .bidly-auction-time`);
+      if (timeElement && auction.endTime) {
+        const newTime = this.formatTimeLeft(auction.endTime);
+        if (timeElement.textContent !== newTime) {
+          timeElement.textContent = newTime;
+        }
+      }
     },
     
     // Start timer updates for all auction instances
