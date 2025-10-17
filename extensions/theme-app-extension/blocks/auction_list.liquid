@@ -268,32 +268,58 @@
 
 <script>
   (function() {
-    const blockId = '{{ block_id }}';
-    const shopDomain = '{{ shop_domain }}';
-    const appProxyUrl = '{{ app_proxy_url }}';
-    
-    // Load the Bidly auction widget
-    window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
-    
-    if (!window.BidlyAuctionWidget.loaded) {
-      // Load CSS
-      const cssLink = document.createElement('link');
-      cssLink.rel = 'stylesheet';
-      cssLink.href = '{{ "bidly-widget.css" | asset_url }}';
-      document.head.appendChild(cssLink);
+    // Wait for DOM to be ready and avoid conflicts
+    function initBidlyWidget() {
+      const blockId = '{{ block_id }}';
+      const shopDomain = '{{ shop_domain }}';
+      const appProxyUrl = '{{ app_proxy_url }}';
       
-      // Load JavaScript
-      const script = document.createElement('script');
-      script.src = '{{ "bidly-widget.js" | asset_url }}';
-      script.onload = function() {
-        window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
-      };
-      document.head.appendChild(script);
+      // Check if we're in theme editor (prevent execution)
+      if (window.Shopify && window.Shopify.designMode) {
+        console.log('Bidly: Skipping initialization in theme editor');
+        return;
+      }
       
-      window.BidlyAuctionWidget.loaded = true;
+      // Load the Bidly auction widget
+      window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
+      
+      if (!window.BidlyAuctionWidget.loaded) {
+        // Load CSS
+        const cssLink = document.createElement('link');
+        cssLink.rel = 'stylesheet';
+        cssLink.href = '{{ "bidly-widget.css" | asset_url }}';
+        cssLink.onerror = function() {
+          console.warn('Bidly: Failed to load CSS');
+        };
+        document.head.appendChild(cssLink);
+        
+        // Load JavaScript
+        const script = document.createElement('script');
+        script.src = '{{ "bidly-widget.js" | asset_url }}';
+        script.onload = function() {
+          if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.init) {
+            window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
+          }
+        };
+        script.onerror = function() {
+          console.error('Bidly: Failed to load JavaScript');
+        };
+        document.head.appendChild(script);
+        
+        window.BidlyAuctionWidget.loaded = true;
+      } else {
+        // Widget already loaded, initialize this block
+        if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.init) {
+          window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
+        }
+      }
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initBidlyWidget);
     } else {
-      // Widget already loaded, initialize this block
-      window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
+      initBidlyWidget();
     }
   })();
 </script>
