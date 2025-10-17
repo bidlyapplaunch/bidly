@@ -360,10 +360,19 @@
         window.BidlyAuctionWidget.loaded = true;
       } else {
         // Widget already loaded, initialize this block
+        console.log('🔄 Widget already loaded, trying to initialize single block:', blockId);
+        console.log('🔄 window.initBidlyBlock available:', !!window.initBidlyBlock);
+        console.log('🔄 window.BidlyAuctionWidget available:', !!window.BidlyAuctionWidget);
+        console.log('🔄 window.BidlyAuctionWidget.initSingle available:', !!(window.BidlyAuctionWidget && window.BidlyAuctionWidget.initSingle));
+        
         if (window.initBidlyBlock) {
+          console.log('✅ Using window.initBidlyBlock');
           window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'single');
         } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initSingle) {
+          console.log('✅ Using window.BidlyAuctionWidget.initSingle');
           window.BidlyAuctionWidget.initSingle(blockId, shopDomain, appProxyUrl, auctionId);
+        } else {
+          console.error('❌ No initialization method available for single block');
         }
       }
     }
