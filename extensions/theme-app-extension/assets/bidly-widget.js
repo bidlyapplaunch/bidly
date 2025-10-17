@@ -1234,6 +1234,10 @@
     
     window.BidlyAuctionWidget.ensureLoadedInstances();
     
+    // Preserve existing instances when adding new ones
+    const existingInstances = { ...window.BidlyAuctionWidget.instances };
+    console.log('🔍 Preserving existing instances:', Object.keys(existingInstances));
+    
     if (type === 'list') {
       window.BidlyAuctionWidget.instances[blockId] = {
         blockId: blockId,
@@ -1283,6 +1287,14 @@
       window.BidlyAuctionWidget.initializeSocket();
       window.BidlyAuctionWidget.loadSingleAuction(blockId, auctionId);
     }
+    
+    // Merge back existing instances to prevent overwriting
+    Object.keys(existingInstances).forEach(key => {
+      if (!window.BidlyAuctionWidget.instances[key]) {
+        window.BidlyAuctionWidget.instances[key] = existingInstances[key];
+        console.log('🔄 Restored existing instance:', key);
+      }
+    });
     
     console.log('📋 All instances after global init:', Object.keys(window.BidlyAuctionWidget.instances));
     
