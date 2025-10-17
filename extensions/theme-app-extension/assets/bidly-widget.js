@@ -59,9 +59,13 @@
         type: 'single'
       };
       
-      this.loadSingleAuction(blockId, auctionId);
+      console.log('✅ Single auction instance created:', blockId);
+      console.log('📋 Current instances after init:', Object.keys(this.instances));
+      
       this.initializeCustomerAuth(blockId);
       this.initializeSocket();
+      
+      this.loadSingleAuction(blockId, auctionId);
     },
     
     // Initialize featured auction widget
@@ -85,9 +89,13 @@
         type: 'featured'
       };
       
-      this.loadSingleAuction(blockId, auctionId);
+      console.log('✅ Featured auction instance created:', blockId);
+      console.log('📋 Current instances after init:', Object.keys(this.instances));
+      
       this.initializeCustomerAuth(blockId);
       this.initializeSocket();
+      
+      this.loadSingleAuction(blockId, auctionId);
     },
     
     // Load auctions for list view
@@ -763,25 +771,9 @@
       console.log('✅ Customer logged in:', this.customer);
       this.showToast(`Welcome, ${name}!`);
       
-      // Re-render ALL instances to update login status
-      Object.keys(this.instances).forEach(id => {
-        console.log('🔄 Re-rendering instance:', id, this.instances[id].type);
-        if (this.instances[id].type === 'list') {
-          this.loadAuctions(id);
-        } else {
-          // Force re-render by clearing and reloading
-          const container = document.querySelector(`#bidly-single-auction-${id}, #bidly-featured-auction-${id}`);
-          if (container) {
-            // Clear the container and reload
-            container.innerHTML = '<div class="bidly-loading">Updating...</div>';
-            setTimeout(() => {
-              this.loadSingleAuction(id, this.instances[id].auctionId);
-            }, 100);
-          } else {
-            this.loadSingleAuction(id, this.instances[id].auctionId);
-          }
-        }
-      });
+      // Simple solution: refresh the page to update all blocks
+      console.log('🔄 Refreshing page to update all blocks...');
+      window.location.reload();
     },
     
     // Customer logout
@@ -959,28 +951,27 @@
         }
       }
       
-      // If no customer found immediately, try again after a short delay
+      // If no customer found immediately, try multiple times with increasing delays
       // This helps with pages that load customer data asynchronously
       if (!this.customerRetryAttempted) {
         this.customerRetryAttempted = true;
-        setTimeout(() => {
-          console.log('🔄 Retrying customer detection after delay...');
-          const retryCustomer = this.getShopifyCustomer();
-          if (retryCustomer && !this.customer) {
-            this.customer = retryCustomer;
-            sessionStorage.setItem('bidly-customer', JSON.stringify(retryCustomer));
-            console.log('✅ Customer detected on retry:', retryCustomer);
-            // Re-render all instances
-            Object.keys(this.instances).forEach(blockId => {
-              const instance = this.instances[blockId];
-              if (instance.type === 'list') {
-                this.loadAuctions(blockId);
-              } else {
-                this.loadSingleAuction(blockId, instance.auctionId);
-              }
-            });
-          }
-        }, 1000); // Retry after 1 second
+        
+        // Try multiple times with increasing delays
+        const retryDelays = [500, 1000, 2000, 3000]; // 0.5s, 1s, 2s, 3s
+        
+        retryDelays.forEach((delay, index) => {
+          setTimeout(() => {
+            console.log(`🔄 Retrying customer detection (attempt ${index + 1}) after ${delay}ms...`);
+            const retryCustomer = this.getShopifyCustomer();
+            if (retryCustomer && !this.customer) {
+              this.customer = retryCustomer;
+              sessionStorage.setItem('bidly-customer', JSON.stringify(retryCustomer));
+              console.log('✅ Customer detected on retry:', retryCustomer);
+              // Refresh page to update all blocks
+              window.location.reload();
+            }
+          }, delay);
+        });
       }
       
       console.log('❌ No Shopify customer data found');
