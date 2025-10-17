@@ -1180,8 +1180,10 @@
     
     // Poll for auction updates (smooth updates without reloading)
     pollForUpdates: function() {
+      console.log('🔄 Polling for updates...');
       Object.keys(this.instances).forEach(blockId => {
         const instance = this.instances[blockId];
+        console.log('🔄 Updating block:', blockId, 'type:', instance.type);
         
         if (instance.type === 'list') {
           // Smoothly update auction list without reloading
@@ -1196,21 +1198,29 @@
     // Smoothly update auction list without reloading the entire content
     updateAuctionListSmoothly: function(blockId) {
       const instance = this.instances[blockId];
-      if (!instance) return;
+      if (!instance) {
+        console.log('❌ No instance found for block:', blockId);
+        return;
+      }
       
+      console.log('🔄 Fetching auction list for block:', blockId);
       // Fetch updated auction data
       fetch(`${instance.appProxyUrl}/api/auctions?shop=${instance.shopDomain}`)
         .then(response => response.json())
         .then(data => {
+          console.log('📊 Auction list data received:', data);
           if (data.success && data.auctions) {
+            console.log('✅ Updating', data.auctions.length, 'auctions');
             // Update each auction card individually without reloading
             data.auctions.forEach(auction => {
               this.updateAuctionCardSmoothly(blockId, auction);
             });
+          } else {
+            console.log('❌ No auctions data or success false');
           }
         })
         .catch(error => {
-          console.log('Error updating auction list:', error);
+          console.log('❌ Error updating auction list:', error);
         });
     },
     
@@ -1235,22 +1245,33 @@
     
     // Update individual auction card smoothly
     updateAuctionCardSmoothly: function(blockId, auction) {
+      console.log('🔄 Updating auction card:', auction._id, 'for block:', blockId);
       const auctionCard = document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auction._id}"]`);
-      if (!auctionCard) return;
+      if (!auctionCard) {
+        console.log('❌ Auction card not found for:', auction._id);
+        return;
+      }
+      console.log('✅ Found auction card, updating...');
       
       // Update current bid amount
       const priceElement = auctionCard.querySelector('.bidly-price-amount');
       if (priceElement) {
         const currentBid = auction.currentBid || 0;
         const newPrice = currentBid > 0 ? `$${currentBid}` : `$${auction.startingBid}`;
+        console.log('💰 Price update - Current:', priceElement.textContent, 'New:', newPrice);
         if (priceElement.textContent !== newPrice) {
+          console.log('✅ Price changed, updating with highlight');
           priceElement.style.transition = 'color 0.3s ease';
           priceElement.textContent = newPrice;
           priceElement.style.color = '#ff6b35'; // Highlight change
           setTimeout(() => {
             priceElement.style.color = '';
           }, 1000);
+        } else {
+          console.log('⏭️ Price unchanged, skipping');
         }
+      } else {
+        console.log('❌ Price element not found');
       }
       
       // Update minimum bid
@@ -1258,14 +1279,20 @@
       if (minBidElement) {
         const minBid = (auction.currentBid || 0) + 1;
         const newMinBid = `Min: $${minBid}`;
+        console.log('💵 Min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
         if (minBidElement.textContent !== newMinBid) {
+          console.log('✅ Min bid changed, updating with highlight');
           minBidElement.style.transition = 'color 0.3s ease';
           minBidElement.textContent = newMinBid;
           minBidElement.style.color = '#ff6b35'; // Highlight change
           setTimeout(() => {
             minBidElement.style.color = '';
           }, 1000);
+        } else {
+          console.log('⏭️ Min bid unchanged, skipping');
         }
+      } else {
+        console.log('❌ Min bid element not found');
       }
       
       // Update bidder info
