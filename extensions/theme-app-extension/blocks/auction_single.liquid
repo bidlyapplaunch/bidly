@@ -11,7 +11,13 @@
   assign auction_id = block.settings.auction_id
 -%}
 
-<div id="bidly-single-auction-{{ block_id }}" class="bidly-single-auction" data-block-id="{{ block_id }}" data-shop="{{ shop_domain }}" data-auction-id="{{ auction_id }}" {{ block.shopify_attributes }}>
+<div id="bidly-single-auction-{{ block_id }}" 
+     class="bidly-single-auction" 
+     data-block-id="{{ block_id }}" 
+     data-shop="{{ shop_domain }}" 
+     data-auction-id="{{ auction_id }}" 
+     {{ block.shopify_attributes }}
+     style="{% if shop.design_mode %}min-height: 200px;{% endif %}">
   <div class="bidly-loading" id="bidly-loading-{{ block_id }}">
     <div class="bidly-spinner"></div>
     <p>Loading auction...</p>
@@ -23,6 +29,22 @@
   
   <div class="bidly-auction-detail" id="bidly-auction-detail-{{ block_id }}" style="display: none;">
     <!-- Auction details will be populated by JavaScript -->
+  </div>
+  
+  <!-- Theme Editor Placeholder -->
+  <div class="bidly-theme-editor-placeholder" style="display: none;">
+    <div style="padding: 2rem; text-align: center; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">
+      <h3 style="margin: 0 0 1rem 0; color: #495057;">🎯 Single Auction</h3>
+      <p style="margin: 0; color: #6c757d;">This block will display a specific auction when the theme is published.</p>
+      <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 4px;">
+        <p style="margin: 0; font-size: 0.9rem; color: #6c757d;">
+          <strong>Settings:</strong><br>
+          Auction ID: {{ block.settings.auction_id | default: 'Not set' }}<br>
+          Title: {{ block.settings.title | default: 'Auction Details' }}<br>
+          Show Bid History: {{ block.settings.show_bid_history | default: true }}
+        </p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -259,9 +281,24 @@
       const appProxyUrl = '{{ app_proxy_url }}';
       const auctionId = '{{ auction_id }}';
       
-      // Check if we're in theme editor (prevent execution)
-      if (window.Shopify && window.Shopify.designMode) {
-        console.log('Bidly: Skipping initialization in theme editor');
+      // More robust theme editor detection
+      const isThemeEditor = window.Shopify && (
+        window.Shopify.designMode || 
+        window.location.search.includes('preview_theme_id') ||
+        document.body.classList.contains('shopify-design-mode') ||
+        window.location.pathname.includes('editor')
+      );
+      
+      if (isThemeEditor) {
+        console.log('Bidly: Theme editor detected, showing placeholder');
+        // Show placeholder immediately
+        setTimeout(function() {
+          const placeholder = document.querySelector(`#bidly-single-auction-${blockId} .bidly-theme-editor-placeholder`);
+          const loading = document.querySelector(`#bidly-loading-${blockId}`);
+          
+          if (placeholder) placeholder.style.display = 'block';
+          if (loading) loading.style.display = 'none';
+        }, 50);
         return;
       }
       
