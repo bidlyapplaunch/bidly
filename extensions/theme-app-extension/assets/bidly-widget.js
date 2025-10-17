@@ -313,7 +313,23 @@
     renderBiddingSection: function(auction, blockId, isDetailed = false) {
       const status = this.computeAuctionStatus(auction);
       const canBid = status === 'active';
-      const minBid = (auction.currentBid || 0) + 1;
+      
+      // Calculate minimum bid - use startingBid if currentBid is 0 or undefined
+      let minBid;
+      if (auction.currentBid && auction.currentBid > 0) {
+        minBid = auction.currentBid + 1;
+      } else if (auction.startingBid && auction.startingBid > 0) {
+        minBid = auction.startingBid;
+      } else {
+        minBid = 1; // Fallback
+      }
+      
+      console.log('💰 Bid calculation:', {
+        currentBid: auction.currentBid,
+        startingBid: auction.startingBid,
+        calculatedMinBid: minBid,
+        auction: auction
+      });
       
       if (!canBid) {
         return `<div class="bidly-bid-section">
@@ -343,7 +359,16 @@
     renderFeaturedBidding: function(auction, blockId) {
       const status = this.computeAuctionStatus(auction);
       const canBid = status === 'active';
-      const minBid = (auction.currentBid || 0) + 1;
+      
+      // Calculate minimum bid - use startingBid if currentBid is 0 or undefined
+      let minBid;
+      if (auction.currentBid && auction.currentBid > 0) {
+        minBid = auction.currentBid + 1;
+      } else if (auction.startingBid && auction.startingBid > 0) {
+        minBid = auction.startingBid;
+      } else {
+        minBid = 1; // Fallback
+      }
       
       if (!canBid) {
         return `<div class="bidly-featured-bidding">
@@ -587,10 +612,13 @@
     
     // Get Shopify customer data if available
     getShopifyCustomer: function() {
+      console.log('🔍 Checking for Shopify customer data...');
+      
       // Check for Shopify customer object in global scope
       if (window.Shopify && window.Shopify.customer) {
+        console.log('✅ Found Shopify customer in window.Shopify.customer:', window.Shopify.customer);
         return {
-          name: window.Shopify.customer.first_name + ' ' + window.Shopify.customer.last_name,
+          name: (window.Shopify.customer.first_name || '') + ' ' + (window.Shopify.customer.last_name || ''),
           email: window.Shopify.customer.email,
           id: window.Shopify.customer.id,
           isShopifyCustomer: true
@@ -603,6 +631,7 @@
       const customerId = document.querySelector('meta[name="customer-id"]')?.content;
       
       if (customerName && customerEmail) {
+        console.log('✅ Found customer in meta tags:', { customerName, customerEmail });
         return {
           name: customerName,
           email: customerEmail,
@@ -613,13 +642,48 @@
       
       // Check for customer data in window object (some themes use this)
       if (window.customer && window.customer.email) {
+        console.log('✅ Found customer in window.customer:', window.customer);
         return {
-          name: window.customer.first_name + ' ' + window.customer.last_name,
+          name: (window.customer.first_name || '') + ' ' + (window.customer.last_name || ''),
           email: window.customer.email,
           id: window.customer.id,
           isShopifyCustomer: true
         };
       }
+      
+      // Check for customer data in theme-specific objects
+      if (window.theme && window.theme.customer) {
+        console.log('✅ Found customer in window.theme.customer:', window.theme.customer);
+        return {
+          name: (window.theme.customer.first_name || '') + ' ' + (window.theme.customer.last_name || ''),
+          email: window.theme.customer.email,
+          id: window.theme.customer.id,
+          isShopifyCustomer: true
+        };
+      }
+      
+      // Check for customer data in liquid variables (if available)
+      if (window.customerData) {
+        console.log('✅ Found customer in window.customerData:', window.customerData);
+        return {
+          name: (window.customerData.first_name || '') + ' ' + (window.customerData.last_name || ''),
+          email: window.customerData.email,
+          id: window.customerData.id,
+          isShopifyCustomer: true
+        };
+      }
+      
+      console.log('❌ No Shopify customer data found');
+      console.log('Available objects:', {
+        'window.Shopify': !!window.Shopify,
+        'window.customer': !!window.customer,
+        'window.theme': !!window.theme,
+        'window.customerData': !!window.customerData,
+        'meta tags': {
+          customerName: !!customerName,
+          customerEmail: !!customerEmail
+        }
+      });
       
       return null;
     },
