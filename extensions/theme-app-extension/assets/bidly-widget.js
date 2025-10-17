@@ -1232,7 +1232,13 @@
       return;
     }
     
+    // Log instances BEFORE ensureLoadedInstances
+    console.log('🔍 Instances BEFORE ensureLoadedInstances:', Object.keys(window.BidlyAuctionWidget.instances || {}));
+    
     window.BidlyAuctionWidget.ensureLoadedInstances();
+    
+    // Log instances AFTER ensureLoadedInstances
+    console.log('🔍 Instances AFTER ensureLoadedInstances:', Object.keys(window.BidlyAuctionWidget.instances || {}));
     
     // Preserve existing instances when adding new ones
     const existingInstances = { ...window.BidlyAuctionWidget.instances };
@@ -1297,6 +1303,7 @@
     });
     
     console.log('📋 All instances after global init:', Object.keys(window.BidlyAuctionWidget.instances));
+    console.log('📋 Final instances object:', window.BidlyAuctionWidget.instances);
     
     // Add a check to see if the instance is still there after a delay
     setTimeout(() => {
