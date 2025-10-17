@@ -480,10 +480,25 @@
     // Place bid
     placeBid: function(auctionId, blockId) {
       console.log('🎯 placeBid called:', { auctionId, blockId });
+      console.log('📋 Available instances:', Object.keys(this.instances));
+      console.log('📋 All instances:', this.instances);
       
       const instance = this.instances[blockId];
       if (!instance) {
         console.error('❌ Instance not found for block:', blockId);
+        console.log('🔍 Trying to find instance by partial match...');
+        
+        // Try to find instance by partial block ID match
+        const matchingKey = Object.keys(this.instances).find(key => 
+          key.includes(blockId) || blockId.includes(key)
+        );
+        
+        if (matchingKey) {
+          console.log('✅ Found matching instance:', matchingKey);
+          const foundInstance = this.instances[matchingKey];
+          return this.placeBid(auctionId, matchingKey);
+        }
+        
         return;
       }
       
@@ -609,6 +624,8 @@
     
     // Update individual auction card with new data
     updateAuctionCard: function(auctionCard, auction) {
+      console.log('🔄 Updating auction card:', auctionCard, auction);
+      
       // Update current bid
       const priceElement = auctionCard.querySelector('.bidly-price-amount');
       if (priceElement) {
@@ -616,6 +633,7 @@
         const startingBid = auction.startingBid || 0;
         const displayPrice = currentBid > 0 ? currentBid : startingBid;
         priceElement.textContent = `$${displayPrice}`;
+        console.log('✅ Updated price element:', displayPrice);
       }
       
       // Update price label
@@ -623,6 +641,7 @@
       if (labelElement) {
         const currentBid = auction.currentBid || 0;
         labelElement.textContent = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+        console.log('✅ Updated label element:', labelElement.textContent);
       }
       
       // Update starting bid info
@@ -630,6 +649,7 @@
       if (startingBidElement && auction.currentBid > 0 && auction.startingBid > 0) {
         startingBidElement.textContent = `Starting: $${auction.startingBid}`;
         startingBidElement.style.display = 'block';
+        console.log('✅ Updated starting bid element');
       }
       
       // Update minimum bid
@@ -637,12 +657,22 @@
       if (minBidElement) {
         const minBid = (auction.currentBid || 0) + 1;
         minBidElement.textContent = `Min: $${minBid}`;
+        console.log('✅ Updated min bid element:', minBid);
       }
       
       // Update bidder info
       const bidderElement = auctionCard.querySelector('.bidly-current-bidder');
       if (bidderElement && auction.currentBidder) {
         bidderElement.textContent = `Current: ${auction.currentBidder}`;
+        console.log('✅ Updated bidder element');
+      }
+      
+      // Update bid input placeholder
+      const bidInput = auctionCard.querySelector('.bidly-bid-input');
+      if (bidInput) {
+        const minBid = (auction.currentBid || 0) + 1;
+        bidInput.placeholder = `Min: $${minBid}`;
+        console.log('✅ Updated bid input placeholder');
       }
     },
     
@@ -739,7 +769,17 @@
         if (this.instances[id].type === 'list') {
           this.loadAuctions(id);
         } else {
-          this.loadSingleAuction(id, this.instances[id].auctionId);
+          // Force re-render by clearing and reloading
+          const container = document.querySelector(`#bidly-single-auction-${id}, #bidly-featured-auction-${id}`);
+          if (container) {
+            // Clear the container and reload
+            container.innerHTML = '<div class="bidly-loading">Updating...</div>';
+            setTimeout(() => {
+              this.loadSingleAuction(id, this.instances[id].auctionId);
+            }, 100);
+          } else {
+            this.loadSingleAuction(id, this.instances[id].auctionId);
+          }
         }
       });
     },
