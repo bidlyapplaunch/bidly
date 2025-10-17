@@ -305,6 +305,11 @@
       const appProxyUrl = '{{ app_proxy_url }}';
       const auctionId = '{{ auction_id }}';
       
+      console.log('🎯 Single Auction Block - initBidlyWidget called for blockId:', blockId);
+      console.log('🎯 Single Auction Block - auctionId:', auctionId);
+      console.log('🎯 Single Auction Block - shopDomain:', shopDomain);
+      console.log('🎯 Single Auction Block - appProxyUrl:', appProxyUrl);
+      
       // More robust theme editor detection
       const isThemeEditor = window.Shopify && (
         window.Shopify.designMode || 
