@@ -13,9 +13,18 @@
     customer: null,
     loadedInstances: new Set(), // Track loaded instances instead of global flag
     
+    // Ensure loadedInstances is always available
+    ensureLoadedInstances: function() {
+      if (!this.loadedInstances) {
+        this.loadedInstances = new Set();
+      }
+    },
+    
     // Initialize the widget
     init: function(blockId, shopDomain, appProxyUrl) {
       console.log('🎯 Initializing Bidly Auction Widget:', { blockId, shopDomain, appProxyUrl });
+      
+      this.ensureLoadedInstances();
       
       this.instances[blockId] = {
         blockId: blockId,
@@ -32,6 +41,8 @@
     // Initialize single auction widget
     initSingle: function(blockId, shopDomain, appProxyUrl, auctionId) {
       console.log('🎯 Initializing Single Auction Widget:', { blockId, shopDomain, appProxyUrl, auctionId });
+      
+      this.ensureLoadedInstances();
       
       // Check if auction ID is provided
       if (!auctionId || auctionId === 'undefined' || auctionId === '') {
@@ -56,6 +67,8 @@
     // Initialize featured auction widget
     initFeatured: function(blockId, shopDomain, appProxyUrl, auctionId) {
       console.log('🎯 Initializing Featured Auction Widget:', { blockId, shopDomain, appProxyUrl, auctionId });
+      
+      this.ensureLoadedInstances();
       
       // Check if auction ID is provided
       if (!auctionId || auctionId === 'undefined' || auctionId === '') {

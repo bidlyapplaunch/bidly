@@ -308,6 +308,7 @@
       
       // Load the Bidly auction widget
       window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
+      window.BidlyAuctionWidget.loadedInstances = window.BidlyAuctionWidget.loadedInstances || new Set();
       
       if (!window.BidlyAuctionWidget.loadedInstances.has(blockId)) {
         // Load CSS
