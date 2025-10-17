@@ -33,6 +33,13 @@
     initSingle: function(blockId, shopDomain, appProxyUrl, auctionId) {
       console.log('🎯 Initializing Single Auction Widget:', { blockId, shopDomain, appProxyUrl, auctionId });
       
+      // Check if auction ID is provided
+      if (!auctionId || auctionId === 'undefined' || auctionId === '') {
+        console.error('❌ No auction ID provided for single auction widget');
+        this.showError(blockId, 'No auction ID configured. Please set an Auction ID in the block settings.');
+        return;
+      }
+      
       this.instances[blockId] = {
         blockId: blockId,
         shopDomain: shopDomain,
@@ -49,6 +56,13 @@
     // Initialize featured auction widget
     initFeatured: function(blockId, shopDomain, appProxyUrl, auctionId) {
       console.log('🎯 Initializing Featured Auction Widget:', { blockId, shopDomain, appProxyUrl, auctionId });
+      
+      // Check if auction ID is provided
+      if (!auctionId || auctionId === 'undefined' || auctionId === '') {
+        console.error('❌ No auction ID provided for featured auction widget');
+        this.showError(blockId, 'No auction ID configured. Please set an Auction ID in the block settings.');
+        return;
+      }
       
       this.instances[blockId] = {
         blockId: blockId,
@@ -529,6 +543,21 @@
       const savedCustomer = sessionStorage.getItem('bidly-customer');
       if (savedCustomer) {
         this.customer = JSON.parse(savedCustomer);
+      }
+    },
+    
+    // Show error message
+    showError: function(blockId, message) {
+      const loadingEl = document.getElementById(`bidly-loading-${blockId}`);
+      const errorEl = document.getElementById(`bidly-error-${blockId}`);
+      
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) {
+        errorEl.style.display = 'block';
+        const errorText = errorEl.querySelector('p');
+        if (errorText) {
+          errorText.textContent = message;
+        }
       }
     },
     

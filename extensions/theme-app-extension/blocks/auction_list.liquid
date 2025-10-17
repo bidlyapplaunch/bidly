@@ -54,12 +54,24 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     max-width: 100%;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
   }
   
   /* Hide in theme editor to prevent conflicts */
   .shopify-section-group-header .bidly-auction-list,
   .shopify-section-group-footer .bidly-auction-list {
     display: none !important;
+  }
+  
+  /* Prevent theme conflicts */
+  .bidly-auction-list * {
+    box-sizing: border-box;
+  }
+  
+  .bidly-auction-list input,
+  .bidly-auction-list button {
+    font-family: inherit;
   }
   
   /* Hide loading state in theme editor */
@@ -325,7 +337,8 @@
       window.Shopify.designMode || 
       window.location.search.includes('preview_theme_id') ||
       document.body.classList.contains('shopify-design-mode') ||
-      window.location.pathname.includes('editor')
+      window.location.pathname.includes('editor') ||
+      window.location.search.includes('oseid=')
     );
     
     if (isThemeEditor) {
@@ -334,9 +347,11 @@
       setTimeout(function() {
         const placeholder = document.querySelector('#bidly-auction-list-{{ block_id }} .bidly-theme-editor-placeholder');
         const loading = document.querySelector('#bidly-loading-{{ block_id }}');
+        const container = document.querySelector('#bidly-auctions-{{ block_id }}');
         
         if (placeholder) placeholder.style.display = 'block';
         if (loading) loading.style.display = 'none';
+        if (container) container.style.display = 'none';
       }, 50);
       return; // Exit early, don't load any scripts
     }
@@ -350,6 +365,21 @@
       // Double-check we're not in theme editor
       if (window.Shopify && window.Shopify.designMode) {
         return;
+      }
+      
+      // Prevent conflicts with theme's predictive search
+      if (window.predictiveSearch) {
+        console.log('Bidly: Predictive search detected, preventing conflicts');
+        // Temporarily disable predictive search for our block
+        const originalResetSearch = window.predictiveSearch.resetSearch;
+        if (originalResetSearch) {
+          window.predictiveSearch.resetSearch = function() {
+            // Only run if not in our block context
+            if (!document.querySelector('#bidly-auction-list-{{ block_id }}')) {
+              return originalResetSearch.apply(this, arguments);
+            }
+          };
+        }
       }
       
       // Test App Proxy connection first

@@ -27,6 +27,13 @@
     <p>Unable to load auction. Please try again later.</p>
   </div>
   
+  {% unless auction_id %}
+  <div class="bidly-config-error" style="padding: 2rem; text-align: center; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; color: #856404;">
+    <h3 style="margin: 0 0 1rem 0;">⚠️ Configuration Required</h3>
+    <p style="margin: 0;">Please set an Auction ID in the block settings to display an auction.</p>
+  </div>
+  {% endunless %}
+  
   <div class="bidly-auction-detail" id="bidly-auction-detail-{{ block_id }}" style="display: none;">
     <!-- Auction details will be populated by JavaScript -->
   </div>
