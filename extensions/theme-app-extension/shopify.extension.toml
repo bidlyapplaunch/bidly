@@ -2,7 +2,10 @@
 api_version = "2023-10"
 
 [[extensions]]
-type = "theme"
+
+uid = "a2274091-89f7-01b4-1067-13d60045030b40d0fae7"
+
+type = "theme_app_extension"
 name = "Bidly Auction Widget"
 handle = "bidly-auction-widget"
 

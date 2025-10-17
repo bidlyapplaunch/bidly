@@ -18,9 +18,9 @@ This guide will help you deploy the Bidly Theme App Extension to your Shopify ap
 cd your-bidly-app
 
 # Add the theme extension
-shopify app generate extension --type=theme
+shopify app generate extension --type=theme_app_extension
 
-# When prompted, select "theme" and name it "bidly-theme-extension"
+# When prompted, name it "bidly-theme-extension"
 ```
 
 ### 1.2 Copy Extension Files
