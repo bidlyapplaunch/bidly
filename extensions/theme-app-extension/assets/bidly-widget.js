@@ -236,6 +236,11 @@
           <div class="bidly-auction-time">${timeLeft}</div>
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId)}
+          <div class="bidly-auction-actions">
+            <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">
+              View Details
+            </button>
+          </div>
         </div>
       `;
       
@@ -337,6 +342,7 @@
       
       return `
         <div class="bidly-featured-bidding">
+          ${this.renderCustomerAuth(blockId)}
           <input type="number" class="bidly-featured-bid-input" placeholder="Min: $${minBid}" min="${minBid}" step="1">
           <button class="bidly-featured-bid-button" onclick="BidlyAuctionWidget.placeBid('${auction._id || auction.id}', '${blockId}')">
             Place Bid
@@ -354,6 +360,17 @@
     
     // Render customer authentication section
     renderCustomerAuth: function(blockId) {
+      // Check for Shopify customer first
+      const shopifyCustomer = this.getShopifyCustomer();
+      
+      if (shopifyCustomer) {
+        this.customer = shopifyCustomer;
+        return `<div class="bidly-customer-auth">
+          <p>Logged in as: <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
+          <button class="bidly-auth-button" onclick="BidlyAuctionWidget.logout()">Logout</button>
+        </div>`;
+      }
+      
       if (this.customer) {
         return `<div class="bidly-customer-auth">
           <p>Logged in as: <strong>${this.customer.name}</strong></p>
@@ -541,11 +558,57 @@
     
     // Initialize customer authentication
     initializeCustomerAuth: function(blockId) {
+      // Check for Shopify customer first
+      const shopifyCustomer = this.getShopifyCustomer();
+      if (shopifyCustomer) {
+        this.customer = shopifyCustomer;
+        return;
+      }
+      
       // Check for existing customer session
       const savedCustomer = sessionStorage.getItem('bidly-customer');
       if (savedCustomer) {
         this.customer = JSON.parse(savedCustomer);
       }
+    },
+    
+    // Get Shopify customer data if available
+    getShopifyCustomer: function() {
+      // Check for Shopify customer object in global scope
+      if (window.Shopify && window.Shopify.customer) {
+        return {
+          name: window.Shopify.customer.first_name + ' ' + window.Shopify.customer.last_name,
+          email: window.Shopify.customer.email,
+          id: window.Shopify.customer.id,
+          isShopifyCustomer: true
+        };
+      }
+      
+      // Check for customer data in meta tags (common Shopify pattern)
+      const customerName = document.querySelector('meta[name="customer-name"]')?.content;
+      const customerEmail = document.querySelector('meta[name="customer-email"]')?.content;
+      const customerId = document.querySelector('meta[name="customer-id"]')?.content;
+      
+      if (customerName && customerEmail) {
+        return {
+          name: customerName,
+          email: customerEmail,
+          id: customerId,
+          isShopifyCustomer: true
+        };
+      }
+      
+      // Check for customer data in window object (some themes use this)
+      if (window.customer && window.customer.email) {
+        return {
+          name: window.customer.first_name + ' ' + window.customer.last_name,
+          email: window.customer.email,
+          id: window.customer.id,
+          isShopifyCustomer: true
+        };
+      }
+      
+      return null;
     },
     
     // Show error message
@@ -561,6 +624,18 @@
           errorText.textContent = message;
         }
       }
+    },
+    
+    // View auction details in a new page/modal
+    viewAuctionDetails: function(auctionId, shopifyProductId) {
+      // Create a new page URL for the auction
+      const currentUrl = new URL(window.location);
+      const auctionUrl = new URL('/auction', currentUrl.origin);
+      auctionUrl.searchParams.set('id', auctionId);
+      auctionUrl.searchParams.set('product_id', shopifyProductId);
+      
+      // Open in new tab
+      window.open(auctionUrl.toString(), '_blank');
     },
     
     // Initialize WebSocket connection

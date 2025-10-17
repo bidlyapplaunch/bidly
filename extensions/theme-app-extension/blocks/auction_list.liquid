@@ -136,10 +136,31 @@
   }
   
   .bidly-auctions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
     padding: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+  }
+  
+  .bidly-auctions-grid::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .bidly-auctions-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  .bidly-auctions-grid::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+  
+  .bidly-auctions-grid::-webkit-scrollbar-thumb:hover {
+    background: #999;
   }
   
   .bidly-auction-card {
@@ -149,11 +170,37 @@
     background: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    flex: 0 0 280px; /* Fixed width for horizontal layout */
+    min-width: 280px;
+    max-width: 320px;
   }
   
   .bidly-auction-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  .bidly-auction-actions {
+    padding: 1rem;
+    border-top: 1px solid #e1e5e9;
+    background: #f8f9fa;
+  }
+  
+  .bidly-view-details-button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .bidly-view-details-button:hover {
+    background: #0056b3;
   }
   
   .bidly-auction-image {
@@ -325,7 +372,13 @@
   
   @media (max-width: 768px) {
     .bidly-auctions-grid {
-      grid-template-columns: 1fr;
+      flex-wrap: nowrap; /* Keep horizontal scroll on mobile */
+    }
+    
+    .bidly-auction-card {
+      flex: 0 0 250px; /* Smaller cards on mobile */
+      min-width: 250px;
+      max-width: 250px;
     }
   }
 </style>
