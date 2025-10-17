@@ -138,6 +138,14 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/app-bridge/') || req.path.startsWith('/auth/')) {
     return next();
   }
+  
+  // Add cache-busting headers for JavaScript and CSS files
+  if (req.path.endsWith('.js') || req.path.endsWith('.css')) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  
   console.log('📁 Serving static file:', req.path, 'from admin frontend');
   express.static(frontendDistPath)(req, res, next);
 });
