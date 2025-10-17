@@ -399,8 +399,14 @@
           console.error('❌ No initialization method available for featured block');
           // Fallback: try to initialize manually
           console.log('🔄 Attempting manual initialization...');
+          console.log('🔄 window.BidlyAuctionWidget available:', !!window.BidlyAuctionWidget);
+          console.log('🔄 window.BidlyAuctionWidget.ensureLoadedInstances available:', !!(window.BidlyAuctionWidget && window.BidlyAuctionWidget.ensureLoadedInstances));
+          
           if (window.BidlyAuctionWidget) {
+            console.log('🔄 Calling ensureLoadedInstances...');
             window.BidlyAuctionWidget.ensureLoadedInstances();
+            
+            console.log('🔄 Creating instance for blockId:', blockId);
             window.BidlyAuctionWidget.instances[blockId] = {
               blockId: blockId,
               shopDomain: shopDomain,
@@ -408,10 +414,20 @@
               auctionId: auctionId,
               type: 'featured'
             };
+            
+            console.log('🔄 Calling initializeCustomerAuth...');
             window.BidlyAuctionWidget.initializeCustomerAuth(blockId);
+            
+            console.log('🔄 Calling initializeSocket...');
             window.BidlyAuctionWidget.initializeSocket();
+            
+            console.log('🔄 Calling loadSingleAuction...');
             window.BidlyAuctionWidget.loadSingleAuction(blockId, auctionId);
+            
             console.log('✅ Manual initialization completed for featured block');
+            console.log('📋 All instances after manual init:', Object.keys(window.BidlyAuctionWidget.instances));
+          } else {
+            console.error('❌ window.BidlyAuctionWidget not available for manual initialization');
           }
         }
       }
