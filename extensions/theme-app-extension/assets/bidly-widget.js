@@ -8,10 +8,10 @@
 
   // Global widget object
   window.BidlyAuctionWidget = {
-    loaded: false,
     instances: {},
     socket: null,
     customer: null,
+    loadedInstances: new Set(), // Track loaded instances instead of global flag
     
     // Initialize the widget
     init: function(blockId, shopDomain, appProxyUrl) {

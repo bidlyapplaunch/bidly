@@ -309,7 +309,7 @@
       // Load the Bidly auction widget
       window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
       
-      if (!window.BidlyAuctionWidget.loaded) {
+      if (!window.BidlyAuctionWidget.loadedInstances.has(blockId)) {
         // Load CSS
         const cssLink = document.createElement('link');
         cssLink.rel = 'stylesheet';
@@ -324,6 +324,7 @@
         script.src = '{{ "bidly-widget.js" | asset_url }}?v=2';
         script.onload = function() {
           if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initFeatured) {
+            window.BidlyAuctionWidget.loadedInstances.add(blockId);
             window.BidlyAuctionWidget.initFeatured(blockId, shopDomain, appProxyUrl, auctionId);
           }
         };
