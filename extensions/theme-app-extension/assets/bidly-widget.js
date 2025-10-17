@@ -985,6 +985,18 @@
         retryDelays.forEach((delay, index) => {
           setTimeout(() => {
             console.log(`🔄 Retrying customer detection (attempt ${index + 1}) after ${delay}ms...`);
+            
+            // Try additional detection methods on retry
+            const additionalCustomer = this.detectCustomerFromAdditionalSources();
+            if (additionalCustomer) {
+              this.customer = additionalCustomer;
+              sessionStorage.setItem('bidly-customer', JSON.stringify(additionalCustomer));
+              console.log('✅ Customer detected from additional sources:', additionalCustomer);
+              // Refresh page to update all blocks
+              window.location.reload();
+              return;
+            }
+            
             const retryCustomer = this.getShopifyCustomer();
             if (retryCustomer && !this.customer) {
               this.customer = retryCustomer;
@@ -1014,6 +1026,94 @@
           customerName: !!bodyCustomerName
         }
       });
+      
+      return null;
+    },
+    
+    // Additional customer detection methods
+    detectCustomerFromAdditionalSources: function() {
+      console.log('🔍 Checking additional customer sources...');
+      
+      // Check for customer data in script tags with JSON
+      const scriptTags = document.querySelectorAll('script[type="application/json"]');
+      for (const script of scriptTags) {
+        try {
+          const data = JSON.parse(script.textContent);
+          if (data.customer && data.customer.email) {
+            console.log('✅ Found customer in script tag:', data.customer);
+            return {
+              name: data.customer.first_name || data.customer.name || 'Customer',
+              email: data.customer.email,
+              id: data.customer.id,
+              isShopifyCustomer: true
+            };
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
+      }
+      
+      // Check for customer data in localStorage
+      const customerData = localStorage.getItem('customer');
+      if (customerData) {
+        try {
+          const customer = JSON.parse(customerData);
+          if (customer.email) {
+            console.log('✅ Found customer in localStorage:', customer);
+            return {
+              name: customer.first_name || customer.name || 'Customer',
+              email: customer.email,
+              id: customer.id,
+              isShopifyCustomer: true
+            };
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
+      }
+      
+      // Check for customer data in sessionStorage
+      const sessionCustomerData = sessionStorage.getItem('customer');
+      if (sessionCustomerData) {
+        try {
+          const customer = JSON.parse(sessionCustomerData);
+          if (customer.email) {
+            console.log('✅ Found customer in sessionStorage:', customer);
+            return {
+              name: customer.first_name || customer.name || 'Customer',
+              email: customer.email,
+              id: customer.id,
+              isShopifyCustomer: true
+            };
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
+      }
+      
+      // Check for customer data in cookies
+      const cookies = document.cookie.split(';');
+      let customerEmail = null;
+      let customerName = null;
+      
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'customer_email') {
+          customerEmail = decodeURIComponent(value);
+        } else if (name === 'customer_name') {
+          customerName = decodeURIComponent(value);
+        }
+      }
+      
+      if (customerEmail && customerName) {
+        console.log('✅ Found customer in cookies:', { customerEmail, customerName });
+        return {
+          name: customerName,
+          email: customerEmail,
+          id: null,
+          isShopifyCustomer: true
+        };
+      }
       
       return null;
     },
@@ -1049,12 +1149,48 @@
     initializeSocket: function() {
       if (this.socket) return;
       
-      // Note: WebSocket connection would need to be configured for your backend
-      // This is a placeholder for real-time updates
-      console.log('🔌 WebSocket connection would be initialized here');
+      console.log('🔌 Initializing WebSocket connection...');
+      
+      // Try to connect to WebSocket
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/socket.io/`;
+        
+        // For now, use polling as WebSocket might not be available
+        console.log('🔄 Using polling for real-time updates (WebSocket not available)');
+        this.startPollingUpdates();
+      } catch (error) {
+        console.log('❌ WebSocket connection failed, using polling:', error);
+        this.startPollingUpdates();
+      }
       
       // Start timer updates for all instances
       this.startTimerUpdates();
+    },
+    
+    // Start polling for updates every 5 seconds
+    startPollingUpdates: function() {
+      if (this.pollingInterval) return;
+      
+      console.log('🔄 Starting polling updates every 5 seconds...');
+      this.pollingInterval = setInterval(() => {
+        this.pollForUpdates();
+      }, 5000);
+    },
+    
+    // Poll for auction updates
+    pollForUpdates: function() {
+      Object.keys(this.instances).forEach(blockId => {
+        const instance = this.instances[blockId];
+        
+        if (instance.type === 'list') {
+          // Poll for all auctions in list
+          this.loadAuctions(blockId);
+        } else if (instance.type === 'single' || instance.type === 'featured') {
+          // Poll for specific auction
+          this.loadSingleAuction(blockId, instance.auctionId);
+        }
+      });
     },
     
     // Start timer updates for all auction instances
