@@ -1232,6 +1232,17 @@
       return;
     }
     
+    // Check if this is a fresh widget instance (instances object is empty)
+    const hasExistingInstances = window.BidlyAuctionWidget.instances && Object.keys(window.BidlyAuctionWidget.instances).length > 0;
+    console.log('🔍 Has existing instances:', hasExistingInstances);
+    console.log('🔍 Current instances object:', window.BidlyAuctionWidget.instances);
+    
+    // If this is a fresh widget, try to restore from global storage
+    if (!hasExistingInstances && window.BidlyGlobalInstances) {
+      console.log('🔄 Restoring instances from global storage:', Object.keys(window.BidlyGlobalInstances));
+      window.BidlyAuctionWidget.instances = { ...window.BidlyGlobalInstances };
+    }
+    
     // Log instances BEFORE ensureLoadedInstances
     console.log('🔍 Instances BEFORE ensureLoadedInstances:', Object.keys(window.BidlyAuctionWidget.instances || {}));
     
@@ -1304,6 +1315,10 @@
     
     console.log('📋 All instances after global init:', Object.keys(window.BidlyAuctionWidget.instances));
     console.log('📋 Final instances object:', window.BidlyAuctionWidget.instances);
+    
+    // Store instances globally to prevent loss between block initializations
+    window.BidlyGlobalInstances = { ...window.BidlyAuctionWidget.instances };
+    console.log('💾 Stored instances globally:', Object.keys(window.BidlyGlobalInstances));
     
     // Add a check to see if the instance is still there after a delay
     setTimeout(() => {
