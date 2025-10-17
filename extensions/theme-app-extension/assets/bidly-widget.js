@@ -24,6 +24,13 @@
     init: function(blockId, shopDomain, appProxyUrl) {
       console.log('🎯 Initializing Bidly Auction Widget:', { blockId, shopDomain, appProxyUrl });
       
+      // Use the global initialization function
+      if (window.initBidlyBlock) {
+        console.log('🔄 Using global init function for list block');
+        window.initBidlyBlock(blockId, shopDomain, appProxyUrl, null, 'list');
+        return;
+      }
+      
       this.ensureLoadedInstances();
       
       this.instances[blockId] = {
@@ -41,6 +48,13 @@
     // Initialize single auction widget
     initSingle: function(blockId, shopDomain, appProxyUrl, auctionId) {
       console.log('🎯 Initializing Single Auction Widget:', { blockId, shopDomain, appProxyUrl, auctionId });
+      
+      // Use the global initialization function
+      if (window.initBidlyBlock) {
+        console.log('🔄 Using global init function for single block');
+        window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'single');
+        return;
+      }
       
       this.ensureLoadedInstances();
       
@@ -71,6 +85,13 @@
     // Initialize featured auction widget
     initFeatured: function(blockId, shopDomain, appProxyUrl, auctionId) {
       console.log('🎯 Initializing Featured Auction Widget:', { blockId, shopDomain, appProxyUrl, auctionId });
+      
+      // Use the global initialization function
+      if (window.initBidlyBlock) {
+        console.log('🔄 Using global init function for featured block');
+        window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'featured');
+        return;
+      }
       
       this.ensureLoadedInstances();
       
@@ -1202,7 +1223,7 @@
 
   // Global initialization function that can be called from Liquid blocks
   window.initBidlyBlock = function(blockId, shopDomain, appProxyUrl, auctionId, type) {
-    console.log('🌍 Global Block Initialization:', { blockId, shopDomain, appProxyUrl, auctionId, type });
+    console.log('🌍 Global Block Initialization CALLED:', { blockId, shopDomain, appProxyUrl, auctionId, type });
     
     if (!window.BidlyAuctionWidget) {
       console.error('❌ BidlyAuctionWidget not loaded yet');
