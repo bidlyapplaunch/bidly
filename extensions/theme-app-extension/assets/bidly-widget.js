@@ -492,13 +492,18 @@
       if (instance.type === 'list') {
         bidInput = document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auctionId}"] .bidly-bid-input`);
       } else if (instance.type === 'single') {
-        bidInput = document.querySelector(`#bidly-auction-detail-${blockId} .bidly-bid-input`);
+        bidInput = document.querySelector(`#bidly-single-auction-${blockId} .bidly-bid-input`);
       } else if (instance.type === 'featured') {
-        bidInput = document.querySelector(`#bidly-featured-container-${blockId} .bidly-featured-bid-input`);
+        bidInput = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-featured-bid-input`);
       }
       
       if (!bidInput) {
-        console.error('❌ Bid input not found for auction:', auctionId, 'block:', blockId);
+        console.error('❌ Bid input not found for auction:', auctionId, 'block:', blockId, 'type:', instance.type);
+        console.log('Available elements:', {
+          list: document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auctionId}"] .bidly-bid-input`),
+          single: document.querySelector(`#bidly-single-auction-${blockId} .bidly-bid-input`),
+          featured: document.querySelector(`#bidly-featured-auction-${blockId} .bidly-featured-bid-input`)
+        });
         this.showToast('Bid input not found. Please refresh the page.', true);
         return;
       }
@@ -515,9 +520,15 @@
       if (instance.type === 'list') {
         button = document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auctionId}"] .bidly-bid-button`);
       } else if (instance.type === 'single') {
-        button = document.querySelector(`#bidly-auction-detail-${blockId} .bidly-bid-button`);
+        button = document.querySelector(`#bidly-single-auction-${blockId} .bidly-bid-button`);
       } else if (instance.type === 'featured') {
-        button = document.querySelector(`#bidly-featured-container-${blockId} .bidly-featured-bid-button`);
+        button = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-featured-bid-button`);
+      }
+      
+      if (!button) {
+        console.error('❌ Bid button not found for auction:', auctionId, 'block:', blockId, 'type:', instance.type);
+        this.showToast('Bid button not found. Please refresh the page.', true);
+        return;
       }
       button.disabled = true;
       button.textContent = 'Placing Bid...';
@@ -755,15 +766,62 @@
         };
       }
       
+      // Check for customer data in Shopify.routes (some themes use this)
+      if (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) {
+        console.log('🔍 Checking Shopify routes for customer data...');
+        // This is a common pattern in some themes
+      }
+      
+      // Check for customer data in theme settings or other common locations
+      if (window.theme && window.theme.settings && window.theme.settings.customer) {
+        console.log('✅ Found customer in window.theme.settings.customer:', window.theme.settings.customer);
+        return {
+          name: (window.theme.settings.customer.first_name || '') + ' ' + (window.theme.settings.customer.last_name || ''),
+          email: window.theme.settings.customer.email,
+          id: window.theme.settings.customer.id,
+          isShopifyCustomer: true
+        };
+      }
+      
+      // Check for customer data in global variables (some themes expose this)
+      if (window.customer_email && window.customer_name) {
+        console.log('✅ Found customer in global variables:', { customer_email: window.customer_email, customer_name: window.customer_name });
+        return {
+          name: window.customer_name,
+          email: window.customer_email,
+          id: window.customer_id || null,
+          isShopifyCustomer: true
+        };
+      }
+      
+      // Check for customer data in data attributes on body or html
+      const bodyCustomerEmail = document.body.getAttribute('data-customer-email');
+      const bodyCustomerName = document.body.getAttribute('data-customer-name');
+      if (bodyCustomerEmail && bodyCustomerName) {
+        console.log('✅ Found customer in body data attributes:', { bodyCustomerEmail, bodyCustomerName });
+        return {
+          name: bodyCustomerName,
+          email: bodyCustomerEmail,
+          id: document.body.getAttribute('data-customer-id') || null,
+          isShopifyCustomer: true
+        };
+      }
+      
       console.log('❌ No Shopify customer data found');
       console.log('Available objects:', {
         'window.Shopify': !!window.Shopify,
         'window.customer': !!window.customer,
         'window.theme': !!window.theme,
         'window.customerData': !!window.customerData,
+        'window.customer_email': !!window.customer_email,
+        'window.customer_name': !!window.customer_name,
         'meta tags': {
           customerName: !!customerName,
           customerEmail: !!customerEmail
+        },
+        'body attributes': {
+          customerEmail: !!bodyCustomerEmail,
+          customerName: !!bodyCustomerName
         }
       });
       
@@ -897,10 +955,12 @@
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
       
-      if (days > 0) return `${days}d ${hours}h ${minutes}m left`;
-      if (hours > 0) return `${hours}h ${minutes}m left`;
-      return `${minutes}m left`;
+      if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s left`;
+      if (hours > 0) return `${hours}h ${minutes}m ${seconds}s left`;
+      if (minutes > 0) return `${minutes}m ${seconds}s left`;
+      return `${seconds}s left`;
     },
     
     formatBidTime: function(timestamp) {
