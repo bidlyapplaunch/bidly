@@ -1339,19 +1339,27 @@
     
     // Update single auction display smoothly
     updateSingleAuctionDisplay: function(blockId, auction) {
+      console.log('🔄 Updating single auction display for block:', blockId, 'auction:', auction._id);
+      
       // Update current bid
       const priceElement = document.querySelector(`#bidly-auction-${blockId} .bidly-price-amount`);
       if (priceElement) {
         const currentBid = auction.currentBid || 0;
         const newPrice = currentBid > 0 ? `$${currentBid}` : `$${auction.startingBid}`;
+        console.log('💰 Single auction price update - Current:', priceElement.textContent, 'New:', newPrice);
         if (priceElement.textContent !== newPrice) {
+          console.log('✅ Single auction price changed, updating with highlight');
           priceElement.style.transition = 'color 0.3s ease';
           priceElement.textContent = newPrice;
           priceElement.style.color = '#ff6b35'; // Highlight change
           setTimeout(() => {
             priceElement.style.color = '';
           }, 1000);
+        } else {
+          console.log('⏭️ Single auction price unchanged, skipping');
         }
+      } else {
+        console.log('❌ Single auction price element not found');
       }
       
       // Update minimum bid
@@ -1359,28 +1367,40 @@
       if (minBidElement) {
         const minBid = (auction.currentBid || 0) + 1;
         const newMinBid = `Min: $${minBid}`;
+        console.log('💵 Single auction min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
         if (minBidElement.textContent !== newMinBid) {
+          console.log('✅ Single auction min bid changed, updating with highlight');
           minBidElement.style.transition = 'color 0.3s ease';
           minBidElement.textContent = newMinBid;
           minBidElement.style.color = '#ff6b35'; // Highlight change
           setTimeout(() => {
             minBidElement.style.color = '';
           }, 1000);
+        } else {
+          console.log('⏭️ Single auction min bid unchanged, skipping');
         }
+      } else {
+        console.log('❌ Single auction min bid element not found');
       }
       
       // Update bidder info
       const bidderElement = document.querySelector(`#bidly-auction-${blockId} .bidly-bidder`);
       if (bidderElement && auction.currentBidder) {
         const newBidder = `by ${auction.currentBidder}`;
+        console.log('👤 Single auction bidder update - Current:', bidderElement.textContent, 'New:', newBidder);
         if (bidderElement.textContent !== newBidder) {
+          console.log('✅ Single auction bidder changed, updating with highlight');
           bidderElement.style.transition = 'opacity 0.3s ease';
           bidderElement.textContent = newBidder;
           bidderElement.style.opacity = '0.7';
           setTimeout(() => {
             bidderElement.style.opacity = '1';
           }, 500);
+        } else {
+          console.log('⏭️ Single auction bidder unchanged, skipping');
         }
+      } else {
+        console.log('❌ Single auction bidder element not found or no bidder');
       }
       
       // Update bid input placeholder
@@ -1388,18 +1408,30 @@
       if (bidInput) {
         const minBid = (auction.currentBid || 0) + 1;
         const newPlaceholder = `Min: $${minBid}`;
+        console.log('📝 Single auction bid input update - Current:', bidInput.placeholder, 'New:', newPlaceholder);
         if (bidInput.placeholder !== newPlaceholder) {
           bidInput.placeholder = newPlaceholder;
+          console.log('✅ Single auction bid input updated');
+        } else {
+          console.log('⏭️ Single auction bid input unchanged, skipping');
         }
+      } else {
+        console.log('❌ Single auction bid input not found');
       }
       
       // Update timer
       const timeElement = document.querySelector(`#bidly-auction-${blockId} .bidly-auction-time`);
       if (timeElement && auction.endTime) {
         const newTime = this.formatTimeLeft(auction.endTime);
+        console.log('⏰ Single auction timer update - Current:', timeElement.textContent, 'New:', newTime);
         if (timeElement.textContent !== newTime) {
           timeElement.textContent = newTime;
+          console.log('✅ Single auction timer updated');
+        } else {
+          console.log('⏭️ Single auction timer unchanged, skipping');
         }
+      } else {
+        console.log('❌ Single auction timer element not found or no end time');
       }
     },
     
