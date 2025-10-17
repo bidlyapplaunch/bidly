@@ -502,8 +502,10 @@
       if (instance.type === 'list') {
         bidInput = document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auctionId}"] .bidly-bid-input`);
       } else if (instance.type === 'single') {
+        // For single auction, use the full block ID
         bidInput = document.querySelector(`#bidly-single-auction-${blockId} .bidly-bid-input`);
       } else if (instance.type === 'featured') {
+        // For featured auction, use the full block ID
         bidInput = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-featured-bid-input`);
       }
       
@@ -535,8 +537,10 @@
       if (instance.type === 'list') {
         button = document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auctionId}"] .bidly-bid-button`);
       } else if (instance.type === 'single') {
+        // For single auction, use the full block ID
         button = document.querySelector(`#bidly-single-auction-${blockId} .bidly-bid-button`);
       } else if (instance.type === 'featured') {
+        // For featured auction, use the full block ID
         button = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-featured-bid-button`);
       }
       
@@ -564,12 +568,8 @@
         if (data.success) {
           this.showToast(data.message);
           bidInput.value = '';
-          // Refresh the auction data
-          if (instance.type === 'list') {
-            this.loadAuctions(blockId);
-          } else {
-            this.loadSingleAuction(blockId, auctionId);
-          }
+          // Update all instances of this auction across all blocks
+          this.updateAuctionInAllBlocks(auctionId, data.auction);
         } else {
           throw new Error(data.message || 'Failed to place bid');
         }
@@ -582,6 +582,68 @@
         button.disabled = false;
         button.textContent = 'Place Bid';
       });
+    },
+    
+    // Update auction data in all blocks that display this auction
+    updateAuctionInAllBlocks: function(auctionId, updatedAuction) {
+      console.log('🔄 Updating auction in all blocks:', auctionId, updatedAuction);
+      
+      Object.keys(this.instances).forEach(blockId => {
+        const instance = this.instances[blockId];
+        
+        if (instance.type === 'list') {
+          // Update auction card in list view
+          const auctionCard = document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auctionId}"]`);
+          if (auctionCard && updatedAuction) {
+            this.updateAuctionCard(auctionCard, updatedAuction);
+          }
+        } else if (instance.type === 'single' && instance.auctionId === auctionId) {
+          // Update single auction view
+          this.loadSingleAuction(blockId, auctionId);
+        } else if (instance.type === 'featured' && instance.auctionId === auctionId) {
+          // Update featured auction view
+          this.loadSingleAuction(blockId, auctionId);
+        }
+      });
+    },
+    
+    // Update individual auction card with new data
+    updateAuctionCard: function(auctionCard, auction) {
+      // Update current bid
+      const priceElement = auctionCard.querySelector('.bidly-price-amount');
+      if (priceElement) {
+        const currentBid = auction.currentBid || 0;
+        const startingBid = auction.startingBid || 0;
+        const displayPrice = currentBid > 0 ? currentBid : startingBid;
+        priceElement.textContent = `$${displayPrice}`;
+      }
+      
+      // Update price label
+      const labelElement = auctionCard.querySelector('.bidly-price-label');
+      if (labelElement) {
+        const currentBid = auction.currentBid || 0;
+        labelElement.textContent = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+      }
+      
+      // Update starting bid info
+      const startingBidElement = auctionCard.querySelector('.bidly-starting-bid');
+      if (startingBidElement && auction.currentBid > 0 && auction.startingBid > 0) {
+        startingBidElement.textContent = `Starting: $${auction.startingBid}`;
+        startingBidElement.style.display = 'block';
+      }
+      
+      // Update minimum bid
+      const minBidElement = auctionCard.querySelector('.bidly-min-bid');
+      if (minBidElement) {
+        const minBid = (auction.currentBid || 0) + 1;
+        minBidElement.textContent = `Min: $${minBid}`;
+      }
+      
+      // Update bidder info
+      const bidderElement = auctionCard.querySelector('.bidly-current-bidder');
+      if (bidderElement && auction.currentBidder) {
+        bidderElement.textContent = `Current: ${auction.currentBidder}`;
+      }
     },
     
     // Buy now
@@ -700,6 +762,13 @@
     
     // Initialize customer authentication
     initializeCustomerAuth: function(blockId) {
+      // Only initialize once globally
+      if (this.customerInitialized) {
+        return;
+      }
+      
+      console.log('🔍 Initializing customer authentication...');
+      
       // Check for Shopify customer first
       const shopifyCustomer = this.getShopifyCustomer();
       if (shopifyCustomer) {
@@ -707,15 +776,24 @@
         // Save to session storage for consistency
         sessionStorage.setItem('bidly-customer', JSON.stringify(shopifyCustomer));
         console.log('✅ Shopify customer authenticated:', shopifyCustomer);
+        this.customerInitialized = true;
         return;
       }
       
       // Check for existing customer session
       const savedCustomer = sessionStorage.getItem('bidly-customer');
       if (savedCustomer) {
-        this.customer = JSON.parse(savedCustomer);
-        console.log('✅ Existing customer session found:', this.customer);
+        try {
+          this.customer = JSON.parse(savedCustomer);
+          console.log('✅ Existing customer session found:', this.customer);
+          this.customerInitialized = true;
+        } catch (e) {
+          console.error('❌ Failed to parse saved customer:', e);
+          sessionStorage.removeItem('bidly-customer');
+        }
       }
+      
+      this.customerInitialized = true;
     },
     
     // Get Shopify customer data if available
@@ -839,6 +917,30 @@
         } catch (e) {
           console.log('❌ Failed to parse customer data from serialized div:', e);
         }
+      }
+      
+      // If no customer found immediately, try again after a short delay
+      // This helps with pages that load customer data asynchronously
+      if (!this.customerRetryAttempted) {
+        this.customerRetryAttempted = true;
+        setTimeout(() => {
+          console.log('🔄 Retrying customer detection after delay...');
+          const retryCustomer = this.getShopifyCustomer();
+          if (retryCustomer && !this.customer) {
+            this.customer = retryCustomer;
+            sessionStorage.setItem('bidly-customer', JSON.stringify(retryCustomer));
+            console.log('✅ Customer detected on retry:', retryCustomer);
+            // Re-render all instances
+            Object.keys(this.instances).forEach(blockId => {
+              const instance = this.instances[blockId];
+              if (instance.type === 'list') {
+                this.loadAuctions(blockId);
+              } else {
+                this.loadSingleAuction(blockId, instance.auctionId);
+              }
+            });
+          }
+        }, 1000); // Retry after 1 second
       }
       
       console.log('❌ No Shopify customer data found');
