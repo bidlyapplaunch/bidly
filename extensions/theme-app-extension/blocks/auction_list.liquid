@@ -32,6 +32,14 @@
     <div style="padding: 2rem; text-align: center; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">
       <h3 style="margin: 0 0 1rem 0; color: #495057;">🎯 Bidly Auction List</h3>
       <p style="margin: 0; color: #6c757d;">This block will display live auctions when the theme is published.</p>
+      <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 4px;">
+        <p style="margin: 0; font-size: 0.9rem; color: #6c757d;">
+          <strong>Settings:</strong><br>
+          Title: {{ block.settings.title | default: 'Live Auctions' }}<br>
+          Max Auctions: {{ block.settings.max_auctions | default: 6 }}<br>
+          Show Ended: {{ block.settings.show_ended | default: false }}
+        </p>
+      </div>
     </div>
   </div>
 </div>
@@ -47,6 +55,15 @@
   .shopify-section-group-header .bidly-auction-list,
   .shopify-section-group-footer .bidly-auction-list {
     display: none !important;
+  }
+  
+  /* Hide loading state in theme editor */
+  .shopify-design-mode .bidly-loading {
+    display: none !important;
+  }
+  
+  .shopify-design-mode .bidly-theme-editor-placeholder {
+    display: block !important;
   }
   
   .bidly-loading {
@@ -282,19 +299,32 @@
 
 <script>
   (function() {
+    // Immediate theme editor check to prevent loading
+    if (window.Shopify && window.Shopify.designMode) {
+      console.log('Bidly: Theme editor detected, showing placeholder');
+      // Show placeholder immediately
+      setTimeout(function() {
+        const placeholder = document.querySelector('#bidly-auction-list-{{ block_id }} .bidly-theme-editor-placeholder');
+        if (placeholder) {
+          placeholder.style.display = 'block';
+        }
+        // Hide loading state
+        const loading = document.querySelector('#bidly-loading-{{ block_id }}');
+        if (loading) {
+          loading.style.display = 'none';
+        }
+      }, 100);
+      return; // Exit early, don't load any scripts
+    }
+    
     // Wait for DOM to be ready and avoid conflicts
     function initBidlyWidget() {
       const blockId = '{{ block_id }}';
       const shopDomain = '{{ shop_domain }}';
       const appProxyUrl = '{{ app_proxy_url }}';
       
-      // Check if we're in theme editor (show placeholder)
+      // Double-check we're not in theme editor
       if (window.Shopify && window.Shopify.designMode) {
-        console.log('Bidly: Showing placeholder in theme editor');
-        const placeholder = document.querySelector(`#bidly-auction-list-${blockId} .bidly-theme-editor-placeholder`);
-        if (placeholder) {
-          placeholder.style.display = 'block';
-        }
         return;
       }
       
