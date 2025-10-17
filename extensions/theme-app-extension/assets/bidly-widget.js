@@ -1341,8 +1341,20 @@
     updateSingleAuctionDisplay: function(blockId, auction) {
       console.log('🔄 Updating single auction display for block:', blockId, 'auction:', auction._id);
       
+      // Try different selectors for single and featured blocks
+      const singleContainer = document.querySelector(`#bidly-auction-detail-${blockId}`);
+      const featuredContainer = document.querySelector(`#bidly-featured-container-${blockId}`);
+      const container = singleContainer || featuredContainer;
+      
+      if (!container) {
+        console.log('❌ No container found for block:', blockId);
+        return;
+      }
+      
+      console.log('✅ Found container:', container.id);
+      
       // Update current bid
-      const priceElement = document.querySelector(`#bidly-auction-${blockId} .bidly-price-amount`);
+      const priceElement = container.querySelector('.bidly-price-amount');
       if (priceElement) {
         const currentBid = auction.currentBid || 0;
         const newPrice = currentBid > 0 ? `$${currentBid}` : `$${auction.startingBid}`;
@@ -1363,7 +1375,7 @@
       }
       
       // Update minimum bid
-      const minBidElement = document.querySelector(`#bidly-auction-${blockId} .bidly-min-bid`);
+      const minBidElement = container.querySelector('.bidly-min-bid');
       if (minBidElement) {
         const minBid = (auction.currentBid || 0) + 1;
         const newMinBid = `Min: $${minBid}`;
@@ -1384,7 +1396,7 @@
       }
       
       // Update bidder info
-      const bidderElement = document.querySelector(`#bidly-auction-${blockId} .bidly-bidder`);
+      const bidderElement = container.querySelector('.bidly-bidder');
       if (bidderElement && auction.currentBidder) {
         const newBidder = `by ${auction.currentBidder}`;
         console.log('👤 Single auction bidder update - Current:', bidderElement.textContent, 'New:', newBidder);
@@ -1404,7 +1416,7 @@
       }
       
       // Update bid input placeholder
-      const bidInput = document.querySelector(`#bidly-auction-${blockId} .bidly-bid-input`);
+      const bidInput = container.querySelector('.bidly-bid-input');
       if (bidInput) {
         const minBid = (auction.currentBid || 0) + 1;
         const newPlaceholder = `Min: $${minBid}`;
@@ -1420,7 +1432,7 @@
       }
       
       // Update timer
-      const timeElement = document.querySelector(`#bidly-auction-${blockId} .bidly-auction-time`);
+      const timeElement = container.querySelector('.bidly-auction-time');
       if (timeElement && auction.endTime) {
         const newTime = this.formatTimeLeft(auction.endTime);
         console.log('⏰ Single auction timer update - Current:', timeElement.textContent, 'New:', newTime);
