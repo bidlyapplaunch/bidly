@@ -94,6 +94,7 @@
       
       // Fetch auctions via app proxy
       console.log('🔍 Fetching auctions from:', `${instance.appProxyUrl}/api/auctions?shop=${instance.shopDomain}`);
+      console.log('🔍 Instance details:', instance);
       
       fetch(`${instance.appProxyUrl}/api/auctions?shop=${instance.shopDomain}`, {
         method: 'GET',
@@ -105,13 +106,14 @@
       })
         .then(response => {
           console.log('📡 Response status:', response.status);
+          console.log('📡 Response headers:', response.headers);
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
           return response.json();
         })
         .then(data => {
-          console.log('📦 Received data:', data);
+          console.log('📦 Received auction data:', data);
           if (data.success && data.data) {
             this.renderAuctions(blockId, data.data);
             if (loadingEl) loadingEl.style.display = 'none';

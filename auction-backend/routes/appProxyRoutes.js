@@ -27,9 +27,9 @@ router.use(identifyStore);
 // GET /apps/bidly/api/auctions?shop=store.myshopify.com
 router.get('/api/auctions', getAllAuctions);
 
-// Get single auction by ID
+// Get single auction by ID (accepts both MongoDB ObjectId and Shopify Product ID)
 // GET /apps/bidly/api/auctions/:id?shop=store.myshopify.com
-router.get('/api/auctions/:id', validateId, getAuctionById);
+router.get('/api/auctions/:id', getAuctionById);
 
 // Place bid on auction
 // POST /apps/bidly/api/auctions/:id/bid?shop=store.myshopify.com

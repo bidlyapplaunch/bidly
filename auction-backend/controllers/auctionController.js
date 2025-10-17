@@ -144,16 +144,16 @@ export const getAuctionById = async (req, res, next) => {
       throw new AppError('Store domain is required', 400);
     }
     
-    // Try to find auction by MongoDB ObjectId first, then by Shopify product ID
+    // Try to find auction by Shopify product ID first (priority), then by MongoDB ObjectId
     let auction = await Auction.findOne({ 
-      _id: req.params.id, 
+      shopifyProductId: req.params.id, 
       shopDomain: shopDomain 
     });
     
-    // If not found by ObjectId, try by Shopify product ID
+    // If not found by Shopify product ID, try by MongoDB ObjectId
     if (!auction) {
       auction = await Auction.findOne({ 
-        shopifyProductId: req.params.id, 
+        _id: req.params.id, 
         shopDomain: shopDomain 
       });
     }
