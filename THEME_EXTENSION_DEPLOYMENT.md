@@ -48,7 +48,7 @@ shopify app deploy
 3. Configure the proxy:
    - **Subpath prefix**: `bidly`
    - **Subpath**: `/apps/bidly`
-   - **URL**: `https://your-backend-url.com/apps/bidly`
+   - **URL**: `https://bidly-auction-backend.onrender.com/apps/bidly`
 
 ### 2.2 Update Backend Configuration
 

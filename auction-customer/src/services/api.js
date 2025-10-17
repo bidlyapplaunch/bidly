@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://unsynchronous-theresia-indefinite.ngrok-free.dev/api';
+const API_BASE_URL = 'https://bidly-auction-backend.onrender.com/api';
 
 // Helper function to get shop from URL parameters
 const getShopFromURL = () => {

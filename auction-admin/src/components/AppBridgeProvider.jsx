@@ -39,10 +39,10 @@ const AppBridgeWrapper = ({ children }) => {
       
       if (!shop) {
         // For development, allow running without shop parameter
-        const isDevelopment = window.location.hostname === 'localhost' || 
-                             window.location.hostname === '127.0.0.1' ||
-                             window.location.hostname.includes('ngrok') ||
-                             window.location.hostname.includes('trycloudflare');
+               const isDevelopment = window.location.hostname === 'localhost' || 
+                                  window.location.hostname === '127.0.0.1' ||
+                                  window.location.hostname.includes('onrender.com') ||
+                                  window.location.hostname.includes('trycloudflare');
         
         if (isDevelopment) {
           console.log('🔧 Development mode: No shop parameter, using default config');
