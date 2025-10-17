@@ -351,9 +351,9 @@
         const script = document.createElement('script');
         script.src = '{{ "bidly-widget.js" | asset_url }}?v=2';
         script.onload = function() {
-          if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initFeatured) {
+          if (window.initBidlyBlock) {
             window.BidlyAuctionWidget.loadedInstances.add(blockId);
-            window.BidlyAuctionWidget.initFeatured(blockId, shopDomain, appProxyUrl, auctionId);
+            window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'featured');
           }
         };
         script.onerror = function() {
@@ -364,8 +364,8 @@
         window.BidlyAuctionWidget.loaded = true;
       } else {
         // Widget already loaded, initialize this block
-        if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initFeatured) {
-          window.BidlyAuctionWidget.initFeatured(blockId, shopDomain, appProxyUrl, auctionId);
+        if (window.initBidlyBlock) {
+          window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'featured');
         }
       }
     }

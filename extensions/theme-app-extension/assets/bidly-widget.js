@@ -1200,4 +1200,68 @@
     }
   };
 
+  // Global initialization function that can be called from Liquid blocks
+  window.initBidlyBlock = function(blockId, shopDomain, appProxyUrl, auctionId, type) {
+    console.log('🌍 Global Block Initialization:', { blockId, shopDomain, appProxyUrl, auctionId, type });
+    
+    if (!window.BidlyAuctionWidget) {
+      console.error('❌ BidlyAuctionWidget not loaded yet');
+      return;
+    }
+    
+    window.BidlyAuctionWidget.ensureLoadedInstances();
+    
+    if (type === 'list') {
+      window.BidlyAuctionWidget.instances[blockId] = {
+        blockId: blockId,
+        shopDomain: shopDomain,
+        appProxyUrl: appProxyUrl,
+        type: 'list'
+      };
+      window.BidlyAuctionWidget.initializeCustomerAuth(blockId);
+      window.BidlyAuctionWidget.initializeSocket();
+      window.BidlyAuctionWidget.loadAuctions(blockId);
+    } else if (type === 'single') {
+      if (!auctionId || auctionId === 'undefined' || auctionId === '') {
+        console.error('❌ No auction ID provided for single auction widget');
+        window.BidlyAuctionWidget.showError(blockId, 'No auction ID configured. Please set an Auction ID in the block settings.');
+        return;
+      }
+      
+      window.BidlyAuctionWidget.instances[blockId] = {
+        blockId: blockId,
+        shopDomain: shopDomain,
+        appProxyUrl: appProxyUrl,
+        auctionId: auctionId,
+        type: 'single'
+      };
+      
+      console.log('✅ Single auction instance created:', blockId);
+      window.BidlyAuctionWidget.initializeCustomerAuth(blockId);
+      window.BidlyAuctionWidget.initializeSocket();
+      window.BidlyAuctionWidget.loadSingleAuction(blockId, auctionId);
+    } else if (type === 'featured') {
+      if (!auctionId || auctionId === 'undefined' || auctionId === '') {
+        console.error('❌ No auction ID provided for featured auction widget');
+        window.BidlyAuctionWidget.showError(blockId, 'No auction ID configured. Please set an Auction ID in the block settings.');
+        return;
+      }
+      
+      window.BidlyAuctionWidget.instances[blockId] = {
+        blockId: blockId,
+        shopDomain: shopDomain,
+        appProxyUrl: appProxyUrl,
+        auctionId: auctionId,
+        type: 'featured'
+      };
+      
+      console.log('✅ Featured auction instance created:', blockId);
+      window.BidlyAuctionWidget.initializeCustomerAuth(blockId);
+      window.BidlyAuctionWidget.initializeSocket();
+      window.BidlyAuctionWidget.loadSingleAuction(blockId, auctionId);
+    }
+    
+    console.log('📋 All instances after global init:', Object.keys(window.BidlyAuctionWidget.instances));
+  };
+
 })();
