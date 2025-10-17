@@ -256,7 +256,7 @@
             <div class="bidly-price-amount">$${displayPrice}</div>
             ${currentBid > 0 && startingBid > 0 ? `<div class="bidly-starting-bid">Starting: $${startingBid}</div>` : ''}
           </div>
-          <div class="bidly-auction-time">${timeLeft}</div>
+          <div class="bidly-auction-time" data-end-time="${auction.endTime}">${timeLeft}</div>
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId)}
           <div class="bidly-auction-actions">
@@ -296,7 +296,7 @@
             <div class="bidly-price-amount">$${displayPrice}</div>
             ${currentBid > 0 && startingBid > 0 ? `<div class="bidly-starting-bid">Starting: $${startingBid}</div>` : ''}
           </div>
-          <div class="bidly-auction-time">${timeLeft}</div>
+          <div class="bidly-auction-time" data-end-time="${auction.endTime}">${timeLeft}</div>
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId, true)}
           ${this.renderBidHistory(auction)}
@@ -331,7 +331,7 @@
               <div class="bidly-price-amount">$${displayPrice}</div>
               ${currentBid > 0 && startingBid > 0 ? `<div class="bidly-starting-bid">Starting: $${startingBid}</div>` : ''}
             </div>
-            <div class="bidly-featured-time">${timeLeft}</div>
+            <div class="bidly-featured-time" data-end-time="${auction.endTime}">${timeLeft}</div>
             <div class="bidly-featured-status">${status}</div>
             ${this.renderFeaturedBidding(auction, blockId)}
           </div>
@@ -479,13 +479,23 @@
     
     // Place bid
     placeBid: function(auctionId, blockId) {
+      console.log('🎯 placeBid called:', { auctionId, blockId });
+      
       const instance = this.instances[blockId];
-      if (!instance) return;
+      if (!instance) {
+        console.error('❌ Instance not found for block:', blockId);
+        return;
+      }
+      
+      console.log('✅ Instance found:', instance);
       
       if (!this.customer) {
+        console.log('❌ No customer logged in');
         this.showToast('Please login to place a bid', true);
         return;
       }
+      
+      console.log('✅ Customer logged in:', this.customer);
       
       // Find the specific bid input for this auction
       let bidInput;
@@ -503,6 +513,11 @@
           list: document.querySelector(`#bidly-grid-${blockId} [data-auction-id="${auctionId}"] .bidly-bid-input`),
           single: document.querySelector(`#bidly-single-auction-${blockId} .bidly-bid-input`),
           featured: document.querySelector(`#bidly-featured-auction-${blockId} .bidly-featured-bid-input`)
+        });
+        console.log('All available bid inputs:', document.querySelectorAll('.bidly-bid-input, .bidly-featured-bid-input'));
+        console.log('Container elements:', {
+          single: document.querySelector(`#bidly-single-auction-${blockId}`),
+          featured: document.querySelector(`#bidly-featured-auction-${blockId}`)
         });
         this.showToast('Bid input not found. Please refresh the page.', true);
         return;
@@ -807,6 +822,25 @@
         };
       }
       
+      // Check for customer data in hidden div with data-serialized-id="customer-data"
+      const customerDataDiv = document.querySelector('[data-serialized-id="customer-data"]');
+      if (customerDataDiv && customerDataDiv.textContent) {
+        try {
+          const customerData = JSON.parse(customerDataDiv.textContent);
+          console.log('✅ Found customer in serialized data div:', customerData);
+          if (customerData.email) {
+            return {
+              name: customerData.firstName ? `${customerData.firstName} ${customerData.lastName || ''}`.trim() : 'Customer',
+              email: customerData.email,
+              id: customerData.id,
+              isShopifyCustomer: true
+            };
+          }
+        } catch (e) {
+          console.log('❌ Failed to parse customer data from serialized div:', e);
+        }
+      }
+      
       console.log('❌ No Shopify customer data found');
       console.log('Available objects:', {
         'window.Shopify': !!window.Shopify,
@@ -862,6 +896,46 @@
       // Note: WebSocket connection would need to be configured for your backend
       // This is a placeholder for real-time updates
       console.log('🔌 WebSocket connection would be initialized here');
+      
+      // Start timer updates for all instances
+      this.startTimerUpdates();
+    },
+    
+    // Start timer updates for all auction instances
+    startTimerUpdates: function() {
+      // Update timers every second
+      setInterval(() => {
+        Object.keys(this.instances).forEach(blockId => {
+          const instance = this.instances[blockId];
+          
+          if (instance.type === 'list') {
+            // Update all auction cards in list view
+            const auctionCards = document.querySelectorAll(`#bidly-grid-${blockId} [data-auction-id]`);
+            auctionCards.forEach(card => {
+              const auctionId = card.dataset.auctionId;
+              const timeElement = card.querySelector('.bidly-auction-time');
+              if (timeElement && timeElement.dataset.endTime) {
+                const newTime = this.formatTimeLeft(timeElement.dataset.endTime);
+                timeElement.textContent = newTime;
+              }
+            });
+          } else if (instance.type === 'single') {
+            // Update single auction timer
+            const timeElement = document.querySelector(`#bidly-single-auction-${blockId} .bidly-auction-time`);
+            if (timeElement && timeElement.dataset.endTime) {
+              const newTime = this.formatTimeLeft(timeElement.dataset.endTime);
+              timeElement.textContent = newTime;
+            }
+          } else if (instance.type === 'featured') {
+            // Update featured auction timer
+            const timeElement = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-featured-time`);
+            if (timeElement && timeElement.dataset.endTime) {
+              const newTime = this.formatTimeLeft(timeElement.dataset.endTime);
+              timeElement.textContent = newTime;
+            }
+          }
+        });
+      }, 1000); // Update every second
     },
     
     // Handle real-time bid updates
