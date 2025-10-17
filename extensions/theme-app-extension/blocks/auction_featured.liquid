@@ -11,7 +11,7 @@
   assign auction_id = block.settings.auction_id
 -%}
 
-<div id="bidly-featured-auction-{{ block_id }}" class="bidly-featured-auction" data-block-id="{{ block_id }}" data-shop="{{ shop_domain }}" data-auction-id="{{ auction_id }}">
+<div id="bidly-featured-auction-{{ block_id }}" class="bidly-featured-auction" data-block-id="{{ block_id }}" data-shop="{{ shop_domain }}" data-auction-id="{{ auction_id }}" {{ block.shopify_attributes }}>
   <div class="bidly-loading" id="bidly-loading-{{ block_id }}">
     <div class="bidly-spinner"></div>
     <p>Loading featured auction...</p>
