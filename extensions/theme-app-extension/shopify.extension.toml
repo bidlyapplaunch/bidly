@@ -1,0 +1,22 @@
+# Theme App Extension Configuration
+api_version = "2023-10"
+
+[[extensions]]
+type = "theme"
+name = "Bidly Auction Widget"
+
+[extensions.settings]
+[[extensions.settings.blocks]]
+type = "auction_list"
+name = "Auction List"
+limit = 1
+
+[[extensions.settings.blocks]]
+type = "auction_single"
+name = "Single Auction"
+limit = 5
+
+[[extensions.settings.blocks]]
+type = "auction_featured"
+name = "Featured Auction"
+limit = 1

@@ -19,6 +19,7 @@ import authRoutes from './routes/authRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';
 import appBridgeRoutes from './routes/appBridgeRoutes.js';
+import appProxyRoutes from './routes/appProxyRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
 
@@ -122,6 +123,9 @@ app.use('/webhooks/shopify', oauthRoutes);
 
 // App Bridge routes for embedded app functionality
 app.use('/app-bridge', appBridgeRoutes);
+
+// App Proxy routes for theme integration
+app.use('/apps/bidly', appProxyRoutes);
 
 // Serve static files from the admin frontend build (after API routes)
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');

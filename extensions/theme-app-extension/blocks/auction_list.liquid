@@ -1,0 +1,349 @@
+{% comment %}
+  Bidly Auction List Block
+  Displays a list of active auctions for customers to view and bid on
+{% endcomment %}
+
+{%- liquid
+  assign block_id = block.id
+  assign section_id = section.id
+  assign shop_domain = shop.permanent_domain
+  assign app_proxy_url = '/apps/bidly'
+-%}
+
+<div id="bidly-auction-list-{{ block_id }}" class="bidly-auction-list" data-block-id="{{ block_id }}" data-shop="{{ shop_domain }}">
+  <div class="bidly-loading" id="bidly-loading-{{ block_id }}">
+    <div class="bidly-spinner"></div>
+    <p>Loading auctions...</p>
+  </div>
+  
+  <div class="bidly-error" id="bidly-error-{{ block_id }}" style="display: none;">
+    <p>Unable to load auctions. Please try again later.</p>
+  </div>
+  
+  <div class="bidly-auctions-container" id="bidly-auctions-{{ block_id }}" style="display: none;">
+    <h3 class="bidly-section-title">{{ block.settings.title | default: 'Live Auctions' }}</h3>
+    <div class="bidly-auctions-grid" id="bidly-grid-{{ block_id }}">
+      <!-- Auctions will be populated by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<style>
+  .bidly-auction-list {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  .bidly-loading {
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  .bidly-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: bidly-spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  @keyframes bidly-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .bidly-error {
+    background-color: #fee;
+    border: 1px solid #fcc;
+    border-radius: 4px;
+    padding: 1rem;
+    text-align: center;
+    color: #c33;
+  }
+  
+  .bidly-section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  
+  .bidly-auctions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 0;
+  }
+  
+  .bidly-auction-card {
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .bidly-auction-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  .bidly-auction-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background-color: #f8f9fa;
+  }
+  
+  .bidly-auction-content {
+    padding: 1rem;
+  }
+  
+  .bidly-auction-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  
+  .bidly-auction-price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2c5aa0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .bidly-auction-time {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
+  }
+  
+  .bidly-auction-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  
+  .bidly-status-active {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .bidly-status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  
+  .bidly-status-ended {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  .bidly-bid-section {
+    margin-top: 1rem;
+  }
+  
+  .bidly-bid-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .bidly-bid-button {
+    width: 100%;
+    background-color: #2c5aa0;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .bidly-bid-button:hover:not(:disabled) {
+    background-color: #1e3f73;
+  }
+  
+  .bidly-bid-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .bidly-buy-now-button {
+    width: 100%;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background-color 0.2s ease;
+  }
+  
+  .bidly-buy-now-button:hover:not(:disabled) {
+    background-color: #1e7e34;
+  }
+  
+  .bidly-buy-now-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .bidly-customer-auth {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .bidly-auth-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .bidly-auth-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  
+  .bidly-auth-button:hover {
+    background-color: #5a6268;
+  }
+  
+  .bidly-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .bidly-toast.show {
+    transform: translateX(0);
+  }
+  
+  .bidly-toast.error {
+    background-color: #dc3545;
+  }
+  
+  @media (max-width: 768px) {
+    .bidly-auctions-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    const blockId = '{{ block_id }}';
+    const shopDomain = '{{ shop_domain }}';
+    const appProxyUrl = '{{ app_proxy_url }}';
+    
+    // Load the Bidly auction widget
+    window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
+    
+    if (!window.BidlyAuctionWidget.loaded) {
+      // Load CSS
+      const cssLink = document.createElement('link');
+      cssLink.rel = 'stylesheet';
+      cssLink.href = '{{ "bidly-widget.css" | asset_url }}';
+      document.head.appendChild(cssLink);
+      
+      // Load JavaScript
+      const script = document.createElement('script');
+      script.src = '{{ "bidly-widget.js" | asset_url }}';
+      script.onload = function() {
+        window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
+      };
+      document.head.appendChild(script);
+      
+      window.BidlyAuctionWidget.loaded = true;
+    } else {
+      // Widget already loaded, initialize this block
+      window.BidlyAuctionWidget.init(blockId, shopDomain, appProxyUrl);
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Auction List",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Live Auctions"
+    },
+    {
+      "type": "range",
+      "id": "max_auctions",
+      "label": "Maximum Auctions to Display",
+      "min": 1,
+      "max": 20,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "checkbox",
+      "id": "show_ended",
+      "label": "Show Ended Auctions",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "sort_by",
+      "label": "Sort By",
+      "options": [
+        {
+          "value": "newest",
+          "label": "Newest First"
+        },
+        {
+          "value": "ending_soon",
+          "label": "Ending Soon"
+        },
+        {
+          "value": "highest_bid",
+          "label": "Highest Bid"
+        }
+      ],
+      "default": "ending_soon"
+    }
+  ]
+}
+{% endschema %}
