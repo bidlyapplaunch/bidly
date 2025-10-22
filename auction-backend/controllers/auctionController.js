@@ -854,9 +854,16 @@ export const relistAuction = async (req, res, next) => {
 // Get auction details page (renders HTML page for individual auction)
 export const getAuctionDetailsPage = async (req, res, next) => {
   try {
+    console.log('🔍 getAuctionDetailsPage called with:', {
+      auctionId: req.params.id,
+      shopDomain: req.shopDomain,
+      query: req.query
+    });
+    
     const auction = await Auction.findById(req.params.id);
     
     if (!auction) {
+      console.log('❌ Auction not found:', req.params.id);
       return res.status(404).send(`
         <!DOCTYPE html>
         <html>
@@ -877,7 +884,33 @@ export const getAuctionDetailsPage = async (req, res, next) => {
     }
     
     const shopDomain = req.shopDomain;
+    if (!shopDomain) {
+      console.log('❌ No shop domain found in request');
+      return res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Store Required</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 2rem; }
+            .error { color: #dc3545; }
+          </style>
+        </head>
+        <body>
+          <h1 class="error">Store Required</h1>
+          <p>Shop domain is required to view this auction.</p>
+        </body>
+        </html>
+      `);
+    }
+    
     const productTitle = auction.productData?.title || 'Auction Item';
+    console.log('✅ Auction found:', {
+      id: auction._id,
+      title: productTitle,
+      shopDomain: shopDomain
+    });
     
     // Render the auction details page
     res.send(`
