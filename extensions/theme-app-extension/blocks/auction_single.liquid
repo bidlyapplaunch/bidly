@@ -358,7 +358,7 @@
         
         // Load JavaScript
         const script = document.createElement('script');
-        script.src = '{{ "bidly-widget.js" | asset_url }}?v=11';
+        script.src = '{{ "bidly-widget.js" | asset_url }}?v=999';
         script.onload = function() {
           if (window.initBidlyBlock) {
             window.BidlyAuctionWidget.loadedInstances.add(blockId);
