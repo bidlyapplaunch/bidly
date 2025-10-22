@@ -34,7 +34,7 @@ const OAuthSetup = ({ onComplete }) => {
       console.log('🔍 OAuth Setup - Shop Info:', shopInfo);
 
       // Check if store has valid OAuth token by testing Shopify API
-      const response = await fetch(`/api/shopify/status?shop=${shopInfo.shop}`);
+      const response = await fetch(`https://bidly-auction-backend.onrender.com/api/shopify/status?shop=${shopInfo.shop}`);
       const data = await response.json();
 
       if (data.success && data.configured && data.hasAccessToken) {
@@ -63,7 +63,7 @@ const OAuthSetup = ({ onComplete }) => {
     console.log('🔍 OAuth Setup - Completing OAuth for shop:', shopInfo.shop);
 
     // Redirect to OAuth flow
-    const oauthUrl = `/auth/shopify/install?shop=${shopInfo.shop}`;
+    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${shopInfo.shop}`;
     window.location.href = oauthUrl;
   };
 
