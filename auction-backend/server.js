@@ -20,6 +20,7 @@ import analyticsRoutes from './routes/analyticsRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';
 import appBridgeRoutes from './routes/appBridgeRoutes.js';
 import appProxyRoutes from './routes/appProxyRoutes.js';
+import debugRoutes from './routes/debugRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
 
@@ -127,6 +128,9 @@ app.use('/app-bridge', appBridgeRoutes);
 
 // App Proxy routes for theme integration
 app.use('/apps/bidly', appProxyRoutes);
+
+// Debug routes (development only)
+app.use('/api/debug', debugRoutes);
 
 // Serve static files from the admin frontend build (after API routes)
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
