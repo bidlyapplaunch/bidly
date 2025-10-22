@@ -3,7 +3,8 @@ import {
   getAllAuctions,
   getAuctionById,
   placeBid,
-  buyNow
+  buyNow,
+  getAuctionDetailsPage
 } from '../controllers/auctionController.js';
 import {
   validatePlaceBid,
@@ -30,6 +31,10 @@ router.get('/api/auctions', getAllAuctions);
 // Get single auction by ID (accepts both MongoDB ObjectId and Shopify Product ID)
 // GET /apps/bidly/api/auctions/:id?shop=store.myshopify.com
 router.get('/api/auctions/:id', getAuctionById);
+
+// Get auction details page (renders HTML page for individual auction)
+// GET /apps/bidly/api/auctions/page/:id?shop=store.myshopify.com
+router.get('/api/auctions/page/:id', validateId, getAuctionDetailsPage);
 
 // Place bid on auction
 // POST /apps/bidly/api/auctions/:id/bid?shop=store.myshopify.com
