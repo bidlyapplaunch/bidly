@@ -401,20 +401,20 @@
       
       if (shopifyCustomer) {
         this.customer = shopifyCustomer;
-        return `<div class="bidly-customer-auth">
+        return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
           <p>Logged in as: <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
-          <button class="bidly-auth-button" onclick="BidlyAuctionWidget.logout()">Logout</button>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
         </div>`;
       }
       
       if (this.customer) {
-        return `<div class="bidly-customer-auth">
+        return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
           <p>Logged in as: <strong>${this.customer.name}</strong></p>
-          <button class="bidly-auth-button" onclick="BidlyAuctionWidget.logout()">Logout</button>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
         </div>`;
       }
       
-      return `<div class="bidly-customer-auth">
+      return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
         <input type="text" class="bidly-auth-input" placeholder="Your Name" id="page-customer-name">
         <input type="email" class="bidly-auth-input" placeholder="Your Email" id="page-customer-email">
         <button class="bidly-auth-button" onclick="BidlyAuctionWidget.loginPage()">Login to Bid</button>
@@ -610,14 +610,14 @@
       }
       
       return `
-        <div class="bidly-bid-section">
+        <div class="bidly-bid-section" onclick="event.stopPropagation()">
           ${this.renderCustomerAuth(blockId)}
-          <input type="number" class="bidly-bid-input" placeholder="Min: $${minBid}" min="${minBid}" step="1">
-          <button class="bidly-bid-button" onclick="BidlyAuctionWidget.placeBid('${auction._id || auction.id}', '${blockId}')">
+          <input type="number" class="bidly-bid-input" placeholder="Min: $${minBid}" min="${minBid}" step="1" onclick="event.stopPropagation()">
+          <button class="bidly-bid-button" onclick="event.stopPropagation(); BidlyAuctionWidget.placeBid('${auction._id || auction.id}', '${blockId}')">
             Place Bid
           </button>
           ${auction.buyNowPrice ? `
-            <button class="bidly-buy-now-button" onclick="BidlyAuctionWidget.buyNow('${auction._id || auction.id}', '${blockId}')">
+            <button class="bidly-buy-now-button" onclick="event.stopPropagation(); BidlyAuctionWidget.buyNow('${auction._id || auction.id}', '${blockId}')">
               Buy Now - $${auction.buyNowPrice}
             </button>
           ` : ''}
@@ -673,23 +673,23 @@
       
       if (shopifyCustomer) {
         this.customer = shopifyCustomer;
-        return `<div class="bidly-customer-auth">
+        return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
           <p>Logged in as: <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
-          <button class="bidly-auth-button" onclick="BidlyAuctionWidget.logout()">Logout</button>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
         </div>`;
       }
       
       if (this.customer) {
-        return `<div class="bidly-customer-auth">
+        return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
           <p>Logged in as: <strong>${this.customer.name}</strong></p>
-          <button class="bidly-auth-button" onclick="BidlyAuctionWidget.logout()">Logout</button>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
         </div>`;
       }
       
-      return `<div class="bidly-customer-auth">
-        <input type="text" class="bidly-auth-input" placeholder="Your Name" id="bidly-name-${blockId}">
-        <input type="email" class="bidly-auth-input" placeholder="Your Email" id="bidly-email-${blockId}">
-        <button class="bidly-auth-button" onclick="BidlyAuctionWidget.login('${blockId}')">Login to Bid</button>
+      return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
+        <input type="text" class="bidly-auth-input" placeholder="Your Name" id="bidly-name-${blockId}" onclick="event.stopPropagation()">
+        <input type="email" class="bidly-auth-input" placeholder="Your Email" id="bidly-email-${blockId}" onclick="event.stopPropagation()">
+        <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.login('${blockId}')">Login to Bid</button>
       </div>`;
     },
     
