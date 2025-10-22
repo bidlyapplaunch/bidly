@@ -1135,11 +1135,15 @@
     
     // View auction details in a new page/modal
     viewAuctionDetails: function(auctionId, shopifyProductId) {
+      console.log('🔗 viewAuctionDetails called with:', { auctionId, shopifyProductId });
+      
       // Create a new page URL for the auction using the backend route
       const currentUrl = new URL(window.location);
       const shopDomain = currentUrl.hostname;
       const auctionUrl = new URL(`/apps/bidly/api/auctions/page/${auctionId}`, currentUrl.origin);
       auctionUrl.searchParams.set('shop', shopDomain);
+      
+      console.log('🔗 Opening URL:', auctionUrl.toString());
       
       // Open in new tab
       window.open(auctionUrl.toString(), '_blank');
