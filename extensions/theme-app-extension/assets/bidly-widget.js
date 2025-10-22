@@ -384,6 +384,220 @@
       };
     },
     
+    // Render bidding section for dedicated page
+    renderPageBiddingSection: function(auction, minBid) {
+      const status = this.computeAuctionStatus(auction);
+      const canBid = status === 'active';
+      
+      if (!canBid) {
+        return `<div class="bidly-bid-section">
+          <button class="bidly-bid-button" disabled>
+            ${status === 'pending' ? 'Auction Not Started' : 'Auction Ended'}
+          </button>
+        </div>`;
+      }
+      
+      return `
+        <div class="bidly-bid-section">
+          ${this.renderPageCustomerAuth()}
+          <input type="number" class="bidly-bid-input" placeholder="Min: $${minBid}" min="${minBid}" step="1" id="page-bid-input">
+          <button class="bidly-bid-button" onclick="BidlyAuctionWidget.placePageBid('${auction._id || auction.id}')">
+            Place Bid
+          </button>
+          ${auction.buyNowPrice ? `
+            <button class="bidly-buy-now-button" onclick="BidlyAuctionWidget.buyPageNow('${auction._id || auction.id}')">
+              Buy Now - $${auction.buyNowPrice}
+            </button>
+          ` : ''}
+        </div>
+      `;
+    },
+    
+    // Render customer authentication for page
+    renderPageCustomerAuth: function() {
+      // Check for Shopify customer first
+      const shopifyCustomer = this.getShopifyCustomer();
+      
+      if (shopifyCustomer) {
+        this.customer = shopifyCustomer;
+        return `<div class="bidly-customer-auth">
+          <p>Logged in as: <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
+          <button class="bidly-auth-button" onclick="BidlyAuctionWidget.logout()">Logout</button>
+        </div>`;
+      }
+      
+      if (this.customer) {
+        return `<div class="bidly-customer-auth">
+          <p>Logged in as: <strong>${this.customer.name}</strong></p>
+          <button class="bidly-auth-button" onclick="BidlyAuctionWidget.logout()">Logout</button>
+        </div>`;
+      }
+      
+      return `<div class="bidly-customer-auth">
+        <input type="text" class="bidly-auth-input" placeholder="Your Name" id="page-customer-name">
+        <input type="email" class="bidly-auth-input" placeholder="Your Email" id="page-customer-email">
+        <button class="bidly-auth-button" onclick="BidlyAuctionWidget.loginPage()">Login to Bid</button>
+      </div>`;
+    },
+    
+    // Place bid from page
+    placePageBid: function(auctionId) {
+      console.log('🎯 placePageBid called:', auctionId);
+      
+      if (!this.customer) {
+        console.log('❌ No customer logged in');
+        this.showToast('Please login to place a bid', true);
+        return;
+      }
+      
+      const bidInput = document.getElementById('page-bid-input');
+      if (!bidInput) {
+        console.error('❌ Bid input not found');
+        this.showToast('Bid input not found. Please refresh the page.', true);
+        return;
+      }
+      
+      const bidAmount = parseFloat(bidInput.value);
+      if (!bidAmount || bidAmount <= 0) {
+        this.showToast('Please enter a valid bid amount', true);
+        return;
+      }
+      
+      const button = document.querySelector('.bidly-bid-button');
+      if (!button) {
+        console.error('❌ Bid button not found');
+        this.showToast('Bid button not found. Please refresh the page.', true);
+        return;
+      }
+      
+      button.disabled = true;
+      button.textContent = 'Placing Bid...';
+      
+      // Get shop domain from current URL
+      const shopDomain = window.location.hostname;
+      
+      fetch(`/apps/bidly/api/auctions/${auctionId}/bid?shop=${shopDomain}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: bidAmount,
+          bidder: this.customer.name,
+          customerEmail: this.customer.email
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          this.showToast(data.message);
+          bidInput.value = '';
+          // Reload the page to show updated auction data
+          window.location.reload();
+        } else {
+          throw new Error(data.message || 'Failed to place bid');
+        }
+      })
+      .catch(error => {
+        console.error('Error placing bid:', error);
+        this.showToast(error.message, true);
+      })
+      .finally(() => {
+        button.disabled = false;
+        button.textContent = 'Place Bid';
+      });
+    },
+    
+    // Buy now from page
+    buyPageNow: function(auctionId) {
+      console.log('🎯 buyPageNow called:', auctionId);
+      
+      if (!this.customer) {
+        this.showToast('Please login to buy now', true);
+        return;
+      }
+      
+      const button = document.querySelector('.bidly-buy-now-button');
+      if (!button) {
+        console.error('❌ Buy now button not found');
+        this.showToast('Buy now button not found. Please refresh the page.', true);
+        return;
+      }
+      
+      button.disabled = true;
+      button.textContent = 'Processing...';
+      
+      // Get shop domain from current URL
+      const shopDomain = window.location.hostname;
+      
+      fetch(`/apps/bidly/api/auctions/${auctionId}/buy-now?shop=${shopDomain}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bidder: this.customer.name,
+          customerEmail: this.customer.email
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          this.showToast(data.message);
+          // Reload the page to show updated auction data
+          window.location.reload();
+        } else {
+          throw new Error(data.message || 'Failed to buy now');
+        }
+      })
+      .catch(error => {
+        console.error('Error buying now:', error);
+        this.showToast(error.message, true);
+      })
+      .finally(() => {
+        button.disabled = false;
+        button.textContent = 'Buy Now';
+      });
+    },
+    
+    // Login from page
+    loginPage: function() {
+      console.log('🔐 Login attempt from page');
+      
+      const nameInput = document.getElementById('page-customer-name');
+      const emailInput = document.getElementById('page-customer-email');
+      
+      if (!nameInput || !emailInput) {
+        console.error('❌ Input elements not found');
+        this.showToast('Login form not found. Please refresh the page.', true);
+        return;
+      }
+      
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      
+      if (!name || !email) {
+        this.showToast('Please enter both name and email', true);
+        return;
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        this.showToast('Please enter a valid email address', true);
+        return;
+      }
+      
+      this.customer = { name, email };
+      sessionStorage.setItem('bidly-customer', JSON.stringify(this.customer));
+      
+      console.log('✅ Customer logged in:', this.customer);
+      this.showToast(`Welcome, ${name}!`);
+      
+      // Reload the page to update the bidding section
+      window.location.reload();
+    },
+    
     // Render bidding section
     renderBiddingSection: function(auction, blockId, isDetailed = false) {
       const status = this.computeAuctionStatus(auction);
@@ -1138,6 +1352,20 @@
     
     // Show error message
     showError: function(blockId, message) {
+      // If blockId is a string like 'Auction not found', treat it as a message for page
+      if (typeof blockId === 'string' && !blockId.includes('bidly-')) {
+        const containerEl = document.getElementById('bidly-auction-detail-page');
+        if (containerEl) {
+          containerEl.innerHTML = `
+            <div class="bidly-error">
+              <h3>Error</h3>
+              <p>${blockId}</p>
+            </div>
+          `;
+        }
+        return;
+      }
+      
       const loadingEl = document.getElementById(`bidly-loading-${blockId}`);
       const errorEl = document.getElementById(`bidly-error-${blockId}`);
       
@@ -1172,6 +1400,8 @@
       const containerEl = document.getElementById('bidly-auction-detail-page');
       if (!containerEl) return;
       
+      console.log('🔍 Loading single auction page:', { auctionId, productId, shopDomain });
+      
       // Show loading
       containerEl.innerHTML = `
         <div class="bidly-loading">
@@ -1184,6 +1414,7 @@
       fetch(`/apps/bidly/api/auctions/${auctionId}?shop=${shopDomain}`)
         .then(response => response.json())
         .then(data => {
+          console.log('📦 Auction data received:', data);
           if (data.success && data.data) {
             this.renderSingleAuctionPage(data.data, containerEl);
           } else {
@@ -1198,6 +1429,8 @@
     
     // Render single auction for dedicated page
     renderSingleAuctionPage: function(auction, containerEl) {
+      console.log('🎨 Rendering single auction page:', auction);
+      
       const status = this.computeAuctionStatus(auction);
       const timeLeft = this.formatTimeLeft(auction.endTime);
       const productImage = auction.productData?.images?.[0]?.src || '/placeholder-image.jpg';
@@ -1206,6 +1439,9 @@
       const startingBid = auction.startingBid || 0;
       const displayPrice = currentBid > 0 ? currentBid : startingBid;
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+      
+      // Calculate minimum bid
+      const minBid = currentBid > 0 ? currentBid + 1 : startingBid;
       
       containerEl.innerHTML = `
         <div class="auction-details-full">
@@ -1224,7 +1460,7 @@
             <div class="auction-timer" data-end-time="${auction.endTime}">${timeLeft}</div>
             <div class="auction-status status-${status}">${status}</div>
             <div class="auction-bidding-section">
-              ${this.renderBiddingSection(auction, 'page-auction')}
+              ${this.renderPageBiddingSection(auction, minBid)}
             </div>
             <div class="auction-bid-history">
               ${this.renderBidHistory(auction)}
