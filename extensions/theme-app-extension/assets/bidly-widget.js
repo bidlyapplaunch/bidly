@@ -858,12 +858,14 @@
           this.customer = JSON.parse(savedCustomer);
           console.log('✅ Existing customer session found:', this.customer);
           this.customerInitialized = true;
+          return;
         } catch (e) {
           console.error('❌ Failed to parse saved customer:', e);
           sessionStorage.removeItem('bidly-customer');
         }
       }
       
+      // No customer found, but mark as initialized so login can work
       this.customerInitialized = true;
     },
     
