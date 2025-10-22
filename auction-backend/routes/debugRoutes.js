@@ -121,6 +121,40 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
   }
 });
 
+// Clear store record (force reinstall)
+router.delete('/clear-store/:shopDomain', async (req, res) => {
+  try {
+    const { shopDomain } = req.params;
+    
+    console.log(`🗑️ Clearing store record for: ${shopDomain}`);
+    
+    const result = await Store.deleteOne({ shopDomain });
+    
+    if (result.deletedCount > 0) {
+      console.log('✅ Successfully deleted store record');
+      res.json({
+        success: true,
+        message: `Store record cleared for ${shopDomain}`,
+        deletedCount: result.deletedCount
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `No store record found for ${shopDomain}`,
+        deletedCount: 0
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Error clearing store record:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
 // List all stores
 router.get('/stores', async (req, res) => {
   try {
