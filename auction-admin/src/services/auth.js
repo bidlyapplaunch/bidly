@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// Updated to use Render backend URL
 const API_BASE_URL = 'https://bidly-auction-backend.onrender.com/api';
 
 class AuthService {
