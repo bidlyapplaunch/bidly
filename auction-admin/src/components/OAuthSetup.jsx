@@ -27,12 +27,14 @@ const OAuthSetup = ({ onComplete }) => {
 
       // Get shop info from App Bridge
       const shopInfo = getShopInfo();
-      if (!shopInfo) {
+      if (!shopInfo || !shopInfo.shop) {
         throw new Error('Unable to get shop information');
       }
 
+      console.log('🔍 OAuth Setup - Shop Info:', shopInfo);
+
       // Check if store has valid OAuth token by testing Shopify API
-      const response = await fetch(`/api/shopify/status?shop=${shopInfo.domain}`);
+      const response = await fetch(`/api/shopify/status?shop=${shopInfo.shop}`);
       const data = await response.json();
 
       if (data.success && data.configured && data.hasAccessToken) {
@@ -53,13 +55,15 @@ const OAuthSetup = ({ onComplete }) => {
   const handleCompleteOAuth = () => {
     // Get shop info
     const shopInfo = getShopInfo();
-    if (!shopInfo) {
+    if (!shopInfo || !shopInfo.shop) {
       setError('Unable to get shop information');
       return;
     }
 
+    console.log('🔍 OAuth Setup - Completing OAuth for shop:', shopInfo.shop);
+
     // Redirect to OAuth flow
-    const oauthUrl = `/auth/shopify/install?shop=${shopInfo.domain}`;
+    const oauthUrl = `/auth/shopify/install?shop=${shopInfo.shop}`;
     window.location.href = oauthUrl;
   };
 
