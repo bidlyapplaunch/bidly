@@ -25,9 +25,32 @@ export const useAppBridgeActions = () => {
 
   // Get current shop information
   const getShopInfo = () => {
+    console.log('🔍 getShopInfo - Current URL:', window.location.href);
+    console.log('🔍 getShopInfo - Search params:', window.location.search);
+    
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Try multiple sources for shop domain
+    let shop = urlParams.get('shop');
+    
+    // If not in search params, try to extract from hash or other sources
+    if (!shop) {
+      // Check if shop is in the hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      shop = hashParams.get('shop');
+    }
+    
+    // If still not found, try to extract from the hostname (for embedded apps)
+    if (!shop && window.location.hostname.includes('myshopify.com')) {
+      shop = window.location.hostname;
+    }
+    
+    // Debug logging
+    console.log('🔍 getShopInfo - Found shop:', shop);
+    console.log('🔍 getShopInfo - All URL params:', Object.fromEntries(urlParams.entries()));
+    
     return {
-      shop: urlParams.get('shop'),
+      shop: shop,
       installed: urlParams.get('installed') === 'true',
       success: urlParams.get('success') === 'true',
       error: urlParams.get('error'),
