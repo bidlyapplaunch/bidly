@@ -12,6 +12,7 @@ import {
   refreshProductData,
   refreshAllProductData,
   getAuctionsWithProductData,
+  getAuctionDetailsPage,
 } from '../controllers/auctionController.js';
 import {
   validateCreateAuction,
@@ -48,5 +49,8 @@ router.put('/:id/relist', validateCreateAuction, relistAuction);
 // Shopify product data routes
 router.put('/:id/refresh-product', validateId, refreshProductData);
 router.put('/refresh-all-products', refreshAllProductData);
+
+// Auction details page route
+router.get('/page/:id', validateId, getAuctionDetailsPage);
 
 export default router;

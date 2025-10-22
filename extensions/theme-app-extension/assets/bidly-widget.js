@@ -1135,14 +1135,88 @@
     
     // View auction details in a new page/modal
     viewAuctionDetails: function(auctionId, shopifyProductId) {
-      // Create a new page URL for the auction
+      // Create a new page URL for the auction using the backend route
       const currentUrl = new URL(window.location);
-      const auctionUrl = new URL('/auction', currentUrl.origin);
-      auctionUrl.searchParams.set('id', auctionId);
-      auctionUrl.searchParams.set('product_id', shopifyProductId);
+      const shopDomain = currentUrl.hostname;
+      const auctionUrl = new URL(`/apps/bidly/api/auctions/page/${auctionId}`, currentUrl.origin);
+      auctionUrl.searchParams.set('shop', shopDomain);
       
       // Open in new tab
       window.open(auctionUrl.toString(), '_blank');
+    },
+    
+    // Load single auction for dedicated page
+    loadSingleAuctionPage: function(auctionId, productId, shopDomain) {
+      const containerEl = document.getElementById('bidly-auction-detail-page');
+      if (!containerEl) return;
+      
+      // Show loading
+      containerEl.innerHTML = `
+        <div class="bidly-loading">
+          <div class="bidly-spinner"></div>
+          <p>Loading auction details...</p>
+        </div>
+      `;
+      
+      // Fetch auction data
+      fetch(`/apps/bidly/api/auctions/${auctionId}?shop=${shopDomain}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.data) {
+            this.renderSingleAuctionPage(data.data, containerEl);
+          } else {
+            this.showError('Auction not found', containerEl);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading auction:', error);
+          this.showError('Error loading auction', containerEl);
+        });
+    },
+    
+    // Render single auction for dedicated page
+    renderSingleAuctionPage: function(auction, containerEl) {
+      const status = this.computeAuctionStatus(auction);
+      const timeLeft = this.formatTimeLeft(auction.endTime);
+      const productImage = auction.productData?.images?.[0]?.src || '/placeholder-image.jpg';
+      
+      const currentBid = auction.currentBid || 0;
+      const startingBid = auction.startingBid || 0;
+      const displayPrice = currentBid > 0 ? currentBid : startingBid;
+      const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+      
+      containerEl.innerHTML = `
+        <div class="auction-details-full">
+          <div class="auction-details-image">
+            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="auction-main-image">
+          </div>
+          <div class="auction-details-info">
+            <h1 class="auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+            <div class="auction-price-section">
+              <div class="auction-price">
+                <span class="price-label">${priceLabel}</span>
+                <span class="price-amount">$${displayPrice}</span>
+                ${currentBid > 0 && startingBid > 0 ? `<span class="starting-price">Starting: $${startingBid}</span>` : ''}
+              </div>
+            </div>
+            <div class="auction-timer" data-end-time="${auction.endTime}">${timeLeft}</div>
+            <div class="auction-status status-${status}">${status}</div>
+            <div class="auction-bidding-section">
+              ${this.renderBiddingSection(auction, 'page-auction')}
+            </div>
+            <div class="auction-bid-history">
+              ${this.renderBidHistory(auction)}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Initialize customer auth and socket for this page
+      this.initializeCustomerAuth();
+      this.initializeSocket();
+      
+      // Start timer updates
+      this.startTimerUpdates();
     },
     
     // Initialize WebSocket connection

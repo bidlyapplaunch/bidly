@@ -851,4 +851,253 @@ export const relistAuction = async (req, res, next) => {
   }
 };
 
+// Get auction details page (renders HTML page for individual auction)
+export const getAuctionDetailsPage = async (req, res, next) => {
+  try {
+    const auction = await Auction.findById(req.params.id);
+    
+    if (!auction) {
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Auction Not Found</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 2rem; }
+            .error { color: #dc3545; }
+          </style>
+        </head>
+        <body>
+          <h1 class="error">Auction Not Found</h1>
+          <p>The auction you're looking for doesn't exist or has been removed.</p>
+        </body>
+        </html>
+      `);
+    }
+    
+    const shopDomain = req.shopDomain;
+    const productTitle = auction.productData?.title || 'Auction Item';
+    
+    // Render the auction details page
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Auction: ${productTitle}</title>
+        <link rel="stylesheet" href="/apps/bidly/assets/bidly-widget.css">
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+          }
+          .auction-details-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+          }
+          .auction-details-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+          }
+          .auction-details-header {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-bottom: 1px solid #dee2e6;
+          }
+          .auction-details-header h1 {
+            margin: 0 0 1rem 0;
+            color: #333;
+            font-size: 2rem;
+          }
+          .auction-details-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+            color: #666;
+          }
+          .auction-details-body {
+            padding: 2rem;
+          }
+          #bidly-auction-detail-page {
+            min-height: 400px;
+          }
+          .auction-details-full {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+          }
+          .auction-details-image {
+            position: sticky;
+            top: 2rem;
+          }
+          .auction-main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 8px;
+          }
+          .auction-details-info {
+            padding: 1rem 0;
+          }
+          .auction-title {
+            font-size: 2.5rem;
+            margin: 0 0 1rem 0;
+            color: #333;
+          }
+          .auction-price-section {
+            margin: 2rem 0;
+          }
+          .auction-price {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+          .price-label {
+            font-size: 1.2rem;
+            color: #666;
+            font-weight: 500;
+          }
+          .price-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #28a745;
+          }
+          .starting-price {
+            font-size: 1.1rem;
+            color: #666;
+          }
+          .auction-timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #dc3545;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #fff3cd;
+            border-radius: 8px;
+            text-align: center;
+          }
+          .auction-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+          }
+          .status-active {
+            background: #d4edda;
+            color: #155724;
+          }
+          .status-pending {
+            background: #fff3cd;
+            color: #856404;
+          }
+          .status-ended {
+            background: #f8d7da;
+            color: #721c24;
+          }
+          .status-closed {
+            background: #d1ecf1;
+            color: #0c5460;
+          }
+          .auction-bidding-section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+          }
+          .auction-bid-history {
+            margin: 2rem 0;
+          }
+          @media (max-width: 768px) {
+            .auction-details-full {
+              grid-template-columns: 1fr;
+            }
+            .auction-details-page {
+              padding: 1rem;
+            }
+            .auction-title {
+              font-size: 2rem;
+            }
+            .price-amount {
+              font-size: 2.5rem;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="auction-details-page">
+          <div class="auction-details-container">
+            <div class="auction-details-header">
+              <h1>Auction Details</h1>
+              <div class="auction-details-meta">
+                <span class="auction-id">Auction ID: ${auction._id}</span>
+                <span class="product-id">Product ID: ${auction.shopifyProductId}</span>
+              </div>
+            </div>
+            <div class="auction-details-body">
+              <div id="bidly-auction-detail-page" 
+                   data-auction-id="${auction._id}" 
+                   data-product-id="${auction.shopifyProductId}"
+                   data-shop="${shopDomain}">
+                <div class="bidly-loading">
+                  <div class="bidly-spinner"></div>
+                  <p>Loading auction details...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <script src="/apps/bidly/assets/bidly-widget.js"></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const auctionId = document.getElementById('bidly-auction-detail-page').dataset.auctionId;
+            const productId = document.getElementById('bidly-auction-detail-page').dataset.productId;
+            const shopDomain = document.getElementById('bidly-auction-detail-page').dataset.shop;
+            
+            if (window.BidlyAuctionWidget) {
+              // Load the specific auction
+              window.BidlyAuctionWidget.loadSingleAuctionPage(auctionId, productId, shopDomain);
+            } else {
+              console.error('BidlyAuctionWidget not found');
+              document.getElementById('bidly-auction-detail-page').innerHTML = 
+                '<div class="error">Error: Auction widget not loaded</div>';
+            }
+          });
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Error loading auction details page:', error);
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Error</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 2rem; }
+          .error { color: #dc3545; }
+        </style>
+      </head>
+      <body>
+        <h1 class="error">Error Loading Auction</h1>
+        <p>There was an error loading the auction details. Please try again later.</p>
+      </body>
+      </html>
+    `);
+  }
+};
+
 
