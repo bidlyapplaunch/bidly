@@ -288,13 +288,15 @@
           <div class="bidly-auction-time" data-end-time="${auction.endTime}">${timeLeft}</div>
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId)}
-          <div class="bidly-auction-actions">
-            <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">
-              View Details
-            </button>
-          </div>
         </div>
       `;
+      
+      // Make the entire card clickable
+      card.style.cursor = 'pointer';
+      card.onclick = () => {
+        console.log('🖱️ Auction card clicked:', auction._id || auction.id);
+        this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+      };
       
       return card;
     },
@@ -331,6 +333,13 @@
           ${this.renderBidHistory(auction)}
         </div>
       `;
+      
+      // Make the entire single auction clickable
+      containerEl.style.cursor = 'pointer';
+      containerEl.onclick = () => {
+        console.log('🖱️ Single auction clicked:', auction._id || auction.id);
+        this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+      };
     },
     
     // Render featured auction
@@ -366,6 +375,13 @@
           </div>
         </div>
       `;
+      
+      // Make the entire featured auction clickable
+      containerEl.style.cursor = 'pointer';
+      containerEl.onclick = () => {
+        console.log('🖱️ Featured auction clicked:', auction._id || auction.id);
+        this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+      };
     },
     
     // Render bidding section
