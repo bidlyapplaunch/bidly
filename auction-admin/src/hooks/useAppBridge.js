@@ -25,18 +25,29 @@ export const useAppBridgeActions = () => {
 
   // Get current shop information
   const getShopInfo = () => {
-    // Since we can see the shop domain in App Bridge initialization,
-    // let's use a simple approach that works
     const urlParams = new URLSearchParams(window.location.search);
     
     // Try to get shop from URL params first
     let shop = urlParams.get('shop');
     
-    // If not found, use the hardcoded shop domain we know works
-    if (!shop) {
-      shop = 'bidly-2.myshopify.com';
-      console.log('🔍 Using hardcoded shop domain:', shop);
+    // If not found, try to extract from the hostname (for embedded apps)
+    if (!shop && window.location.hostname.includes('myshopify.com')) {
+      shop = window.location.hostname;
     }
+    
+    // If still not found, try to get from App Bridge context
+    if (!shop && window.shopify && window.shopify.config) {
+      shop = window.shopify.config.shop;
+    }
+    
+    // If still not found, try to get from the global App Bridge data
+    if (!shop && window.shopifyAppBridgeData) {
+      shop = window.shopifyAppBridgeData.shop;
+    }
+    
+    console.log('🔍 getShopInfo - Found shop:', shop);
+    console.log('🔍 getShopInfo - URL:', window.location.href);
+    console.log('🔍 getShopInfo - Hostname:', window.location.hostname);
     
     return {
       shop: shop,
