@@ -277,11 +277,9 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       card.innerHTML = `
-        <div class="bidly-auction-image-container">
-          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;" onerror="this.src='/placeholder-image.jpg'">
-        </div>
+        <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
         <div class="bidly-auction-content">
-          <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h3>
+          <h3 class="bidly-auction-title">${auction.productData?.title || 'Auction Item'}</h3>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -290,6 +288,7 @@
           <div class="bidly-auction-time" data-end-time="${auction.endTime}">${timeLeft}</div>
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId)}
+          <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">View Details</button>
         </div>
       `;
       
@@ -313,10 +312,10 @@
       
       containerEl.innerHTML = `
         <div class="bidly-auction-image-container">
-          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;" onerror="this.src='/placeholder-image.jpg'">
+          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-info">
-          <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h1>
+          <h1 class="bidly-auction-title">${auction.productData?.title || 'Auction Item'}</h1>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -326,6 +325,7 @@
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId, true)}
           ${this.renderBidHistory(auction)}
+          <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">View Details</button>
         </div>
       `;
     },
@@ -348,10 +348,10 @@
       containerEl.innerHTML = `
         <div class="bidly-featured-content">
           <div class="bidly-featured-image-container">
-            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;" onerror="this.src='/placeholder-image.jpg'">
+            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onerror="this.src='/placeholder-image.jpg'">
           </div>
           <div class="bidly-featured-info">
-            <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h1>
+            <h1 class="bidly-featured-title">${auction.productData?.title || 'Auction Item'}</h1>
             <div class="bidly-featured-price">
               <div class="bidly-price-label">${priceLabel}</div>
               <div class="bidly-price-amount">$${displayPrice}</div>
@@ -360,6 +360,7 @@
             <div class="bidly-featured-time" data-end-time="${auction.endTime}">${timeLeft}</div>
             <div class="bidly-featured-status">${status}</div>
             ${this.renderFeaturedBidding(auction, blockId)}
+            <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">View Details</button>
           </div>
         </div>
       `;
