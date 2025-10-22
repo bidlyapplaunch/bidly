@@ -1093,20 +1093,47 @@ export const getAuctionDetailsPage = async (req, res, next) => {
         
         <script src="/apps/bidly/assets/bidly-widget.js"></script>
         <script>
+          console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
+          
+          // Test if script is running
+          setTimeout(() => {
+            console.log('🔥 SCRIPT TIMEOUT TEST - Widget exists:', !!window.BidlyAuctionWidget);
+          }, 1000);
+          
           document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Product page DOM loaded');
+            
             const auctionId = document.getElementById('bidly-auction-detail-page').dataset.auctionId;
             const productId = document.getElementById('bidly-auction-detail-page').dataset.productId;
             const shopDomain = document.getElementById('bidly-auction-detail-page').dataset.shop;
             
-            if (window.BidlyAuctionWidget) {
+            console.log('📊 Product page data:', { auctionId, productId, shopDomain });
+            console.log('🔍 Widget check:', { 
+              widgetExists: !!window.BidlyAuctionWidget,
+              loadSingleAuctionPageExists: !!(window.BidlyAuctionWidget && window.BidlyAuctionWidget.loadSingleAuctionPage)
+            });
+            
+            if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.loadSingleAuctionPage) {
+              console.log('✅ Calling loadSingleAuctionPage');
               // Load the specific auction
               window.BidlyAuctionWidget.loadSingleAuctionPage(auctionId, productId, shopDomain);
             } else {
-              console.error('BidlyAuctionWidget not found');
+              console.error('❌ BidlyAuctionWidget not found or loadSingleAuctionPage missing');
+              if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.debug) {
+                window.BidlyAuctionWidget.debug();
+              }
               document.getElementById('bidly-auction-detail-page').innerHTML = 
-                '<div class="error">Error: Auction widget not loaded</div>';
+                '<div class="error">Error: Auction widget not loaded properly</div>';
             }
           });
+          
+          // Also try immediate execution
+          console.log('🔥 IMMEDIATE EXECUTION TEST');
+          if (window.BidlyAuctionWidget) {
+            console.log('🔥 Widget found immediately');
+          } else {
+            console.log('🔥 Widget not found immediately, waiting...');
+          }
         </script>
       </body>
       </html>

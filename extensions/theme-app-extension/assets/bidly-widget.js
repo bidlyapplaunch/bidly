@@ -277,9 +277,9 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       card.innerHTML = `
-        <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
+        <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         <div class="bidly-auction-content">
-          <h3 class="bidly-auction-title">${auction.productData?.title || 'Auction Item'}</h3>
+          <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || 'Auction Item'}</h3>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -288,7 +288,6 @@
           <div class="bidly-auction-time" data-end-time="${auction.endTime}">${timeLeft}</div>
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId)}
-          <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">View Details</button>
         </div>
       `;
       
@@ -312,10 +311,10 @@
       
       containerEl.innerHTML = `
         <div class="bidly-auction-image-container">
-          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
+          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-info">
-          <h1 class="bidly-auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+          <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || 'Auction Item'}</h1>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -325,7 +324,6 @@
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
           ${this.renderBiddingSection(auction, blockId, true)}
           ${this.renderBidHistory(auction)}
-          <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">View Details</button>
         </div>
       `;
     },
@@ -348,10 +346,10 @@
       containerEl.innerHTML = `
         <div class="bidly-featured-content">
           <div class="bidly-featured-image-container">
-            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onerror="this.src='/placeholder-image.jpg'">
+            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
           </div>
           <div class="bidly-featured-info">
-            <h1 class="bidly-featured-title">${auction.productData?.title || 'Auction Item'}</h1>
+            <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || 'Auction Item'}</h1>
             <div class="bidly-featured-price">
               <div class="bidly-price-label">${priceLabel}</div>
               <div class="bidly-price-amount">$${displayPrice}</div>
@@ -360,7 +358,6 @@
             <div class="bidly-featured-time" data-end-time="${auction.endTime}">${timeLeft}</div>
             <div class="bidly-featured-status">${status}</div>
             ${this.renderFeaturedBidding(auction, blockId)}
-            <button class="bidly-view-details-button" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">View Details</button>
           </div>
         </div>
       `;
@@ -572,12 +569,47 @@
       
       this.customer = { name, email };
       sessionStorage.setItem('bidly-customer', JSON.stringify(this.customer));
+      this.customerInitialized = true;
       
       console.log('✅ Customer logged in:', this.customer);
       this.showToast(`Welcome, ${name}!`);
       
-      // Reload the page to update the bidding section
-      window.location.reload();
+      // Update the bidding section without reloading
+      this.updatePageBiddingSection();
+    },
+    
+    // Update page bidding section after login
+    updatePageBiddingSection: function() {
+      console.log('🔄 Updating page bidding section...');
+      
+      // Find the auction data from the page
+      const auctionData = window.currentAuctionData;
+      if (!auctionData) {
+        console.error('❌ No auction data found on page');
+        return;
+      }
+      
+      // Find the bidding section container
+      const biddingSection = document.querySelector('.bidly-bid-section');
+      if (!biddingSection) {
+        console.error('❌ Bidding section not found');
+        return;
+      }
+      
+      // Calculate minimum bid
+      let minBid;
+      if (auctionData.currentBid && auctionData.currentBid > 0) {
+        minBid = auctionData.currentBid + 1;
+      } else if (auctionData.startingBid && auctionData.startingBid > 0) {
+        minBid = auctionData.startingBid;
+      } else {
+        minBid = 1;
+      }
+      
+      // Update the bidding section
+      biddingSection.innerHTML = this.renderPageBiddingSection(auctionData, minBid);
+      
+      console.log('✅ Page bidding section updated');
     },
     
     // Render bidding section
@@ -1795,7 +1827,22 @@
             }
           }
         });
+        
+        // Also update page timers (for product pages)
+        this.updatePageTimers();
       }, 1000); // Update every second
+    },
+    
+    // Update timers on product pages
+    updatePageTimers: function() {
+      // Update all timer elements on the page
+      const timeElements = document.querySelectorAll('.bidly-auction-time, .bidly-featured-time');
+      timeElements.forEach(timeElement => {
+        if (timeElement.dataset.endTime) {
+          const newTime = this.formatTimeLeft(timeElement.dataset.endTime);
+          timeElement.textContent = newTime;
+        }
+      });
     },
     
     // Handle real-time bid updates
@@ -2033,6 +2080,156 @@
         console.error('❌ Instance disappeared:', blockId);
       }
     }, 1000);
+  };
+  
+  // Initialize product page when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      window.BidlyAuctionWidget.initializeProductPage();
+    });
+  } else {
+    window.BidlyAuctionWidget.initializeProductPage();
+  }
+  
+  // Initialize product page
+  window.BidlyAuctionWidget.initializeProductPage = function() {
+    console.log('🚀 Initializing product page...');
+    
+    // Initialize customer auth
+    this.initializeCustomerAuth();
+    
+    // Start timer updates
+    this.startTimerUpdates();
+    
+    console.log('✅ Product page initialized');
+  };
+  
+  // Load single auction page (called from product page)
+  window.BidlyAuctionWidget.loadSingleAuctionPage = function(auctionId, productId, shopDomain) {
+    console.log('🎯 Loading single auction page:', { auctionId, productId, shopDomain });
+    
+    // Initialize customer auth
+    this.initializeCustomerAuth();
+    
+    // Start timer updates
+    this.startTimerUpdates();
+    
+    // Load the auction data
+    this.loadAuctionForPage(auctionId, productId, shopDomain);
+  };
+  
+  // Debug function to check if widget is loaded
+  window.BidlyAuctionWidget.debug = function() {
+    console.log('🔍 Widget debug info:', {
+      widgetLoaded: !!window.BidlyAuctionWidget,
+      functions: {
+        loadSingleAuctionPage: !!window.BidlyAuctionWidget.loadSingleAuctionPage,
+        loadAuctionForPage: !!window.BidlyAuctionWidget.loadAuctionForPage,
+        renderAuctionOnPage: !!window.BidlyAuctionWidget.renderAuctionOnPage,
+        initializeCustomerAuth: !!window.BidlyAuctionWidget.initializeCustomerAuth,
+        startTimerUpdates: !!window.BidlyAuctionWidget.startTimerUpdates
+      }
+    });
+  };
+  
+  // Load auction data for product page
+  window.BidlyAuctionWidget.loadAuctionForPage = function(auctionId, productId, shopDomain) {
+    console.log('📡 Loading auction data for page...');
+    
+    const appProxyUrl = `https://${shopDomain}/apps/bidly/api`;
+    
+    fetch(`${appProxyUrl}/auctions/${auctionId}?shop=${shopDomain}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('✅ Auction data loaded:', data.data);
+          
+          // Store auction data globally for the page
+          window.currentAuctionData = data.data;
+          
+          // Render the auction on the page
+          this.renderAuctionOnPage(data.data);
+        } else {
+          console.error('❌ Failed to load auction:', data.message);
+          this.showPageError('Failed to load auction data');
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error loading auction:', error);
+        this.showPageError('Error loading auction data');
+      });
+  };
+  
+  // Render auction on product page
+  window.BidlyAuctionWidget.renderAuctionOnPage = function(auction) {
+    console.log('🎨 Rendering auction on page:', auction);
+    
+    const container = document.getElementById('bidly-auction-detail-page');
+    if (!container) {
+      console.error('❌ Container not found');
+      return;
+    }
+    
+    const status = this.computeAuctionStatus(auction);
+    const timeLeft = this.formatTimeLeft(auction.endTime);
+    const productImage = auction.productData?.images?.[0]?.src || '/placeholder-image.jpg';
+    
+    // Calculate display values
+    const currentBid = auction.currentBid || 0;
+    const startingBid = auction.startingBid || 0;
+    const displayPrice = currentBid > 0 ? currentBid : startingBid;
+    const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+    
+    // Calculate minimum bid
+    let minBid;
+    if (currentBid > 0) {
+      minBid = currentBid + 1;
+    } else if (startingBid > 0) {
+      minBid = startingBid;
+    } else {
+      minBid = 1;
+    }
+    
+    container.innerHTML = `
+      <div class="auction-details-full">
+        <div class="auction-details-image">
+          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="auction-main-image" onerror="this.src='/placeholder-image.jpg'">
+        </div>
+        <div class="auction-details-info">
+          <h1 class="auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+          <div class="auction-price-section">
+            <div class="auction-price">
+              <div class="price-label">${priceLabel}</div>
+              <div class="price-amount">$${displayPrice}</div>
+              ${currentBid > 0 && startingBid > 0 ? `<div class="starting-price">Starting: $${startingBid}</div>` : ''}
+            </div>
+          </div>
+          <div class="auction-timer" data-end-time="${auction.endTime}">${timeLeft}</div>
+          <div class="auction-status status-${status}">${status}</div>
+          <div class="auction-bidding-section">
+            ${this.renderPageBiddingSection(auction, minBid)}
+          </div>
+          <div class="auction-bid-history">
+            ${this.renderBidHistory(auction)}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    console.log('✅ Auction rendered on page');
+  };
+  
+  // Show error on product page
+  window.BidlyAuctionWidget.showPageError = function(message) {
+    const container = document.getElementById('bidly-auction-detail-page');
+    if (container) {
+      container.innerHTML = `
+        <div class="error" style="text-align: center; padding: 2rem; color: #dc3545;">
+          <h3>Error</h3>
+          <p>${message}</p>
+        </div>
+      `;
+    }
   };
 
 })();
