@@ -1,4 +1,7 @@
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import {
   getAllAuctions,
   getAuctionById,
@@ -12,6 +15,10 @@ import {
   validateId
 } from '../middleware/validation.js';
 import { identifyStore } from '../middleware/storeMiddleware.js';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -53,6 +60,37 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     shop: req.shopDomain
   });
+});
+
+// Serve theme extension assets
+// GET /apps/bidly/assets/bidly-widget.css
+router.get('/assets/bidly-widget.css', (req, res) => {
+  try {
+    const cssPath = path.join(__dirname, '../../extensions/theme-app-extension/assets/bidly-widget.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf8');
+    
+    res.setHeader('Content-Type', 'text/css');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.send(cssContent);
+  } catch (error) {
+    console.error('Error serving CSS:', error);
+    res.status(404).send('/* CSS file not found */');
+  }
+});
+
+// GET /apps/bidly/assets/bidly-widget.js
+router.get('/assets/bidly-widget.js', (req, res) => {
+  try {
+    const jsPath = path.join(__dirname, '../../extensions/theme-app-extension/assets/bidly-widget.js');
+    const jsContent = fs.readFileSync(jsPath, 'utf8');
+    
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.send(jsContent);
+  } catch (error) {
+    console.error('Error serving JS:', error);
+    res.status(404).send('// JS file not found');
+  }
 });
 
 export default router;
