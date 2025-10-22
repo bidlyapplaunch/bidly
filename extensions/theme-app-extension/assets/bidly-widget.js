@@ -738,6 +738,7 @@
         .map(bid => `
           <div class="bidly-bid-item">
             <span class="bidly-bid-amount">$${bid.amount}</span>
+            <span class="bidly-bid-bidder">${bid.bidder}</span>
             <span class="bidly-bid-time">${this.formatBidTime(bid.timestamp)}</span>
           </div>
         `).join('');
@@ -1836,7 +1837,7 @@
     // Update timers on product pages
     updatePageTimers: function() {
       // Update all timer elements on the page
-      const timeElements = document.querySelectorAll('.bidly-auction-time, .bidly-featured-time');
+      const timeElements = document.querySelectorAll('.bidly-auction-time, .bidly-featured-time, .auction-timer');
       timeElements.forEach(timeElement => {
         if (timeElement.dataset.endTime) {
           const newTime = this.formatTimeLeft(timeElement.dataset.endTime);
@@ -2149,6 +2150,9 @@
           
           // Render the auction on the page
           this.renderAuctionOnPage(data.data);
+          
+          // Start real-time updates for product page
+          this.startPageRealTimeUpdates(auctionId, shopDomain);
         } else {
           console.error('❌ Failed to load auction:', data.message);
           this.showPageError('Failed to load auction data');
@@ -2158,6 +2162,65 @@
         console.error('❌ Error loading auction:', error);
         this.showPageError('Error loading auction data');
       });
+  };
+  
+  // Start real-time updates for product page
+  window.BidlyAuctionWidget.startPageRealTimeUpdates = function(auctionId, shopDomain) {
+    console.log('🔄 Starting real-time updates for product page...');
+    
+    // Update every 5 seconds
+    setInterval(() => {
+      this.updatePageAuctionData(auctionId, shopDomain);
+    }, 5000);
+  };
+  
+  // Update auction data on product page
+  window.BidlyAuctionWidget.updatePageAuctionData = function(auctionId, shopDomain) {
+    const appProxyUrl = `https://${shopDomain}/apps/bidly/api`;
+    
+    fetch(`${appProxyUrl}/auctions/${auctionId}?shop=${shopDomain}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update global auction data
+          window.currentAuctionData = data.data;
+          
+          // Update the page content
+          this.updatePageContent(data.data);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error updating auction data:', error);
+      });
+  };
+  
+  // Update page content with new auction data
+  window.BidlyAuctionWidget.updatePageContent = function(auction) {
+    // Update current bid
+    const currentBidElement = document.querySelector('.price-amount');
+    if (currentBidElement) {
+      const currentBid = auction.currentBid || 0;
+      const startingBid = auction.startingBid || 0;
+      const displayPrice = currentBid > 0 ? currentBid : startingBid;
+      currentBidElement.textContent = `$${displayPrice}`;
+    }
+    
+    // Update bid history
+    const bidHistoryElement = document.querySelector('.auction-bid-history');
+    if (bidHistoryElement) {
+      bidHistoryElement.innerHTML = this.renderBidHistory(auction);
+    }
+    
+    // Update minimum bid in bidding section
+    const minBidElement = document.querySelector('.bidly-min-bid');
+    if (minBidElement) {
+      const currentBid = auction.currentBid || 0;
+      const startingBid = auction.startingBid || 0;
+      const minBid = currentBid > 0 ? currentBid + 1 : startingBid;
+      minBidElement.textContent = `Minimum bid: $${minBid}`;
+    }
+    
+    console.log('✅ Page content updated with new auction data');
   };
   
   // Render auction on product page
@@ -2191,6 +2254,7 @@
     }
     
     container.innerHTML = `
+      ${this.renderPageCustomerAuth()}
       <div class="auction-details-full">
         <div class="auction-details-image">
           <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="auction-main-image" onerror="this.src='/placeholder-image.jpg'">
@@ -2217,6 +2281,30 @@
     `;
     
     console.log('✅ Auction rendered on page');
+  };
+  
+  // Render customer auth for product page (with top-right positioning)
+  window.BidlyAuctionWidget.renderPageCustomerAuth = function() {
+    if (this.customerInitialized && this.customer) {
+      return `
+        <div class="bidly-page-customer-auth" style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div class="bidly-customer-info">
+            <span class="bidly-customer-name">Welcome, ${this.customer.name}!</span>
+            <button class="bidly-logout-btn" onclick="BidlyAuctionWidget.logout()">Logout</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    return `
+      <div class="bidly-page-customer-auth" style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <div class="bidly-auth-form">
+          <input type="text" placeholder="Your name" class="bidly-auth-input" id="bidly-page-name">
+          <input type="email" placeholder="Your email" class="bidly-auth-input" id="bidly-page-email">
+          <button class="bidly-login-btn" onclick="BidlyAuctionWidget.loginPage()">Login</button>
+        </div>
+      </div>
+    `;
   };
   
   // Show error on product page
