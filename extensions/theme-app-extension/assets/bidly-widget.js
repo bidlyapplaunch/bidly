@@ -277,9 +277,11 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       card.innerHTML = `
-        <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
+        <div class="bidly-auction-image-container" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">
+          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
+        </div>
         <div class="bidly-auction-content">
-          <h3 class="bidly-auction-title">${auction.productData?.title || 'Auction Item'}</h3>
+          <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h3>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -290,28 +292,6 @@
           ${this.renderBiddingSection(auction, blockId)}
         </div>
       `;
-      
-      // Make ONLY the image and title clickable
-      const image = card.querySelector('.bidly-auction-image');
-      const title = card.querySelector('.bidly-auction-title');
-      
-      if (image) {
-        image.style.cursor = 'pointer';
-        image.onclick = (e) => {
-          e.stopPropagation();
-          console.log('🖱️ Auction image clicked:', auction._id || auction.id);
-          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-        };
-      }
-      
-      if (title) {
-        title.style.cursor = 'pointer';
-        title.onclick = (e) => {
-          e.stopPropagation();
-          console.log('🖱️ Auction title clicked:', auction._id || auction.id);
-          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-        };
-      }
       
       return card;
     },
@@ -332,11 +312,11 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       containerEl.innerHTML = `
-        <div class="bidly-auction-image-container">
+        <div class="bidly-auction-image-container" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">
           <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-info">
-          <h1 class="bidly-auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+          <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h1>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -348,28 +328,6 @@
           ${this.renderBidHistory(auction)}
         </div>
       `;
-      
-      // Make ONLY the image and title clickable
-      const image = containerEl.querySelector('.bidly-auction-image');
-      const title = containerEl.querySelector('.bidly-auction-title');
-      
-      if (image) {
-        image.style.cursor = 'pointer';
-        image.onclick = (e) => {
-          e.stopPropagation();
-          console.log('🖱️ Single auction image clicked:', auction._id || auction.id);
-          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-        };
-      }
-      
-      if (title) {
-        title.style.cursor = 'pointer';
-        title.onclick = (e) => {
-          e.stopPropagation();
-          console.log('🖱️ Single auction title clicked:', auction._id || auction.id);
-          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-        };
-      }
     },
     
     // Render featured auction
@@ -389,11 +347,11 @@
       
       containerEl.innerHTML = `
         <div class="bidly-featured-content">
-          <div class="bidly-featured-image-container">
+          <div class="bidly-featured-image-container" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">
             <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onerror="this.src='/placeholder-image.jpg'">
           </div>
           <div class="bidly-featured-info">
-            <h1 class="bidly-featured-title">${auction.productData?.title || 'Auction Item'}</h1>
+            <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h1>
             <div class="bidly-featured-price">
               <div class="bidly-price-label">${priceLabel}</div>
               <div class="bidly-price-amount">$${displayPrice}</div>
@@ -405,28 +363,6 @@
           </div>
         </div>
       `;
-      
-      // Make ONLY the image and title clickable
-      const image = containerEl.querySelector('.bidly-featured-image');
-      const title = containerEl.querySelector('.bidly-featured-title');
-      
-      if (image) {
-        image.style.cursor = 'pointer';
-        image.onclick = (e) => {
-          e.stopPropagation();
-          console.log('🖱️ Featured auction image clicked:', auction._id || auction.id);
-          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-        };
-      }
-      
-      if (title) {
-        title.style.cursor = 'pointer';
-        title.onclick = (e) => {
-          e.stopPropagation();
-          console.log('🖱️ Featured auction title clicked:', auction._id || auction.id);
-          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-        };
-      }
     },
     
     // Render bidding section for dedicated page
