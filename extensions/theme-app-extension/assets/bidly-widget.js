@@ -291,12 +291,27 @@
         </div>
       `;
       
-      // Make the entire card clickable
-      card.style.cursor = 'pointer';
-      card.onclick = () => {
-        console.log('🖱️ Auction card clicked:', auction._id || auction.id);
-        this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-      };
+      // Make ONLY the image and title clickable
+      const image = card.querySelector('.bidly-auction-image');
+      const title = card.querySelector('.bidly-auction-title');
+      
+      if (image) {
+        image.style.cursor = 'pointer';
+        image.onclick = (e) => {
+          e.stopPropagation();
+          console.log('🖱️ Auction image clicked:', auction._id || auction.id);
+          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+        };
+      }
+      
+      if (title) {
+        title.style.cursor = 'pointer';
+        title.onclick = (e) => {
+          e.stopPropagation();
+          console.log('🖱️ Auction title clicked:', auction._id || auction.id);
+          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+        };
+      }
       
       return card;
     },
@@ -334,12 +349,27 @@
         </div>
       `;
       
-      // Make the entire single auction clickable
-      containerEl.style.cursor = 'pointer';
-      containerEl.onclick = () => {
-        console.log('🖱️ Single auction clicked:', auction._id || auction.id);
-        this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-      };
+      // Make ONLY the image and title clickable
+      const image = containerEl.querySelector('.bidly-auction-image');
+      const title = containerEl.querySelector('.bidly-auction-title');
+      
+      if (image) {
+        image.style.cursor = 'pointer';
+        image.onclick = (e) => {
+          e.stopPropagation();
+          console.log('🖱️ Single auction image clicked:', auction._id || auction.id);
+          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+        };
+      }
+      
+      if (title) {
+        title.style.cursor = 'pointer';
+        title.onclick = (e) => {
+          e.stopPropagation();
+          console.log('🖱️ Single auction title clicked:', auction._id || auction.id);
+          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+        };
+      }
     },
     
     // Render featured auction
@@ -376,12 +406,27 @@
         </div>
       `;
       
-      // Make the entire featured auction clickable
-      containerEl.style.cursor = 'pointer';
-      containerEl.onclick = () => {
-        console.log('🖱️ Featured auction clicked:', auction._id || auction.id);
-        this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
-      };
+      // Make ONLY the image and title clickable
+      const image = containerEl.querySelector('.bidly-featured-image');
+      const title = containerEl.querySelector('.bidly-featured-title');
+      
+      if (image) {
+        image.style.cursor = 'pointer';
+        image.onclick = (e) => {
+          e.stopPropagation();
+          console.log('🖱️ Featured auction image clicked:', auction._id || auction.id);
+          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+        };
+      }
+      
+      if (title) {
+        title.style.cursor = 'pointer';
+        title.onclick = (e) => {
+          e.stopPropagation();
+          console.log('🖱️ Featured auction title clicked:', auction._id || auction.id);
+          this.viewAuctionDetails(auction._id || auction.id, auction.shopifyProductId);
+        };
+      }
     },
     
     // Render bidding section for dedicated page
