@@ -332,7 +332,14 @@ export const getProductsByTags = async (req, res, next) => {
  */
 export const getServiceStatus = async (req, res, next) => {
   try {
+    console.log('🔍 getServiceStatus called with:', {
+      query: req.query,
+      headers: req.headers,
+      url: req.url
+    });
+    
     const shopDomain = getCurrentShopDomain(req);
+    console.log('🔍 getServiceStatus - shopDomain:', shopDomain);
     
     if (!shopDomain) {
       throw new AppError('Store context is required', 400);
