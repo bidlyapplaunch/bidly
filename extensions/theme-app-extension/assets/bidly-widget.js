@@ -277,8 +277,8 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       card.innerHTML = `
-        <div class="bidly-auction-image-container" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">
-          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
+        <div class="bidly-auction-image-container">
+          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-content">
           <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h3>
@@ -312,8 +312,8 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       containerEl.innerHTML = `
-        <div class="bidly-auction-image-container" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">
-          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onerror="this.src='/placeholder-image.jpg'">
+        <div class="bidly-auction-image-container">
+          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-info">
           <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h1>
@@ -347,8 +347,8 @@
       
       containerEl.innerHTML = `
         <div class="bidly-featured-content">
-          <div class="bidly-featured-image-container" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">
-            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onerror="this.src='/placeholder-image.jpg'">
+          <div class="bidly-featured-image-container">
+            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;" onerror="this.src='/placeholder-image.jpg'">
           </div>
           <div class="bidly-featured-info">
             <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" style="cursor: pointer;">${auction.productData?.title || 'Auction Item'}</h1>
