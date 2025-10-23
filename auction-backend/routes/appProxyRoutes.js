@@ -28,41 +28,7 @@ const router = express.Router();
  * They handle CORS and provide a secure way for themes to access auction data
  */
 
-// All app proxy routes require store identification
-router.use(identifyStore);
-
-// Get all auctions for theme display
-// GET /apps/bidly/api/auctions?shop=store.myshopify.com
-router.get('/api/auctions', getAllAuctions);
-
-// Get single auction by ID (accepts both MongoDB ObjectId and Shopify Product ID)
-// GET /apps/bidly/api/auctions/:id?shop=store.myshopify.com
-router.get('/api/auctions/:id', getAuctionById);
-
-// Get auction details page (renders HTML page for individual auction)
-// GET /apps/bidly/api/auctions/page/:id?shop=store.myshopify.com
-router.get('/api/auctions/page/:id', validateId, getAuctionDetailsPage);
-
-// Place bid on auction
-// POST /apps/bidly/api/auctions/:id/bid?shop=store.myshopify.com
-router.post('/api/auctions/:id/bid', validateId, validatePlaceBid, placeBid);
-
-// Buy now
-// POST /apps/bidly/api/auctions/:id/buy-now?shop=store.myshopify.com
-router.post('/api/auctions/:id/buy-now', validateId, validateBuyNow, buyNow);
-
-// Health check endpoint
-// GET /apps/bidly/health
-router.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Bidly App Proxy is running',
-    timestamp: new Date().toISOString(),
-    shop: req.shopDomain
-  });
-});
-
-// Serve theme extension assets
+// Serve theme extension assets (NO AUTHENTICATION REQUIRED)
 // GET /apps/bidly/assets/bidly-widget.css
 router.get('/assets/bidly-widget.css', (req, res) => {
   try {
@@ -92,5 +58,38 @@ router.get('/assets/bidly-widget.js', (req, res) => {
     res.status(404).send('// JS file not found');
   }
 });
+
+// Health check endpoint (NO AUTHENTICATION REQUIRED)
+// GET /apps/bidly/health
+router.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bidly App Proxy is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// All other app proxy routes require store identification
+router.use(identifyStore);
+
+// Get all auctions for theme display
+// GET /apps/bidly/api/auctions?shop=store.myshopify.com
+router.get('/api/auctions', getAllAuctions);
+
+// Get single auction by ID (accepts both MongoDB ObjectId and Shopify Product ID)
+// GET /apps/bidly/api/auctions/:id?shop=store.myshopify.com
+router.get('/api/auctions/:id', getAuctionById);
+
+// Get auction details page (renders HTML page for individual auction)
+// GET /apps/bidly/api/auctions/page/:id?shop=store.myshopify.com
+router.get('/api/auctions/page/:id', validateId, getAuctionDetailsPage);
+
+// Place bid on auction
+// POST /apps/bidly/api/auctions/:id/bid?shop=store.myshopify.com
+router.post('/api/auctions/:id/bid', validateId, validatePlaceBid, placeBid);
+
+// Buy now
+// POST /apps/bidly/api/auctions/:id/buy-now?shop=store.myshopify.com
+router.post('/api/auctions/:id/buy-now', validateId, validateBuyNow, buyNow);
 
 export default router;

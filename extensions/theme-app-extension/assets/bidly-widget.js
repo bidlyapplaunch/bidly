@@ -545,8 +545,8 @@
     loginPage: function() {
       console.log('🔐 Login attempt from page');
       
-      const nameInput = document.getElementById('page-customer-name');
-      const emailInput = document.getElementById('page-customer-email');
+      const nameInput = document.getElementById('bidly-page-name');
+      const emailInput = document.getElementById('bidly-page-email');
       
       if (!nameInput || !emailInput) {
         console.error('❌ Input elements not found');
@@ -731,19 +731,25 @@
     // Render bid history
     renderBidHistory: function(auction) {
       if (!auction.bidHistory || auction.bidHistory.length === 0) {
+        console.log('📋 No bid history found');
         return '';
       }
+      
+      console.log('📋 Rendering bid history:', auction.bidHistory);
       
       const historyHtml = auction.bidHistory
         .slice(-5) // Show last 5 bids
         .reverse()
-        .map(bid => `
-          <div class="bidly-bid-item">
-            <span class="bidly-bid-amount">$${bid.amount}</span>
-            <span class="bidly-bid-bidder">${bid.bidder}</span>
-            <span class="bidly-bid-time">${this.formatBidTime(bid.timestamp)}</span>
-          </div>
-        `).join('');
+        .map(bid => {
+          console.log('📋 Processing bid:', bid);
+          return `
+            <div class="bidly-bid-item">
+              <span class="bidly-bid-amount">$${bid.amount}</span>
+              <span class="bidly-bid-bidder">${bid.bidder || 'Unknown'}</span>
+              <span class="bidly-bid-time">${this.formatBidTime(bid.timestamp)}</span>
+            </div>
+          `;
+        }).join('');
       
       return `
         <div class="bidly-bid-history">
@@ -1840,9 +1846,11 @@
     updatePageTimers: function() {
       // Update all timer elements on the page
       const timeElements = document.querySelectorAll('.bidly-auction-time, .bidly-featured-time, .auction-timer');
+      console.log('🕐 Updating page timers, found elements:', timeElements.length);
       timeElements.forEach(timeElement => {
         if (timeElement.dataset.endTime) {
           const newTime = this.formatTimeLeft(timeElement.dataset.endTime);
+          console.log('🕐 Updating timer:', timeElement.dataset.endTime, '->', newTime);
           timeElement.textContent = newTime;
         }
       });
