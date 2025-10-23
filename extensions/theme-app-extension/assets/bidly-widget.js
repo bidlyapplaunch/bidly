@@ -584,17 +584,25 @@
           });
         });
         
-        // Try to find inputs by placeholder text
-        const nameByPlaceholder = document.querySelector('input[placeholder*="name" i]');
-        const emailByPlaceholder = document.querySelector('input[placeholder*="email" i]');
+        // Try to find inputs that actually have values
+        const nameInputsWithValue = document.querySelectorAll('input[placeholder*="name" i]');
+        const emailInputsWithValue = document.querySelectorAll('input[placeholder*="email" i]');
         
-        if (nameByPlaceholder && !name) {
-          name = nameByPlaceholder.value.trim();
-          console.log('🔍 Found name by placeholder:', name);
+        // Find the input with a non-empty value
+        for (let input of nameInputsWithValue) {
+          if (input.value.trim()) {
+            name = input.value.trim();
+            console.log('🔍 Found name with value:', name);
+            break;
+          }
         }
-        if (emailByPlaceholder && !email) {
-          email = emailByPlaceholder.value.trim();
-          console.log('🔍 Found email by placeholder:', email);
+        
+        for (let input of emailInputsWithValue) {
+          if (input.value.trim()) {
+            email = input.value.trim();
+            console.log('🔍 Found email with value:', email);
+            break;
+          }
         }
       }
       
