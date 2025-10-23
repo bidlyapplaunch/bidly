@@ -548,8 +548,16 @@
       const nameInput = document.getElementById('bidly-page-name');
       const emailInput = document.getElementById('bidly-page-email');
       
+      console.log('🔍 Found elements:', {
+        nameInput: !!nameInput,
+        emailInput: !!emailInput,
+        nameValue: nameInput?.value,
+        emailValue: emailInput?.value
+      });
+      
       if (!nameInput || !emailInput) {
         console.error('❌ Input elements not found');
+        console.log('🔍 Available elements with bidly-page:', document.querySelectorAll('[id*="bidly-page"]'));
         this.showToast('Login form not found. Please refresh the page.', true);
         return;
       }
