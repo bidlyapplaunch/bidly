@@ -1684,31 +1684,29 @@
         console.log('❌ Price element not found');
       }
       
-      // Update minimum bid (check for multiple possible selectors)
-      const minBidSelectors = ['.bidly-min-bid', '.bidly-minimum-bid', '[class*="min-bid"]'];
+      // Update minimum bid in input placeholder
+      const bidInputs = auctionCard.querySelectorAll('.bidly-bid-input, .bidly-featured-bid-input');
       let minBidUpdated = false;
       
-      minBidSelectors.forEach(selector => {
-        const minBidElements = auctionCard.querySelectorAll(selector);
-        minBidElements.forEach(minBidElement => {
-          const minBid = (auction.currentBid || 0) + 1;
-          const newMinBid = `Min: $${minBid}`;
-          console.log('💵 Min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
-          if (minBidElement.textContent !== newMinBid) {
-            console.log('✅ Min bid changed, updating with highlight');
-            minBidElement.style.transition = 'color 0.3s ease';
-            minBidElement.textContent = newMinBid;
-            minBidElement.style.color = '#ff6b35'; // Highlight change
-            setTimeout(() => {
-              minBidElement.style.color = '';
-            }, 1000);
-            minBidUpdated = true;
-          }
-        });
+      bidInputs.forEach(bidInput => {
+        const minBid = (auction.currentBid || 0) + 1;
+        const newPlaceholder = `Min: $${minBid}`;
+        console.log('💵 Min bid update - Current placeholder:', bidInput.placeholder, 'New:', newPlaceholder);
+        if (bidInput.placeholder !== newPlaceholder) {
+          console.log('✅ Min bid changed, updating placeholder with highlight');
+          bidInput.style.transition = 'border-color 0.3s ease';
+          bidInput.placeholder = newPlaceholder;
+          bidInput.min = minBid;
+          bidInput.style.borderColor = '#ff6b35'; // Highlight change
+          setTimeout(() => {
+            bidInput.style.borderColor = '';
+          }, 1000);
+          minBidUpdated = true;
+        }
       });
       
       if (!minBidUpdated) {
-        console.log('❌ No min bid elements found with any selector');
+        console.log('❌ No bid input elements found for min bid update');
       }
       
       // Update bidder info
@@ -1782,31 +1780,29 @@
         console.log('❌ Single auction price element not found');
       }
       
-      // Update minimum bid (check for multiple possible selectors)
-      const minBidSelectors = ['.bidly-min-bid', '.bidly-minimum-bid', '[class*="min-bid"]'];
+      // Update minimum bid in input placeholder
+      const bidInputs = container.querySelectorAll('.bidly-bid-input, .bidly-featured-bid-input');
       let minBidUpdated = false;
       
-      minBidSelectors.forEach(selector => {
-        const minBidElements = container.querySelectorAll(selector);
-        minBidElements.forEach(minBidElement => {
-          const minBid = (auction.currentBid || 0) + 1;
-          const newMinBid = `Min: $${minBid}`;
-          console.log('💵 Single auction min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
-          if (minBidElement.textContent !== newMinBid) {
-            console.log('✅ Single auction min bid changed, updating with highlight');
-            minBidElement.style.transition = 'color 0.3s ease';
-            minBidElement.textContent = newMinBid;
-            minBidElement.style.color = '#ff6b35'; // Highlight change
-            setTimeout(() => {
-              minBidElement.style.color = '';
-            }, 1000);
-            minBidUpdated = true;
-          }
-        });
+      bidInputs.forEach(bidInput => {
+        const minBid = (auction.currentBid || 0) + 1;
+        const newPlaceholder = `Min: $${minBid}`;
+        console.log('💵 Single auction min bid update - Current placeholder:', bidInput.placeholder, 'New:', newPlaceholder);
+        if (bidInput.placeholder !== newPlaceholder) {
+          console.log('✅ Single auction min bid changed, updating placeholder with highlight');
+          bidInput.style.transition = 'border-color 0.3s ease';
+          bidInput.placeholder = newPlaceholder;
+          bidInput.min = minBid;
+          bidInput.style.borderColor = '#ff6b35'; // Highlight change
+          setTimeout(() => {
+            bidInput.style.borderColor = '';
+          }, 1000);
+          minBidUpdated = true;
+        }
       });
       
       if (!minBidUpdated) {
-        console.log('❌ No min bid elements found with any selector');
+        console.log('❌ No bid input elements found for single auction min bid update');
       }
       
       // Update bidder info

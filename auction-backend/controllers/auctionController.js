@@ -1091,7 +1091,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           </div>
         </div>
         
-        <script src="/apps/bidly/assets/bidly-widget.js?v=2007&t=${Date.now()}"></script>
+        <script src="/apps/bidly/assets/bidly-widget.js?v=2008&t=${Date.now()}"></script>
         <script>
           console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
           console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2000');
