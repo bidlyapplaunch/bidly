@@ -1684,25 +1684,31 @@
         console.log('❌ Price element not found');
       }
       
-      // Update minimum bid
-      const minBidElement = auctionCard.querySelector('.bidly-min-bid');
-      if (minBidElement) {
-        const minBid = (auction.currentBid || 0) + 1;
-        const newMinBid = `Min: $${minBid}`;
-        console.log('💵 Min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
-        if (minBidElement.textContent !== newMinBid) {
-          console.log('✅ Min bid changed, updating with highlight');
-          minBidElement.style.transition = 'color 0.3s ease';
-          minBidElement.textContent = newMinBid;
-          minBidElement.style.color = '#ff6b35'; // Highlight change
-          setTimeout(() => {
-            minBidElement.style.color = '';
-          }, 1000);
-        } else {
-          console.log('⏭️ Min bid unchanged, skipping');
-        }
-      } else {
-        console.log('❌ Min bid element not found');
+      // Update minimum bid (check for multiple possible selectors)
+      const minBidSelectors = ['.bidly-min-bid', '.bidly-minimum-bid', '[class*="min-bid"]'];
+      let minBidUpdated = false;
+      
+      minBidSelectors.forEach(selector => {
+        const minBidElements = auctionCard.querySelectorAll(selector);
+        minBidElements.forEach(minBidElement => {
+          const minBid = (auction.currentBid || 0) + 1;
+          const newMinBid = `Min: $${minBid}`;
+          console.log('💵 Min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
+          if (minBidElement.textContent !== newMinBid) {
+            console.log('✅ Min bid changed, updating with highlight');
+            minBidElement.style.transition = 'color 0.3s ease';
+            minBidElement.textContent = newMinBid;
+            minBidElement.style.color = '#ff6b35'; // Highlight change
+            setTimeout(() => {
+              minBidElement.style.color = '';
+            }, 1000);
+            minBidUpdated = true;
+          }
+        });
+      });
+      
+      if (!minBidUpdated) {
+        console.log('❌ No min bid elements found with any selector');
       }
       
       // Update bidder info
@@ -1776,25 +1782,31 @@
         console.log('❌ Single auction price element not found');
       }
       
-      // Update minimum bid
-      const minBidElement = container.querySelector('.bidly-min-bid');
-      if (minBidElement) {
-        const minBid = (auction.currentBid || 0) + 1;
-        const newMinBid = `Min: $${minBid}`;
-        console.log('💵 Single auction min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
-        if (minBidElement.textContent !== newMinBid) {
-          console.log('✅ Single auction min bid changed, updating with highlight');
-          minBidElement.style.transition = 'color 0.3s ease';
-          minBidElement.textContent = newMinBid;
-          minBidElement.style.color = '#ff6b35'; // Highlight change
-          setTimeout(() => {
-            minBidElement.style.color = '';
-          }, 1000);
-        } else {
-          console.log('⏭️ Single auction min bid unchanged, skipping');
-        }
-      } else {
-        console.log('❌ Single auction min bid element not found');
+      // Update minimum bid (check for multiple possible selectors)
+      const minBidSelectors = ['.bidly-min-bid', '.bidly-minimum-bid', '[class*="min-bid"]'];
+      let minBidUpdated = false;
+      
+      minBidSelectors.forEach(selector => {
+        const minBidElements = container.querySelectorAll(selector);
+        minBidElements.forEach(minBidElement => {
+          const minBid = (auction.currentBid || 0) + 1;
+          const newMinBid = `Min: $${minBid}`;
+          console.log('💵 Single auction min bid update - Current:', minBidElement.textContent, 'New:', newMinBid);
+          if (minBidElement.textContent !== newMinBid) {
+            console.log('✅ Single auction min bid changed, updating with highlight');
+            minBidElement.style.transition = 'color 0.3s ease';
+            minBidElement.textContent = newMinBid;
+            minBidElement.style.color = '#ff6b35'; // Highlight change
+            setTimeout(() => {
+              minBidElement.style.color = '';
+            }, 1000);
+            minBidUpdated = true;
+          }
+        });
+      });
+      
+      if (!minBidUpdated) {
+        console.log('❌ No min bid elements found with any selector');
       }
       
       // Update bidder info
@@ -1847,6 +1859,79 @@
       } else {
         console.log('❌ Single auction timer element not found or no end time');
       }
+      
+      // Check if there's a new bid and show notification
+      if (auction.bidHistory && auction.bidHistory.length > 0) {
+        const latestBid = auction.bidHistory[auction.bidHistory.length - 1];
+        const now = new Date();
+        const bidTime = new Date(latestBid.timestamp);
+        const timeDiff = now - bidTime;
+        
+        // If the bid was placed within the last 15 seconds, show notification
+        if (timeDiff < 15000) {
+          this.showBidNotification(latestBid, auction);
+        }
+      }
+    },
+    
+    // Show bid notification popup
+    showBidNotification: function(bid, auction) {
+      console.log('🔔 Showing bid notification:', bid);
+      
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = 'bidly-bid-notification';
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        max-width: 300px;
+        animation: slideInRight 0.3s ease-out;
+      `;
+      
+      notification.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">💰 New Bid!</div>
+        <div>${bid.bidder || 'Someone'} bid $${bid.amount} on ${auction.productData?.title || 'this auction'}</div>
+        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Just now</div>
+      `;
+      
+      // Add CSS animation
+      if (!document.getElementById('bidly-notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'bidly-notification-styles';
+        style.textContent = `
+          @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      // Add to page
+      document.body.appendChild(notification);
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 5000);
     },
     
     // Start timer updates for all auction instances
