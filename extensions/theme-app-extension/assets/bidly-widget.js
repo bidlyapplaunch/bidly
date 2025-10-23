@@ -552,7 +552,11 @@
         nameInput: !!nameInput,
         emailInput: !!emailInput,
         nameValue: nameInput?.value,
-        emailValue: emailInput?.value
+        emailValue: emailInput?.value,
+        nameInputId: nameInput?.id,
+        emailInputId: emailInput?.id,
+        allInputs: document.querySelectorAll('input').length,
+        allBidlyInputs: document.querySelectorAll('[id*="bidly-page"]').length
       });
       
       if (!nameInput || !emailInput) {
@@ -562,8 +566,37 @@
         return;
       }
       
-      const name = nameInput.value.trim();
-      const email = emailInput.value.trim();
+      let name = nameInput.value.trim();
+      let email = emailInput.value.trim();
+      
+      // Fallback: try to get values from any input fields if the specific ones are empty
+      if (!name || !email) {
+        console.log('🔍 Trying fallback - checking all inputs on page');
+        const allInputs = document.querySelectorAll('input[type="text"], input[type="email"]');
+        console.log('🔍 All inputs found:', allInputs.length);
+        
+        allInputs.forEach((input, index) => {
+          console.log(`🔍 Input ${index}:`, {
+            id: input.id,
+            type: input.type,
+            value: input.value,
+            placeholder: input.placeholder
+          });
+        });
+        
+        // Try to find inputs by placeholder text
+        const nameByPlaceholder = document.querySelector('input[placeholder*="name" i]');
+        const emailByPlaceholder = document.querySelector('input[placeholder*="email" i]');
+        
+        if (nameByPlaceholder && !name) {
+          name = nameByPlaceholder.value.trim();
+          console.log('🔍 Found name by placeholder:', name);
+        }
+        if (emailByPlaceholder && !email) {
+          email = emailByPlaceholder.value.trim();
+          console.log('🔍 Found email by placeholder:', email);
+        }
+      }
       
       if (!name || !email) {
         this.showToast('Please enter both name and email', true);
