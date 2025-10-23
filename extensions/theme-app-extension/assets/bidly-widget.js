@@ -5,6 +5,8 @@
 
 (function() {
   'use strict';
+  
+  console.log('🚀 Bidly Widget v2000 - Loading with all fixes!');
 
   // Global widget object
   window.BidlyAuctionWidget = {

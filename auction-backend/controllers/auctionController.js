@@ -1091,13 +1091,15 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           </div>
         </div>
         
-        <script src="/apps/bidly/assets/bidly-widget.js"></script>
+        <script src="/apps/bidly/assets/bidly-widget.js?v=2000&t=${Date.now()}"></script>
         <script>
           console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
+          console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2000');
           
           // Test if script is running
           setTimeout(() => {
             console.log('🔥 SCRIPT TIMEOUT TEST - Widget exists:', !!window.BidlyAuctionWidget);
+            console.log('🔥 PRODUCT PAGE - Widget version check:', window.BidlyAuctionWidget ? 'v2000 loaded' : 'not loaded');
           }, 1000);
           
           document.addEventListener('DOMContentLoaded', function() {
