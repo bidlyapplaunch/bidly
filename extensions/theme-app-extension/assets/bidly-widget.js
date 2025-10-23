@@ -625,8 +625,10 @@
       console.log('✅ Customer logged in:', this.customer);
       this.showToast(`Welcome, ${name}!`);
       
-      // Update the bidding section without reloading
-      this.updatePageBiddingSection();
+      // Refresh the page to update the UI properly
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     },
     
     // Update page bidding section after login
@@ -1107,14 +1109,10 @@
       sessionStorage.removeItem('bidly-customer');
       this.showToast('Logged out successfully');
       
-      // Re-render all instances
-      Object.keys(this.instances).forEach(id => {
-        if (this.instances[id].type === 'list') {
-          this.loadAuctions(id);
-        } else {
-          this.loadSingleAuction(id, this.instances[id].auctionId);
-        }
-      });
+      // Refresh the page to update the UI properly
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     },
     
     // Initialize customer authentication
