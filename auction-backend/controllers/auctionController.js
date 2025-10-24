@@ -930,21 +930,26 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #fafafa;
+            background: #f8f9fa;
             color: #333;
-            line-height: 1.6;
+            line-height: 1.4;
+            height: 100vh;
+            overflow: hidden;
           }
           
           .auction-details-page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
           }
           
           .auction-details-container {
+            flex: 1;
+            display: flex;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             overflow: hidden;
           }
           
@@ -954,98 +959,105 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           .auction-details-body {
             padding: 0;
+            flex: 1;
           }
           
           #bidly-auction-detail-page {
-            min-height: 500px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
           }
           
           .auction-details-full {
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 100%;
+            gap: 0;
           }
           
           .auction-details-image {
-            flex: 0 0 auto;
             background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
-            border-radius: 8px;
+            position: relative;
           }
           
           .auction-main-image {
-            max-width: 300px;
-            max-height: 300px;
-            object-fit: cover;
-            border-radius: 4px;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: block;
           }
           
           .auction-details-info {
-            flex: 1;
-            padding: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            overflow-y: auto;
           }
           
           .auction-title {
-            font-size: 2.2rem;
-            font-weight: 600;
+            font-size: 1.8rem;
+            font-weight: 700;
             color: #333;
-            margin-bottom: 20px;
-            line-height: 1.3;
+            margin-bottom: 15px;
+            line-height: 1.2;
           }
           
           .product-description {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 10px 0;
+            padding: 15px;
             background: #f8f9fa;
             border-radius: 6px;
             border-left: 3px solid #007bff;
+            max-height: 120px;
+            overflow-y: auto;
           }
           
           .product-description h3 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
           }
           
           .product-description .description-content {
             color: #666;
-            line-height: 1.6;
-            max-height: 150px;
-            overflow-y: auto;
-            font-size: 0.95rem;
+            line-height: 1.5;
+            font-size: 0.9rem;
           }
           
           .product-description-full {
-            margin: 30px 0;
-            padding: 25px;
+            margin: 10px 0;
+            padding: 15px;
             background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-            clear: both;
-            width: 100%;
+            border-radius: 6px;
+            border-left: 3px solid #007bff;
+            max-height: 120px;
+            overflow-y: auto;
           }
           
           .product-description-full h3 {
-            font-size: 1.3rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 600;
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
           }
           
           .product-description-full .description-content {
             color: #666;
-            line-height: 1.7;
-            max-height: 300px;
-            overflow-y: auto;
-            font-size: 1rem;
+            line-height: 1.5;
+            font-size: 0.9rem;
           }
           
           .auction-price-section {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 10px 0;
+            padding: 15px;
             background: #007bff;
             border-radius: 6px;
             color: white;
@@ -1057,34 +1069,34 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .price-label {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: 500;
             opacity: 0.9;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
           }
           
           .price-amount {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             line-height: 1;
           }
           
           .starting-price {
-            font-size: 1rem;
+            font-size: 0.9rem;
             opacity: 0.8;
             font-weight: 400;
           }
           
           .auction-timer {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #dc3545;
             text-align: center;
-            margin: 20px 0;
-            padding: 15px;
+            margin: 10px 0;
+            padding: 10px;
             background: #fff5f5;
             border: 2px solid #dc3545;
             border-radius: 6px;
@@ -1092,11 +1104,11 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           .auction-status {
             display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 15px;
             font-weight: 600;
-            font-size: 0.9rem;
-            margin: 15px 0;
+            font-size: 0.8rem;
+            margin: 8px 0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
           }
@@ -1122,27 +1134,27 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .auction-bidding-section {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 10px 0;
+            padding: 15px;
             background: #f8f9fa;
             border-radius: 6px;
           }
           
           .bid-form {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             align-items: center;
             flex-wrap: wrap;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
           }
           
           .bid-input {
             flex: 1;
-            min-width: 200px;
-            padding: 12px 16px;
+            min-width: 150px;
+            padding: 10px 12px;
             border: 2px solid #dee2e6;
             border-radius: 4px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: border-color 0.2s ease;
             background: white;
@@ -1154,12 +1166,12 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .bid-button {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
@@ -1175,16 +1187,16 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .buy-now-button {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            margin-left: 15px;
+            margin-left: 10px;
           }
           
           .buy-now-button:hover {
@@ -1192,16 +1204,18 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .auction-bid-history {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 10px 0;
+            padding: 15px;
             background: #f8f9fa;
             border-radius: 6px;
+            max-height: 150px;
+            overflow-y: auto;
           }
           
           .bid-history-title {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            margin: 0 0 15px 0;
+            margin: 0 0 10px 0;
             color: #333;
           }
           
@@ -1209,8 +1223,8 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
-            margin: 8px 0;
+            padding: 8px 12px;
+            margin: 5px 0;
             background: white;
             border-radius: 4px;
             border-left: 3px solid #007bff;
@@ -1218,7 +1232,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .bid-amount {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #28a745;
           }
@@ -1226,11 +1240,11 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           .bid-bidder {
             font-weight: 600;
             color: #495057;
-            font-size: 1rem;
+            font-size: 0.9rem;
           }
           
           .bid-time {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #6c757d;
             font-weight: 400;
           }
@@ -1244,39 +1258,39 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           .auth-form {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             border: 1px solid #dee2e6;
-            min-width: 300px;
+            min-width: 280px;
           }
           
           .auth-form h3 {
-            margin: 0 0 15px 0;
+            margin: 0 0 10px 0;
             color: #333;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
             text-align: center;
           }
           
           .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
           }
           
           .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
             font-weight: 500;
             color: #495057;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
           }
           
           .form-group input {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 2px solid #dee2e6;
             border-radius: 4px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: border-color 0.2s ease;
             background: #f8f9fa;
           }
@@ -1289,19 +1303,19 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           .auth-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 8px;
+            margin-top: 10px;
           }
           
           .auth-button {
             flex: 1;
-            padding: 10px 16px;
+            padding: 8px 12px;
             border: none;
             border-radius: 4px;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
           }
           
           .login-button {
@@ -1320,18 +1334,18 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           .bidly-loading {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #6c757d;
           }
           
           .bidly-spinner {
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             border: 3px solid #f3f3f3;
             border-top: 3px solid #007bff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
           }
           
           @keyframes spin {
@@ -1342,29 +1356,28 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           /* Responsive Design */
           @media (max-width: 768px) {
             .auction-details-full {
-              flex-direction: column;
-              gap: 20px;
+              grid-template-columns: 1fr;
+              grid-template-rows: auto 1fr;
             }
             
             .auction-details-image {
-              align-self: center;
+              padding: 15px;
             }
             
             .auction-main-image {
-              max-width: 250px;
-              max-height: 250px;
+              max-height: 200px;
             }
             
             .auction-details-info {
-              padding: 0;
+              padding: 15px;
             }
             
             .auction-title {
-              font-size: 1.8rem;
+              font-size: 1.5rem;
             }
             
             .price-amount {
-              font-size: 2rem;
+              font-size: 1.8rem;
             }
             
             .bid-form {
@@ -1377,7 +1390,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             
             .customer-auth {
               position: static;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
             }
             
             .auth-form {
