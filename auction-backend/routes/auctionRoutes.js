@@ -12,6 +12,7 @@ import {
   refreshProductData,
   refreshAllProductData,
   getAuctionsWithProductData,
+  getAllAuctionsPage,
   getAuctionDetailsPage,
 } from '../controllers/auctionController.js';
 import {
@@ -50,7 +51,10 @@ router.put('/:id/relist', validateCreateAuction, relistAuction);
 router.put('/:id/refresh-product', validateId, refreshProductData);
 router.put('/refresh-all-products', refreshAllProductData);
 
-// Auction details page route
+// Auction listing page route (all auctions)
+router.get('/page', getAllAuctionsPage);
+
+// Auction details page route (individual auction)
 router.get('/page/:id', validateId, getAuctionDetailsPage);
 
 export default router;

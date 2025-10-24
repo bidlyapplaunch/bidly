@@ -851,6 +851,691 @@ export const relistAuction = async (req, res, next) => {
   }
 };
 
+// Get all auctions page (HTML) - Main auction listing
+export const getAllAuctionsPage = async (req, res, next) => {
+  try {
+    const shopDomain = req.query.shop;
+    
+    if (!shopDomain) {
+      return res.status(400).send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1>Error</h1>
+            <p>Shop domain is required</p>
+          </body>
+        </html>
+      `);
+    }
+
+    // Get all active auctions for this shop
+    const auctions = await Auction.find({ 
+      shopDomain: shopDomain,
+      status: { $in: ['active', 'pending'] }
+    }).sort({ createdAt: -1 });
+
+    // Compute real-time status for each auction
+    const auctionsWithRealTimeStatus = auctions.map(auction => ({
+      ...auction.toObject(),
+      status: computeAuctionStatus(auction)
+    }));
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Live Auctions - ${shopDomain}</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+          }
+          
+          .auction-listing-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+          }
+          
+          .auction-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+          }
+          
+          .auction-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+          }
+          
+          .auction-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+          }
+          
+          .auction-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+          }
+          
+          .stat-item {
+            text-align: center;
+            padding: 15px 25px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+          }
+          
+          .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            display: block;
+          }
+          
+          .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+          }
+          
+          .auction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 30px;
+            background: #f8f9fa;
+          }
+          
+          .auction-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+          }
+          
+          .auction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+          }
+          
+          .auction-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f8f9fa;
+          }
+          
+          .auction-content {
+            padding: 20px;
+          }
+          
+          .auction-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            line-height: 1.4;
+          }
+          
+          .auction-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          }
+          
+          .current-bid {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #27ae60;
+          }
+          
+          .starting-bid {
+            font-size: 0.9rem;
+            color: #6c757d;
+          }
+          
+          .auction-timer {
+            background: #fff3cd;
+            color: #856404;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 15px;
+            border-left: 4px solid #ffc107;
+          }
+          
+          .auction-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+          }
+          
+          .status-active {
+            background: #d4edda;
+            color: #155724;
+          }
+          
+          .status-pending {
+            background: #fff3cd;
+            color: #856404;
+          }
+          
+          .bid-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+          }
+          
+          .bid-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+          }
+          
+          .bid-input:focus {
+            outline: none;
+            border-color: #667eea;
+          }
+          
+          .bid-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          }
+          
+          .bid-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+          }
+          
+          .bid-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+          }
+          
+          .buy-now-button {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+          }
+          
+          .buy-now-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+          }
+          
+          .bid-history {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+          }
+          
+          .bid-history h4 {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .bid-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            margin: 3px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+          }
+          
+          .bid-amount {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #28a745;
+          }
+          
+          .bid-bidder {
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+          }
+          
+          .bid-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-weight: 400;
+          }
+          
+          .customer-auth {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+            min-width: 200px;
+          }
+          
+          .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+          }
+          
+          .customer-name {
+            font-weight: 600;
+            color: #2c3e50;
+          }
+          
+          .logout-button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+          }
+          
+          .logout-button:hover {
+            background: #c0392b;
+          }
+          
+          .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+          
+          .login-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+          }
+          
+          .login-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+          }
+          
+          .login-button:hover {
+            background: #2980b9;
+          }
+          
+          .no-auctions {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+          }
+          
+          .no-auctions h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+          }
+          
+          .no-auctions p {
+            font-size: 1rem;
+          }
+          
+          @media (max-width: 768px) {
+            .auction-grid {
+              grid-template-columns: 1fr;
+              padding: 20px;
+            }
+            
+            .auction-header h1 {
+              font-size: 2rem;
+            }
+            
+            .auction-stats {
+              gap: 15px;
+            }
+            
+            .customer-auth {
+              position: relative;
+              top: auto;
+              right: auto;
+              margin: 20px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="auction-listing-page">
+          <div class="auction-header">
+            <h1>🎯 Live Auctions</h1>
+            <p>Bid on amazing products and win great deals!</p>
+            
+            <div class="auction-stats">
+              <div class="stat-item">
+                <span class="stat-number" id="total-auctions">${auctionsWithRealTimeStatus.length}</span>
+                <span class="stat-label">Active Auctions</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="total-bids">${auctionsWithRealTimeStatus.reduce((sum, auction) => sum + auction.bidHistory.length, 0)}</span>
+                <span class="stat-label">Total Bids</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="active-bidders">${new Set(auctionsWithRealTimeStatus.flatMap(auction => auction.bidHistory.map(bid => bid.bidder))).size}</span>
+                <span class="stat-label">Active Bidders</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="auction-grid" id="auction-grid">
+            ${auctionsWithRealTimeStatus.length === 0 ? `
+              <div class="no-auctions">
+                <h3>No Active Auctions</h3>
+                <p>Check back later for new auctions!</p>
+              </div>
+            ` : auctionsWithRealTimeStatus.map(auction => `
+              <div class="auction-card" data-auction-id="${auction._id}">
+                <img src="${auction.productData?.image?.src || '/placeholder-image.jpg'}" 
+                     alt="${auction.productData?.title || 'Auction Item'}" 
+                     class="auction-image"
+                     onerror="this.src='/placeholder-image.jpg'">
+                
+                <div class="auction-content">
+                  <h3 class="auction-title">${auction.productData?.title || 'Auction Item'}</h3>
+                  
+                  <div class="auction-price">
+                    <span class="current-bid">$${auction.currentBid || auction.startingBid}</span>
+                    <span class="starting-bid">Starting: $${auction.startingBid}</span>
+                  </div>
+                  
+                  <div class="auction-timer" data-end-time="${auction.endTime}">
+                    ${auction.status === 'active' ? 'Loading...' : 'Pending'}
+                  </div>
+                  
+                  <div class="auction-status status-${auction.status}">
+                    ${auction.status}
+                  </div>
+                  
+                  <div class="bid-section">
+                    <input type="number" 
+                           class="bid-input" 
+                           placeholder="Min: $${auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid}"
+                           min="${auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid}"
+                           step="1">
+                    <button class="bid-button" 
+                            onclick="placeBid('${auction._id}', this)"
+                            ${auction.status !== 'active' ? 'disabled' : ''}>
+                      Place Bid
+                    </button>
+                  </div>
+                  
+                  ${auction.buyNowPrice ? `
+                    <button class="buy-now-button" 
+                            onclick="buyNow('${auction._id}')"
+                            ${auction.status !== 'active' ? 'disabled' : ''}>
+                      Buy Now - $${auction.buyNowPrice}
+                    </button>
+                  ` : ''}
+                  
+                  <div class="bid-history">
+                    <h4>Recent Bids</h4>
+                    <div class="bid-history-list">
+                      ${auction.bidHistory.slice(-3).reverse().map(bid => `
+                        <div class="bid-item">
+                          <span class="bid-amount">$${bid.amount}</span>
+                          <span class="bid-bidder">${bid.bidder}</span>
+                          <span class="bid-time">${new Date(bid.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="customer-auth" id="customer-auth">
+          <div class="customer-info" id="customer-info" style="display: none;">
+            <span class="customer-name" id="customer-name"></span>
+            <button class="logout-button" onclick="logout()">Logout</button>
+          </div>
+          
+          <div class="login-form" id="login-form">
+            <input type="text" id="bidder-name" placeholder="Your Name" class="login-input">
+            <input type="email" id="bidder-email" placeholder="Your Email" class="login-input">
+            <button class="login-button" onclick="login()">Login to Bid</button>
+          </div>
+        </div>
+        
+        <script>
+          // Auction data for JavaScript
+          window.auctionData = ${JSON.stringify(auctionsWithRealTimeStatus)};
+          window.shopDomain = '${shopDomain}';
+          
+          // Customer authentication
+          let currentCustomer = null;
+          
+          function initializeCustomerAuth() {
+            const savedCustomer = sessionStorage.getItem('bidly-customer');
+            if (savedCustomer) {
+              currentCustomer = JSON.parse(savedCustomer);
+              showCustomerInfo();
+            }
+          }
+          
+          function showCustomerInfo() {
+            document.getElementById('customer-info').style.display = 'flex';
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('customer-name').textContent = currentCustomer.name;
+          }
+          
+          function showLoginForm() {
+            document.getElementById('customer-info').style.display = 'none';
+            document.getElementById('login-form').style.display = 'flex';
+          }
+          
+          function login() {
+            const name = document.getElementById('bidder-name').value.trim();
+            const email = document.getElementById('bidder-email').value.trim();
+            
+            if (!name || !email) {
+              alert('Please enter both name and email');
+              return;
+            }
+            
+            currentCustomer = { name, email };
+            sessionStorage.setItem('bidly-customer', JSON.stringify(currentCustomer));
+            showCustomerInfo();
+          }
+          
+          function logout() {
+            currentCustomer = null;
+            sessionStorage.removeItem('bidly-customer');
+            showLoginForm();
+          }
+          
+          // Timer updates
+          function updateTimers() {
+            const timers = document.querySelectorAll('.auction-timer[data-end-time]');
+            const now = new Date();
+            
+            timers.forEach(timer => {
+              const endTime = new Date(timer.dataset.endTime);
+              const diff = endTime - now;
+              
+              if (diff <= 0) {
+                timer.textContent = 'Auction Ended';
+                timer.style.background = '#f8d7da';
+                timer.style.color = '#721c24';
+                timer.style.borderLeftColor = '#e74c3c';
+              } else {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                timer.textContent = \`\${hours}h \${minutes}m \${seconds}s\`;
+              }
+            });
+          }
+          
+          // Place bid function
+          async function placeBid(auctionId, button) {
+            if (!currentCustomer) {
+              alert('Please login to place a bid');
+              return;
+            }
+            
+            const card = button.closest('.auction-card');
+            const input = card.querySelector('.bid-input');
+            const amount = parseFloat(input.value);
+            
+            if (!amount || amount <= 0) {
+              alert('Please enter a valid bid amount');
+              return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Placing Bid...';
+            
+            try {
+              const response = await fetch(\`/apps/bidly/api/auctions/\${auctionId}/bid?shop=\${window.shopDomain}\`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  bidder: currentCustomer.name,
+                  amount: amount,
+                  customerEmail: currentCustomer.email
+                })
+              });
+              
+              const result = await response.json();
+              
+              if (result.success) {
+                alert('Bid placed successfully!');
+                location.reload(); // Refresh to show updated data
+              } else {
+                alert('Error: ' + result.message);
+              }
+            } catch (error) {
+              alert('Error placing bid: ' + error.message);
+            } finally {
+              button.disabled = false;
+              button.textContent = 'Place Bid';
+            }
+          }
+          
+          // Buy now function
+          async function buyNow(auctionId) {
+            if (!currentCustomer) {
+              alert('Please login to buy now');
+              return;
+            }
+            
+            if (!confirm('Are you sure you want to buy this item now?')) {
+              return;
+            }
+            
+            try {
+              const response = await fetch(\`/apps/bidly/api/auctions/\${auctionId}/buy-now?shop=\${window.shopDomain}\`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  bidder: currentCustomer.name,
+                  customerEmail: currentCustomer.email
+                })
+              });
+              
+              const result = await response.json();
+              
+              if (result.success) {
+                alert('Purchase successful! You won the auction!');
+                location.reload();
+              } else {
+                alert('Error: ' + result.message);
+              }
+            } catch (error) {
+              alert('Error: ' + error.message);
+            }
+          }
+          
+          // Initialize page
+          document.addEventListener('DOMContentLoaded', function() {
+            initializeCustomerAuth();
+            updateTimers();
+            setInterval(updateTimers, 1000);
+          });
+        </script>
+      </body>
+      </html>
+    `;
+
+    res.send(html);
+  } catch (error) {
+    console.error('Error rendering auction listing page:', error);
+    res.status(500).send(`
+      <html>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1>Error</h1>
+          <p>Failed to load auctions. Please try again later.</p>
+        </body>
+      </html>
+    `);
+  }
+};
+
 // Get auction details page (renders HTML page for individual auction)
 export const getAuctionDetailsPage = async (req, res, next) => {
   try {
