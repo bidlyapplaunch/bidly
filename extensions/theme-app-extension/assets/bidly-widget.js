@@ -1528,12 +1528,29 @@
       // Check if description exists and log it
       if (auction.productData?.description) {
         console.log('✅ Description found:', auction.productData.description.substring(0, 100) + '...');
+        console.log('✅ Full description length:', auction.productData.description.length);
       } else {
         console.log('❌ No description found in productData');
+        console.log('❌ ProductData structure:', auction.productData);
       }
       
       // Calculate minimum bid
       const minBid = currentBid > 0 ? currentBid + 1 : startingBid;
+      
+      // Test description rendering
+      const descriptionHTML = auction.productData?.description ? `
+        <div class="product-description">
+          <h3>Product Description</h3>
+          <div class="description-content">${auction.productData.description}</div>
+        </div>
+      ` : `
+        <div class="product-description">
+          <h3>Product Description</h3>
+          <div class="description-content">No description available</div>
+        </div>
+      `;
+      
+      console.log('🔍 Description HTML being rendered:', descriptionHTML.substring(0, 200) + '...');
       
       containerEl.innerHTML = `
         <div class="auction-details-full">
@@ -1542,17 +1559,7 @@
           </div>
           <div class="auction-details-info">
             <h1 class="auction-title">${auction.productData?.title || 'Auction Item'}</h1>
-            ${auction.productData?.description ? `
-              <div class="product-description">
-                <h3>Product Description</h3>
-                <div class="description-content">${auction.productData.description}</div>
-              </div>
-            ` : `
-              <div class="product-description">
-                <h3>Product Description</h3>
-                <div class="description-content">No description available</div>
-              </div>
-            `}
+            ${descriptionHTML}
             <div class="auction-price-section">
               <div class="auction-price">
                 <span class="price-label">${priceLabel}</span>
