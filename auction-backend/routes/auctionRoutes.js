@@ -29,6 +29,12 @@ const router = express.Router();
 // All auction routes require store identification
 router.use(identifyStore);
 
+// Auction listing page route (all auctions) - MUST be first to avoid conflicts
+router.get('/list', getAllAuctionsPage);
+
+// Auction details page route (individual auction)
+router.get('/page/:id', validateId, getAuctionDetailsPage);
+
 // Auction CRUD routes
 router.post('/', validateCreateAuction, createAuction);
 router.get('/', getAllAuctions);
@@ -50,11 +56,5 @@ router.put('/:id/relist', validateCreateAuction, relistAuction);
 // Shopify product data routes
 router.put('/:id/refresh-product', validateId, refreshProductData);
 router.put('/refresh-all-products', refreshAllProductData);
-
-// Auction listing page route (all auctions)
-router.get('/list', getAllAuctionsPage);
-
-// Auction details page route (individual auction)
-router.get('/page/:id', validateId, getAuctionDetailsPage);
 
 export default router;
