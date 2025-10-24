@@ -997,10 +997,16 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             color: #333;
             font-size: 1.2rem;
           }
-          .product-description p {
+          .product-description .description-content {
             margin: 0;
             color: #666;
             line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #fff;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
           }
           .auction-price-section {
             margin: 2rem 0;
@@ -1108,7 +1114,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           </div>
         </div>
         
-        <script src="/apps/bidly/assets/bidly-widget.js?v=2013&t=${Date.now()}"></script>
+        <script src="/apps/bidly/assets/bidly-widget.js?v=2014&t=${Date.now()}"></script>
         <script>
           console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
           console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2000');

@@ -1531,7 +1531,7 @@
             ${auction.productData?.description ? `
               <div class="product-description">
                 <h3>Product Description</h3>
-                <p>${auction.productData.description}</p>
+                <div class="description-content">${auction.productData.description}</div>
               </div>
             ` : ''}
             <div class="auction-price-section">
