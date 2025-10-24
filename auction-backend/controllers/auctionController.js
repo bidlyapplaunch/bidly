@@ -936,15 +936,16 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .auction-details-page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            width: 100%;
+            margin: 0;
+            padding: 0;
           }
           
           .auction-details-container {
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            min-height: 100vh;
+            box-shadow: none;
             overflow: hidden;
           }
           
@@ -964,7 +965,8 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0;
-            min-height: 500px;
+            min-height: 100vh;
+            width: 100%;
           }
           
           .auction-details-image {
@@ -972,57 +974,62 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px;
+            padding: 60px 40px;
+            min-height: 100vh;
           }
           
           .auction-main-image {
             max-width: 100%;
-            max-height: 400px;
+            max-height: 80vh;
             object-fit: cover;
             border-radius: 4px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           }
           
           .auction-details-info {
-            padding: 40px;
+            padding: 60px 50px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
           }
           
           .auction-title {
-            font-size: 2.2rem;
-            font-weight: 600;
+            font-size: 3rem;
+            font-weight: 700;
             color: #333;
-            margin-bottom: 20px;
-            line-height: 1.3;
+            margin-bottom: 30px;
+            line-height: 1.2;
           }
           
           .product-description {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 30px 0;
+            padding: 30px;
             background: #f8f9fa;
-            border-radius: 6px;
-            border-left: 3px solid #007bff;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
           }
           
           .product-description h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 1.3rem;
+            font-weight: 700;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
           }
           
           .product-description .description-content {
             color: #666;
-            line-height: 1.6;
-            max-height: 150px;
+            line-height: 1.7;
+            max-height: 200px;
             overflow-y: auto;
-            font-size: 0.95rem;
+            font-size: 1rem;
           }
           
           .auction-price-section {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 30px 0;
+            padding: 30px;
             background: #007bff;
-            border-radius: 6px;
+            border-radius: 8px;
             color: white;
           }
           
@@ -1041,9 +1048,9 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .price-amount {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
             line-height: 1;
           }
           
@@ -1097,10 +1104,10 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .auction-bidding-section {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 30px 0;
+            padding: 30px;
             background: #f8f9fa;
-            border-radius: 6px;
+            border-radius: 8px;
           }
           
           .bid-form {
@@ -1113,11 +1120,11 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           .bid-input {
             flex: 1;
-            min-width: 200px;
-            padding: 12px 16px;
+            min-width: 250px;
+            padding: 15px 20px;
             border: 2px solid #dee2e6;
-            border-radius: 4px;
-            font-size: 1rem;
+            border-radius: 6px;
+            font-size: 1.1rem;
             font-weight: 500;
             transition: border-color 0.2s ease;
             background: white;
@@ -1129,12 +1136,12 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .bid-button {
-            padding: 12px 24px;
+            padding: 15px 30px;
             background: #007bff;
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 1rem;
+            border-radius: 6px;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
@@ -1150,12 +1157,12 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .buy-now-button {
-            padding: 12px 24px;
+            padding: 15px 30px;
             background: #28a745;
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 1rem;
+            border-radius: 6px;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
@@ -1167,10 +1174,10 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .auction-bid-history {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 30px 0;
+            padding: 30px;
             background: #f8f9fa;
-            border-radius: 6px;
+            border-radius: 8px;
           }
           
           .bid-history-title {
