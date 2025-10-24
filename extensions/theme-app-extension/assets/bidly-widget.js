@@ -1520,6 +1520,12 @@
           </div>
           <div class="auction-details-info">
             <h1 class="auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+            ${auction.productData?.description ? `
+              <div class="product-description">
+                <h3>Product Description</h3>
+                <p>${auction.productData.description}</p>
+              </div>
+            ` : ''}
             <div class="auction-price-section">
               <div class="auction-price">
                 <span class="price-label">${priceLabel}</span>
@@ -1884,9 +1890,28 @@
       }
     },
     
-    // Show bid notification popup
+    // Show bid notification popup (with duplicate prevention)
     showBidNotification: function(bid, auction) {
       console.log('🔔 Showing bid notification:', bid);
+      
+      // Check if we already showed this bid to prevent duplicates
+      const bidKey = `${auction._id}_${bid.amount}_${bid.timestamp}`;
+      if (this.shownBidNotifications && this.shownBidNotifications.has(bidKey)) {
+        console.log('🔔 Bid notification already shown, skipping duplicate');
+        return;
+      }
+      
+      // Initialize tracking if not exists
+      if (!this.shownBidNotifications) {
+        this.shownBidNotifications = new Set();
+      }
+      
+      // Mark this bid as shown
+      this.shownBidNotifications.add(bidKey);
+      
+      // Remove any existing notifications first
+      const existingNotifications = document.querySelectorAll('.bidly-bid-notification');
+      existingNotifications.forEach(notif => notif.remove());
       
       // Create notification element
       const notification = document.createElement('div');
