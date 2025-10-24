@@ -1109,20 +1109,40 @@ export const getAuctionDetailsPage = async (req, res, next) => {
                   <div class="bidly-spinner"></div>
                   <p>Loading auction details...</p>
                 </div>
+                
+                <!-- DEBUG: Direct HTML description display -->
+                <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">
+                  <h4>DEBUG: Product Description (Direct HTML)</h4>
+                  <p><strong>Has Product Data:</strong> ${auction.productData ? 'YES' : 'NO'}</p>
+                  <p><strong>Has Description:</strong> ${auction.productData?.description ? 'YES' : 'NO'}</p>
+                  <p><strong>Description Length:</strong> ${auction.productData?.description?.length || 0} characters</p>
+                  <p><strong>Description Preview:</strong> ${auction.productData?.description ? auction.productData.description.substring(0, 200) + '...' : 'NO DESCRIPTION'}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
         
-        <script src="/apps/bidly/assets/bidly-widget.js?v=2015&t=${Date.now()}"></script>
+        <script src="/apps/bidly/assets/bidly-widget.js?v=2016&t=${Date.now()}"></script>
         <script>
           console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
-          console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2000');
+          console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2015');
+          
+          // Debug auction data directly in HTML
+          console.log('🔍 AUCTION DATA IN HTML:', {
+            auctionId: '${auction._id}',
+            productId: '${auction.shopifyProductId}',
+            hasProductData: ${auction.productData ? 'true' : 'false'},
+            productData: ${JSON.stringify(auction.productData)},
+            hasDescription: ${auction.productData?.description ? 'true' : 'false'},
+            description: ${auction.productData?.description ? `'${auction.productData.description.substring(0, 100)}...'` : 'null'},
+            descriptionLength: ${auction.productData?.description?.length || 0}
+          });
           
           // Test if script is running
           setTimeout(() => {
             console.log('🔥 SCRIPT TIMEOUT TEST - Widget exists:', !!window.BidlyAuctionWidget);
-            console.log('🔥 PRODUCT PAGE - Widget version check:', window.BidlyAuctionWidget ? 'v2000 loaded' : 'not loaded');
+            console.log('🔥 PRODUCT PAGE - Widget version check:', window.BidlyAuctionWidget ? 'v2015 loaded' : 'not loaded');
           }, 1000);
           
           document.addEventListener('DOMContentLoaded', function() {
