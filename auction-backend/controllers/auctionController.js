@@ -961,30 +961,30 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .auction-details-full {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            min-height: 500px;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
           }
           
           .auction-details-image {
+            flex: 0 0 auto;
             background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
+            padding: 20px;
+            border-radius: 8px;
           }
           
           .auction-main-image {
-            max-width: 100%;
-            max-height: 400px;
+            max-width: 300px;
+            max-height: 300px;
             object-fit: cover;
             border-radius: 4px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: block;
           }
           
           .auction-details-info {
-            padding: 30px;
+            flex: 1;
+            padding: 0;
           }
           
           .auction-title {
@@ -1019,26 +1019,28 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           .product-description-full {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 30px 0;
+            padding: 25px;
             background: #f8f9fa;
-            border-radius: 6px;
-            border-left: 3px solid #007bff;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            clear: both;
+            width: 100%;
           }
           
           .product-description-full h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
+            font-size: 1.3rem;
+            font-weight: 700;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
           }
           
           .product-description-full .description-content {
             color: #666;
-            line-height: 1.6;
-            max-height: 200px;
+            line-height: 1.7;
+            max-height: 300px;
             overflow-y: auto;
-            font-size: 0.95rem;
+            font-size: 1rem;
           }
           
           .auction-price-section {
@@ -1340,11 +1342,21 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           /* Responsive Design */
           @media (max-width: 768px) {
             .auction-details-full {
-              grid-template-columns: 1fr;
+              flex-direction: column;
+              gap: 20px;
+            }
+            
+            .auction-details-image {
+              align-self: center;
+            }
+            
+            .auction-main-image {
+              max-width: 250px;
+              max-height: 250px;
             }
             
             .auction-details-info {
-              padding: 20px;
+              padding: 0;
             }
             
             .auction-title {
