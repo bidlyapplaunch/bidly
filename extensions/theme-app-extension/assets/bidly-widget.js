@@ -652,7 +652,7 @@
       // Calculate minimum bid
       let minBid;
       if (auctionData.currentBid && auctionData.currentBid > 0) {
-        minBid = auctionData.currentBid + 1;
+        minBid = auctionData.currentBid > 0 ? auctionData.currentBid + 1 : auctionData.startingBid;
       } else if (auctionData.startingBid && auctionData.startingBid > 0) {
         minBid = auctionData.startingBid;
       } else {
@@ -673,7 +673,7 @@
       // Calculate minimum bid - use startingBid if currentBid is 0 or undefined
       let minBid;
       if (auction.currentBid && auction.currentBid > 0) {
-        minBid = auction.currentBid + 1;
+        minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
       } else if (auction.startingBid && auction.startingBid > 0) {
         minBid = auction.startingBid;
       } else {
@@ -719,7 +719,7 @@
       // Calculate minimum bid - use startingBid if currentBid is 0 or undefined
       let minBid;
       if (auction.currentBid && auction.currentBid > 0) {
-        minBid = auction.currentBid + 1;
+        minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
       } else if (auction.startingBid && auction.startingBid > 0) {
         minBid = auction.startingBid;
       } else {
@@ -990,7 +990,7 @@
       // Update minimum bid
       const minBidElement = auctionCard.querySelector('.bidly-min-bid');
       if (minBidElement) {
-        const minBid = (auction.currentBid || 0) + 1;
+        const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
         minBidElement.textContent = `Min: $${minBid}`;
         console.log('✅ Updated min bid element:', minBid);
       }
@@ -1005,7 +1005,7 @@
       // Update bid input placeholder
       const bidInput = auctionCard.querySelector('.bidly-bid-input');
       if (bidInput) {
-        const minBid = (auction.currentBid || 0) + 1;
+        const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
         bidInput.placeholder = `Min: $${minBid}`;
         console.log('✅ Updated bid input placeholder');
       }
@@ -1510,6 +1510,14 @@
       const displayPrice = currentBid > 0 ? currentBid : startingBid;
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
+      // Debug product data
+      console.log('🔍 Product data for description:', {
+        hasProductData: !!auction.productData,
+        hasDescription: !!auction.productData?.description,
+        description: auction.productData?.description,
+        title: auction.productData?.title
+      });
+      
       // Calculate minimum bid
       const minBid = currentBid > 0 ? currentBid + 1 : startingBid;
       
@@ -1696,7 +1704,7 @@
       let minBidUpdated = false;
       
       bidInputs.forEach((bidInput, index) => {
-        const minBid = (auction.currentBid || 0) + 1;
+        const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
         const newPlaceholder = `Min: $${minBid}`;
         console.log(`💵 Min bid update ${index} - Current placeholder:`, bidInput.placeholder, 'New:', newPlaceholder);
         if (bidInput.placeholder !== newPlaceholder) {
@@ -1735,7 +1743,7 @@
       // Update bid input placeholder
       const bidInput = auctionCard.querySelector('.bidly-bid-input');
       if (bidInput) {
-        const minBid = (auction.currentBid || 0) + 1;
+        const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
         const newPlaceholder = `Min: $${minBid}`;
         if (bidInput.placeholder !== newPlaceholder) {
           bidInput.placeholder = newPlaceholder;
@@ -1795,7 +1803,7 @@
       let minBidUpdated = false;
       
       bidInputs.forEach((bidInput, index) => {
-        const minBid = (auction.currentBid || 0) + 1;
+        const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
         const newPlaceholder = `Min: $${minBid}`;
         console.log(`💵 Single auction min bid update ${index} - Current placeholder:`, bidInput.placeholder, 'New:', newPlaceholder);
         if (bidInput.placeholder !== newPlaceholder) {
@@ -1840,7 +1848,7 @@
       // Update bid input placeholder
       const bidInput = container.querySelector('.bidly-bid-input');
       if (bidInput) {
-        const minBid = (auction.currentBid || 0) + 1;
+        const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
         const newPlaceholder = `Min: $${minBid}`;
         console.log('📝 Single auction bid input update - Current:', bidInput.placeholder, 'New:', newPlaceholder);
         if (bidInput.placeholder !== newPlaceholder) {
