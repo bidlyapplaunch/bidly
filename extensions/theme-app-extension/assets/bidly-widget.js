@@ -2471,6 +2471,26 @@
   window.BidlyAuctionWidget.loadSingleAuctionPage = function(auctionId, productId, shopDomain) {
     console.log('🎯 Loading single auction page:', { auctionId, productId, shopDomain });
     
+    // Check if we already have auction data in the HTML
+    const existingAuctionData = window.auctionDataFromHTML;
+    console.log('🔍 Checking for existing auction data:', existingAuctionData);
+    if (existingAuctionData) {
+      console.log('✅ Using existing auction data from HTML:', existingAuctionData);
+      console.log('✅ Description in HTML data:', existingAuctionData.productData?.description?.substring(0, 100) + '...');
+      
+      // Initialize customer auth
+      this.initializeCustomerAuth();
+      
+      // Start timer updates
+      this.startTimerUpdates();
+      
+      // Render the auction page with HTML data
+      this.renderAuctionOnPage(existingAuctionData);
+      return;
+    } else {
+      console.log('❌ No existing auction data found, making API call...');
+    }
+    
     // Initialize customer auth
     this.initializeCustomerAuth();
     
