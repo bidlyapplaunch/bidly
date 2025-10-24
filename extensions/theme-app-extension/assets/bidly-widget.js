@@ -1574,10 +1574,10 @@
     startPollingUpdates: function() {
       if (this.pollingInterval) return;
       
-      console.log('🔄 Starting polling updates every 10 seconds...');
+      console.log('🔄 Starting polling updates every 3 seconds...');
       this.pollingInterval = setInterval(() => {
         this.pollForUpdates();
-      }, 10000);
+      }, 3000);
     },
     
     // Poll for auction updates (smooth updates without reloading)
@@ -1686,12 +1686,13 @@
       
       // Update minimum bid in input placeholder
       const bidInputs = auctionCard.querySelectorAll('.bidly-bid-input, .bidly-featured-bid-input');
+      console.log('💵 Found bid inputs for auction card:', bidInputs.length);
       let minBidUpdated = false;
       
-      bidInputs.forEach(bidInput => {
+      bidInputs.forEach((bidInput, index) => {
         const minBid = (auction.currentBid || 0) + 1;
         const newPlaceholder = `Min: $${minBid}`;
-        console.log('💵 Min bid update - Current placeholder:', bidInput.placeholder, 'New:', newPlaceholder);
+        console.log(`💵 Min bid update ${index} - Current placeholder:`, bidInput.placeholder, 'New:', newPlaceholder);
         if (bidInput.placeholder !== newPlaceholder) {
           console.log('✅ Min bid changed, updating placeholder with highlight');
           bidInput.style.transition = 'border-color 0.3s ease';
@@ -1702,6 +1703,8 @@
             bidInput.style.borderColor = '';
           }, 1000);
           minBidUpdated = true;
+        } else {
+          console.log('⏭️ Min bid unchanged, skipping');
         }
       });
       
@@ -1782,12 +1785,13 @@
       
       // Update minimum bid in input placeholder
       const bidInputs = container.querySelectorAll('.bidly-bid-input, .bidly-featured-bid-input');
+      console.log('💵 Found bid inputs for single auction:', bidInputs.length);
       let minBidUpdated = false;
       
-      bidInputs.forEach(bidInput => {
+      bidInputs.forEach((bidInput, index) => {
         const minBid = (auction.currentBid || 0) + 1;
         const newPlaceholder = `Min: $${minBid}`;
-        console.log('💵 Single auction min bid update - Current placeholder:', bidInput.placeholder, 'New:', newPlaceholder);
+        console.log(`💵 Single auction min bid update ${index} - Current placeholder:`, bidInput.placeholder, 'New:', newPlaceholder);
         if (bidInput.placeholder !== newPlaceholder) {
           console.log('✅ Single auction min bid changed, updating placeholder with highlight');
           bidInput.style.transition = 'border-color 0.3s ease';
@@ -1798,6 +1802,8 @@
             bidInput.style.borderColor = '';
           }, 1000);
           minBidUpdated = true;
+        } else {
+          console.log('⏭️ Single auction min bid unchanged, skipping');
         }
       });
       
@@ -1863,8 +1869,16 @@
         const bidTime = new Date(latestBid.timestamp);
         const timeDiff = now - bidTime;
         
+        console.log('🔔 Checking for new bids:', {
+          bidHistoryLength: auction.bidHistory.length,
+          latestBid: latestBid,
+          timeDiff: timeDiff,
+          shouldShowNotification: timeDiff < 15000
+        });
+        
         // If the bid was placed within the last 15 seconds, show notification
         if (timeDiff < 15000) {
+          console.log('🔔 Showing notification for recent bid');
           this.showBidNotification(latestBid, auction);
         }
       }
