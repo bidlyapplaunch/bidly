@@ -26,11 +26,12 @@ import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
-// All auction routes require store identification
-router.use(identifyStore);
-
 // Auction listing page route (all auctions) - MUST be first to avoid conflicts
+// This route doesn't need store identification middleware
 router.get('/list', getAllAuctionsPage);
+
+// All other auction routes require store identification
+router.use(identifyStore);
 
 // Auction details page route (individual auction)
 router.get('/page/:id', validateId, getAuctionDetailsPage);
