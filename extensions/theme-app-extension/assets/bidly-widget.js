@@ -1472,6 +1472,14 @@
       
       console.log('🔍 Loading single auction page:', { auctionId, productId, shopDomain });
       
+      // Check if we already have auction data in the HTML
+      const existingAuctionData = window.auctionDataFromHTML;
+      if (existingAuctionData) {
+        console.log('✅ Using existing auction data from HTML:', existingAuctionData);
+        this.renderSingleAuctionPage(existingAuctionData, containerEl);
+        return;
+      }
+      
       // Show loading
       containerEl.innerHTML = `
         <div class="bidly-loading">
