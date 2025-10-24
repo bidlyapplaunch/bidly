@@ -2643,6 +2643,12 @@
         </div>
         <div class="auction-details-info">
           <h1 class="auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+          ${auction.productData?.description ? `
+            <div class="product-description">
+              <h3>Product Description</h3>
+              <div class="description-content">${auction.productData.description}</div>
+            </div>
+          ` : ''}
           <div class="auction-price-section">
             <div class="auction-price">
               <div class="price-label">${priceLabel}</div>
