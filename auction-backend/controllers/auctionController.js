@@ -1038,7 +1038,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             background: #f8f9fa;
             border-radius: 6px;
             border-left: 3px solid #007bff;
-            max-height: 120px;
+            max-height: 200px;
             overflow-y: auto;
           }
           
@@ -1208,8 +1208,8 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             padding: 15px;
             background: #f8f9fa;
             border-radius: 6px;
-            max-height: 150px;
-            overflow-y: auto;
+            max-height: 200px;
+            overflow: hidden;
           }
           
           .bid-history-title {
