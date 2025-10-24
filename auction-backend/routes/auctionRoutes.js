@@ -52,7 +52,7 @@ router.put('/:id/refresh-product', validateId, refreshProductData);
 router.put('/refresh-all-products', refreshAllProductData);
 
 // Auction listing page route (all auctions)
-router.get('/page', getAllAuctionsPage);
+router.get('/list', getAllAuctionsPage);
 
 // Auction details page route (individual auction)
 router.get('/page/:id', validateId, getAuctionDetailsPage);
