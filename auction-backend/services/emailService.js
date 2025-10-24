@@ -111,7 +111,7 @@ class EmailService {
         
         <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
           <h4 style="color: #856404; margin-top: 0;">Next Steps</h4>
-          <p>Please complete your payment and arrange for item pickup/shipping within 48 hours.</p>
+          <p>We will contact you shortly to send you the link to the product you have won for payment and arrangements.</p>
         </div>
         
         <p style="color: #7f8c8d; font-size: 14px;">
