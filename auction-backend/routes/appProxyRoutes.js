@@ -7,6 +7,7 @@ import {
   getAuctionById,
   placeBid,
   buyNow,
+  getAllAuctionsPage,
   getAuctionDetailsPage
 } from '../controllers/auctionController.js';
 import {
@@ -71,6 +72,10 @@ router.get('/health', (req, res) => {
 
 // All other app proxy routes require store identification
 router.use(identifyStore);
+
+// Get auction listing page (all auctions) - MUST be first to avoid conflicts
+// GET /apps/bidly/api/auctions/list?shop=store.myshopify.com
+router.get('/api/auctions/list', getAllAuctionsPage);
 
 // Get all auctions for theme display
 // GET /apps/bidly/api/auctions?shop=store.myshopify.com
