@@ -795,9 +795,9 @@
           console.log('📋 Processing bid:', bid);
           return `
             <div class="bid-item">
-              <div class="bid-amount">$${bid.amount}</div>
-              <div class="bid-bidder">${bid.bidder || 'Unknown'}</div>
-              <div class="bid-time">${this.formatBidTime(bid.timestamp)}</div>
+              <span class="bid-amount">$${bid.amount}</span>
+              <span class="bid-bidder">${bid.bidder || 'Unknown'}</span>
+              <span class="bid-time">${this.formatBidTime(bid.timestamp)}</span>
             </div>
           `;
         }).join('');
