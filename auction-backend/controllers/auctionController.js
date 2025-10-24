@@ -933,12 +933,11 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             background: #f8f9fa;
             color: #333;
             line-height: 1.4;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
           }
           
           .auction-details-page {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
           }
@@ -963,7 +962,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           }
           
           #bidly-auction-detail-page {
-            height: 100%;
+            min-height: 100%;
             display: flex;
             flex-direction: column;
           }
@@ -971,7 +970,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           .auction-details-full {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            height: 100%;
+            min-height: 500px;
             gap: 0;
           }
           
