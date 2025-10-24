@@ -1220,30 +1220,37 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           
           .bid-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            margin: 5px 0;
+            flex-direction: column;
+            padding: 12px 15px;
+            margin: 8px 0;
             background: white;
-            border-radius: 4px;
-            border-left: 3px solid #007bff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+          }
+          
+          .bid-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           }
           
           .bid-amount {
-            font-size: 1rem;
-            font-weight: 700;
+            font-size: 1.2rem;
+            font-weight: 800;
             color: #28a745;
+            margin-bottom: 4px;
           }
           
           .bid-bidder {
             font-weight: 600;
-            color: #495057;
-            font-size: 0.9rem;
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
           }
           
           .bid-time {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #6c757d;
             font-weight: 400;
           }
