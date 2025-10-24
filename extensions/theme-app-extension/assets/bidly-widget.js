@@ -1485,6 +1485,12 @@
         .then(response => response.json())
         .then(data => {
           console.log('📦 Auction data received:', data);
+          console.log('🔍 Product data in response:', {
+            hasProductData: !!data.data?.productData,
+            productData: data.data?.productData,
+            hasDescription: !!data.data?.productData?.description,
+            description: data.data?.productData?.description
+          });
           if (data.success && data.data) {
             this.renderSingleAuctionPage(data.data, containerEl);
           } else {
@@ -1515,8 +1521,16 @@
         hasProductData: !!auction.productData,
         hasDescription: !!auction.productData?.description,
         description: auction.productData?.description,
-        title: auction.productData?.title
+        title: auction.productData?.title,
+        fullProductData: auction.productData
       });
+      
+      // Check if description exists and log it
+      if (auction.productData?.description) {
+        console.log('✅ Description found:', auction.productData.description.substring(0, 100) + '...');
+      } else {
+        console.log('❌ No description found in productData');
+      }
       
       // Calculate minimum bid
       const minBid = currentBid > 0 ? currentBid + 1 : startingBid;
@@ -1533,7 +1547,12 @@
                 <h3>Product Description</h3>
                 <div class="description-content">${auction.productData.description}</div>
               </div>
-            ` : ''}
+            ` : `
+              <div class="product-description">
+                <h3>Product Description</h3>
+                <div class="description-content">No description available</div>
+              </div>
+            `}
             <div class="auction-price-section">
               <div class="auction-price">
                 <span class="price-label">${priceLabel}</span>
