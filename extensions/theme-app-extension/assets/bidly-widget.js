@@ -2254,7 +2254,144 @@
     // Start timer updates
     this.startTimerUpdates();
     
+    // Start real-time polling for product page
+    this.startProductPagePolling();
+    
     console.log('✅ Product page initialized');
+  };
+  
+  // Start polling for product page updates
+  window.BidlyAuctionWidget.startProductPagePolling = function() {
+    console.log('🔄 Starting product page polling every 3 seconds...');
+    
+    // Clear any existing polling
+    if (this.productPagePollingInterval) {
+      clearInterval(this.productPagePollingInterval);
+    }
+    
+    this.productPagePollingInterval = setInterval(() => {
+      this.pollProductPageUpdates();
+    }, 3000);
+  };
+  
+  // Poll for product page updates
+  window.BidlyAuctionWidget.pollProductPageUpdates = function() {
+    console.log('🔄 Polling product page for updates...');
+    
+    // Get auction data from the page
+    const auctionContainer = document.getElementById('bidly-auction-detail-page');
+    if (!auctionContainer) {
+      console.log('❌ No auction container found on product page');
+      return;
+    }
+    
+    const auctionId = auctionContainer.dataset.auctionId;
+    const shopDomain = auctionContainer.dataset.shop;
+    
+    if (!auctionId || !shopDomain) {
+      console.log('❌ Missing auction ID or shop domain on product page');
+      return;
+    }
+    
+    console.log('📡 Fetching product page auction data:', { auctionId, shopDomain });
+    
+    // Fetch updated auction data
+    const appProxyUrl = `https://${shopDomain}/apps/bidly/api`;
+    fetch(`${appProxyUrl}/auctions/${auctionId}?shop=${shopDomain}`)
+      .then(response => response.json())
+      .then(data => {
+        console.log('📊 Product page auction data received:', data);
+        if (data.success && data.data) {
+          console.log('✅ Updating product page with new data');
+          this.updateProductPageContent(data.data);
+        } else {
+          console.log('❌ No product page auction data or success false');
+        }
+      })
+      .catch(error => {
+        console.log('❌ Error updating product page auction:', error);
+      });
+  };
+  
+  // Update product page content with new auction data
+  window.BidlyAuctionWidget.updateProductPageContent = function(auction) {
+    console.log('🔄 Updating product page content:', auction._id);
+    
+    // Update current bid
+    const currentBidElement = document.querySelector('.price-amount');
+    if (currentBidElement) {
+      const currentBid = auction.currentBid || 0;
+      const startingBid = auction.startingBid || 0;
+      const displayPrice = currentBid > 0 ? currentBid : startingBid;
+      const newPrice = `$${displayPrice}`;
+      console.log('💰 Product page price update - Current:', currentBidElement.textContent, 'New:', newPrice);
+      if (currentBidElement.textContent !== newPrice) {
+        console.log('✅ Product page price changed, updating with highlight');
+        currentBidElement.style.transition = 'color 0.3s ease';
+        currentBidElement.textContent = newPrice;
+        currentBidElement.style.color = '#ff6b35';
+        setTimeout(() => {
+          currentBidElement.style.color = '';
+        }, 1000);
+      }
+    }
+    
+    // Update minimum bid in input placeholder
+    const bidInputs = document.querySelectorAll('.bidly-bid-input, .bidly-featured-bid-input');
+    console.log('💵 Found bid inputs for product page:', bidInputs.length);
+    let minBidUpdated = false;
+    
+    bidInputs.forEach((bidInput, index) => {
+      const minBid = (auction.currentBid || 0) + 1;
+      const newPlaceholder = `Min: $${minBid}`;
+      console.log(`💵 Product page min bid update ${index} - Current placeholder:`, bidInput.placeholder, 'New:', newPlaceholder);
+      if (bidInput.placeholder !== newPlaceholder) {
+        console.log('✅ Product page min bid changed, updating placeholder with highlight');
+        bidInput.style.transition = 'border-color 0.3s ease';
+        bidInput.placeholder = newPlaceholder;
+        bidInput.min = minBid;
+        bidInput.style.borderColor = '#ff6b35';
+        setTimeout(() => {
+          bidInput.style.borderColor = '';
+        }, 1000);
+        minBidUpdated = true;
+      } else {
+        console.log('⏭️ Product page min bid unchanged, skipping');
+      }
+    });
+    
+    if (!minBidUpdated) {
+      console.log('❌ No bid input elements found for product page min bid update');
+    }
+    
+    // Update bid history
+    const bidHistoryElement = document.querySelector('.auction-bid-history');
+    if (bidHistoryElement) {
+      bidHistoryElement.innerHTML = this.renderBidHistory(auction);
+    }
+    
+    // Check if there's a new bid and show notification
+    if (auction.bidHistory && auction.bidHistory.length > 0) {
+      const latestBid = auction.bidHistory[auction.bidHistory.length - 1];
+      const now = new Date();
+      const bidTime = new Date(latestBid.timestamp);
+      const timeDiff = now - bidTime;
+      
+      console.log('🔔 Product page checking for new bids:', {
+        bidHistoryLength: auction.bidHistory.length,
+        latestBid: latestBid,
+        timeDiff: timeDiff,
+        shouldShowNotification: timeDiff < 15000
+      });
+      
+      // If the bid was placed within the last 15 seconds, show notification
+      if (timeDiff < 15000) {
+        console.log('🔔 Showing notification for recent bid on product page');
+        this.showBidNotification(latestBid, auction);
+      }
+    }
+    
+    console.log('✅ Product page content updated');
   };
   
   // Load single auction page (called from product page)
