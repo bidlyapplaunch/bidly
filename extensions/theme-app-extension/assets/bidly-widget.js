@@ -794,10 +794,10 @@
         .map(bid => {
           console.log('📋 Processing bid:', bid);
           return `
-            <div class="bidly-bid-item">
-              <span class="bidly-bid-amount">$${bid.amount}</span>
-              <span class="bidly-bid-bidder">${bid.bidder || 'Unknown'}</span>
-              <span class="bidly-bid-time">${this.formatBidTime(bid.timestamp)}</span>
+            <div class="bid-item">
+              <div class="bid-amount">$${bid.amount}</div>
+              <div class="bid-bidder">${bid.bidder || 'Unknown'}</div>
+              <div class="bid-time">${this.formatBidTime(bid.timestamp)}</div>
             </div>
           `;
         }).join('');
