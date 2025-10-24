@@ -2375,7 +2375,7 @@
     let minBidUpdated = false;
     
     bidInputs.forEach((bidInput, index) => {
-      const minBid = (auction.currentBid || 0) + 1;
+      const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
       const newPlaceholder = `Min: $${minBid}`;
       console.log(`💵 Product page min bid update ${index} - Current placeholder:`, bidInput.placeholder, 'New:', newPlaceholder);
       if (bidInput.placeholder !== newPlaceholder) {
@@ -2568,7 +2568,7 @@
     // Calculate minimum bid
     let minBid;
     if (currentBid > 0) {
-      minBid = currentBid + 1;
+      minBid = currentBid > 0 ? currentBid + 1 : startingBid;
     } else if (startingBid > 0) {
       minBid = startingBid;
     } else {
