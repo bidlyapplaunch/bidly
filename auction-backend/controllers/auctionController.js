@@ -1110,20 +1110,12 @@ export const getAuctionDetailsPage = async (req, res, next) => {
                   <p>Loading auction details...</p>
                 </div>
                 
-                <!-- DEBUG: Direct HTML description display -->
-                <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border: 1px solid #ccc;">
-                  <h4>DEBUG: Product Description (Direct HTML)</h4>
-                  <p><strong>Has Product Data:</strong> ${auction.productData ? 'YES' : 'NO'}</p>
-                  <p><strong>Has Description:</strong> ${auction.productData?.description ? 'YES' : 'NO'}</p>
-                  <p><strong>Description Length:</strong> ${auction.productData?.description?.length || 0} characters</p>
-                  <p><strong>Description Preview:</strong> ${auction.productData?.description ? auction.productData.description.substring(0, 200) + '...' : 'NO DESCRIPTION'}</p>
-                </div>
               </div>
             </div>
           </div>
         </div>
         
-        <script src="/apps/bidly/assets/bidly-widget.js?v=2017&t=${Date.now()}"></script>
+        <script src="/apps/bidly/assets/bidly-widget.js?v=2018&t=${Date.now()}"></script>
         <script>
           console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
           console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2015');

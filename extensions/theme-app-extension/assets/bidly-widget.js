@@ -1474,10 +1474,14 @@
       
       // Check if we already have auction data in the HTML
       const existingAuctionData = window.auctionDataFromHTML;
+      console.log('🔍 Checking for existing auction data:', existingAuctionData);
       if (existingAuctionData) {
         console.log('✅ Using existing auction data from HTML:', existingAuctionData);
+        console.log('✅ Description in HTML data:', existingAuctionData.productData?.description?.substring(0, 100) + '...');
         this.renderSingleAuctionPage(existingAuctionData, containerEl);
         return;
+      } else {
+        console.log('❌ No existing auction data found, making API call...');
       }
       
       // Show loading
@@ -1559,6 +1563,8 @@
       `;
       
       console.log('🔍 Description HTML being rendered:', descriptionHTML.substring(0, 200) + '...');
+      console.log('🔍 Full description HTML length:', descriptionHTML.length);
+      console.log('🔍 Description content preview:', auction.productData?.description?.substring(0, 100) + '...');
       
       containerEl.innerHTML = `
         <div class="auction-details-full">
