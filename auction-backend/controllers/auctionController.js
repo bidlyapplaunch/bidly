@@ -1115,10 +1115,10 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           </div>
         </div>
         
-        <script src="/apps/bidly/assets/bidly-widget.js?v=2018&t=${Date.now()}"></script>
+        <script src="/apps/bidly/assets/bidly-widget.js?v=2019&t=${Date.now()}&r=${Math.random()}"></script>
         <script>
           console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
-          console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2015');
+          console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2019');
           
           // Debug auction data directly in HTML
           console.log('🔍 AUCTION DATA IN HTML:', {
@@ -1134,11 +1134,12 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           // Pass auction data to JavaScript
           window.auctionDataFromHTML = ${JSON.stringify(auction)};
           console.log('✅ Auction data passed to JavaScript:', window.auctionDataFromHTML);
+          console.log('✅ Description in HTML data:', window.auctionDataFromHTML.productData?.description?.substring(0, 100) + '...');
           
           // Test if script is running
           setTimeout(() => {
             console.log('🔥 SCRIPT TIMEOUT TEST - Widget exists:', !!window.BidlyAuctionWidget);
-            console.log('🔥 PRODUCT PAGE - Widget version check:', window.BidlyAuctionWidget ? 'v2015 loaded' : 'not loaded');
+            console.log('🔥 PRODUCT PAGE - Widget version check:', window.BidlyAuctionWidget ? 'v2019 loaded' : 'not loaded');
           }, 1000);
           
           document.addEventListener('DOMContentLoaded', function() {
