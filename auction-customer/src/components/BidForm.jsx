@@ -112,28 +112,29 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
               </Button>
             </div>
           </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Button 
-              primary 
-              submit 
-              loading={isLoading}
-              disabled={!amount}
-            >
-              {isLoading ? 'Placing Bid...' : 'Place Bid'}
-            </Button>
-            
-            {auction.buyNowPrice && auction.buyNowPrice > 0 && (
-              <Button 
-                onClick={handleBuyNow}
-                loading={isLoading}
-                tone="critical"
-              >
-                Buy Now (${auction.buyNowPrice})
-              </Button>
-            )}
-          </div>
         </FormLayout>
+
+        {/* Move buttons outside FormLayout to remove extra spacing */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+          <Button 
+            primary 
+            submit 
+            loading={isLoading}
+            disabled={!amount}
+          >
+            {isLoading ? 'Placing Bid...' : 'Place Bid'}
+          </Button>
+          
+          {auction.buyNowPrice && auction.buyNowPrice > 0 && (
+            <Button 
+              onClick={handleBuyNow}
+              loading={isLoading}
+              tone="critical"
+            >
+              Buy Now (${auction.buyNowPrice})
+            </Button>
+          )}
+        </div>
       </form>
 
       {/* Buy Now Confirmation Modal - only show if buy now price exists */}

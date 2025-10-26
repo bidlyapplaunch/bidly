@@ -268,10 +268,6 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         onClose={() => setBidModalOpen(false)}
         title={`Place Bid: ${auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}`}
         large
-        primaryAction={{
-          content: 'Close',
-          onAction: () => setBidModalOpen(false)
-        }}
       >
         <Modal.Section>
           <Frame>
@@ -326,11 +322,6 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                     {auction.status === 'pending' ? 'Auction has not started yet' : 
                      auction.status === 'ended' ? 'Auction has ended' : 'Auction is not available'}
                   </Text>
-                  <div style={{ marginTop: '1rem' }}>
-                    <Button onClick={() => setBidModalOpen(false)}>
-                      Close
-                    </Button>
-                  </div>
                 </div>
               </Card>
             )}
