@@ -1,11 +1,11 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import getShopifyService from '../services/shopifyService.js';
 
 const router = express.Router();
 
 // Get metafields for a product
-router.get('/products/:productId/metafields', authenticateToken, async (req, res) => {
+router.get('/products/:productId/metafields', requireAuth, async (req, res) => {
   try {
     const { productId } = req.params;
     const { shop } = req.query;
@@ -39,7 +39,7 @@ router.get('/products/:productId/metafields', authenticateToken, async (req, res
 });
 
 // Set auction metafields for a product
-router.post('/products/:productId/auction-metafields', authenticateToken, async (req, res) => {
+router.post('/products/:productId/auction-metafields', requireAuth, async (req, res) => {
   try {
     const { productId } = req.params;
     const { shop, auctionData } = req.body;
@@ -159,7 +159,7 @@ router.post('/products/:productId/auction-metafields', authenticateToken, async 
 });
 
 // Update auction metafields
-router.put('/products/:productId/auction-metafields', authenticateToken, async (req, res) => {
+router.put('/products/:productId/auction-metafields', requireAuth, async (req, res) => {
   try {
     const { productId } = req.params;
     const { shop, updates } = req.body;
@@ -224,7 +224,7 @@ router.put('/products/:productId/auction-metafields', authenticateToken, async (
 });
 
 // Remove auction metafields (when auction is deleted)
-router.delete('/products/:productId/auction-metafields', authenticateToken, async (req, res) => {
+router.delete('/products/:productId/auction-metafields', requireAuth, async (req, res) => {
   try {
     const { productId } = req.params;
     const { shop } = req.query;

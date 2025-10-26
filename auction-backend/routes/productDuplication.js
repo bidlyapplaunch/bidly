@@ -1,11 +1,11 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import ProductDuplicationService from '../services/productDuplicationService.js';
 
 const router = express.Router();
 
 // Duplicate product for auction winner
-router.post('/duplicate-for-winner', authenticateToken, async (req, res) => {
+router.post('/duplicate-for-winner', requireAuth, async (req, res) => {
   try {
     const { shop, originalProductId, winningBid, winnerEmail, winnerName } = req.body;
     
@@ -100,7 +100,7 @@ router.post('/verify-access', async (req, res) => {
 });
 
 // Cleanup old winner products (admin only)
-router.delete('/cleanup', authenticateToken, async (req, res) => {
+router.delete('/cleanup', requireAuth, async (req, res) => {
   try {
     const { shop } = req.query;
     const { daysOld = 30 } = req.body;
