@@ -291,62 +291,54 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         }] : undefined}
       >
         <Modal.Section>
-          <Frame>
-            <Layout>
-              <Layout.Section oneHalf>
-                <div style={{ marginBottom: '1rem' }}>
-                  <Text variant="headingMd">Auction Information</Text>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <Text variant="bodyMd"><strong>Current Bid:</strong> {formatCurrency(auction.currentBid || 0)}</Text>
-                    <Text variant="bodyMd"><strong>Starting Bid:</strong> {formatCurrency(auction.startingBid)}</Text>
-                    {auction.buyNowPrice && (
-                      <Text variant="bodyMd"><strong>Buy Now Price:</strong> {formatCurrency(auction.buyNowPrice)}</Text>
-                    )}
-                  </div>
-                </div>
-              </Layout.Section>
-              <Layout.Section oneHalf>
-                <div style={{ marginBottom: '1rem' }}>
-                  <Text variant="headingMd">Time Remaining</Text>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <CountdownTimer 
-                      endTime={auction.endTime}
-                      startTime={auction.startTime}
-                      status={auction.status}
-                      onTimeUp={handleTimeUp}
-                    />
-                  </div>
-                </div>
-              </Layout.Section>
-            </Layout>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <Text variant="headingMd">Auction Information</Text>
+              <div style={{ marginTop: '0.5rem' }}>
+                <Text variant="bodyMd"><strong>Current Bid:</strong> {formatCurrency(auction.currentBid || 0)}</Text>
+                <Text variant="bodyMd"><strong>Starting Bid:</strong> {formatCurrency(auction.startingBid)}</Text>
+                {auction.buyNowPrice && (
+                  <Text variant="bodyMd"><strong>Buy Now Price:</strong> {formatCurrency(auction.buyNowPrice)}</Text>
+                )}
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Text variant="headingMd">Time Remaining</Text>
+              <div style={{ marginTop: '0.5rem' }}>
+                <CountdownTimer 
+                  endTime={auction.endTime}
+                  startTime={auction.startTime}
+                  status={auction.status}
+                  onTimeUp={handleTimeUp}
+                />
+              </div>
+            </div>
+          </div>
 
-            {/* Bid Form - Only shown for active auctions */}
-            {auction.status === 'active' && (
-              <BidForm 
-                auction={auction} 
-                onBidPlaced={(bidData) => {
-                  onBidPlaced(bidData);
-                  setBidModalOpen(false); // Close modal after successful bid
-                }}
-                onBuyNow={(bidder) => {
-                  onBuyNow(bidder);
-                  setBidModalOpen(false); // Close modal after buy now
-                }}
-                isLoading={isLoading}
-              />
-            )}
+          {/* Bid Form - Only shown for active auctions */}
+          {auction.status === 'active' && (
+            <BidForm 
+              auction={auction} 
+              onBidPlaced={(bidData) => {
+                onBidPlaced(bidData);
+                setBidModalOpen(false); // Close modal after successful bid
+              }}
+              onBuyNow={(bidder) => {
+                onBuyNow(bidder);
+                setBidModalOpen(false); // Close modal after buy now
+              }}
+              isLoading={isLoading}
+            />
+          )}
 
-            {auction.status !== 'active' && (
-              <Card>
-                <div style={{ textAlign: 'center', padding: '1rem' }}>
-                  <Text variant="headingMd" color="subdued">
-                    {auction.status === 'pending' ? 'Auction has not started yet' : 
-                     auction.status === 'ended' ? 'Auction has ended' : 'Auction is not available'}
-                  </Text>
-                </div>
-              </Card>
-            )}
-          </Frame>
+          {auction.status !== 'active' && (
+            <div style={{ textAlign: 'center', padding: '1rem' }}>
+              <Text variant="headingMd" color="subdued">
+                {auction.status === 'pending' ? 'Auction has not started yet' : 
+                 auction.status === 'ended' ? 'Auction has ended' : 'Auction is not available'}
+              </Text>
+            </div>
+          )}
         </Modal.Section>
       </Modal>
     </>

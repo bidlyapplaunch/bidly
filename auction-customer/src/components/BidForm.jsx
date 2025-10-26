@@ -57,9 +57,8 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
   return (
     <>
-    <Card>
-      <div style={{ padding: '1rem' }}>
-        <Text variant="headingMd" as="h3">Place Your Bid</Text>
+    <div style={{ padding: '0.5rem 0' }}>
+      <Text variant="headingMd" as="h3" style={{ marginBottom: '1rem' }}>Place Your Bid</Text>
       
       {error && (
         <div style={{ marginBottom: '1rem' }}>
@@ -127,8 +126,7 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           />
         )}
       </form>
-      </div>
-    </Card>
+    </div>
 
     {/* Buy Now Confirmation Modal - only show if buy now price exists */}
     {auction.buyNowPrice && auction.buyNowPrice > 0 && (
