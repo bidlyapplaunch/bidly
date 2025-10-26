@@ -1,6 +1,6 @@
 /**
  * Auction App Embed JavaScript
- * Handles widget injection and functionality
+ * Handles widget injection and hybrid login functionality
  */
 
 (function() {
@@ -30,10 +30,175 @@
         ]
     };
 
+    // Customer state management
+    let currentCustomer = null;
+    let isLoggedIn = false;
+
+    // Shopify customer detection
+    async function detectShopifyCustomer() {
+        try {
+            console.log('Bidly: Detecting Shopify customer...');
+            
+            // Check for Shopify customer data in various locations
+            let customerData = null;
+            
+            // Method 1: Check window.Shopify.customer
+            if (window.Shopify?.customer) {
+                customerData = {
+                    id: window.Shopify.customer.id,
+                    email: window.Shopify.customer.email,
+                    firstName: window.Shopify.customer.first_name,
+                    lastName: window.Shopify.customer.last_name
+                };
+                console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
+            }
+            
+            // Method 2: Check for customer data in meta tags
+            if (!customerData) {
+                const customerMeta = document.querySelector('meta[name="shopify-customer"]');
+                if (customerMeta) {
+                    try {
+                        const customerJson = JSON.parse(customerMeta.content);
+                        customerData = {
+                            id: customerJson.id,
+                            email: customerJson.email,
+                            firstName: customerJson.first_name,
+                            lastName: customerJson.last_name
+                        };
+                        console.log('Bidly: Found customer via meta tag:', customerData);
+                    } catch (e) {
+                        console.warn('Bidly: Error parsing customer meta tag:', e);
+                    }
+                }
+            }
+            
+            // Method 3: Check for customer data in script tags
+            if (!customerData) {
+                const customerScript = document.querySelector('script[data-customer]');
+                if (customerScript) {
+                    try {
+                        const customerJson = JSON.parse(customerScript.textContent);
+                        customerData = {
+                            id: customerJson.id,
+                            email: customerJson.email,
+                            firstName: customerJson.first_name,
+                            lastName: customerJson.last_name
+                        };
+                        console.log('Bidly: Found customer via script tag:', customerData);
+                    } catch (e) {
+                        console.warn('Bidly: Error parsing customer script:', e);
+                    }
+                }
+            }
+            
+            if (customerData && customerData.email) {
+                // Sync customer with backend
+                const response = await fetch(`${CONFIG.backendUrl}/api/customers/sync`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        shopifyId: customerData.id,
+                        email: customerData.email,
+                        firstName: customerData.firstName,
+                        lastName: customerData.lastName,
+                        shopDomain: CONFIG.shopDomain
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    currentCustomer = result.customer;
+                    isLoggedIn = true;
+                    console.log('Bidly: Customer synced successfully:', currentCustomer);
+                    return true;
+                } else {
+                    console.warn('Bidly: Failed to sync customer:', response.status);
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('Bidly: Error detecting Shopify customer:', error);
+            return false;
+        }
+    }
+
+    // Guest login function
+    async function guestLogin(name, email) {
+        try {
+            console.log('Bidly: Attempting guest login...');
+            
+            const response = await fetch(`${CONFIG.backendUrl}/api/customers/temp-login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    email,
+                    shopDomain: CONFIG.shopDomain
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                currentCustomer = result.customer;
+                isLoggedIn = true;
+                console.log('Bidly: Guest login successful:', currentCustomer);
+                return true;
+            } else {
+                console.error('Bidly: Guest login failed:', response.status);
+                return false;
+            }
+        } catch (error) {
+            console.error('Bidly: Error during guest login:', error);
+            return false;
+        }
+    }
+
     // Widget HTML template
     function createWidgetHTML(auctionData, settings) {
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
+        
+        // If not logged in, show login prompt
+        if (!isLoggedIn) {
+            return `
+                <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
+                    <div class="bidly-widget-container">
+                        <div class="bidly-widget-header">
+                            <h3 class="bidly-widget-title">Live Auction</h3>
+                            <div class="bidly-widget-status">
+                                ${status === 'active' ? '<span class="bidly-status-active">● LIVE</span>' : 
+                                  status === 'pending' ? '<span class="bidly-status-pending">● STARTING SOON</span>' : 
+                                  '<span class="bidly-status-ended">● ENDED</span>'}
+                            </div>
+                        </div>
+                        
+                        <div class="bidly-login-required">
+                            <div class="bidly-login-message">
+                                <h4>Login Required to Bid</h4>
+                                <p>Please log in to participate in this auction</p>
+                            </div>
+                            
+                            <div class="bidly-login-options">
+                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.BidlyAuctionWidget?.openShopifyLogin()">
+                                    <span class="bidly-btn-icon">🛍️</span>
+                                    Log in with Shopify
+                                </button>
+                                
+                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyAuctionWidget?.openGuestLogin()">
+                                    <span class="bidly-btn-icon">👤</span>
+                                    Continue as Guest
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
         
         return `
             <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
@@ -44,6 +209,10 @@
                             ${status === 'active' ? '<span class="bidly-status-active">● LIVE</span>' : 
                               status === 'pending' ? '<span class="bidly-status-pending">● STARTING SOON</span>' : 
                               '<span class="bidly-status-ended">● ENDED</span>'}
+                        </div>
+                        <div class="bidly-customer-info">
+                            <span class="bidly-customer-name">👤 ${currentCustomer.fullName}</span>
+                            <button class="bidly-logout-btn" onclick="window.BidlyAuctionWidget?.logout()" title="Logout">×</button>
                         </div>
                     </div>
 
@@ -110,9 +279,16 @@
     }
 
     // Get product ID from page
-    function getProductIdFromPage() {
+    async function getProductIdFromPage() {
+        console.log('Bidly: Debugging product ID detection...');
+        console.log('Bidly: window.Shopify:', window.Shopify);
+        console.log('Bidly: window.Shopify?.analytics:', window.Shopify?.analytics);
+        console.log('Bidly: window.Shopify?.analytics?.meta:', window.Shopify?.analytics?.meta);
+        console.log('Bidly: window.Shopify?.analytics?.meta?.product:', window.Shopify?.analytics?.meta?.product);
+
         // Try to get from Shopify global objects first (most reliable)
         if (window.Shopify?.analytics?.meta?.product?.id) {
+            console.log('Bidly: Found product ID from analytics:', window.Shopify.analytics.meta.product.id);
             return window.Shopify.analytics.meta.product.id.toString();
         }
 
@@ -121,7 +297,9 @@
         if (productJson) {
             try {
                 const product = JSON.parse(productJson.textContent);
+                console.log('Bidly: Found product from JSON script:', product);
                 if (product.id) {
+                    console.log('Bidly: Found product ID from JSON script:', product.id);
                     return product.id.toString();
                 }
             } catch (e) {
@@ -131,29 +309,74 @@
 
         // Try to get from window.Shopify global object
         if (window.Shopify?.product?.id) {
+            console.log('Bidly: Found product ID from window.Shopify.product:', window.Shopify.product.id);
             return window.Shopify.product.id.toString();
         }
 
         // Try to get from meta tags
         const productIdMeta = document.querySelector('meta[name="product-id"]');
         if (productIdMeta) {
+            console.log('Bidly: Found product ID from meta tag:', productIdMeta.getAttribute('content'));
             return productIdMeta.getAttribute('content');
+        }
+
+        // Try to get from all script tags that might contain product data
+        const allScripts = document.querySelectorAll('script[type="application/json"]');
+        console.log('Bidly: Found', allScripts.length, 'JSON script tags');
+        for (let i = 0; i < allScripts.length; i++) {
+            const script = allScripts[i];
+            try {
+                const data = JSON.parse(script.textContent);
+                console.log(`Bidly: Script ${i} data:`, data);
+                if (data.product && data.product.id) {
+                    console.log('Bidly: Found product ID from script tag:', data.product.id);
+                    return data.product.id.toString();
+                }
+                // Also check for other possible structures
+                if (data.id && typeof data.id === 'number') {
+                    console.log('Bidly: Found numeric ID from script tag:', data.id);
+                    return data.id.toString();
+                }
+            } catch (e) {
+                console.log(`Bidly: Error parsing script ${i}:`, e.message);
+            }
+        }
+
+        // Try to get from window.Shopify.routes
+        if (window.Shopify?.routes?.root) {
+            console.log('Bidly: window.Shopify.routes:', window.Shopify.routes);
         }
 
         // Last resort: try to get from URL (but this gives us the handle, not ID)
         const urlMatch = window.location.pathname.match(/\/products\/([^\/\?]+)/);
         if (urlMatch) {
             console.warn('Bidly: Got product handle from URL, not numeric ID:', urlMatch[1]);
+            // Try to fetch product ID from Shopify API using the handle
+            try {
+                const handle = urlMatch[1];
+                console.log('Bidly: Attempting to fetch product ID for handle:', handle);
+                const response = await fetch(`https://${CONFIG.shopDomain}/products/${handle}.json`);
+                if (response.ok) {
+                    const productData = await response.json();
+                    if (productData.product && productData.product.id) {
+                        console.log('Bidly: Found product ID via API:', productData.product.id);
+                        return productData.product.id.toString();
+                    }
+                }
+            } catch (e) {
+                console.warn('Bidly: Error fetching product ID via API:', e);
+            }
             return null; // Don't use handle, we need numeric ID
         }
 
+        console.log('Bidly: Could not find product ID from any source');
         return null;
     }
 
     // Check if product has auction data by fetching from backend API
     async function checkProductForAuction() {
         try {
-            const productId = getProductIdFromPage();
+            const productId = await getProductIdFromPage();
             if (!productId) {
                 console.log('Bidly: Could not determine product ID');
                 return { hasAuction: false };
@@ -197,23 +420,120 @@
 
     // Find pricing section to overlay widget
     function findPricingSection() {
+        console.log('Bidly: Looking for pricing section...');
+        
+        // First try to find the entire product form/pricing container
+        const productFormSelectors = [
+            '.product-form',
+            '.product-form__price',
+            '.product__form',
+            '.product-single__form',
+            '.product-form__buttons',
+            '.product-form__actions',
+            '.product-actions',
+            '.product-buy',
+            '.product-purchase'
+        ];
+        
+        for (const selector of productFormSelectors) {
+            const elements = document.querySelectorAll(selector);
+            console.log(`Bidly: Checking product form selector "${selector}":`, elements);
+            
+            for (const element of elements) {
+                const rect = element.getBoundingClientRect();
+                console.log(`Bidly: Product form element rect:`, rect);
+                
+                // Look for elements that contain both price and buttons
+                if (rect.width > 200 && rect.height > 50) {
+                    console.log('Bidly: Found valid product form element:', element);
+                    return element;
+                }
+            }
+        }
+        
+        // Fallback: try the configured selectors
         for (const selector of CONFIG.pricingSelectors) {
-            const element = document.querySelector(selector);
-            if (element) {
+            const elements = document.querySelectorAll(selector);
+            console.log(`Bidly: Checking selector "${selector}":`, elements);
+            
+            // Find the element with actual visible price (not $0.00)
+            for (const element of elements) {
+                const text = element.textContent || element.innerText || '';
+                const rect = element.getBoundingClientRect();
+                console.log(`Bidly: Element text: "${text}", rect:`, rect);
+                
+                // Look for elements with actual price values and visible dimensions
+                if (text.includes('$') && !text.includes('$0.00') && rect.width > 0 && rect.height > 0) {
+                    console.log('Bidly: Found valid pricing element, looking for parent container...');
+                    
+                    // Try to find the parent container that includes buttons
+                    let parent = element.parentElement;
+                    let level = 0;
+                    while (parent && level < 5) {
+                        const parentRect = parent.getBoundingClientRect();
+                        const hasButtons = parent.querySelector('button, .btn, [class*="button"], [class*="add-to-cart"], [class*="buy"]');
+                        
+                        if (hasButtons && parentRect.width > 200 && parentRect.height > 50) {
+                            console.log(`Bidly: Found parent container with buttons at level ${level}:`, parent);
+                            return parent;
+                        }
+                        parent = parent.parentElement;
+                        level++;
+                    }
+                    
+                    console.log('Bidly: Found valid pricing element:', element);
+                    return element;
+                }
+            }
+        }
+        
+        // If no valid pricing found, try additional selectors
+        const additionalSelectors = [
+            '[class*="price"]',
+            '.product-price',
+            '.product__price',
+            '.price-current',
+            '.price-regular',
+            '.money'
+        ];
+        
+        for (const selector of additionalSelectors) {
+            const elements = document.querySelectorAll(selector);
+            console.log(`Bidly: Checking additional selector "${selector}":`, elements);
+            
+            for (const element of elements) {
+                const text = element.textContent || element.innerText || '';
+                const rect = element.getBoundingClientRect();
+                
+                if (text.includes('$') && !text.includes('$0.00') && rect.width > 0 && rect.height > 0) {
+                    console.log('Bidly: Found valid pricing element with additional selector:', element);
+                    return element;
+                }
+            }
+        }
+        
+        // Last resort: search for any element with price-like text
+        console.log('Bidly: No valid pricing found, searching for price-like text...');
+        const allElements = document.querySelectorAll('*');
+        for (const element of allElements) {
+            const text = element.textContent || element.innerText || '';
+            const rect = element.getBoundingClientRect();
+            
+            // Look for elements containing price patterns
+            if (text.match(/\$\d+\.\d{2}/) && rect.width > 0 && rect.height > 0 && rect.top > 0) {
+                console.log(`Bidly: Found price-like element: "${text}"`, rect);
                 return element;
             }
         }
+        
+        console.warn('Bidly: No pricing section found with any method');
         return null;
     }
 
     // Inject widget into pricing section
     function injectWidget(auctionData, settings) {
         const pricingSection = findPricingSection();
-        if (!pricingSection) {
-            console.warn('Bidly: Could not find pricing section to overlay widget');
-            return;
-        }
-
+        
         // Remove existing widget if any
         const existingWidget = document.querySelector(`.${CONFIG.widgetClass}`);
         if (existingWidget) {
@@ -224,21 +544,205 @@
         const widgetContainer = document.createElement('div');
         widgetContainer.className = CONFIG.widgetClass;
         widgetContainer.innerHTML = createWidgetHTML(auctionData, settings);
-
-        // Position widget based on settings
-        const widgetPosition = settings.widget_position || 'below_price';
         
-        if (widgetPosition === 'replace_price') {
-            // Replace the pricing section
-            pricingSection.style.display = 'none';
-            pricingSection.parentNode.insertBefore(widgetContainer, pricingSection.nextSibling);
-        } else if (widgetPosition === 'above_price') {
-            // Insert above pricing section
-            pricingSection.parentNode.insertBefore(widgetContainer, pricingSection);
+        // Add transparent overlay styling - no white background
+        widgetContainer.style.cssText = `
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            z-index: 99999 !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        `;
+        
+        // Create the actual auction widget content
+        widgetContainer.innerHTML = createWidgetHTML(auctionData, settings);
+        
+        // Set initial positioning properties (will be overridden by dynamic positioning)
+        widgetContainer.style.position = 'absolute';
+        widgetContainer.style.width = 'auto';
+        widgetContainer.style.height = 'auto';
+        widgetContainer.style.minHeight = 'auto';
+        
+        console.log('Bidly: Widget container created and styled:', widgetContainer);
+
+        // Position widget to overlay on the pricing section
+        console.log('Bidly: Positioning widget to overlay on pricing section');
+        console.log('Bidly: Pricing section found:', pricingSection);
+        
+        if (pricingSection) {
+            // Calculate position relative to pricing section for overlay
+            const pricingRect = pricingSection.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            console.log('Bidly: Pricing section rect:', pricingRect);
+            console.log('Bidly: Scroll position:', { scrollTop, scrollLeft });
+            
+            // Log detailed rect information
+            console.log('Bidly: Detailed rect info:', {
+                top: pricingRect.top,
+                left: pricingRect.left,
+                right: pricingRect.right,
+                bottom: pricingRect.bottom,
+                width: pricingRect.width,
+                height: pricingRect.height,
+                x: pricingRect.x,
+                y: pricingRect.y
+            });
+            
+            // Check if the pricing element has valid coordinates
+            let finalTop, finalLeft, finalWidth, finalHeight;
+            
+            if (pricingRect.top === 0 && pricingRect.left === 0 && pricingRect.width === 0) {
+                console.log('Bidly: Pricing element has zero coordinates, trying parent container...');
+                
+                // Try to find the parent container that has valid coordinates
+                let parentElement = pricingSection.parentElement;
+                let attempts = 0;
+                const maxAttempts = 5;
+                
+                while (parentElement && attempts < maxAttempts) {
+                    const parentRect = parentElement.getBoundingClientRect();
+                    console.log(`Bidly: Parent ${attempts + 1} rect:`, parentRect);
+                    
+                    if (parentRect.width > 0 && parentRect.height > 0 && (parentRect.top > 0 || parentRect.left > 0)) {
+                        console.log(`Bidly: Found valid parent container at attempt ${attempts + 1}`);
+                        finalTop = parentRect.top + scrollTop;
+                        finalLeft = parentRect.left + scrollLeft;
+                        finalWidth = parentRect.width;
+                        finalHeight = parentRect.height;
+                        break;
+                    }
+                    
+                    parentElement = parentElement.parentElement;
+                    attempts++;
+                }
+                
+                // If no valid parent found, use fallback positioning
+                if (attempts >= maxAttempts || !parentElement) {
+                    console.log('Bidly: No valid parent found, using fallback positioning');
+                    finalTop = 200 + scrollTop; // Position below header, accounting for scroll
+                    finalLeft = 20 + scrollLeft; // Position from left edge, accounting for scroll
+                    finalWidth = 400; // Reasonable fallback width
+                    finalHeight = 200; // Reasonable fallback height
+                }
+            } else {
+                // Use the pricing element's coordinates - EXACT replacement
+                finalTop = pricingRect.top + scrollTop;
+                finalLeft = pricingRect.left + scrollLeft;
+                finalWidth = pricingRect.width;
+                finalHeight = pricingRect.height;
+            }
+            
+            console.log('Bidly: Calculated positions:', {
+                finalTop,
+                finalLeft,
+                finalWidth,
+                pricingRectTop: pricingRect.top,
+                pricingRectLeft: pricingRect.left,
+                scrollTop,
+                scrollLeft
+            });
+            
+        // Position widget to replace the pricing section (absolute positioning within page flow)
+        // Add some offset to move widget down and avoid covering the title
+        const titleOffset = 40; // Add 40px offset to move widget below title
+        
+        widgetContainer.style.position = 'absolute';
+        widgetContainer.style.top = (finalTop + titleOffset) + 'px';
+        widgetContainer.style.left = finalLeft + 'px';
+        widgetContainer.style.width = finalWidth + 'px';
+        widgetContainer.style.height = finalHeight + 'px';
+        widgetContainer.style.minHeight = 'auto';
+        widgetContainer.style.zIndex = '10';
+            
+            // Hide only specific pricing elements, not the entire container
+            // This prevents hiding the product title
+            const elementsToHide = pricingSection.querySelectorAll(
+                '.price, .product-price, .money, button, .btn, [class*="button"], [class*="add-to-cart"], [class*="buy"], [class*="quantity"], [class*="price-current"], [class*="price-regular"]'
+            );
+            
+            elementsToHide.forEach(element => {
+                element.style.display = 'none';
+            });
+            
+            // Only hide the pricing section if it's ONLY a price element (not a container)
+            // Check if it's a direct price element, not a container with other content
+            const isDirectPriceElement = pricingSection.classList.contains('price') && 
+                                       !pricingSection.querySelector('h1, h2, h3, h4, h5, h6, .product-title, .product-name, [class*="title"], [class*="name"]');
+            
+            if (isDirectPriceElement) {
+                pricingSection.style.display = 'none';
+            }
+            
+            console.log('Bidly: Original pricing section and related elements hidden');
+            
+            console.log('Bidly: Widget positioned to overlay on pricing section');
+            console.log('Bidly: Applied styles:', {
+                position: widgetContainer.style.position,
+                top: widgetContainer.style.top,
+                left: widgetContainer.style.left,
+                width: widgetContainer.style.width
+            });
         } else {
-            // Insert below pricing section (default)
-            pricingSection.parentNode.insertBefore(widgetContainer, pricingSection.nextSibling);
+            // Fallback positioning if pricing section not found
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            widgetContainer.style.position = 'absolute';
+            widgetContainer.style.top = (20 + scrollTop) + 'px';
+            widgetContainer.style.left = (20 + scrollLeft) + 'px';
+            widgetContainer.style.width = '400px'; // Reasonable fallback width
+            widgetContainer.style.height = '200px'; // Reasonable fallback height
+            widgetContainer.style.minHeight = 'auto'; // Remove minHeight
+            console.log('Bidly: Pricing section not found, using fallback positioning');
         }
+        
+        // Ensure body has relative positioning for absolute children
+        if (document.body.style.position !== 'relative') {
+            document.body.style.position = 'relative';
+        }
+        
+        document.body.appendChild(widgetContainer);
+        console.log('Bidly: Widget appended to document.body');
+        
+        console.log('Bidly: Widget injection complete. Widget element:', widgetContainer);
+        
+        // More detailed visibility checks
+        const widgetElement = document.querySelector(`.${CONFIG.widgetClass}`);
+        if (widgetElement) {
+            const computedStyle = window.getComputedStyle(widgetElement);
+            console.log('Bidly: Widget computed style - display:', computedStyle.display);
+            console.log('Bidly: Widget computed style - visibility:', computedStyle.visibility);
+            console.log('Bidly: Widget computed style - opacity:', computedStyle.opacity);
+            console.log('Bidly: Widget computed style - width:', computedStyle.width);
+            console.log('Bidly: Widget computed style - height:', computedStyle.height);
+            console.log('Bidly: Widget offsetParent:', widgetElement.offsetParent);
+            console.log('Bidly: Widget offsetWidth:', widgetElement.offsetWidth);
+            console.log('Bidly: Widget offsetHeight:', widgetElement.offsetHeight);
+
+            let parent = widgetElement.parentElement;
+            let depth = 0;
+            while (parent && depth < 5) { // Check up to 5 parent levels
+                const parentComputedStyle = window.getComputedStyle(parent);
+                console.log(`Bidly: Parent ${depth} (${parent.tagName}) computed style - display:`, parentComputedStyle.display);
+                console.log(`Bidly: Parent ${depth} (${parent.tagName}) computed style - visibility:`, parentComputedStyle.visibility);
+                console.log(`Bidly: Parent ${depth} (${parent.tagName}) computed style - opacity:`, parentComputedStyle.opacity);
+                if (parentComputedStyle.display === 'none' || parentComputedStyle.visibility === 'hidden' || parentComputedStyle.opacity === '0') {
+                    console.warn(`Bidly: Parent ${depth} (${parent.tagName}) is hiding the widget!`);
+                    break;
+                }
+                parent = parent.parentElement;
+                depth++;
+            }
+        }
+        
+        console.log('Bidly: Widget is visible:', widgetContainer.offsetParent !== null);
 
         // Initialize countdown timer if active
         if (auctionData.status === 'active' && auctionData.endTime && settings.show_timer) {
@@ -325,6 +829,82 @@
                     '<span class="bidly-status-pending">● PENDING</span>';
             }
         }
+    }
+
+    // Open Shopify login
+    function openShopifyLogin() {
+        const currentUrl = encodeURIComponent(window.location.href);
+        const loginUrl = `/account/login?return_to=${currentUrl}`;
+        window.location.href = loginUrl;
+    }
+
+    // Open guest login modal
+    function openGuestLogin() {
+        const modal = document.createElement('div');
+        modal.className = 'bidly-modal-overlay';
+        modal.innerHTML = `
+            <div class="bidly-modal-content">
+                <div class="bidly-modal-header">
+                    <h3>Continue as Guest</h3>
+                    <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeGuestLoginModal()">&times;</button>
+                </div>
+                <div class="bidly-modal-body">
+                    <form id="bidly-guest-login-form" onsubmit="window.BidlyAuctionWidget.submitGuestLogin(event)">
+                        <div class="bidly-form-group">
+                            <label for="bidly-guest-name">Full Name</label>
+                            <input type="text" id="bidly-guest-name" name="name" required>
+                        </div>
+                        <div class="bidly-form-group">
+                            <label for="bidly-guest-email">Email Address</label>
+                            <input type="email" id="bidly-guest-email" name="email" required>
+                        </div>
+                        <div class="bidly-form-actions">
+                            <button type="submit" class="bidly-btn bidly-btn-primary">Continue as Guest</button>
+                            <button type="button" class="bidly-btn bidly-btn-secondary" onclick="window.BidlyAuctionWidget.closeGuestLoginModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Close guest login modal
+    function closeGuestLoginModal() {
+        const modal = document.querySelector('.bidly-modal-overlay');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // Submit guest login
+    async function submitGuestLogin(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const name = formData.get('name');
+        const email = formData.get('email');
+
+        if (!name || !email) {
+            alert('Please enter both name and email');
+            return;
+        }
+
+        const success = await guestLogin(name, email);
+        if (success) {
+            closeGuestLoginModal();
+            // Refresh the widget to show logged-in state
+            window.location.reload();
+        } else {
+            alert('Login failed. Please try again.');
+        }
+    }
+
+    // Logout function
+    function logout() {
+        currentCustomer = null;
+        isLoggedIn = false;
+        // Refresh the widget to show login prompt
+        window.location.reload();
     }
 
     // Create bid modal
@@ -422,13 +1002,21 @@
 
         submitBid: async function(event, auctionId) {
             event.preventDefault();
+            
+            // Check if user is logged in
+            if (!isLoggedIn || !currentCustomer) {
+                alert('Please log in to place a bid');
+                return;
+            }
+            
             const form = event.target;
             const formData = new FormData(form);
             
             const bidData = {
                 amount: parseFloat(formData.get('amount')),
-                bidderName: formData.get('bidderName'),
-                bidderEmail: formData.get('bidderEmail')
+                bidderName: currentCustomer.fullName,
+                bidderEmail: currentCustomer.email,
+                customerId: currentCustomer.id
             };
 
             try {
@@ -442,6 +1030,19 @@
 
                 const result = await response.json();
                 if (result.success) {
+                    // Update customer bid history
+                    await fetch(`${CONFIG.backendUrl}/api/customers/${currentCustomer.id}/bid?shop=${CONFIG.shopDomain}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            auctionId,
+                            amount: bidData.amount,
+                            isWinning: result.isWinning || false
+                        })
+                    });
+                    
                     alert('Bid placed successfully!');
                     this.closeBidModal(auctionId);
                     location.reload();
@@ -482,6 +1083,16 @@
     // Main initialization function
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
+        
+        // First, try to detect Shopify customer
+        console.log('Bidly: Attempting to detect Shopify customer...');
+        const shopifyCustomerDetected = await detectShopifyCustomer();
+        
+        if (shopifyCustomerDetected) {
+            console.log('Bidly: Shopify customer detected and synced');
+        } else {
+            console.log('Bidly: No Shopify customer detected, will show login options');
+        }
         
         // Get settings from block
         const settings = {
