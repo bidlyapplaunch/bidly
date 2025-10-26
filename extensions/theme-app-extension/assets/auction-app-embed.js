@@ -44,12 +44,8 @@
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
         
-        // TEMPORARY: Always show bidding interface for testing
-        // TODO: Re-enable login check once login system is fully working
-        const forceShowBidding = true;
-        
         // If not logged in, show login prompt
-        if (!forceShowBidding && !isUserLoggedIn()) {
+        if (!isUserLoggedIn()) {
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
                     <div class="bidly-widget-container">
