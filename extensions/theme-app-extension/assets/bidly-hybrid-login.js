@@ -282,10 +282,7 @@
             window.dispatchEvent(new CustomEvent('bidly-login-success', { 
                 detail: { customer: currentCustomer } 
             }));
-            // Refresh the page to ensure all components update
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
+            console.log('Bidly: Login success event dispatched');
         } else {
             console.error('Bidly: Guest login failed');
             alert('Login failed. Please try again.');
