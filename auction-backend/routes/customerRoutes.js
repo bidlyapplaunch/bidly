@@ -52,19 +52,15 @@ router.post('/sync', async (req, res, next) => {
 router.post('/temp-login', async (req, res, next) => {
   try {
     const { 
-      name, 
+      firstName, 
+      lastName, 
       email, 
       shopDomain 
     } = req.body;
 
-    if (!name || !email || !shopDomain) {
-      return next(new AppError('Name, email, and shop domain are required', 400));
+    if (!firstName || !lastName || !email || !shopDomain) {
+      return next(new AppError('First name, last name, email, and shop domain are required', 400));
     }
-
-    // Parse name into first and last name
-    const nameParts = name.trim().split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || '';
 
     // Find or create temporary customer
     const customer = await Customer.findOrCreate({
