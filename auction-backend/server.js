@@ -120,6 +120,10 @@ app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+// Customer routes for hybrid login system
+const { default: customerRoutes } = await import('./routes/customerRoutes.js');
+app.use('/api/customers', customerRoutes);
+
 // Widget features re-enabled with fixed imports
 const { default: metafieldsRoutes } = await import('./routes/metafields.js');
 const { default: productDuplicationRoutes } = await import('./routes/productDuplication.js');

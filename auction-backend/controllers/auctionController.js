@@ -388,7 +388,7 @@ export const deleteAuction = async (req, res, next) => {
 // Place a bid on an auction
 export const placeBid = async (req, res, next) => {
   try {
-    const { bidder, amount, customerEmail } = req.body;
+    const { bidder, amount, customerEmail, bidderName, bidderEmail, customerId } = req.body;
     const shopDomain = req.shopDomain; // Get from store middleware
     
     if (!shopDomain) {
@@ -396,7 +396,8 @@ export const placeBid = async (req, res, next) => {
     }
     
     // Input sanitization and validation
-    const sanitizedBidder = bidder?.trim();
+    const sanitizedBidder = (bidder || bidderName)?.trim();
+    const sanitizedEmail = (customerEmail || bidderEmail)?.trim();
     const sanitizedAmount = parseFloat(amount);
     
     // Basic validation
@@ -410,6 +411,10 @@ export const placeBid = async (req, res, next) => {
     
     if (!amount || isNaN(sanitizedAmount) || sanitizedAmount <= 0) {
       throw new AppError('Valid bid amount is required', 400);
+    }
+    
+    if (!sanitizedEmail || sanitizedEmail.length === 0) {
+      throw new AppError('Bidder email is required', 400);
     }
     
     const auction = await Auction.findOne({ 
@@ -464,7 +469,7 @@ export const placeBid = async (req, res, next) => {
     
     try {
       // Add the bid with customer email
-      await auction.addBid(sanitizedBidder, sanitizedAmount, customerEmail);
+      await auction.addBid(sanitizedBidder, sanitizedAmount, sanitizedEmail);
     } catch (error) {
       // Restore original status if bid fails
       if (originalStatus !== auction.status) {
@@ -501,8 +506,8 @@ export const placeBid = async (req, res, next) => {
     try {
       // Send bid confirmation to the bidder
       await emailService.sendBidConfirmation(
-        customerEmail || `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Use customer email or demo email
-        bidder,
+        sanitizedEmail, // Use actual customer email
+        sanitizedBidder,
         updatedAuction,
         amount
       );
@@ -510,7 +515,7 @@ export const placeBid = async (req, res, next) => {
       // Send outbid notification to previous highest bidder
       if (updatedAuction.bidHistory.length > 1) {
         const previousBid = updatedAuction.bidHistory[updatedAuction.bidHistory.length - 2];
-        if (previousBid.bidder !== bidder && previousBid.customerEmail) {
+        if (previousBid.bidder !== sanitizedBidder && previousBid.customerEmail) {
           await emailService.sendOutbidNotification(
             previousBid.customerEmail, // Use actual customer email
             previousBid.bidder,
@@ -523,8 +528,8 @@ export const placeBid = async (req, res, next) => {
       // Send auction won notification if buy now
       if (auctionEnded) {
         await emailService.sendAuctionWonNotification(
-          customerEmail || `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Use customer email or demo email
-          bidder,
+          sanitizedEmail, // Use actual customer email
+          sanitizedBidder,
           updatedAuction,
           amount
         );
@@ -532,7 +537,7 @@ export const placeBid = async (req, res, next) => {
         // Send admin notification
         await emailService.sendAdminNotification(
           'Auction Won via Buy Now',
-          `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" was won by ${bidder} for $${amount}`,
+          `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" was won by ${sanitizedBidder} for $${amount}`,
           updatedAuction
         );
       }
@@ -550,11 +555,11 @@ export const placeBid = async (req, res, next) => {
         auctionId: req.params.id,
         currentBid: updatedAuction.currentBid,
         bidHistory: updatedAuction.bidHistory,
-        bidder: bidder,
+        bidder: sanitizedBidder,
         amount: amount,
         timestamp: new Date().toISOString(),
         auctionEnded: auctionEnded,
-        winner: auctionEnded ? bidder : null,
+        winner: auctionEnded ? sanitizedBidder : null,
         productTitle: updatedAuction.productData?.title || 'Unknown Product'
       };
 

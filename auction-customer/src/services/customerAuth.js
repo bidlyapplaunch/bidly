@@ -11,10 +11,23 @@ class CustomerAuthService {
   }
 
   /**
-   * Load customer data from sessionStorage
+   * Load customer data from sessionStorage or shared login system
    */
   loadFromStorage() {
     try {
+      // First try shared login system
+      if (window.BidlyHybridLogin) {
+        const sharedCustomer = window.BidlyHybridLogin.getCurrentCustomer();
+        const isLoggedIn = window.BidlyHybridLogin.isUserLoggedIn();
+        
+        if (isLoggedIn && sharedCustomer) {
+          this.customer = sharedCustomer;
+          console.log('👤 Customer loaded from shared login system:', this.customer.fullName || this.customer.name);
+          return;
+        }
+      }
+      
+      // Fallback to sessionStorage
       const stored = sessionStorage.getItem('customerAuth');
       if (stored) {
         this.customer = JSON.parse(stored);
@@ -44,7 +57,10 @@ class CustomerAuthService {
    * Get customer name for display
    */
   getCustomerName() {
-    return this.customer ? this.customer.name : 'Guest';
+    if (this.customer) {
+      return this.customer.fullName || this.customer.name || 'Guest';
+    }
+    return 'Guest';
   }
 
   /**
@@ -57,13 +73,26 @@ class CustomerAuthService {
   /**
    * Login/Register customer
    */
-  login(customerData) {
+  async login(customerData) {
     try {
-      // Store in sessionStorage
+      // Try shared login system first
+      if (window.BidlyHybridLogin) {
+        const success = await window.BidlyHybridLogin.guestLogin(customerData.name, customerData.email);
+        if (success) {
+          const sharedCustomer = window.BidlyHybridLogin.getCurrentCustomer();
+          if (sharedCustomer) {
+            this.customer = sharedCustomer;
+            console.log('✅ Customer authenticated via shared login system:', sharedCustomer.fullName || sharedCustomer.name);
+            return true;
+          }
+        }
+      }
+      
+      // Fallback to sessionStorage
       sessionStorage.setItem('customerAuth', JSON.stringify(customerData));
       this.customer = customerData;
       
-      console.log('✅ Customer authenticated:', customerData.name);
+      console.log('✅ Customer authenticated (fallback):', customerData.name);
       return true;
     } catch (error) {
       console.error('Error storing customer data:', error);
@@ -76,6 +105,12 @@ class CustomerAuthService {
    */
   logout() {
     try {
+      // Use shared login system if available
+      if (window.BidlyHybridLogin) {
+        window.BidlyHybridLogin.logout();
+      }
+      
+      // Clear local storage
       sessionStorage.removeItem('customerAuth');
       this.customer = null;
       console.log('👋 Customer logged out');
@@ -96,7 +131,7 @@ class CustomerAuthService {
 
     return {
       customerId: this.customer.id,
-      customerName: this.customer.name,
+      customerName: this.customer.fullName || this.customer.name,
       customerEmail: this.customer.email
     };
   }
