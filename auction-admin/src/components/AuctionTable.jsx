@@ -17,7 +17,7 @@ import {
   TextField,
   Select
 } from '@shopify/polaris';
-import { EditMinor, DeleteMinor, ViewMinor } from '@shopify/polaris-icons';
+import { EditMinor, DeleteMinor, ViewMinor, StoreMinor } from '@shopify/polaris-icons';
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
 
@@ -158,6 +158,15 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     // Bid Count
     auction.bidHistory?.length || 0,
     <ButtonGroup key={auction.id}>
+      <Button
+        icon={StoreMinor}
+        onClick={() => {
+          // Placeholder - will implement functionality later
+          console.log('Store button clicked for auction:', auction.id);
+        }}
+        size="slim"
+        accessibilityLabel="View in store"
+      />
       <Button
         icon={ViewMinor}
         onClick={() => onView(auction)}
