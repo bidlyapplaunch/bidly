@@ -219,17 +219,31 @@
     // Submit guest login
     async function submitGuestLogin(event) {
         event.preventDefault();
-        const formData = new FormData(event.target);
-        const name = formData.get('name');
-        const email = formData.get('email');
+        console.log('Bidly: Submitting guest login form...');
+        
+        const nameInput = document.getElementById('bidly-guest-name');
+        const emailInput = document.getElementById('bidly-guest-email');
+        
+        if (!nameInput || !emailInput) {
+            console.error('Bidly: Form inputs not found');
+            alert('Form error. Please try again.');
+            return;
+        }
+        
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+
+        console.log('Bidly: Form data:', { name, email });
 
         if (!name || !email) {
             alert('Please enter both name and email');
             return;
         }
 
+        console.log('Bidly: Attempting guest login...');
         const success = await guestLogin(name, email);
         if (success) {
+            console.log('Bidly: Guest login successful');
             closeGuestLoginModal();
             // Trigger custom event for components to listen to
             window.dispatchEvent(new CustomEvent('bidly-login-success', { 
@@ -240,6 +254,7 @@
                 window.location.reload();
             }, 500);
         } else {
+            console.error('Bidly: Guest login failed');
             alert('Login failed. Please try again.');
         }
     }
@@ -277,6 +292,10 @@
         
         if (shopifyCustomerDetected) {
             console.log('Bidly: Shopify customer detected and synced');
+            // Dispatch login success event immediately
+            window.dispatchEvent(new CustomEvent('bidly-login-success', { 
+                detail: { customer: currentCustomer } 
+            }));
         } else {
             console.log('Bidly: No Shopify customer detected, will show login options when needed');
         }

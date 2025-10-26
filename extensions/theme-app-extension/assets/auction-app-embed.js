@@ -896,7 +896,7 @@
         
         // Wait for shared login system to initialize
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 15; // Increased attempts
         
         while (!window.BidlyHybridLogin && attempts < maxAttempts) {
             console.log('Bidly: Waiting for shared login system...', attempts + 1);
@@ -907,7 +907,7 @@
         if (window.BidlyHybridLogin) {
             console.log('Bidly: Shared hybrid login system loaded');
             // Wait a bit more for customer detection to complete
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Increased wait time
         } else {
             console.log('Bidly: Shared login system not available after waiting');
         }
