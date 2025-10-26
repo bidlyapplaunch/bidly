@@ -29,3 +29,8 @@ limit = 1
 type = "auction_product_widget"
 name = "Auction Product Widget"
 limit = 1
+
+[[extensions.settings.blocks]]
+type = "auction_app_embed"
+name = "Auction App Embed"
+limit = 1
