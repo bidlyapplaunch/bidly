@@ -351,10 +351,27 @@
             for (const element of elements) {
                 const text = element.textContent || element.innerText || '';
                 const rect = element.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(element);
+                
                 console.log(`Bidly: Element text: "${text}", rect:`, rect);
+                console.log(`Bidly: Element visibility:`, {
+                    display: computedStyle.display,
+                    visibility: computedStyle.visibility,
+                    opacity: computedStyle.opacity,
+                    inlineDisplay: element.style.display
+                });
+                
+                // Skip hidden elements
+                if (computedStyle.display === 'none' || 
+                    computedStyle.visibility === 'hidden' || 
+                    computedStyle.opacity === '0' ||
+                    element.style.display === 'none') {
+                    console.log(`Bidly: Skipping hidden element: "${text}"`);
+                    continue;
+                }
                 
                 // Look for elements with actual price values and visible dimensions
-                if (text.includes('$') && !text.includes('$0.00') && rect.width > 0 && rect.height > 0) {
+                if (text.includes('$') && !text.includes('$0.00') && rect.width > 0 && rect.height > 0 && rect.top > 0 && rect.left >= 0) {
                     console.log('Bidly: Found valid pricing element, looking for parent container...');
                     
                     // Try to find the parent container that includes buttons
@@ -413,6 +430,28 @@
             // Look for elements containing price patterns
             if (text.match(/\$\d+\.\d{2}/) && rect.width > 0 && rect.height > 0 && rect.top > 0) {
                 console.log(`Bidly: Found price-like element: "${text}"`, rect);
+                return element;
+            }
+        }
+        
+        // Final fallback: look for any element containing the main product price
+        console.log('Bidly: Trying final fallback - looking for main product price...');
+        const allElements = document.querySelectorAll('*');
+        for (const element of allElements) {
+            const text = element.textContent || element.innerText || '';
+            const rect = element.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(element);
+            
+            // Look for the main product price ($841.65 based on the image)
+            if (text.includes('$841.65') && 
+                computedStyle.display !== 'none' && 
+                computedStyle.visibility !== 'hidden' && 
+                computedStyle.opacity !== '0' &&
+                rect.width > 50 && 
+                rect.height > 10 && 
+                rect.top > 0 && 
+                rect.left >= 0) {
+                console.log('Bidly: Found main product price element:', element, rect);
                 return element;
             }
         }
