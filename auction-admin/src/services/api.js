@@ -131,6 +131,15 @@ export const auctionAPI = {
   getAuctionsWithProductData: async (params = {}) => {
     const response = await api.get('/auctions/with-product-data', { params });
     return response.data;
+  },
+
+  // Get Shopify product details for store redirect
+  getShopifyProduct: async (productId, shop = null) => {
+    const shopDomain = shop || getShopFromURL();
+    const response = await api.get(`/shopify/products/${productId}`, {
+      params: { shop: shopDomain }
+    });
+    return response.data;
   }
 };
 

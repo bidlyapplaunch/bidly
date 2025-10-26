@@ -160,10 +160,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     <ButtonGroup key={auction.id}>
       <Button
         icon={StoreMinor}
-        onClick={() => {
-          // Placeholder - will implement functionality later
-          console.log('Store button clicked for auction:', auction.id);
-        }}
+        onClick={() => handleViewInStore(auction)}
         size="slim"
         accessibilityLabel="View in store"
       />
@@ -215,6 +212,61 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const clearFilters = () => {
     setFilters({ status: '', shopifyProductId: '' });
     setCurrentPage(1);
+  };
+
+  const handleViewInStore = async (auction) => {
+    try {
+      console.log('🏪 Opening product in store for auction:', auction.id);
+      
+      // Get the shop domain from the current context
+      const urlParams = new URLSearchParams(window.location.search);
+      const shop = urlParams.get('shop');
+      
+      if (!shop) {
+        console.error('❌ No shop domain found in URL');
+        setToastMessage('Error: No shop domain found');
+        setShowToast(true);
+        return;
+      }
+
+      // Get the Shopify product ID
+      const shopifyProductId = auction.shopifyProductId;
+      if (!shopifyProductId) {
+        console.error('❌ No Shopify product ID found for auction:', auction.id);
+        setToastMessage('Error: No product ID found for this auction');
+        setShowToast(true);
+        return;
+      }
+
+      // Try to get product details from Shopify API
+      try {
+        const response = await auctionAPI.getShopifyProduct(shopifyProductId, shop);
+        const product = response.data;
+        
+        if (product && product.handle) {
+          // Use the product handle to construct the URL
+          const productUrl = `https://${shop}/products/${product.handle}`;
+          console.log('🔗 Opening Shopify product URL:', productUrl);
+          window.open(productUrl, '_blank');
+        } else {
+          // Fallback: try to construct URL with product ID
+          const productUrl = `https://${shop}/products/${shopifyProductId}`;
+          console.log('🔗 Opening Shopify product URL (fallback):', productUrl);
+          window.open(productUrl, '_blank');
+        }
+      } catch (apiError) {
+        console.warn('⚠️ Could not fetch product details, using fallback URL:', apiError);
+        // Fallback: construct URL with product ID
+        const productUrl = `https://${shop}/products/${shopifyProductId}`;
+        console.log('🔗 Opening Shopify product URL (fallback):', productUrl);
+        window.open(productUrl, '_blank');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error opening product in store:', error);
+      setToastMessage('Error opening product in store');
+      setShowToast(true);
+    }
   };
 
   if (error) {
