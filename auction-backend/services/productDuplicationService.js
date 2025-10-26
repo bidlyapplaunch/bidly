@@ -1,4 +1,4 @@
-const { getShopifyClient } = require('./shopifyService');
+import { getShopifyClient } from './shopifyService.js';
 
 class ProductDuplicationService {
   /**
@@ -163,7 +163,6 @@ class ProductDuplicationService {
    */
   static verifyAccessToken(token, email, productId) {
     try {
-      const shopify = require('shopify-api-node');
       // This would need to be implemented with proper token verification
       // For now, we'll use a simple approach
       return token && email && productId;
