@@ -464,8 +464,9 @@
         },
         body: JSON.stringify({
           amount: bidAmount,
-          bidder: this.customer.name,
-          customerEmail: this.customer.email
+          bidderName: this.customer.fullName || this.customer.name,
+          bidderEmail: this.customer.email,
+          customerId: this.customer.id
         })
       })
       .then(response => response.json())
@@ -517,8 +518,9 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          bidder: this.customer.name,
-          customerEmail: this.customer.email
+          bidderName: this.customer.fullName || this.customer.name,
+          bidderEmail: this.customer.email,
+          customerId: this.customer.id
         })
       })
       .then(response => response.json())
@@ -909,8 +911,9 @@
         },
         body: JSON.stringify({
           amount: bidAmount,
-          bidder: this.customer.name,
-          customerEmail: this.customer.email
+          bidderName: this.customer.fullName || this.customer.name,
+          bidderEmail: this.customer.email,
+          customerId: this.customer.id
         })
       })
       .then(response => response.json())
@@ -1031,8 +1034,9 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          bidder: this.customer.name,
-          customerEmail: this.customer.email
+          bidderName: this.customer.fullName || this.customer.name,
+          bidderEmail: this.customer.email,
+          customerId: this.customer.id
         })
       })
       .then(response => response.json())
@@ -1115,41 +1119,48 @@
       }, 1000);
     },
     
-    // Initialize customer authentication
+    // Initialize customer authentication using shared login system
     initializeCustomerAuth: function(blockId) {
       // Only initialize once globally
       if (this.customerInitialized) {
         return;
       }
       
-      console.log('🔍 Initializing customer authentication...');
+      console.log('🔍 Initializing customer authentication with shared login system...');
       
-      // Check for Shopify customer first
-      const shopifyCustomer = this.getShopifyCustomer();
-      if (shopifyCustomer) {
-        this.customer = shopifyCustomer;
-        // Save to session storage for consistency
-        sessionStorage.setItem('bidly-customer', JSON.stringify(shopifyCustomer));
-        console.log('✅ Shopify customer authenticated:', shopifyCustomer);
-        this.customerInitialized = true;
-        return;
-      }
-      
-      // Check for existing customer session
-      const savedCustomer = sessionStorage.getItem('bidly-customer');
-      if (savedCustomer) {
-        try {
-          this.customer = JSON.parse(savedCustomer);
-          console.log('✅ Existing customer session found:', this.customer);
-          this.customerInitialized = true;
-          return;
-        } catch (e) {
-          console.error('❌ Failed to parse saved customer:', e);
-          sessionStorage.removeItem('bidly-customer');
+      // Use shared login system if available
+      if (window.BidlyHybridLogin) {
+        const customer = window.BidlyHybridLogin.getCurrentCustomer();
+        const isLoggedIn = window.BidlyHybridLogin.isUserLoggedIn();
+        
+        if (isLoggedIn && customer) {
+          this.customer = customer;
+          console.log('✅ Customer authenticated via shared login system:', customer);
+        } else {
+          console.log('ℹ️ No customer authentication found via shared login system');
+        }
+      } else {
+        console.log('⚠️ Shared login system not available, using fallback');
+        // Fallback to old system
+        const shopifyCustomer = this.getShopifyCustomer();
+        if (shopifyCustomer) {
+          this.customer = shopifyCustomer;
+          sessionStorage.setItem('bidly-customer', JSON.stringify(shopifyCustomer));
+          console.log('✅ Shopify customer authenticated (fallback):', shopifyCustomer);
+        } else {
+          const savedCustomer = sessionStorage.getItem('bidly-customer');
+          if (savedCustomer) {
+            try {
+              this.customer = JSON.parse(savedCustomer);
+              console.log('✅ Customer session restored (fallback):', this.customer);
+            } catch (e) {
+              console.error('❌ Failed to parse saved customer:', e);
+              sessionStorage.removeItem('bidly-customer');
+            }
+          }
         }
       }
       
-      // No customer found, but mark as initialized so login can work
       this.customerInitialized = true;
     },
     

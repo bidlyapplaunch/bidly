@@ -356,22 +356,31 @@
         };
         document.head.appendChild(cssLink);
         
-        // Load JavaScript
-        const script = document.createElement('script');
-        script.src = '{{ "bidly-widget.js" | asset_url }}?v=2021&t=' + Date.now();
-        script.onload = function() {
-          if (window.initBidlyBlock) {
-            window.BidlyAuctionWidget.loadedInstances.add(blockId);
-            window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'single');
-          } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initSingle) {
-            window.BidlyAuctionWidget.loadedInstances.add(blockId);
-            window.BidlyAuctionWidget.initSingle(blockId, shopDomain, appProxyUrl, auctionId);
-          }
+        // Load shared login system first
+        const loginScript = document.createElement('script');
+        loginScript.src = '{{ "bidly-hybrid-login.js" | asset_url }}?v=2&t=' + Date.now();
+        loginScript.onload = function() {
+          // Load main widget JavaScript after login system
+          const script = document.createElement('script');
+          script.src = '{{ "bidly-widget.js" | asset_url }}?v=2021&t=' + Date.now();
+          script.onload = function() {
+            if (window.initBidlyBlock) {
+              window.BidlyAuctionWidget.loadedInstances.add(blockId);
+              window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'single');
+            } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initSingle) {
+              window.BidlyAuctionWidget.loadedInstances.add(blockId);
+              window.BidlyAuctionWidget.initSingle(blockId, shopDomain, appProxyUrl, auctionId);
+            }
+          };
+          script.onerror = function() {
+            console.error('Bidly: Failed to load JavaScript');
+          };
+          document.head.appendChild(script);
         };
-        script.onerror = function() {
-          console.error('Bidly: Failed to load JavaScript');
+        loginScript.onerror = function() {
+          console.error('Bidly: Failed to load login system');
         };
-        document.head.appendChild(script);
+        document.head.appendChild(loginScript);
         
         window.BidlyAuctionWidget.loaded = true;
       } else {

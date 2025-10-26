@@ -30,132 +30,13 @@
         ]
     };
 
-    // Customer state management
-    let currentCustomer = null;
-    let isLoggedIn = false;
-
-    // Shopify customer detection
-    async function detectShopifyCustomer() {
-        try {
-            console.log('Bidly: Detecting Shopify customer...');
-            
-            // Check for Shopify customer data in various locations
-            let customerData = null;
-            
-            // Method 1: Check window.Shopify.customer
-            if (window.Shopify?.customer) {
-                customerData = {
-                    id: window.Shopify.customer.id,
-                    email: window.Shopify.customer.email,
-                    firstName: window.Shopify.customer.first_name,
-                    lastName: window.Shopify.customer.last_name
-                };
-                console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
-            }
-            
-            // Method 2: Check for customer data in meta tags
-            if (!customerData) {
-                const customerMeta = document.querySelector('meta[name="shopify-customer"]');
-                if (customerMeta) {
-                    try {
-                        const customerJson = JSON.parse(customerMeta.content);
-                        customerData = {
-                            id: customerJson.id,
-                            email: customerJson.email,
-                            firstName: customerJson.first_name,
-                            lastName: customerJson.last_name
-                        };
-                        console.log('Bidly: Found customer via meta tag:', customerData);
-                    } catch (e) {
-                        console.warn('Bidly: Error parsing customer meta tag:', e);
-                    }
-                }
-            }
-            
-            // Method 3: Check for customer data in script tags
-            if (!customerData) {
-                const customerScript = document.querySelector('script[data-customer]');
-                if (customerScript) {
-                    try {
-                        const customerJson = JSON.parse(customerScript.textContent);
-                        customerData = {
-                            id: customerJson.id,
-                            email: customerJson.email,
-                            firstName: customerJson.first_name,
-                            lastName: customerJson.last_name
-                        };
-                        console.log('Bidly: Found customer via script tag:', customerData);
-                    } catch (e) {
-                        console.warn('Bidly: Error parsing customer script:', e);
-                    }
-                }
-            }
-            
-            if (customerData && customerData.email) {
-                // Sync customer with backend
-                const response = await fetch(`${CONFIG.backendUrl}/api/customers/sync`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        shopifyId: customerData.id,
-                        email: customerData.email,
-                        firstName: customerData.firstName,
-                        lastName: customerData.lastName,
-                        shopDomain: CONFIG.shopDomain
-                    })
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    currentCustomer = result.customer;
-                    isLoggedIn = true;
-                    console.log('Bidly: Customer synced successfully:', currentCustomer);
-                    return true;
-                } else {
-                    console.warn('Bidly: Failed to sync customer:', response.status);
-                }
-            }
-            
-            return false;
-        } catch (error) {
-            console.error('Bidly: Error detecting Shopify customer:', error);
-            return false;
-        }
+    // Use shared hybrid login system
+    function getCurrentCustomer() {
+        return window.BidlyHybridLogin?.getCurrentCustomer() || null;
     }
 
-    // Guest login function
-    async function guestLogin(name, email) {
-        try {
-            console.log('Bidly: Attempting guest login...');
-            
-            const response = await fetch(`${CONFIG.backendUrl}/api/customers/temp-login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name,
-                    email,
-                    shopDomain: CONFIG.shopDomain
-                })
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                currentCustomer = result.customer;
-                isLoggedIn = true;
-                console.log('Bidly: Guest login successful:', currentCustomer);
-                return true;
-            } else {
-                console.error('Bidly: Guest login failed:', response.status);
-                return false;
-            }
-        } catch (error) {
-            console.error('Bidly: Error during guest login:', error);
-            return false;
-        }
+    function isUserLoggedIn() {
+        return window.BidlyHybridLogin?.isUserLoggedIn() || false;
     }
 
     // Widget HTML template
@@ -164,7 +45,7 @@
         const { show_timer, show_bid_history, widget_position } = settings;
         
         // If not logged in, show login prompt
-        if (!isLoggedIn) {
+        if (!isUserLoggedIn()) {
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
                     <div class="bidly-widget-container">
@@ -184,12 +65,12 @@
                             </div>
                             
                             <div class="bidly-login-options">
-                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.BidlyAuctionWidget?.openShopifyLogin()">
+                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.BidlyHybridLogin?.openShopifyLogin()">
                                     <span class="bidly-btn-icon">🛍️</span>
                                     Log in with Shopify
                                 </button>
                                 
-                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyAuctionWidget?.openGuestLogin()">
+                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
                                     <span class="bidly-btn-icon">👤</span>
                                     Continue as Guest
                                 </button>
@@ -211,8 +92,8 @@
                               '<span class="bidly-status-ended">● ENDED</span>'}
                         </div>
                         <div class="bidly-customer-info">
-                            <span class="bidly-customer-name">👤 ${currentCustomer.fullName}</span>
-                            <button class="bidly-logout-btn" onclick="window.BidlyAuctionWidget?.logout()" title="Logout">×</button>
+                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.fullName || 'Guest'}</span>
+                            <button class="bidly-logout-btn" onclick="window.BidlyHybridLogin?.logout()" title="Logout">×</button>
                         </div>
                     </div>
 
@@ -831,84 +712,16 @@
         }
     }
 
-    // Open Shopify login
-    function openShopifyLogin() {
-        const currentUrl = encodeURIComponent(window.location.href);
-        const loginUrl = `/account/login?return_to=${currentUrl}`;
-        window.location.href = loginUrl;
-    }
-
-    // Open guest login modal
-    function openGuestLogin() {
-        const modal = document.createElement('div');
-        modal.className = 'bidly-modal-overlay';
-        modal.innerHTML = `
-            <div class="bidly-modal-content">
-                <div class="bidly-modal-header">
-                    <h3>Continue as Guest</h3>
-                    <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeGuestLoginModal()">&times;</button>
-                </div>
-                <div class="bidly-modal-body">
-                    <form id="bidly-guest-login-form" onsubmit="window.BidlyAuctionWidget.submitGuestLogin(event)">
-                        <div class="bidly-form-group">
-                            <label for="bidly-guest-name">Full Name</label>
-                            <input type="text" id="bidly-guest-name" name="name" required>
-                        </div>
-                        <div class="bidly-form-group">
-                            <label for="bidly-guest-email">Email Address</label>
-                            <input type="email" id="bidly-guest-email" name="email" required>
-                        </div>
-                        <div class="bidly-form-actions">
-                            <button type="submit" class="bidly-btn bidly-btn-primary">Continue as Guest</button>
-                            <button type="button" class="bidly-btn bidly-btn-secondary" onclick="window.BidlyAuctionWidget.closeGuestLoginModal()">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    // Close guest login modal
-    function closeGuestLoginModal() {
-        const modal = document.querySelector('.bidly-modal-overlay');
-        if (modal) {
-            modal.remove();
-        }
-    }
-
-    // Submit guest login
-    async function submitGuestLogin(event) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const name = formData.get('name');
-        const email = formData.get('email');
-
-        if (!name || !email) {
-            alert('Please enter both name and email');
-            return;
-        }
-
-        const success = await guestLogin(name, email);
-        if (success) {
-            closeGuestLoginModal();
-            // Refresh the widget to show logged-in state
-            window.location.reload();
-        } else {
-            alert('Login failed. Please try again.');
-        }
-    }
-
-    // Logout function
-    function logout() {
-        currentCustomer = null;
-        isLoggedIn = false;
-        // Refresh the widget to show login prompt
-        window.location.reload();
-    }
 
     // Create bid modal
     function createBidModal(auctionId) {
+        // Check if user is logged in
+        if (!isUserLoggedIn() || !getCurrentCustomer()) {
+            alert('Please log in to place a bid');
+            return;
+        }
+        
+        const customer = getCurrentCustomer();
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
         modal.innerHTML = `
@@ -918,19 +731,15 @@
                     <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBidModal('${auctionId}')">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
+                    <div class="bidly-bidder-info">
+                        <p><strong>Bidding as:</strong> ${customer.fullName}</p>
+                        <p><strong>Email:</strong> ${customer.email}</p>
+                    </div>
                     <form id="bidly-bid-form-${auctionId}" onsubmit="window.BidlyAuctionWidget.submitBid(event, '${auctionId}')">
                         <div class="bidly-form-group">
                             <label for="bidly-bid-amount-${auctionId}">Bid Amount</label>
                             <input type="number" id="bidly-bid-amount-${auctionId}" name="amount" step="0.01" required>
                             <small>Enter your bid amount</small>
-                        </div>
-                        <div class="bidly-form-group">
-                            <label for="bidly-bidder-name-${auctionId}">Your Name</label>
-                            <input type="text" id="bidly-bidder-name-${auctionId}" name="bidderName" required>
-                        </div>
-                        <div class="bidly-form-group">
-                            <label for="bidly-bidder-email-${auctionId}">Your Email</label>
-                            <input type="email" id="bidly-bidder-email-${auctionId}" name="bidderEmail" required>
                         </div>
                         <div class="bidly-form-actions">
                             <button type="submit" class="bidly-submit-bid">Place Bid</button>
@@ -1004,19 +813,20 @@
             event.preventDefault();
             
             // Check if user is logged in
-            if (!isLoggedIn || !currentCustomer) {
+            if (!isUserLoggedIn() || !getCurrentCustomer()) {
                 alert('Please log in to place a bid');
                 return;
             }
             
+            const customer = getCurrentCustomer();
             const form = event.target;
             const formData = new FormData(form);
             
             const bidData = {
                 amount: parseFloat(formData.get('amount')),
-                bidderName: currentCustomer.fullName,
-                bidderEmail: currentCustomer.email,
-                customerId: currentCustomer.id
+                bidderName: customer.fullName,
+                bidderEmail: customer.email,
+                customerId: customer.id
             };
 
             try {
@@ -1031,7 +841,7 @@
                 const result = await response.json();
                 if (result.success) {
                     // Update customer bid history
-                    await fetch(`${CONFIG.backendUrl}/api/customers/${currentCustomer.id}/bid?shop=${CONFIG.shopDomain}`, {
+                    await fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1084,14 +894,22 @@
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
         
-        // First, try to detect Shopify customer
-        console.log('Bidly: Attempting to detect Shopify customer...');
-        const shopifyCustomerDetected = await detectShopifyCustomer();
+        // Wait for shared login system to initialize
+        let attempts = 0;
+        const maxAttempts = 10;
         
-        if (shopifyCustomerDetected) {
-            console.log('Bidly: Shopify customer detected and synced');
+        while (!window.BidlyHybridLogin && attempts < maxAttempts) {
+            console.log('Bidly: Waiting for shared login system...', attempts + 1);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            attempts++;
+        }
+        
+        if (window.BidlyHybridLogin) {
+            console.log('Bidly: Shared hybrid login system loaded');
+            // Wait a bit more for customer detection to complete
+            await new Promise(resolve => setTimeout(resolve, 1000));
         } else {
-            console.log('Bidly: No Shopify customer detected, will show login options');
+            console.log('Bidly: Shared login system not available after waiting');
         }
         
         // Get settings from block
@@ -1106,11 +924,42 @@
         
         if (auctionCheck.hasAuction) {
             console.log('Bidly: Product has auction data, injecting widget...', auctionCheck);
+            // Store auction check data globally for refresh
+            window.currentAuctionCheck = auctionCheck;
             injectWidget(auctionCheck, settings);
         } else {
             console.log('Bidly: No auction data found for this product');
         }
     }
+
+    // Listen for login status changes
+    window.addEventListener('bidly-login-success', function(event) {
+        console.log('Bidly: Login success detected, refreshing widget...');
+        // Refresh the widget to show logged-in state
+        const auctionCheck = window.currentAuctionCheck;
+        if (auctionCheck && auctionCheck.hasAuction) {
+            const settings = {
+                show_timer: true,
+                show_bid_history: true,
+                widget_position: 'below_price'
+            };
+            injectWidget(auctionCheck, settings);
+        }
+    });
+
+    window.addEventListener('bidly-logout', function(event) {
+        console.log('Bidly: Logout detected, refreshing widget...');
+        // Refresh the widget to show login prompt
+        const auctionCheck = window.currentAuctionCheck;
+        if (auctionCheck && auctionCheck.hasAuction) {
+            const settings = {
+                show_timer: true,
+                show_bid_history: true,
+                widget_position: 'below_price'
+            };
+            injectWidget(auctionCheck, settings);
+        }
+    });
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
