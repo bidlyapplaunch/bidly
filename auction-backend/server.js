@@ -136,6 +136,10 @@ app.use('/api/debug', debugRoutes);
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
 console.log('📁 Serving admin frontend from:', frontendDistPath);
 
+// Add cache-busting version
+const FRONTEND_VERSION = Date.now();
+console.log('🔄 Frontend version (cache-busting):', FRONTEND_VERSION);
+
 // Only serve static files for non-API routes
 app.use((req, res, next) => {
   // Skip static file serving for API routes
@@ -143,12 +147,11 @@ app.use((req, res, next) => {
     return next();
   }
   
-  // Add cache-busting headers for JavaScript and CSS files
-  if (req.path.endsWith('.js') || req.path.endsWith('.css')) {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  }
+  // Add cache-busting headers for all static files
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('X-Frontend-Version', FRONTEND_VERSION.toString());
   
   console.log('📁 Serving static file:', req.path, 'from admin frontend');
   express.static(frontendDistPath)(req, res, next);
