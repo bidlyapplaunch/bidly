@@ -2,7 +2,7 @@ import Auction from '../models/Auction.js';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
 import emailService from '../services/emailService.js';
-import ProductDuplicationService from '../services/productDuplicationService.js';
+// import ProductDuplicationService from '../services/productDuplicationService.js';
 
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
@@ -90,8 +90,8 @@ export const createAuction = async (req, res, next) => {
     });
     const savedAuction = await auction.save();
     
-    // Update product metafields for auction widget
-    await updateProductMetafields(savedAuction, shopDomain);
+    // Update product metafields for auction widget (temporarily disabled)
+    // await updateProductMetafields(savedAuction, shopDomain);
     
     // Send real-time notification about new auction
     const io = req.app.get('io');
@@ -453,8 +453,8 @@ export const placeBid = async (req, res, next) => {
       auctionEnded = true;
     }
     
-    // Update product metafields for auction widget
-    await updateProductMetafields(updatedAuction, shopDomain);
+    // Update product metafields for auction widget (temporarily disabled)
+    // await updateProductMetafields(updatedAuction, shopDomain);
     
     // Send email notifications
     try {
