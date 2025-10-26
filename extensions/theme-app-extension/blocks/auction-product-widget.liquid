@@ -1,0 +1,220 @@
+{% comment %}
+  Auction Product Widget - Shows auction information directly on product pages
+  This widget automatically appears when a product is listed as an auction
+{% endcomment %}
+
+{% schema %}
+{
+  "name": "Auction Product Widget",
+  "target": "section",
+  "available_if": "{{ app.metafields.auction.is_auction }}",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Auction Widget Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_timer",
+      "label": "Show countdown timer",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_bid_history",
+      "label": "Show bid history link",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "widget_style",
+      "label": "Widget style",
+      "options": [
+        {
+          "value": "card",
+          "label": "Card style"
+        },
+        {
+          "value": "inline",
+          "label": "Inline style"
+        }
+      ],
+      "default": "card"
+    }
+  ]
+}
+{% endschema %}
+
+{%- liquid
+  assign auction_enabled = product.metafields.auction.is_auction
+  assign auction_id = product.metafields.auction.auction_id
+  assign auction_status = product.metafields.auction.status
+  assign current_bid = product.metafields.auction.current_bid | default: 0
+  assign starting_bid = product.metafields.auction.starting_bid | default: 0
+  assign reserve_price = product.metafields.auction.reserve_price | default: 0
+  assign end_time = product.metafields.auction.end_time
+  assign bid_count = product.metafields.auction.bid_count | default: 0
+  assign buy_now_price = product.metafields.auction.buy_now_price | default: 0
+-%}
+
+{%- if auction_enabled and auction_id -%}
+  <div 
+    id="bidly-auction-widget-{{ auction_id }}" 
+    class="bidly-auction-product-widget"
+    data-auction-id="{{ auction_id }}"
+    data-product-id="{{ product.id }}"
+    data-shop="{{ shop.permanent_domain }}"
+  >
+    <div class="bidly-auction-card">
+      <div class="bidly-auction-header">
+        <h3 class="bidly-auction-title">{{ product.title }}</h3>
+        <div class="bidly-auction-status">
+          {%- if auction_status == 'pending' -%}
+            <span class="bidly-status-badge bidly-status-pending">Starting Soon</span>
+          {%- elsif auction_status == 'active' -%}
+            <span class="bidly-status-badge bidly-status-active">Live Auction</span>
+          {%- elsif auction_status == 'ended' -%}
+            <span class="bidly-status-badge bidly-status-ended">Auction Ended</span>
+          {%- else -%}
+            <span class="bidly-status-badge bidly-status-closed">Closed</span>
+          {%- endif -%}
+        </div>
+      </div>
+
+      {%- if auction_status == 'active' and end_time -%}
+        <div class="bidly-timer-section">
+          <div class="bidly-timer-label">Ends In</div>
+          <div class="bidly-countdown-timer" data-end-time="{{ end_time }}">
+            <span class="bidly-timer-days">0</span> DAYS : 
+            <span class="bidly-timer-hours">0</span> HOURS : 
+            <span class="bidly-timer-minutes">0</span> MINUTES : 
+            <span class="bidly-timer-seconds">0</span> SECONDS
+          </div>
+        </div>
+      {%- endif -%}
+
+      <div class="bidly-auction-details">
+        <div class="bidly-bid-info">
+          <div class="bidly-current-bid">
+            <span class="bidly-label">Current Bid</span>
+            <span class="bidly-amount" data-current-bid="{{ current_bid }}">${{ current_bid | money_without_currency }}</span>
+          </div>
+          {%- if reserve_price > 0 -%}
+            <div class="bidly-reserve-price">
+              <span class="bidly-label">Reserve Price</span>
+              <span class="bidly-amount">${{ reserve_price | money_without_currency }}</span>
+            </div>
+          {%- endif -%}
+          <div class="bidly-bid-count">
+            <span class="bidly-label">Bids</span>
+            <span class="bidly-count" data-bid-count="{{ bid_count }}">{{ bid_count }}</span>
+          </div>
+        </div>
+
+        {%- if auction_status == 'active' -%}
+          <div class="bidly-auction-actions">
+            <button 
+              class="bidly-bid-button" 
+              onclick="openBidModal('{{ auction_id }}')"
+            >
+              Place a Bid
+            </button>
+            {%- if buy_now_price > 0 -%}
+              <button 
+                class="bidly-buy-now-button" 
+                onclick="openBuyNowModal('{{ auction_id }}', {{ buy_now_price }})"
+              >
+                Buy Now (${{ buy_now_price | money_without_currency }})
+              </button>
+            {%- endif -%}
+          </div>
+        {%- elsif auction_status == 'pending' -%}
+          <div class="bidly-pending-message">
+            <p>Auction will start soon. Check back later!</p>
+          </div>
+        {%- elsif auction_status == 'ended' -%}
+          <div class="bidly-ended-message">
+            <p>Auction has ended. Final bid: ${{ current_bid | money_without_currency }}</p>
+          </div>
+        {%- endif -%}
+
+        <div class="bidly-bid-history-link">
+          <a href="#" onclick="openBidHistory('{{ auction_id }}')">View Bid History</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bid Modal -->
+  <div id="bidly-bid-modal-{{ auction_id }}" class="bidly-modal" style="display: none;">
+    <div class="bidly-modal-content">
+      <div class="bidly-modal-header">
+        <h3>Place Your Bid</h3>
+        <span class="bidly-modal-close" onclick="closeBidModal('{{ auction_id }}')">&times;</span>
+      </div>
+      <div class="bidly-modal-body">
+        <form id="bidly-bid-form-{{ auction_id }}" onsubmit="submitBid(event, '{{ auction_id }}')">
+          <div class="bidly-form-group">
+            <label for="bidly-bid-amount-{{ auction_id }}">Bid Amount</label>
+            <input 
+              type="number" 
+              id="bidly-bid-amount-{{ auction_id }}" 
+              name="amount" 
+              min="{{ starting_bid }}"
+              step="0.01"
+              required
+            >
+            <small>Minimum bid: ${{ starting_bid | money_without_currency }}</small>
+          </div>
+          <div class="bidly-form-group">
+            <label for="bidly-bidder-name-{{ auction_id }}">Your Name</label>
+            <input 
+              type="text" 
+              id="bidly-bidder-name-{{ auction_id }}" 
+              name="bidderName" 
+              required
+            >
+          </div>
+          <div class="bidly-form-group">
+            <label for="bidly-bidder-email-{{ auction_id }}">Your Email</label>
+            <input 
+              type="email" 
+              id="bidly-bidder-email-{{ auction_id }}" 
+              name="bidderEmail" 
+              required
+            >
+          </div>
+          <div class="bidly-form-actions">
+            <button type="submit" class="bidly-submit-bid">Place Bid</button>
+            <button type="button" onclick="closeBidModal('{{ auction_id }}')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buy Now Modal -->
+  <div id="bidly-buy-now-modal-{{ auction_id }}" class="bidly-modal" style="display: none;">
+    <div class="bidly-modal-content">
+      <div class="bidly-modal-header">
+        <h3>Buy Now</h3>
+        <span class="bidly-modal-close" onclick="closeBuyNowModal('{{ auction_id }}')">&times;</span>
+      </div>
+      <div class="bidly-modal-body">
+        <p>Are you sure you want to buy this item for <strong>${{ buy_now_price | money_without_currency }}</strong>?</p>
+        <p>This will end the auction immediately and you will be the winner.</p>
+        <div class="bidly-form-actions">
+          <button onclick="confirmBuyNow('{{ auction_id }}', {{ buy_now_price }})" class="bidly-confirm-buy">Yes, Buy Now</button>
+          <button onclick="closeBuyNowModal('{{ auction_id }}')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize auction widget
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeAuctionWidget('{{ auction_id }}', '{{ end_time }}');
+    });
+  </script>
+{%- endif -%}

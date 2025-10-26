@@ -2,6 +2,7 @@ import Auction from '../models/Auction.js';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
 import emailService from '../services/emailService.js';
+import ProductDuplicationService from '../services/productDuplicationService.js';
 
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
@@ -20,6 +21,45 @@ const computeAuctionStatus = (auction) => {
     return 'active';
   } else {
     return 'ended';
+  }
+};
+
+// Helper function to update product metafields for auction widget
+const updateProductMetafields = async (auction, shopDomain) => {
+  try {
+    if (!auction.shopifyProductId || !shopDomain) {
+      return;
+    }
+
+    const auctionData = {
+      auctionId: auction._id,
+      status: computeAuctionStatus(auction),
+      currentBid: auction.currentBid || 0,
+      startingBid: auction.startingBid,
+      reservePrice: auction.reservePrice || 0,
+      endTime: auction.endTime,
+      bidCount: auction.bidHistory?.length || 0,
+      buyNowPrice: auction.buyNowPrice || 0
+    };
+
+    // Update metafields via API call
+    const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:5000'}/api/metafields/products/${auction.shopifyProductId}/auction-metafields`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.ADMIN_TOKEN || 'temp-token'}`
+      },
+      body: JSON.stringify({
+        shop: shopDomain,
+        auctionData
+      })
+    });
+
+    if (!response.ok) {
+      console.warn('Failed to update product metafields:', await response.text());
+    }
+  } catch (error) {
+    console.warn('Error updating product metafields:', error.message);
   }
 };
 
@@ -49,6 +89,9 @@ export const createAuction = async (req, res, next) => {
       productData: productData // Cache the product data
     });
     const savedAuction = await auction.save();
+    
+    // Update product metafields for auction widget
+    await updateProductMetafields(savedAuction, shopDomain);
     
     // Send real-time notification about new auction
     const io = req.app.get('io');
@@ -409,6 +452,9 @@ export const placeBid = async (req, res, next) => {
       await updatedAuction.save();
       auctionEnded = true;
     }
+    
+    // Update product metafields for auction widget
+    await updateProductMetafields(updatedAuction, shopDomain);
     
     // Send email notifications
     try {

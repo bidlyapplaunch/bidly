@@ -118,6 +118,8 @@ app.use('/api/auctions', auctionRoutes);
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/metafields', require('./routes/metafields'));
+app.use('/api/product-duplication', require('./routes/productDuplication'));
 
 // OAuth routes for Shopify app installation
 app.use('/auth/shopify', oauthRoutes);

@@ -24,3 +24,8 @@ limit = 5
 type = "auction_featured"
 name = "Featured Auction"
 limit = 1
+
+[[extensions.settings.blocks]]
+type = "auction_product_widget"
+name = "Auction Product Widget"
+limit = 1
