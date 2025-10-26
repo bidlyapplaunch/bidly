@@ -1,4 +1,4 @@
-import { getShopifyClient } from './shopifyService.js';
+import getShopifyService from './shopifyService.js';
 
 class ProductDuplicationService {
   /**
@@ -20,7 +20,7 @@ class ProductDuplicationService {
         winnerName
       });
 
-      const shopify = getShopifyClient(shop);
+      const shopify = getShopifyService().getClient(shop);
       if (!shopify) {
         throw new Error('Shop not found or invalid credentials');
       }
@@ -182,7 +182,7 @@ class ProductDuplicationService {
    */
   static async getWinnerProduct(shop, productId, token, email) {
     try {
-      const shopify = getShopifyClient(shop);
+      const shopify = getShopifyService().getClient(shop);
       if (!shopify) {
         throw new Error('Shop not found or invalid credentials');
       }
@@ -234,7 +234,7 @@ class ProductDuplicationService {
    */
   static async cleanupOldWinnerProducts(shop, daysOld = 30) {
     try {
-      const shopify = getShopifyClient(shop);
+      const shopify = getShopifyService().getClient(shop);
       if (!shopify) {
         throw new Error('Shop not found or invalid credentials');
       }

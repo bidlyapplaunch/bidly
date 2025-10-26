@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { getShopifyClient } from '../services/shopifyService.js';
+import getShopifyService from '../services/shopifyService.js';
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.get('/products/:productId/metafields', authenticateToken, async (req, res
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyClient(shop);
+    const shopify = getShopifyService().getClient(shop);
     if (!shopify) {
       return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
     }
@@ -48,7 +48,7 @@ router.post('/products/:productId/auction-metafields', authenticateToken, async 
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyClient(shop);
+    const shopify = getShopifyService().getClient(shop);
     if (!shopify) {
       return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
     }
@@ -168,7 +168,7 @@ router.put('/products/:productId/auction-metafields', authenticateToken, async (
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyClient(shop);
+    const shopify = getShopifyService().getClient(shop);
     if (!shopify) {
       return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
     }
@@ -233,7 +233,7 @@ router.delete('/products/:productId/auction-metafields', authenticateToken, asyn
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyClient(shop);
+    const shopify = getShopifyService().getClient(shop);
     if (!shopify) {
       return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
     }
