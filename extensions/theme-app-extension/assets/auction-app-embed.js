@@ -44,8 +44,12 @@
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
         
+        // TEMPORARY: Always show bidding interface for testing
+        // TODO: Re-enable login check once login system is fully working
+        const forceShowBidding = true;
+        
         // If not logged in, show login prompt
-        if (!isUserLoggedIn()) {
+        if (!forceShowBidding && !isUserLoggedIn()) {
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
                     <div class="bidly-widget-container">
@@ -92,7 +96,7 @@
                               '<span class="bidly-status-ended">● ENDED</span>'}
                         </div>
                         <div class="bidly-customer-info">
-                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.fullName || 'Guest'}</span>
+                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.fullName || 'Guest User'}</span>
                             <button class="bidly-logout-btn" onclick="window.BidlyHybridLogin?.logout()" title="Logout">×</button>
                         </div>
                     </div>
@@ -935,30 +939,50 @@
     // Listen for login status changes
     window.addEventListener('bidly-login-success', function(event) {
         console.log('Bidly: Login success detected, refreshing widget...');
-        // Refresh the widget to show logged-in state
-        const auctionCheck = window.currentAuctionCheck;
-        if (auctionCheck && auctionCheck.hasAuction) {
-            const settings = {
-                show_timer: true,
-                show_bid_history: true,
-                widget_position: 'below_price'
-            };
-            injectWidget(auctionCheck, settings);
-        }
+        // Re-check for auction data and refresh widget
+        setTimeout(async () => {
+            try {
+                const auctionCheck = await checkProductForAuction();
+                if (auctionCheck.hasAuction) {
+                    console.log('Bidly: Re-injecting widget after login...', auctionCheck);
+                    window.currentAuctionCheck = auctionCheck;
+                    const settings = {
+                        show_timer: true,
+                        show_bid_history: true,
+                        widget_position: 'below_price'
+                    };
+                    injectWidget(auctionCheck, settings);
+                } else {
+                    console.log('Bidly: No auction data found after login');
+                }
+            } catch (error) {
+                console.error('Bidly: Error refreshing widget after login:', error);
+            }
+        }, 100);
     });
 
     window.addEventListener('bidly-logout', function(event) {
         console.log('Bidly: Logout detected, refreshing widget...');
-        // Refresh the widget to show login prompt
-        const auctionCheck = window.currentAuctionCheck;
-        if (auctionCheck && auctionCheck.hasAuction) {
-            const settings = {
-                show_timer: true,
-                show_bid_history: true,
-                widget_position: 'below_price'
-            };
-            injectWidget(auctionCheck, settings);
-        }
+        // Re-check for auction data and refresh widget
+        setTimeout(async () => {
+            try {
+                const auctionCheck = await checkProductForAuction();
+                if (auctionCheck.hasAuction) {
+                    console.log('Bidly: Re-injecting widget after logout...', auctionCheck);
+                    window.currentAuctionCheck = auctionCheck;
+                    const settings = {
+                        show_timer: true,
+                        show_bid_history: true,
+                        widget_position: 'below_price'
+                    };
+                    injectWidget(auctionCheck, settings);
+                } else {
+                    console.log('Bidly: No auction data found after logout');
+                }
+            } catch (error) {
+                console.error('Bidly: Error refreshing widget after logout:', error);
+            }
+        }, 100);
     });
 
     // Initialize when DOM is ready
