@@ -109,6 +109,78 @@
         `;
     }
 
+    // Get product ID from page
+    function getProductIdFromPage() {
+        // Try to get product ID from URL
+        const urlMatch = window.location.pathname.match(/\/products\/([^\/\?]+)/);
+        if (urlMatch) {
+            return urlMatch[1];
+        }
+
+        // Try to get from Shopify global objects
+        if (window.Shopify?.analytics?.meta?.product?.id) {
+            return window.Shopify.analytics.meta.product.id.toString();
+        }
+
+        // Try to get from product JSON script tag
+        const productJson = document.querySelector('script[type="application/json"][data-product-json]');
+        if (productJson) {
+            try {
+                const product = JSON.parse(productJson.textContent);
+                return product.id ? product.id.toString() : null;
+            } catch (e) {
+                console.warn('Bidly: Error parsing product JSON for ID:', e);
+            }
+        }
+
+        return null;
+    }
+
+    // Check if product has auction data by fetching from backend API
+    async function checkProductForAuction() {
+        try {
+            const productId = getProductIdFromPage();
+            if (!productId) {
+                console.log('Bidly: Could not determine product ID');
+                return { hasAuction: false };
+            }
+
+            console.log('Bidly: Checking for auction data for product ID:', productId);
+
+            // Try to fetch auction data directly from backend API
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.auction) {
+                        const auction = data.auction;
+                        console.log('Bidly: Found auction data:', auction);
+                        return {
+                            hasAuction: true,
+                            auctionId: auction._id,
+                            status: auction.status || 'pending',
+                            currentBid: parseFloat(auction.currentBid) || 0,
+                            startingBid: parseFloat(auction.startingBid) || 0,
+                            reservePrice: parseFloat(auction.reservePrice) || 0,
+                            endTime: auction.endTime,
+                            bidCount: auction.bidHistory?.length || 0,
+                            buyNowPrice: parseFloat(auction.buyNowPrice) || 0
+                        };
+                    }
+                } else {
+                    console.log('Bidly: No auction found for product ID:', productId);
+                }
+            } catch (apiError) {
+                console.warn('Bidly: Error fetching from API:', apiError);
+            }
+
+            return { hasAuction: false };
+        } catch (error) {
+            console.warn('Bidly: Error checking product for auction:', error);
+            return { hasAuction: false };
+        }
+    }
+
     // Find pricing section to overlay widget
     function findPricingSection() {
         for (const selector of CONFIG.pricingSelectors) {
@@ -219,15 +291,15 @@
         // Update current bid
         const currentBidElement = widget.querySelector('[data-current-bid]');
         if (currentBidElement) {
-            currentBidElement.textContent = `$${auctionData.current_bid.toFixed(2)}`;
-            currentBidElement.setAttribute('data-current-bid', auctionData.current_bid);
+            currentBidElement.textContent = `$${auctionData.currentBid.toFixed(2)}`;
+            currentBidElement.setAttribute('data-current-bid', auctionData.currentBid);
         }
 
         // Update bid count
         const bidCountElement = widget.querySelector('[data-bid-count]');
         if (bidCountElement) {
-            bidCountElement.textContent = auctionData.bid_count;
-            bidCountElement.setAttribute('data-bid-count', auctionData.bid_count);
+            bidCountElement.textContent = auctionData.bidHistory?.length || 0;
+            bidCountElement.setAttribute('data-bid-count', auctionData.bidHistory?.length || 0);
         }
 
         // Update status if changed
@@ -392,5 +464,34 @@
             }
         }
     };
+
+    // Main initialization function
+    async function init() {
+        console.log('Bidly: Initializing auction app embed...');
+        
+        // Get settings from block
+        const settings = {
+            show_timer: true, // Default values since we can't access block settings in external JS
+            show_bid_history: true,
+            widget_position: 'below_price'
+        };
+        
+        // Check if product has auction data
+        const auctionCheck = await checkProductForAuction();
+        
+        if (auctionCheck.hasAuction) {
+            console.log('Bidly: Product has auction data, injecting widget...', auctionCheck);
+            injectWidget(auctionCheck, settings);
+        } else {
+            console.log('Bidly: No auction data found for this product');
+        }
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
 })();

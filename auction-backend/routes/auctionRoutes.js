@@ -41,6 +41,58 @@ router.post('/', validateCreateAuction, createAuction);
 router.get('/', getAllAuctions);
 router.get('/stats', getAuctionStats);
 router.get('/with-product-data', getAuctionsWithProductData);
+
+// Get auction by Shopify product ID (for widget) - MUST be before /:id route
+router.get('/by-product/:productId', identifyStore, async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const shopDomain = req.shopDomain;
+    
+    if (!shopDomain) {
+      return res.status(400).json({ success: false, message: 'Store domain is required' });
+    }
+    
+    // Find auction by Shopify product ID
+    const Auction = (await import('../models/Auction.js')).default;
+    const auction = await Auction.findOne({ 
+      shopifyProductId: productId, 
+      shopDomain: shopDomain 
+    });
+    
+    if (!auction) {
+      return res.status(404).json({ success: false, message: 'Auction not found' });
+    }
+    
+    // Compute real-time status
+    const now = new Date();
+    const startTime = new Date(auction.startTime);
+    const endTime = new Date(auction.endTime);
+    
+    let status = auction.status;
+    if (auction.status !== 'closed') {
+      if (now < startTime) {
+        status = 'pending';
+      } else if (now >= startTime && now < endTime) {
+        status = 'active';
+      } else {
+        status = 'ended';
+      }
+    }
+    
+    const auctionWithRealTimeStatus = {
+      ...auction.toObject(),
+      status: status
+    };
+    
+    res.json({
+      success: true,
+      auction: auctionWithRealTimeStatus
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get('/:id', validateId, getAuctionById);
 router.put('/:id', validateUpdateAuction, updateAuction);
 router.delete('/:id', validateId, deleteAuction);
