@@ -3,6 +3,7 @@ import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
 import emailService from '../services/emailService.js';
 import ProductDuplicationService from '../services/productDuplicationService.js';
+import AuctionEndService from '../services/auctionEndService.js';
 
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
@@ -60,6 +61,38 @@ const updateProductMetafields = async (auction, shopDomain) => {
     }
   } catch (error) {
     console.warn('Error updating product metafields:', error.message);
+  }
+};
+
+// Helper function to process ended auctions
+const processEndedAuctions = async () => {
+  try {
+    console.log('🔄 Checking for ended auctions...');
+    
+    // Find auctions that have ended but haven't been processed
+    const endedAuctions = await Auction.find({
+      status: 'ended',
+      completedAt: { $exists: false }
+    });
+
+    console.log(`📊 Found ${endedAuctions.length} ended auctions to process`);
+
+    for (const auction of endedAuctions) {
+      try {
+        console.log(`🎯 Processing ended auction: ${auction._id}`);
+        const result = await AuctionEndService.processAuctionEnd(auction);
+        
+        if (result.success) {
+          console.log(`✅ Successfully processed auction ${auction._id}`);
+        } else {
+          console.error(`❌ Failed to process auction ${auction._id}: ${result.message}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error processing auction ${auction._id}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error in processEndedAuctions:', error);
   }
 };
 
@@ -451,6 +484,14 @@ export const placeBid = async (req, res, next) => {
       updatedAuction.endTime = new Date(); // End immediately
       await updatedAuction.save();
       auctionEnded = true;
+      
+      // Process the ended auction (duplicate product, create draft order, notify winner)
+      try {
+        await processEndedAuctions();
+      } catch (error) {
+        console.error('❌ Error processing ended auction:', error);
+        // Don't fail the bid if auction processing fails
+      }
     }
     
     // Update product metafields for auction widget

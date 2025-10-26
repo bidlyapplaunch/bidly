@@ -359,6 +359,24 @@ const checkAuctionStatusChanges = async () => {
           }
         }
         
+        // Process ended auctions (duplicate product, create draft order, notify winner)
+        if (computedStatus === 'ended') {
+          try {
+            // Import and call the processEndedAuctions function
+            const { default: AuctionEndService } = await import('./services/auctionEndService.js');
+            const result = await AuctionEndService.processAuctionEnd(auction);
+            
+            if (result.success) {
+              console.log(`✅ Auction end processing completed for auction ${auction._id}`);
+            } else {
+              console.error(`❌ Auction end processing failed for auction ${auction._id}: ${result.message}`);
+            }
+          } catch (processingError) {
+            console.error(`❌ Error processing ended auction ${auction._id}:`, processingError);
+            // Don't fail the status update if processing fails
+          }
+        }
+        
         // Broadcast the status change
         global.broadcastAuctionStatusUpdate(auction._id, computedStatus, {
           _id: auction._id,

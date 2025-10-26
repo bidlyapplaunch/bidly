@@ -1,0 +1,24 @@
+{% comment %}
+  Automatic Auction Widget Script
+  This script gets automatically injected into the theme head
+  No manual theme customization required
+{% endcomment %}
+
+{% schema %}
+{
+  "name": "Automatic Auction Script",
+  "target": "head",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Automatic Auction Detection"
+    },
+    {
+      "type": "paragraph",
+      "content": "This script automatically detects products with auctions and injects the auction widget. It works on all product pages without any manual configuration."
+    }
+  ]
+}
+{% endschema %}
+
+<script src="{{ 'auction-auto-inject.js' | asset_url }}" async></script>

@@ -1,0 +1,396 @@
+/**
+ * Auction App Embed JavaScript
+ * Handles widget injection and functionality
+ */
+
+(function() {
+    'use strict';
+
+    // Only run on product pages
+    if (!window.location.pathname.includes('/products/')) {
+        return;
+    }
+
+    // Configuration
+    const CONFIG = {
+        backendUrl: 'https://bidly-auction-backend.onrender.com',
+        shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname,
+        widgetClass: 'bidly-auction-app-embed',
+        pricingSelectors: [
+            '.product-form__price',
+            '.price',
+            '.product-price',
+            '.product__price',
+            '[data-price]',
+            '.money',
+            '.product-single__price',
+            '.product__pricing',
+            '.price-wrapper',
+            '.product-price-wrapper'
+        ]
+    };
+
+    // Widget HTML template
+    function createWidgetHTML(auctionData, settings) {
+        const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice } = auctionData;
+        const { show_timer, show_bid_history, widget_position } = settings;
+        
+        return `
+            <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
+                <div class="bidly-widget-container">
+                    <div class="bidly-widget-header">
+                        <h3 class="bidly-widget-title">Live Auction</h3>
+                        <div class="bidly-widget-status">
+                            ${status === 'active' ? '<span class="bidly-status-active">● LIVE</span>' : 
+                              status === 'pending' ? '<span class="bidly-status-pending">● STARTING SOON</span>' : 
+                              '<span class="bidly-status-ended">● ENDED</span>'}
+                        </div>
+                    </div>
+
+                    ${show_timer && status === 'active' && endTime ? `
+                        <div class="bidly-widget-timer">
+                            <div class="bidly-timer-label">Ends In:</div>
+                            <div class="bidly-countdown" data-end-time="${endTime}">
+                                <span class="bidly-timer-days">0</span>d 
+                                <span class="bidly-timer-hours">0</span>h 
+                                <span class="bidly-timer-minutes">0</span>m 
+                                <span class="bidly-timer-seconds">0</span>s
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="bidly-widget-pricing">
+                        <div class="bidly-current-bid">
+                            <span class="bidly-label">Current Bid:</span>
+                            <span class="bidly-amount" data-current-bid="${currentBid}">$${currentBid.toFixed(2)}</span>
+                        </div>
+                        ${reservePrice > 0 ? `
+                            <div class="bidly-reserve-price">
+                                <span class="bidly-label">Reserve:</span>
+                                <span class="bidly-amount">$${reservePrice.toFixed(2)}</span>
+                            </div>
+                        ` : ''}
+                        <div class="bidly-bid-count">
+                            <span class="bidly-label">Bids:</span>
+                            <span class="bidly-count" data-bid-count="${bidCount}">${bidCount}</span>
+                        </div>
+                    </div>
+
+                    ${status === 'active' ? `
+                        <div class="bidly-widget-actions">
+                            <button class="bidly-bid-btn" onclick="window.BidlyAuctionWidget.openBidModal('${auctionId}')">
+                                Place a Bid
+                            </button>
+                            ${buyNowPrice > 0 ? `
+                                <button class="bidly-buy-now-btn" onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})">
+                                    Buy Now ($${buyNowPrice.toFixed(2)})
+                                </button>
+                            ` : ''}
+                        </div>
+                    ` : status === 'pending' ? `
+                        <div class="bidly-pending-message">
+                            Auction will start soon. Check back later!
+                        </div>
+                    ` : `
+                        <div class="bidly-ended-message">
+                            Auction has ended. Final bid: $${currentBid.toFixed(2)}
+                        </div>
+                    `}
+
+                    ${show_bid_history ? `
+                        <div class="bidly-widget-footer">
+                            <a href="#" onclick="window.BidlyAuctionWidget.openBidHistory('${auctionId}')" class="bidly-history-link">
+                                View Bid History
+                            </a>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Find pricing section to overlay widget
+    function findPricingSection() {
+        for (const selector of CONFIG.pricingSelectors) {
+            const element = document.querySelector(selector);
+            if (element) {
+                return element;
+            }
+        }
+        return null;
+    }
+
+    // Inject widget into pricing section
+    function injectWidget(auctionData, settings) {
+        const pricingSection = findPricingSection();
+        if (!pricingSection) {
+            console.warn('Bidly: Could not find pricing section to overlay widget');
+            return;
+        }
+
+        // Remove existing widget if any
+        const existingWidget = document.querySelector(`.${CONFIG.widgetClass}`);
+        if (existingWidget) {
+            existingWidget.remove();
+        }
+
+        // Create widget container
+        const widgetContainer = document.createElement('div');
+        widgetContainer.className = CONFIG.widgetClass;
+        widgetContainer.innerHTML = createWidgetHTML(auctionData, settings);
+
+        // Position widget based on settings
+        const widgetPosition = settings.widget_position || 'below_price';
+        
+        if (widgetPosition === 'replace_price') {
+            // Replace the pricing section
+            pricingSection.style.display = 'none';
+            pricingSection.parentNode.insertBefore(widgetContainer, pricingSection.nextSibling);
+        } else if (widgetPosition === 'above_price') {
+            // Insert above pricing section
+            pricingSection.parentNode.insertBefore(widgetContainer, pricingSection);
+        } else {
+            // Insert below pricing section (default)
+            pricingSection.parentNode.insertBefore(widgetContainer, pricingSection.nextSibling);
+        }
+
+        // Initialize countdown timer if active
+        if (auctionData.status === 'active' && auctionData.endTime && settings.show_timer) {
+            initializeCountdown(auctionData.auctionId, auctionData.endTime);
+        }
+
+        // Initialize real-time updates
+        initializeRealTimeUpdates(auctionData.auctionId);
+    }
+
+    // Initialize countdown timer
+    function initializeCountdown(auctionId, endTime) {
+        const countdownElement = document.querySelector(`#bidly-auction-widget-${auctionId} .bidly-countdown`);
+        if (!countdownElement) return;
+
+        const endTimestamp = new Date(endTime).getTime();
+        
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = endTimestamp - now;
+
+            if (distance < 0) {
+                countdownElement.innerHTML = 'Auction Ended';
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdownElement.querySelector('.bidly-timer-days').textContent = days;
+            countdownElement.querySelector('.bidly-timer-hours').textContent = hours;
+            countdownElement.querySelector('.bidly-timer-minutes').textContent = minutes;
+            countdownElement.querySelector('.bidly-timer-seconds').textContent = seconds;
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    }
+
+    // Initialize real-time updates via polling
+    function initializeRealTimeUpdates(auctionId) {
+        setInterval(async () => {
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (data.success && data.auction) {
+                    updateWidgetData(auctionId, data.auction);
+                }
+            } catch (error) {
+                console.warn('Bidly: Error updating auction data:', error);
+            }
+        }, 5000);
+    }
+
+    // Update widget data in real-time
+    function updateWidgetData(auctionId, auctionData) {
+        const widget = document.querySelector(`#bidly-auction-widget-${auctionId}`);
+        if (!widget) return;
+
+        // Update current bid
+        const currentBidElement = widget.querySelector('[data-current-bid]');
+        if (currentBidElement) {
+            currentBidElement.textContent = `$${auctionData.current_bid.toFixed(2)}`;
+            currentBidElement.setAttribute('data-current-bid', auctionData.current_bid);
+        }
+
+        // Update bid count
+        const bidCountElement = widget.querySelector('[data-bid-count]');
+        if (bidCountElement) {
+            bidCountElement.textContent = auctionData.bid_count;
+            bidCountElement.setAttribute('data-bid-count', auctionData.bid_count);
+        }
+
+        // Update status if changed
+        if (auctionData.status !== 'active') {
+            const statusElement = widget.querySelector('.bidly-widget-status');
+            if (statusElement) {
+                statusElement.innerHTML = auctionData.status === 'ended' ? 
+                    '<span class="bidly-status-ended">● ENDED</span>' : 
+                    '<span class="bidly-status-pending">● PENDING</span>';
+            }
+        }
+    }
+
+    // Create bid modal
+    function createBidModal(auctionId) {
+        const modal = document.createElement('div');
+        modal.className = 'bidly-modal-overlay';
+        modal.innerHTML = `
+            <div class="bidly-modal-content">
+                <div class="bidly-modal-header">
+                    <h3>Place Your Bid</h3>
+                    <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBidModal('${auctionId}')">&times;</button>
+                </div>
+                <div class="bidly-modal-body">
+                    <form id="bidly-bid-form-${auctionId}" onsubmit="window.BidlyAuctionWidget.submitBid(event, '${auctionId}')">
+                        <div class="bidly-form-group">
+                            <label for="bidly-bid-amount-${auctionId}">Bid Amount</label>
+                            <input type="number" id="bidly-bid-amount-${auctionId}" name="amount" step="0.01" required>
+                            <small>Enter your bid amount</small>
+                        </div>
+                        <div class="bidly-form-group">
+                            <label for="bidly-bidder-name-${auctionId}">Your Name</label>
+                            <input type="text" id="bidly-bidder-name-${auctionId}" name="bidderName" required>
+                        </div>
+                        <div class="bidly-form-group">
+                            <label for="bidly-bidder-email-${auctionId}">Your Email</label>
+                            <input type="email" id="bidly-bidder-email-${auctionId}" name="bidderEmail" required>
+                        </div>
+                        <div class="bidly-form-actions">
+                            <button type="submit" class="bidly-submit-bid">Place Bid</button>
+                            <button type="button" onclick="window.BidlyAuctionWidget.closeBidModal('${auctionId}')">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        return modal;
+    }
+
+    // Create buy now modal
+    function createBuyNowModal(auctionId, price) {
+        const modal = document.createElement('div');
+        modal.className = 'bidly-modal-overlay';
+        modal.innerHTML = `
+            <div class="bidly-modal-content">
+                <div class="bidly-modal-header">
+                    <h3>Buy Now</h3>
+                    <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">&times;</button>
+                </div>
+                <div class="bidly-modal-body">
+                    <p>Are you sure you want to buy this item for <strong>$${price.toFixed(2)}</strong>?</p>
+                    <p>This will end the auction immediately and you will be the winner.</p>
+                    <div class="bidly-form-actions">
+                        <button onclick="window.BidlyAuctionWidget.confirmBuyNow('${auctionId}', ${price})" class="bidly-confirm-buy">Yes, Buy Now</button>
+                        <button onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        return modal;
+    }
+
+    // Global widget object
+    window.BidlyAuctionWidget = {
+        inject: injectWidget,
+        
+        openBidModal: function(auctionId) {
+            const modal = createBidModal(auctionId);
+            document.body.appendChild(modal);
+            modal.style.display = 'flex';
+        },
+
+        openBuyNowModal: function(auctionId, price) {
+            const modal = createBuyNowModal(auctionId, price);
+            document.body.appendChild(modal);
+            modal.style.display = 'flex';
+        },
+
+        openBidHistory: function(auctionId) {
+            window.open(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bids?shop=${CONFIG.shopDomain}`, '_blank');
+        },
+
+        closeBidModal: function(auctionId) {
+            const modal = document.querySelector(`#bidly-bid-form-${auctionId}`).closest('.bidly-modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        },
+
+        closeBuyNowModal: function(auctionId) {
+            const modal = document.querySelector(`[onclick*="confirmBuyNow('${auctionId}'"]`).closest('.bidly-modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+        },
+
+        submitBid: async function(event, auctionId) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const bidData = {
+                amount: parseFloat(formData.get('amount')),
+                bidderName: formData.get('bidderName'),
+                bidderEmail: formData.get('bidderEmail')
+            };
+
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid?shop=${CONFIG.shopDomain}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(bidData)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Bid placed successfully!');
+                    this.closeBidModal(auctionId);
+                    location.reload();
+                } else {
+                    alert('Error placing bid: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error placing bid:', error);
+                alert('Error placing bid. Please try again.');
+            }
+        },
+
+        confirmBuyNow: async function(auctionId, price) {
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/buy-now?shop=${CONFIG.shopDomain}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ price })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Congratulations! You won the auction!');
+                    this.closeBuyNowModal(auctionId);
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error buying now:', error);
+                alert('Error completing purchase. Please try again.');
+            }
+        }
+    };
+
+})();

@@ -1,82 +1,51 @@
-{% comment %}
-  Auction App Embed - Automatically detects and overlays on auction products
-  This appears in the "App embeds" section of theme customization
-  No manual placement needed - just enable/disable
-{% endcomment %}
+/**
+ * Automatic Auction Widget Injector
+ * This script gets automatically loaded on all pages and injects the auction widget
+ * when products have auction metafields - NO manual theme customization needed
+ */
 
-{% schema %}
-{
-  "name": "Auction App Embed",
-  "target": "body",
-  "settings": [
-    {
-      "type": "header",
-      "content": "Auction Widget Settings"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_timer",
-      "label": "Show countdown timer",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "show_bid_history",
-      "label": "Show bid history link",
-      "default": true
-    },
-    {
-      "type": "select",
-      "id": "widget_position",
-      "label": "Widget position",
-      "options": [
-        {
-          "value": "below_price",
-          "label": "Below product price"
-        },
-        {
-          "value": "above_price",
-          "label": "Above product price"
-        },
-        {
-          "value": "replace_price",
-          "label": "Replace product price"
-        }
-      ],
-      "default": "below_price"
+(function() {
+    'use strict';
+
+    // Only run on product pages
+    if (!window.location.pathname.includes('/products/')) {
+        return;
     }
-  ]
-}
-{% endschema %}
 
-<link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}">
-<script src="{{ 'auction-app-embed.js' | asset_url }}" defer></script>
+    // Configuration
+    const CONFIG = {
+        backendUrl: 'https://bidly-auction-backend.onrender.com',
+        shopDomain: window.Shopify?.shop || window.location.hostname,
+        widgetScript: '{{ "auction-auto-widget.js" | asset_url }}',
+        widgetCSS: '{{ "auction-auto-widget.css" | asset_url }}'
+    };
 
-<script>
-// Initialize the auction app embed
-window.BidlyAuctionEmbed = {
-    init: function() {
-        console.log('Bidly: Initializing auction app embed...');
-        
-        // Get settings from block
-        const settings = {
-            show_timer: {{ block.settings.show_timer | default: true }},
-            show_bid_history: {{ block.settings.show_bid_history | default: true }},
-            widget_position: '{{ block.settings.widget_position | default: "below_price" }}'
-        };
-        
-        // Check if product has auction data
-        this.checkProductMetafields().then(auctionCheck => {
-            if (auctionCheck.hasAuction) {
-                console.log('Bidly: Product has auction data, injecting widget...', auctionCheck);
-                this.injectWidget(auctionCheck, settings);
-            } else {
-                console.log('Bidly: No auction data found for this product');
-            }
-        });
-    },
-    
-    checkProductMetafields: async function() {
+    // Inject CSS
+    function injectCSS() {
+        const existingCSS = document.querySelector('link[href*="auction-auto-widget.css"]');
+        if (existingCSS) return;
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = CONFIG.widgetCSS;
+        link.type = 'text/css';
+        document.head.appendChild(link);
+    }
+
+    // Inject JavaScript
+    function injectScript() {
+        const existingScript = document.querySelector('script[src*="auction-auto-widget.js"]');
+        if (existingScript) return;
+
+        const script = document.createElement('script');
+        script.src = CONFIG.widgetScript;
+        script.type = 'text/javascript';
+        script.async = true;
+        document.head.appendChild(script);
+    }
+
+    // Check if product has auction data via metafields
+    async function checkProductMetafields() {
         try {
             // Try to get product data from Shopify's global objects
             if (window.Shopify?.analytics?.meta?.product) {
@@ -132,22 +101,34 @@ window.BidlyAuctionEmbed = {
             console.warn('Bidly: Error checking product metafields:', error);
             return { hasAuction: false };
         }
-    },
-    
-    injectWidget: function(auctionData, settings) {
-        // This will be handled by the external JavaScript file
-        if (window.BidlyAuctionWidget) {
-            window.BidlyAuctionWidget.inject(auctionData, settings);
+    }
+
+    // Main initialization
+    async function init() {
+        console.log('Bidly: Checking for auction data...');
+        
+        // Check if product has auction data
+        const auctionCheck = await checkProductMetafields();
+        
+        if (auctionCheck.hasAuction) {
+            console.log('Bidly: Product has auction data, injecting widget...', auctionCheck);
+            
+            // Inject CSS and JavaScript
+            injectCSS();
+            injectScript();
+            
+            // Store auction data for the widget to use
+            window.bidlyAuctionData = auctionCheck;
+        } else {
+            console.log('Bidly: No auction data found for this product');
         }
     }
-};
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.BidlyAuctionEmbed.init();
-    });
-} else {
-    window.BidlyAuctionEmbed.init();
-}
-</script>
+    // Wait for page to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
