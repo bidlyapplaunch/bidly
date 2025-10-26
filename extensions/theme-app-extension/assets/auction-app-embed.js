@@ -267,9 +267,16 @@
 
             // Try to fetch auction data directly from backend API
             try {
-                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`);
+                const apiUrl = `${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`;
+                console.log('Bidly: Fetching auction data from:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                console.log('Bidly: API response status:', response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Bidly: API response data:', data);
+                    
                     if (data.success && data.auction) {
                         const auction = data.auction;
                         console.log('Bidly: Found auction data:', auction);
@@ -284,9 +291,12 @@
                             bidCount: auction.bidHistory?.length || 0,
                             buyNowPrice: parseFloat(auction.buyNowPrice) || 0
                         };
+                    } else {
+                        console.log('Bidly: API returned success but no auction data:', data);
                     }
                 } else {
-                    console.log('Bidly: No auction found for product ID:', productId);
+                    const errorText = await response.text();
+                    console.log('Bidly: API error response:', response.status, errorText);
                 }
             } catch (apiError) {
                 console.warn('Bidly: Error fetching from API:', apiError);
@@ -413,6 +423,12 @@
 
     // Inject widget into pricing section
     function injectWidget(auctionData, settings) {
+        // Check if we have valid auction data
+        if (!auctionData || !auctionData.hasAuction) {
+            console.log('Bidly: No auction data available, not injecting widget');
+            return;
+        }
+        
         const pricingSection = findPricingSection();
         
         // Remove existing widget if any
@@ -531,17 +547,17 @@
                 scrollLeft
             });
             
-        // Position widget to replace the pricing section (absolute positioning within page flow)
+        // Position widget to replace the pricing section (fixed positioning for stability)
         // Add some offset to move widget down and avoid covering the title
         const titleOffset = 40; // Add 40px offset to move widget below title
         
-        widgetContainer.style.position = 'absolute';
-        widgetContainer.style.top = (finalTop + titleOffset) + 'px';
-        widgetContainer.style.left = finalLeft + 'px';
-        widgetContainer.style.width = finalWidth + 'px';
-        widgetContainer.style.height = finalHeight + 'px';
+        widgetContainer.style.position = 'fixed';
+        widgetContainer.style.top = (pricingRect.top + titleOffset) + 'px';
+        widgetContainer.style.left = pricingRect.left + 'px';
+        widgetContainer.style.width = pricingRect.width + 'px';
+        widgetContainer.style.height = pricingRect.height + 'px';
         widgetContainer.style.minHeight = 'auto';
-        widgetContainer.style.zIndex = '10';
+        widgetContainer.style.zIndex = '9999';
             
             // Hide only specific pricing elements, not the entire container
             // This prevents hiding the product title
@@ -573,15 +589,15 @@
             });
         } else {
             // Fallback positioning if pricing section not found
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            widgetContainer.style.position = 'absolute';
-            widgetContainer.style.top = (20 + scrollTop) + 'px';
-            widgetContainer.style.left = (20 + scrollLeft) + 'px';
+            widgetContainer.style.position = 'fixed';
+            widgetContainer.style.top = '200px'; // Position below header
+            widgetContainer.style.left = '50%';
+            widgetContainer.style.transform = 'translateX(-50%)'; // Center horizontally
             widgetContainer.style.width = '400px'; // Reasonable fallback width
             widgetContainer.style.height = '200px'; // Reasonable fallback height
             widgetContainer.style.minHeight = 'auto'; // Remove minHeight
-            console.log('Bidly: Pricing section not found, using fallback positioning');
+            widgetContainer.style.zIndex = '9999';
+            console.log('Bidly: Pricing section not found, using centered fallback positioning');
         }
         
         // Ensure body has relative positioning for absolute children
