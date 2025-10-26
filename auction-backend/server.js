@@ -75,7 +75,8 @@ app.use(cors({
            'https://bidly-auction-admin.onrender.com',
            'https://bidly-auction-customer.onrender.com',
            'https://admin.shopify.com',
-           'https://*.myshopify.com'
+           'https://*.myshopify.com',
+           'https://bidly-2.myshopify.com'
          ],
   credentials: true,
   // Development headers for iframe compatibility

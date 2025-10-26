@@ -111,13 +111,7 @@
 
     // Get product ID from page
     function getProductIdFromPage() {
-        // Try to get product ID from URL
-        const urlMatch = window.location.pathname.match(/\/products\/([^\/\?]+)/);
-        if (urlMatch) {
-            return urlMatch[1];
-        }
-
-        // Try to get from Shopify global objects
+        // Try to get from Shopify global objects first (most reliable)
         if (window.Shopify?.analytics?.meta?.product?.id) {
             return window.Shopify.analytics.meta.product.id.toString();
         }
@@ -127,10 +121,30 @@
         if (productJson) {
             try {
                 const product = JSON.parse(productJson.textContent);
-                return product.id ? product.id.toString() : null;
+                if (product.id) {
+                    return product.id.toString();
+                }
             } catch (e) {
                 console.warn('Bidly: Error parsing product JSON for ID:', e);
             }
+        }
+
+        // Try to get from window.Shopify global object
+        if (window.Shopify?.product?.id) {
+            return window.Shopify.product.id.toString();
+        }
+
+        // Try to get from meta tags
+        const productIdMeta = document.querySelector('meta[name="product-id"]');
+        if (productIdMeta) {
+            return productIdMeta.getAttribute('content');
+        }
+
+        // Last resort: try to get from URL (but this gives us the handle, not ID)
+        const urlMatch = window.location.pathname.match(/\/products\/([^\/\?]+)/);
+        if (urlMatch) {
+            console.warn('Bidly: Got product handle from URL, not numeric ID:', urlMatch[1]);
+            return null; // Don't use handle, we need numeric ID
         }
 
         return null;
