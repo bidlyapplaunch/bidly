@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Card, 
   FormLayout, 
@@ -14,6 +14,7 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const formRef = useRef(null);
 
   const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
   const suggestedBid = minBid + 5; // Suggest $5 more than minimum
@@ -68,7 +69,7 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={handleSubmit}>
         <FormLayout>
           <TextField
             label="Bid Amount"
@@ -116,27 +117,15 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           </div>
         </FormLayout>
 
-        {/* Move buttons outside FormLayout to remove extra spacing */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-          <Button 
-            primary 
-            submit 
-            loading={isLoading}
-            disabled={!amount}
-          >
-            {isLoading ? 'Placing Bid...' : 'Place Bid'}
-          </Button>
-          
-          {auction.buyNowPrice && auction.buyNowPrice > 0 && (
-            <Button 
-              onClick={handleBuyNow}
-              loading={isLoading}
-              tone="critical"
-            >
-              Buy Now (${auction.buyNowPrice})
-            </Button>
-          )}
-        </div>
+        {/* Hidden buy now trigger for modal button */}
+        {auction.buyNowPrice && auction.buyNowPrice > 0 && (
+          <button 
+            type="button"
+            data-buy-now-trigger
+            onClick={handleBuyNow}
+            style={{ display: 'none' }}
+          />
+        )}
       </form>
       </div>
     </Card>

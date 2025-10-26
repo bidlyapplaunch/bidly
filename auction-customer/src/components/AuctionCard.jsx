@@ -267,6 +267,28 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         open={bidModalOpen}
         onClose={() => setBidModalOpen(false)}
         title={`Place Bid: ${auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}`}
+        primaryAction={auction.status === 'active' ? {
+          content: 'Place Bid',
+          onAction: () => {
+            // Trigger form submission
+            const form = document.querySelector('form');
+            if (form) {
+              const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+              form.dispatchEvent(submitEvent);
+            }
+          },
+          disabled: bidLoading
+        } : undefined}
+        secondaryActions={auction.status === 'active' && auction.buyNowPrice ? [{
+          content: `Buy Now ($${auction.buyNowPrice})`,
+          onAction: () => {
+            // This will be handled by the BidForm component
+            const buyNowButton = document.querySelector('[data-buy-now-trigger]');
+            if (buyNowButton) buyNowButton.click();
+          },
+          disabled: bidLoading,
+          tone: 'critical'
+        }] : undefined}
       >
         <Modal.Section>
           <Frame>
