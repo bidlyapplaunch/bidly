@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { authenticateToken } from '../middleware/auth.js';
+import { getShopifyClient } from '../services/shopifyService.js';
+
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
-const { getShopifyClient } = require('../services/shopifyService');
 
 // Get metafields for a product
 router.get('/products/:productId/metafields', authenticateToken, async (req, res) => {
@@ -270,4 +271,4 @@ router.delete('/products/:productId/auction-metafields', authenticateToken, asyn
   }
 });
 
-module.exports = router;
+export default router;

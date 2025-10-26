@@ -290,4 +290,4 @@ class ProductDuplicationService {
   }
 }
 
-module.exports = ProductDuplicationService;
+export default ProductDuplicationService;

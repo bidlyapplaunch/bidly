@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { authenticateToken } from '../middleware/auth.js';
+import ProductDuplicationService from '../services/productDuplicationService.js';
+
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
-const ProductDuplicationService = require('../services/productDuplicationService');
 
 // Duplicate product for auction winner
 router.post('/duplicate-for-winner', authenticateToken, async (req, res) => {
@@ -123,4 +124,4 @@ router.delete('/cleanup', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

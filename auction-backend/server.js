@@ -118,8 +118,12 @@ app.use('/api/auctions', auctionRoutes);
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/metafields', require('./routes/metafields'));
-app.use('/api/product-duplication', require('./routes/productDuplication'));
+
+// Dynamic imports for new routes
+const { default: metafieldsRoutes } = await import('./routes/metafields.js');
+const { default: productDuplicationRoutes } = await import('./routes/productDuplication.js');
+app.use('/api/metafields', metafieldsRoutes);
+app.use('/api/product-duplication', productDuplicationRoutes);
 
 // OAuth routes for Shopify app installation
 app.use('/auth/shopify', oauthRoutes);
