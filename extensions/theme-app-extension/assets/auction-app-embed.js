@@ -436,8 +436,8 @@
         
         // Final fallback: look for any element containing the main product price
         console.log('Bidly: Trying final fallback - looking for main product price...');
-        const allElements = document.querySelectorAll('*');
-        for (const element of allElements) {
+        const allPageElements = document.querySelectorAll('*');
+        for (const element of allPageElements) {
             const text = element.textContent || element.innerText || '';
             const rect = element.getBoundingClientRect();
             const computedStyle = window.getComputedStyle(element);
