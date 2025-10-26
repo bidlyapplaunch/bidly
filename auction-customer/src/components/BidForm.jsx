@@ -55,8 +55,10 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   };
 
   return (
-    <Card sectioned>
-      <Text variant="headingMd" as="h3">Place Your Bid</Text>
+    <>
+    <Card>
+      <div style={{ padding: '1rem' }}>
+        <Text variant="headingMd" as="h3">Place Your Bid</Text>
       
       {error && (
         <div style={{ marginBottom: '1rem' }}>
@@ -136,41 +138,43 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           )}
         </div>
       </form>
-
-      {/* Buy Now Confirmation Modal - only show if buy now price exists */}
-      {auction.buyNowPrice && auction.buyNowPrice > 0 && (
-        <Modal
-          open={showBuyNowModal}
-          onClose={() => setShowBuyNowModal(false)}
-          title="Confirm Buy Now"
-          primaryAction={{
-            content: 'Yes, Buy Now',
-            onAction: confirmBuyNow,
-            loading: isLoading,
-            tone: 'critical'
-          }}
-          secondaryActions={[
-            {
-              content: 'Cancel',
-              onAction: () => setShowBuyNowModal(false)
-            }
-          ]}
-        >
-          <Modal.Section>
-            <div>
-              <Text variant="bodyMd">
-                Are you sure you want to buy this item for <Text variant="bodyMd" fontWeight="bold">${auction.buyNowPrice}</Text>?
-              </Text>
-              <div style={{ marginTop: '0.5rem' }}>
-                <Text variant="bodyMd" color="subdued">
-                  This will end the auction immediately and you will be the winner.
-                </Text>
-              </div>
-            </div>
-          </Modal.Section>
-        </Modal>
-      )}
+      </div>
     </Card>
+
+    {/* Buy Now Confirmation Modal - only show if buy now price exists */}
+    {auction.buyNowPrice && auction.buyNowPrice > 0 && (
+      <Modal
+        open={showBuyNowModal}
+        onClose={() => setShowBuyNowModal(false)}
+        title="Confirm Buy Now"
+        primaryAction={{
+          content: 'Yes, Buy Now',
+          onAction: confirmBuyNow,
+          loading: isLoading,
+          tone: 'critical'
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setShowBuyNowModal(false)
+          }
+        ]}
+      >
+        <Modal.Section>
+          <div>
+            <Text variant="bodyMd">
+              Are you sure you want to buy this item for <Text variant="bodyMd" fontWeight="bold">${auction.buyNowPrice}</Text>?
+            </Text>
+            <div style={{ marginTop: '0.5rem' }}>
+              <Text variant="bodyMd" color="subdued">
+                This will end the auction immediately and you will be the winner.
+              </Text>
+            </div>
+          </div>
+        </Modal.Section>
+      </Modal>
+    )}
+    </>
   );
 };
 
