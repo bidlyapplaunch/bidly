@@ -137,7 +137,7 @@ const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
 console.log('📁 Serving admin frontend from:', frontendDistPath);
 
 // Add cache-busting version
-const FRONTEND_VERSION = Date.now();
+const FRONTEND_VERSION = Date.now() + Math.random();
 console.log('🔄 Frontend version (cache-busting):', FRONTEND_VERSION);
 
 // Only serve static files for non-API routes
