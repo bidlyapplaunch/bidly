@@ -13,6 +13,8 @@
     };
     
     console.log('Bidly: Configuration loaded:', CONFIG);
+    console.log('Bidly: window.Shopify:', window.Shopify);
+    console.log('Bidly: window.location.hostname:', window.location.hostname);
 
     // Customer state management
     let currentCustomer = null;
@@ -22,6 +24,8 @@
     async function detectShopifyCustomer() {
         try {
             console.log('Bidly: Detecting Shopify customer...');
+            console.log('Bidly: window.Shopify:', window.Shopify);
+            console.log('Bidly: window.Shopify?.customer:', window.Shopify?.customer);
             
             // Check for Shopify customer data in various locations
             let customerData = null;
@@ -143,7 +147,20 @@
     async function guestLogin(name, email) {
         try {
             console.log('Bidly: Attempting guest login...');
-            console.log('Bidly: Request data:', { name, email, shopDomain: CONFIG.shopDomain });
+            
+            // Parse name into first and last name
+            const nameParts = name.trim().split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ') || 'Guest';
+            
+            const requestData = {
+                firstName,
+                lastName,
+                email,
+                shopDomain: CONFIG.shopDomain
+            };
+            
+            console.log('Bidly: Request data:', requestData);
             console.log('Bidly: Backend URL:', `${CONFIG.backendUrl}/api/customers/temp-login`);
             
             const response = await fetch(`${CONFIG.backendUrl}/api/customers/temp-login`, {
@@ -151,11 +168,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    name,
-                    email,
-                    shopDomain: CONFIG.shopDomain
-                })
+                body: JSON.stringify(requestData)
             });
             
             if (response.ok) {
@@ -178,9 +191,22 @@
     // Open Shopify login
     function openShopifyLogin() {
         const currentUrl = encodeURIComponent(window.location.href);
-        const shopDomain = CONFIG.shopDomain;
+        let shopDomain = CONFIG.shopDomain;
+        
+        // Ensure shopDomain has the correct format
+        if (!shopDomain.includes('.myshopify.com')) {
+            // If it's just the hostname, try to construct the proper domain
+            if (shopDomain.includes('myshopify.com')) {
+                // Already has myshopify.com, use as is
+            } else {
+                // Add .myshopify.com if missing
+                shopDomain = shopDomain.replace('.myshopify.com', '') + '.myshopify.com';
+            }
+        }
+        
         const loginUrl = `https://${shopDomain}/account/login?return_to=${currentUrl}`;
         console.log('Bidly: Redirecting to Shopify login:', loginUrl);
+        console.log('Bidly: Shop domain used:', shopDomain);
         window.location.href = loginUrl;
     }
 
