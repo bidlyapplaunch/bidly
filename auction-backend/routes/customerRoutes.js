@@ -4,6 +4,50 @@ import { AppError } from '../middleware/errorHandler.js';
 
 const router = express.Router();
 
+// Save customer data (simplified version of sync)
+router.post('/saveCustomer', async (req, res, next) => {
+  try {
+    const { 
+      shopifyId, 
+      email, 
+      firstName, 
+      lastName, 
+      shopDomain 
+    } = req.body;
+
+    if (!email || !firstName || !lastName || !shopDomain) {
+      return next(new AppError('Missing required customer data', 400));
+    }
+
+    // Find or create customer
+    const customer = await Customer.findOrCreate({
+      shopifyId,
+      email,
+      firstName,
+      lastName,
+      isTemp: !shopifyId // If no shopifyId, it's a temp customer
+    }, shopDomain);
+
+    res.json({
+      success: true,
+      customer: {
+        id: customer._id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        fullName: customer.fullName,
+        shopifyId: customer.shopifyId,
+        isTemp: customer.isTemp,
+        totalBids: customer.totalBids,
+        auctionsWon: customer.auctionsWon,
+        totalBidAmount: customer.totalBidAmount
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Sync Shopify customer data
 router.post('/sync', async (req, res, next) => {
   try {

@@ -30,13 +30,13 @@
         ]
     };
 
-    // Use shared hybrid login system
+    // Use simplified login system
     function getCurrentCustomer() {
-        return window.BidlyHybridLogin?.getCurrentCustomer() || null;
+        return window.BidlySimpleLogin?.getCurrentCustomer() || null;
     }
 
     function isUserLoggedIn() {
-        return window.BidlyHybridLogin?.isUserLoggedIn() || false;
+        return window.BidlySimpleLogin?.isUserLoggedIn() || false;
     }
 
     // Widget HTML template
@@ -65,12 +65,12 @@
                             </div>
                             
                             <div class="bidly-login-options">
-                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.BidlyHybridLogin?.openShopifyLogin()">
+                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.location.href='/account/login'">
                                     <span class="bidly-btn-icon">🛍️</span>
                                     Log in with Shopify
                                 </button>
                                 
-                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
+                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlySimpleLogin?.showTempLoginPopup()">
                                     <span class="bidly-btn-icon">👤</span>
                                     Continue as Guest
                                 </button>
@@ -93,7 +93,7 @@
                         </div>
                         <div class="bidly-customer-info">
                             <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.fullName || 'Guest User'}</span>
-                            <button class="bidly-logout-btn" onclick="window.BidlyHybridLogin?.logout()" title="Logout">×</button>
+                            <button class="bidly-logout-btn" onclick="window.location.reload()" title="Logout">×</button>
                         </div>
                     </div>
 
