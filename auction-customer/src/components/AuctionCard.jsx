@@ -277,7 +277,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
               form.dispatchEvent(submitEvent);
             }
           },
-          disabled: bidLoading
+          disabled: isLoading
         } : undefined}
         secondaryActions={auction.status === 'active' && auction.buyNowPrice ? [{
           content: `Buy Now ($${auction.buyNowPrice})`,
@@ -286,7 +286,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
             const buyNowButton = document.querySelector('[data-buy-now-trigger]');
             if (buyNowButton) buyNowButton.click();
           },
-          disabled: bidLoading,
+          disabled: isLoading,
           tone: 'critical'
         }] : undefined}
       >
