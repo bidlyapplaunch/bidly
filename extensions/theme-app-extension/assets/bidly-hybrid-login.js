@@ -11,6 +11,8 @@
         backendUrl: 'https://bidly-auction-backend.onrender.com',
         shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname
     };
+    
+    console.log('Bidly: Configuration loaded:', CONFIG);
 
     // Customer state management
     let currentCustomer = null;
@@ -141,6 +143,8 @@
     async function guestLogin(name, email) {
         try {
             console.log('Bidly: Attempting guest login...');
+            console.log('Bidly: Request data:', { name, email, shopDomain: CONFIG.shopDomain });
+            console.log('Bidly: Backend URL:', `${CONFIG.backendUrl}/api/customers/temp-login`);
             
             const response = await fetch(`${CONFIG.backendUrl}/api/customers/temp-login`, {
                 method: 'POST',
@@ -161,7 +165,8 @@
                 console.log('Bidly: Guest login successful:', currentCustomer);
                 return true;
             } else {
-                console.error('Bidly: Guest login failed:', response.status);
+                const errorText = await response.text();
+                console.error('Bidly: Guest login failed:', response.status, errorText);
                 return false;
             }
         } catch (error) {
@@ -173,7 +178,9 @@
     // Open Shopify login
     function openShopifyLogin() {
         const currentUrl = encodeURIComponent(window.location.href);
-        const loginUrl = `/account/login?return_to=${currentUrl}`;
+        const shopDomain = CONFIG.shopDomain;
+        const loginUrl = `https://${shopDomain}/account/login?return_to=${currentUrl}`;
+        console.log('Bidly: Redirecting to Shopify login:', loginUrl);
         window.location.href = loginUrl;
     }
 
