@@ -41,7 +41,7 @@
 
     // Widget HTML template
     function createWidgetHTML(auctionData, settings) {
-        const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice } = auctionData;
+        const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice, startTime } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
         
         // Determine the display bid and minimum bid logic
