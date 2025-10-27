@@ -580,15 +580,19 @@
                 scrollLeft
             });
             
-        // Position widget to replace the pricing section (ORIGINAL STYLING RESTORED)
+        // Position widget to replace the pricing section (STABLE POSITIONING)
         // Add some offset to move widget down and avoid covering the title
         const titleOffset = 40; // Add 40px offset to move widget below title
         
-        console.log('Bidly: VERSION FIXED - Using original positioning (no Math.max, no stable positioning)');
+        console.log('Bidly: Using STABLE positioning - widget will stay in place');
         
-        widgetContainer.style.position = 'fixed';
-        widgetContainer.style.top = (pricingRect.top + titleOffset) + 'px';
-        widgetContainer.style.left = pricingRect.left + 'px';
+        // Use absolute positioning relative to the document to prevent scrolling issues
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        
+        widgetContainer.style.position = 'absolute';
+        widgetContainer.style.top = (pricingRect.top + scrollTop + titleOffset) + 'px';
+        widgetContainer.style.left = (pricingRect.left + scrollLeft) + 'px';
         widgetContainer.style.width = Math.max(400, pricingRect.width) + 'px'; // Minimum 400px width
         widgetContainer.style.height = Math.max(300, pricingRect.height) + 'px'; // Minimum 300px height
         widgetContainer.style.minHeight = 'auto';
@@ -977,23 +981,30 @@
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
         
-    // Wait for shared login system to initialize
-    let attempts = 0;
-    const maxAttempts = 15; // Increased attempts
-    
-    while (!window.BidlyHybridLogin && attempts < maxAttempts) {
-        console.log('Bidly: Waiting for shared login system...', attempts + 1);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        attempts++;
-    }
-    
-    if (window.BidlyHybridLogin) {
-        console.log('Bidly: Shared hybrid login system loaded');
-        // Wait a bit more for customer detection to complete
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Increased wait time
-    } else {
-        console.log('Bidly: Shared login system not available after waiting');
-    }
+        // Check if widget already exists to prevent reloading
+        const existingWidget = document.querySelector('.bidly-auction-app-embed');
+        if (existingWidget) {
+            console.log('Bidly: Widget already exists, skipping initialization to prevent reload');
+            return;
+        }
+        
+        // Wait for shared login system to initialize (but don't wait too long)
+        let attempts = 0;
+        const maxAttempts = 5; // Reduced attempts to prevent long waits
+        
+        while (!window.BidlyHybridLogin && attempts < maxAttempts) {
+            console.log('Bidly: Waiting for shared login system...', attempts + 1);
+            await new Promise(resolve => setTimeout(resolve, 200)); // Reduced wait time
+            attempts++;
+        }
+        
+        if (window.BidlyHybridLogin) {
+            console.log('Bidly: Shared hybrid login system loaded');
+            // Wait a bit more for customer detection to complete
+            await new Promise(resolve => setTimeout(resolve, 500)); // Reduced wait time
+        } else {
+            console.log('Bidly: Shared login system not available after waiting');
+        }
 
     // Wait for pricing section to become visible
     console.log('Bidly: Waiting for pricing section to become visible...');
@@ -1019,29 +1030,10 @@
         }
     }
 
-    // Listen for login status changes
+    // Listen for login status changes but don't refresh widget to prevent repositioning
     window.addEventListener('bidly-login-success', function(event) {
-        console.log('Bidly: Login success detected, refreshing widget...');
-        // Re-check for auction data and refresh widget
-        setTimeout(async () => {
-            try {
-                const auctionCheck = await checkProductForAuction();
-                if (auctionCheck.hasAuction) {
-                    console.log('Bidly: Re-injecting widget after login...', auctionCheck);
-                    window.currentAuctionCheck = auctionCheck;
-                    const settings = {
-                        show_timer: true,
-                        show_bid_history: true,
-                        widget_position: 'below_price'
-                    };
-                    injectWidget(auctionCheck, settings);
-                } else {
-                    console.log('Bidly: No auction data found after login');
-                }
-            } catch (error) {
-                console.error('Bidly: Error refreshing widget after login:', error);
-            }
-        }, 100);
+        console.log('Bidly: Login success detected, but keeping widget in place to prevent repositioning');
+        // Don't re-inject widget to prevent repositioning issues
     });
 
     window.addEventListener('bidly-logout', function(event) {
