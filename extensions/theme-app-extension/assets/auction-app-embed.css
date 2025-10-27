@@ -379,6 +379,67 @@
     animation: modalSlideIn 0.3s ease-out;
 }
 
+/* Bid History Modal Styles */
+.bidly-history-modal {
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.bidly-bid-history {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.bidly-bid-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.2s ease;
+}
+
+.bidly-bid-item:hover {
+    background-color: #f5f5f5;
+}
+
+.bidly-bid-item.bidly-current-bid {
+    background-color: #e8f5e8;
+    border-left: 4px solid #4CAF50;
+}
+
+.bidly-bid-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bidly-bidder {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.bidly-bid-time {
+    font-size: 12px;
+    color: #666;
+}
+
+.bidly-bid-amount {
+    font-weight: 700;
+    color: #4CAF50;
+    font-size: 16px;
+}
+
+.bidly-no-bids {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-style: italic;
+}
+
 @keyframes modalSlideIn {
     from {
         opacity: 0;

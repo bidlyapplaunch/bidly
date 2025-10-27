@@ -717,9 +717,47 @@
         setInterval(updateCountdown, 1000);
     }
 
-    // Initialize real-time updates via polling
+    // Initialize real-time updates via WebSocket
+    let socket = null;
     function initializeRealTimeUpdates(auctionId) {
-        setInterval(async () => {
+        // Connect to WebSocket if not already connected
+        if (!socket) {
+            console.log('Bidly: Connecting to WebSocket for real-time updates...');
+            socket = io(CONFIG.backendUrl, {
+                transports: ['websocket', 'polling']
+            });
+            
+            socket.on('connect', () => {
+                console.log('Bidly: WebSocket connected');
+                // Join auction room for real-time updates
+                socket.emit('join-auction', auctionId);
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('Bidly: WebSocket disconnected');
+            });
+            
+            socket.on('bid-placed', (data) => {
+                console.log('Bidly: Real-time bid update received:', data);
+                if (data.auctionId === auctionId) {
+                    updateWidgetData(auctionId, data.auction);
+                }
+            });
+            
+            socket.on('auction-updated', (data) => {
+                console.log('Bidly: Real-time auction update received:', data);
+                if (data.auctionId === auctionId) {
+                    updateWidgetData(auctionId, data.auction);
+                }
+            });
+            
+            socket.on('error', (error) => {
+                console.error('Bidly: WebSocket error:', error);
+            });
+        }
+        
+        // Fallback to polling if WebSocket fails
+        const pollingInterval = setInterval(async () => {
             try {
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
                 if (!response.ok) return;
@@ -731,7 +769,16 @@
             } catch (error) {
                 console.warn('Bidly: Error updating auction data:', error);
             }
-        }, 5000);
+        }, 10000); // Reduced frequency since WebSocket handles real-time updates
+        
+        // Clean up polling when widget is removed
+        return () => {
+            clearInterval(pollingInterval);
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        };
     }
 
     // Update widget data in real-time
@@ -843,8 +890,66 @@
             modal.style.display = 'flex';
         },
 
-        openBidHistory: function(auctionId) {
-            window.open(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bids?shop=${CONFIG.shopDomain}`, '_blank');
+        openBidHistory: async function(auctionId) {
+            try {
+                // Fetch bid history from backend
+                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
+                if (!response.ok) {
+                    alert('Failed to load bid history');
+                    return;
+                }
+                
+                const data = await response.json();
+                if (!data.success || !data.data) {
+                    alert('No bid history available');
+                    return;
+                }
+                
+                const auction = data.data;
+                const bidHistory = auction.bidHistory || [];
+                
+                // Create modal HTML
+                const modalHtml = `
+                    <div class="bidly-modal-overlay">
+                        <div class="bidly-modal-content bidly-history-modal">
+                            <div class="bidly-modal-header">
+                                <h3>Bid History</h3>
+                                <span class="bidly-modal-close">&times;</span>
+                            </div>
+                            <div class="bidly-modal-body">
+                                <div class="bidly-bid-history">
+                                    ${bidHistory.length === 0 ? 
+                                        '<p class="bidly-no-bids">No bids placed yet</p>' :
+                                        bidHistory.map((bid, index) => `
+                                            <div class="bidly-bid-item ${index === bidHistory.length - 1 ? 'bidly-current-bid' : ''}">
+                                                <div class="bidly-bid-info">
+                                                    <span class="bidly-bidder">${bid.bidder}</span>
+                                                    <span class="bidly-bid-time">${new Date(bid.timestamp).toLocaleString()}</span>
+                                                </div>
+                                                <div class="bidly-bid-amount">$${bid.amount.toFixed(2)}</div>
+                                            </div>
+                                        `).join('')
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add modal to page
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // Add close functionality
+                const modal = document.querySelector('.bidly-modal-overlay');
+                modal.querySelector('.bidly-modal-close').addEventListener('click', () => modal.remove());
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+                
+            } catch (error) {
+                console.error('Error loading bid history:', error);
+                alert('Failed to load bid history');
+            }
         },
 
         closeBidModal: function(auctionId) {
@@ -906,7 +1011,17 @@
                     
                     alert('Bid placed successfully!');
                     this.closeBidModal(auctionId);
-                    location.reload();
+                    
+                    // Refresh widget content instead of reloading page
+                    const existingWidget = document.querySelector('.bidly-auction-app-embed');
+                    if (existingWidget && window.currentAuctionCheck) {
+                        const settings = {
+                            show_timer: true,
+                            show_bid_history: true,
+                            widget_position: 'below_price'
+                        };
+                        refreshWidgetContent(existingWidget, window.currentAuctionCheck, settings);
+                    }
                 } else {
                     alert('Error placing bid: ' + result.message);
                 }
