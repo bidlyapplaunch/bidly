@@ -1001,6 +1001,15 @@
         // Event listeners are handled through HTML form submissions and event delegation
         // No need to manually re-attach them
         
+        // Re-initialize timer after content refresh
+        if (auctionCheck.status === 'active' && auctionCheck.endTime && settings.show_timer) {
+            console.log('Bidly: Re-initializing timer after content refresh');
+            initializeCountdown(auctionCheck.auctionId, auctionCheck.endTime);
+        }
+        
+        // Re-initialize real-time updates
+        initializeRealTimeUpdates(auctionCheck.auctionId);
+        
         console.log('Bidly: Widget content refreshed successfully');
     }
 
