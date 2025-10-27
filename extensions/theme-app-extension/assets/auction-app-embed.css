@@ -275,11 +275,19 @@
 }
 
 .bidly-widget-actions {
-    display: flex;
+    /* display: flex; */
     gap: 12px;
     margin-bottom: 15px;
     position: relative;
     z-index: 1;
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    opacity: 0.9;
+    color: rgb(255, 255, 255) !important;
 }
 
 .bidly-bid-btn,
@@ -453,8 +461,8 @@
 
 /* Inline Bidding Form Styles */
 .bidly-inline-bid-form {
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid #b5b5b5;
     border-radius: 8px;
     padding: 12px;
     margin-bottom: 8px;
