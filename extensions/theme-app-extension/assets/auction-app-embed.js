@@ -940,27 +940,63 @@
         }
     };
 
+    // Wait for pricing section to become visible
+    async function waitForPricingSection() {
+        console.log('Bidly: Waiting for pricing section to become visible...');
+        
+        let attempts = 0;
+        const maxAttempts = 20; // Try for up to 10 seconds
+        
+        while (attempts < maxAttempts) {
+            const pricingSection = findPricingSection();
+            if (pricingSection) {
+                const rect = pricingSection.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(pricingSection);
+                
+                // Check if element is visible and has dimensions
+                if (rect.width > 0 && rect.height > 0 && 
+                    computedStyle.display !== 'none' && 
+                    computedStyle.visibility !== 'hidden' && 
+                    computedStyle.opacity !== '0') {
+                    console.log('Bidly: Pricing section is now visible!', pricingSection, rect);
+                    return pricingSection;
+                }
+            }
+            
+            attempts++;
+            console.log(`Bidly: Pricing section not visible yet, attempt ${attempts}/${maxAttempts}`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        console.warn('Bidly: Pricing section did not become visible after waiting');
+        return null;
+    }
+
     // Main initialization function
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
         
-        // Wait for shared login system to initialize
-        let attempts = 0;
-        const maxAttempts = 15; // Increased attempts
-        
-        while (!window.BidlyHybridLogin && attempts < maxAttempts) {
-            console.log('Bidly: Waiting for shared login system...', attempts + 1);
-            await new Promise(resolve => setTimeout(resolve, 500));
-            attempts++;
-        }
-        
-        if (window.BidlyHybridLogin) {
-            console.log('Bidly: Shared hybrid login system loaded');
-            // Wait a bit more for customer detection to complete
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Increased wait time
-        } else {
-            console.log('Bidly: Shared login system not available after waiting');
-        }
+    // Wait for shared login system to initialize
+    let attempts = 0;
+    const maxAttempts = 15; // Increased attempts
+    
+    while (!window.BidlyHybridLogin && attempts < maxAttempts) {
+        console.log('Bidly: Waiting for shared login system...', attempts + 1);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+    }
+    
+    if (window.BidlyHybridLogin) {
+        console.log('Bidly: Shared hybrid login system loaded');
+        // Wait a bit more for customer detection to complete
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Increased wait time
+    } else {
+        console.log('Bidly: Shared login system not available after waiting');
+    }
+
+    // Wait for pricing section to become visible
+    console.log('Bidly: Waiting for pricing section to become visible...');
+    await waitForPricingSection();
         
         // Get settings from block
         const settings = {
