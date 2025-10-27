@@ -156,7 +156,15 @@
                         </div>
                     ` : status === 'pending' ? `
                         <div class="bidly-pending-message">
-                            Auction will start soon. Check back later!
+                            <div class="bidly-countdown-container">
+                                <div class="bidly-countdown-label">Starting in:</div>
+                                <div class="bidly-countdown-timer" id="bidly-countdown-${auctionId}">
+                                    <span class="bidly-countdown-days">0d</span>
+                                    <span class="bidly-countdown-hours">0h</span>
+                                    <span class="bidly-countdown-minutes">0m</span>
+                                    <span class="bidly-countdown-seconds">0s</span>
+                                </div>
+                            </div>
                         </div>
                     ` : `
                         <div class="bidly-ended-message">
@@ -471,6 +479,61 @@
         return null;
     }
 
+    // Initialize countdown timer for pending auctions
+    function initializeCountdownTimer(auctionId, startTime) {
+        const countdownElement = document.getElementById(`bidly-countdown-${auctionId}`);
+        if (!countdownElement) {
+            console.warn('Bidly: Countdown element not found for auction:', auctionId);
+            return;
+        }
+
+        const startDate = new Date(startTime);
+        console.log('Bidly: Initializing countdown for auction:', auctionId, 'Start time:', startDate);
+
+        function updateCountdown() {
+            const now = new Date();
+            const timeLeft = startDate - now;
+
+            if (timeLeft <= 0) {
+                // Auction should start - refresh the page to get updated status
+                console.log('Bidly: Auction should start now, refreshing...');
+                window.location.reload();
+                return;
+            }
+
+            // Calculate time components
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+            // Update countdown display
+            const daysSpan = countdownElement.querySelector('.bidly-countdown-days');
+            const hoursSpan = countdownElement.querySelector('.bidly-countdown-hours');
+            const minutesSpan = countdownElement.querySelector('.bidly-countdown-minutes');
+            const secondsSpan = countdownElement.querySelector('.bidly-countdown-seconds');
+
+            if (daysSpan) daysSpan.textContent = `${days}d`;
+            if (hoursSpan) hoursSpan.textContent = `${hours}h`;
+            if (minutesSpan) minutesSpan.textContent = `${minutes}m`;
+            if (secondsSpan) secondsSpan.textContent = `${seconds}s`;
+
+            console.log('Bidly: Countdown updated:', `${days}d ${hours}h ${minutes}m ${seconds}s`);
+        }
+
+        // Update immediately
+        updateCountdown();
+
+        // Update every second
+        const countdownInterval = setInterval(updateCountdown, 1000);
+
+        // Store interval ID for cleanup
+        window.bidlyCountdownIntervals = window.bidlyCountdownIntervals || {};
+        window.bidlyCountdownIntervals[auctionId] = countdownInterval;
+
+        console.log('Bidly: Countdown timer initialized for auction:', auctionId);
+    }
+
     // Inject widget into pricing section
     function injectWidget(auctionData, settings) {
         // Check if we have valid auction data
@@ -660,6 +723,11 @@
         
         document.body.appendChild(widgetContainer);
         console.log('Bidly: Widget appended to document.body');
+        
+        // Initialize countdown timer if auction is pending
+        if (auctionData.status === 'pending' && auctionData.startTime) {
+            initializeCountdownTimer(auctionData._id, auctionData.startTime);
+        }
         
         console.log('Bidly: Widget injection complete. Widget element:', widgetContainer);
         
