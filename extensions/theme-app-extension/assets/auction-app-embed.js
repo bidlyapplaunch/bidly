@@ -775,6 +775,9 @@
             clearInterval(pollingInterval);
         }
         
+        // Store previous auction data to detect changes
+        let previousAuctionData = null;
+        
         pollingInterval = setInterval(async () => {
             try {
                 console.log('Bidly: Polling for auction updates...', auctionId);
@@ -789,16 +792,39 @@
                 const data = await response.json();
                 console.log('Bidly: Polling response data:', data);
                 
+                let auctionData = null;
                 if (data.success && data.auction) {
-                    console.log('Bidly: Polling update received:', data.auction);
-                    updateWidgetData(auctionId, data.auction);
+                    auctionData = data.auction;
+                    console.log('Bidly: Polling update received:', auctionData);
                 } else if (data.success && data.data) {
                     // Handle different response format
-                    console.log('Bidly: Polling update received (data format):', data.data);
-                    updateWidgetData(auctionId, data.data);
+                    auctionData = data.data;
+                    console.log('Bidly: Polling update received (data format):', auctionData);
                 } else {
                     console.warn('Bidly: Polling response format unexpected:', data);
+                    return;
                 }
+                
+                // Check for bid changes and show notification
+                if (previousAuctionData && auctionData) {
+                    const previousBidCount = previousAuctionData.bidHistory?.length || previousAuctionData.bidCount || 0;
+                    const currentBidCount = auctionData.bidHistory?.length || auctionData.bidCount || 0;
+                    const previousCurrentBid = previousAuctionData.currentBid || previousAuctionData.startingBid || 0;
+                    const currentCurrentBid = auctionData.currentBid || auctionData.startingBid || 0;
+                    
+                    // Show notification if bid count increased or current bid increased significantly
+                    if (currentBidCount > previousBidCount || currentCurrentBid > previousCurrentBid) {
+                        console.log('Bidly: New bid detected! Showing notification...');
+                        showBidNotification(currentCurrentBid, currentBidCount);
+                    }
+                }
+                
+                // Update widget with new data
+                updateWidgetData(auctionId, auctionData);
+                
+                // Store current data for next comparison
+                previousAuctionData = auctionData;
+                
             } catch (error) {
                 console.warn('Bidly: Error updating auction data:', error);
             }
@@ -948,11 +974,24 @@
             animation: slideIn 0.3s ease-out;
         `;
         
-        notification.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 5px;">New Bid Placed!</div>
-            <div>Current Bid: $${currentBid.toFixed(2)}</div>
-            <div>Total Bids: ${bidCount}</div>
-        `;
+        // Handle different message types
+        let messageContent = '';
+        if (typeof bidCount === 'string') {
+            // Custom message (like "New bid placed!")
+            messageContent = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${bidCount}</div>
+                <div>Current Bid: $${currentBid.toFixed(2)}</div>
+            `;
+        } else {
+            // Standard bid notification
+            messageContent = `
+                <div style="font-weight: bold; margin-bottom: 5px;">New Bid Placed!</div>
+                <div>Current Bid: $${currentBid.toFixed(2)}</div>
+                <div>Total Bids: ${bidCount}</div>
+            `;
+        }
+        
+        notification.innerHTML = messageContent;
 
         // Add animation CSS
         if (!document.querySelector('#bidly-notification-styles')) {
@@ -1178,6 +1217,10 @@
                     
                     alert('Bid placed successfully!');
                     this.closeBidModal(auctionId);
+                    
+                    // Show immediate notification for the bid just placed
+                    console.log('Bidly: Showing notification for bid just placed');
+                    showBidNotification(bidData.amount, 'New bid placed!');
                     
                     // Trigger immediate real-time update
                     console.log('Bidly: Triggering immediate update after bid placement');
