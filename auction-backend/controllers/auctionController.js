@@ -38,6 +38,7 @@ const updateProductMetafields = async (auction, shopDomain) => {
       currentBid: auction.currentBid || 0,
       startingBid: auction.startingBid,
       reservePrice: auction.reservePrice || 0,
+      startTime: auction.startTime,
       endTime: auction.endTime,
       bidCount: auction.bidHistory?.length || 0,
       buyNowPrice: auction.buyNowPrice || 0

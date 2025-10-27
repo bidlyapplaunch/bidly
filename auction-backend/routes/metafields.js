@@ -92,6 +92,12 @@ router.post('/products/:productId/auction-metafields', requireAuth, async (req, 
       },
       {
         namespace: 'auction',
+        key: 'start_time',
+        value: auctionData.startTime,
+        type: 'date_time'
+      },
+      {
+        namespace: 'auction',
         key: 'end_time',
         value: auctionData.endTime,
         type: 'date_time'
@@ -199,7 +205,8 @@ router.put('/products/:productId/auction-metafields', requireAuth, async (req, r
             key: key,
             value: value.toString(),
             type: key.includes('bid') || key.includes('price') ? 'number_decimal' : 
-                  key === 'bid_count' ? 'number_integer' : 'single_line_text_field'
+                  key === 'bid_count' ? 'number_integer' : 
+                  key.includes('time') ? 'date_time' : 'single_line_text_field'
           });
           updatedMetafields.push(created);
         }
