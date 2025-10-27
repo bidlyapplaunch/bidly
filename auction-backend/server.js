@@ -124,6 +124,10 @@ app.use('/api/analytics', analyticsRoutes);
 const { default: customerRoutes } = await import('./routes/customerRoutes.js');
 app.use('/api/customers', customerRoutes);
 
+// Winner processing routes
+const { default: winnerRoutes } = await import('./routes/winnerRoutes.js');
+app.use('/api/winner', winnerRoutes);
+
 // Widget features re-enabled with fixed imports
 const { default: metafieldsRoutes } = await import('./routes/metafields.js');
 const { default: productDuplicationRoutes } = await import('./routes/productDuplication.js');
@@ -367,15 +371,11 @@ const checkAuctionStatusChanges = async () => {
         // Process ended auctions (duplicate product, create draft order, notify winner)
         if (computedStatus === 'ended') {
           try {
-            // Import and call the processEndedAuctions function
-            const { default: AuctionEndService } = await import('./services/auctionEndService.js');
-            const result = await AuctionEndService.processAuctionEnd(auction);
+            // Use the new winner processing service
+            const { default: winnerProcessingService } = await import('./services/winnerProcessingService.js');
+            await winnerProcessingService.processAuctionWinner(auction._id, auction.shopDomain);
             
-            if (result.success) {
-              console.log(`✅ Auction end processing completed for auction ${auction._id}`);
-            } else {
-              console.error(`❌ Auction end processing failed for auction ${auction._id}: ${result.message}`);
-            }
+            console.log(`✅ Winner processing completed for auction ${auction._id}`);
           } catch (processingError) {
             console.error(`❌ Error processing ended auction ${auction._id}:`, processingError);
             // Don't fail the status update if processing fails
@@ -402,12 +402,17 @@ const checkAuctionStatusChanges = async () => {
 // Check for status changes every 5 seconds for faster response
 setInterval(checkAuctionStatusChanges, 5000);
 
+// Start scheduled jobs for winner processing
+const { default: scheduledJobsService } = await import('./services/scheduledJobsService.js');
+scheduledJobsService.start();
+
 // Start server
 server.listen(PORT, () => {
   console.log(`🚀 Auction API server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 API base URL: http://localhost:${PORT}/api/auctions`);
   console.log(`🔌 WebSocket server ready for real-time updates`);
+  console.log(`⏰ Scheduled jobs started for winner processing`);
 });
 
 export default app;

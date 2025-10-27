@@ -108,6 +108,33 @@ const auctionSchema = new mongoose.Schema({
     index: true
   },
   bidHistory: [bidSchema],
+  
+  // Winner processing fields
+  winner: {
+    bidder: String,
+    bidderEmail: String,
+    amount: Number,
+    timestamp: Date,
+    customerId: String
+  },
+  
+  privateProduct: {
+    productId: String,
+    productHandle: String,
+    productTitle: String,
+    productUrl: String,
+    createdAt: Date
+  },
+  
+  winnerProcessed: {
+    type: Boolean,
+    default: false
+  },
+  
+  winnerProcessedAt: {
+    type: Date
+  },
+  
   createdAt: {
     type: Date,
     default: Date.now

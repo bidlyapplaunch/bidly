@@ -124,6 +124,73 @@ class EmailService {
     return this.sendEmail(bidderEmail, subject, html);
   }
 
+  // Send winner notification with private product link
+  async sendWinnerNotification(emailData) {
+    const { to, subject, data } = emailData;
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>
+        
+        <p>Dear ${data.winnerName},</p>
+        
+        <p>Congratulations! You have successfully won the auction for <strong>"${data.productTitle}"</strong> with a winning bid of <strong>$${data.winningBid}</strong>.</p>
+        
+        ${data.productImage ? `
+          <div style="text-align: center; margin: 20px 0;">
+            <img src="${data.productImage}" alt="${data.productTitle}" style="max-width: 300px; height: auto; border-radius: 8px;">
+          </div>
+        ` : ''}
+        
+        <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
+          <h3 style="color: #155724; margin-top: 0;">🏆 Your Private Product</h3>
+          <p><strong>Product:</strong> ${data.productTitle}</p>
+          <p><strong>Winning Bid:</strong> $${data.winningBid}</p>
+          <p><strong>Auction Ended:</strong> ${new Date(data.auctionEndTime).toLocaleString()}</p>
+        </div>
+        
+        <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196f3;">
+          <h3 style="color: #0d47a1; margin-top: 0;">🛒 Complete Your Purchase</h3>
+          <p>Your private product has been created and is ready for purchase at your winning bid price.</p>
+          
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${data.privateProductUrl}" 
+               style="background-color: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">
+              🛒 Complete Purchase - $${data.winningBid}
+            </a>
+          </div>
+          
+          <p style="font-size: 14px; color: #666;">
+            <strong>Product Link:</strong><br>
+            <a href="${data.privateProductUrl}" style="color: #2196f3;">${data.privateProductUrl}</a>
+          </p>
+        </div>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+          <h4 style="color: #856404; margin-top: 0;">📋 Next Steps</h4>
+          <p>We will contact you shortly to send you the link to the product you have won for payment and arrangements.</p>
+        </div>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <h4 style="color: #495057; margin-top: 0;">ℹ️ Important Information</h4>
+          <ul style="color: #6c757d;">
+            <li>This is a private product created specifically for you as the auction winner</li>
+            <li>The price is set to your winning bid amount</li>
+            <li>You have 7 days to complete your purchase</li>
+            <li>Contact us if you have any questions about your purchase</li>
+          </ul>
+        </div>
+        
+        <p style="color: #7f8c8d; font-size: 14px;">
+          Best regards,<br>
+          The Bidly Auction Team
+        </p>
+      </div>
+    `;
+
+    return this.sendEmail(to, subject, html);
+  }
+
   // Send outbid notification
   async sendOutbidNotification(bidderEmail, bidderName, auctionData, newHighestBid) {
     const subject = `⚠️ You've Been Outbid - ${auctionData.productData?.title || 'Auction Item'}`;
