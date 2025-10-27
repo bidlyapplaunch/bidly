@@ -2,7 +2,7 @@ import express from 'express';
 import winnerProcessingService from '../services/winnerProcessingService.js';
 import scheduledJobsService from '../services/scheduledJobsService.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { extractShopDomain } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
@@ -12,7 +12,7 @@ const router = express.Router();
  * @desc Process winner for a specific auction
  * @access Private (Admin)
  */
-router.post('/process/:auctionId', authenticateToken, extractShopDomain, async (req, res, next) => {
+router.post('/process/:auctionId', requireAuth, extractShopDomain, async (req, res, next) => {
     try {
         const { auctionId } = req.params;
         const shopDomain = req.shopDomain;
@@ -38,7 +38,7 @@ router.post('/process/:auctionId', authenticateToken, extractShopDomain, async (
  * @desc Process all ended auctions for a store
  * @access Private (Admin)
  */
-router.post('/process-all', authenticateToken, extractShopDomain, async (req, res, next) => {
+router.post('/process-all', requireAuth, extractShopDomain, async (req, res, next) => {
     try {
         const shopDomain = req.shopDomain;
 
@@ -63,7 +63,7 @@ router.post('/process-all', authenticateToken, extractShopDomain, async (req, re
  * @desc Manually trigger winner processing (bypasses duplicate check)
  * @access Private (Admin)
  */
-router.post('/manual/:auctionId', authenticateToken, extractShopDomain, async (req, res, next) => {
+router.post('/manual/:auctionId', requireAuth, extractShopDomain, async (req, res, next) => {
     try {
         const { auctionId } = req.params;
         const shopDomain = req.shopDomain;
@@ -89,7 +89,7 @@ router.post('/manual/:auctionId', authenticateToken, extractShopDomain, async (r
  * @desc Get scheduled jobs status
  * @access Private (Admin)
  */
-router.get('/status', authenticateToken, (req, res) => {
+router.get('/status', requireAuth, (req, res) => {
     const status = scheduledJobsService.getStatus();
     
     res.json({
@@ -103,7 +103,7 @@ router.get('/status', authenticateToken, (req, res) => {
  * @desc Start scheduled jobs
  * @access Private (Admin)
  */
-router.post('/start-jobs', authenticateToken, (req, res) => {
+router.post('/start-jobs', requireAuth, (req, res) => {
     try {
         scheduledJobsService.start();
         
@@ -125,7 +125,7 @@ router.post('/start-jobs', authenticateToken, (req, res) => {
  * @desc Stop scheduled jobs
  * @access Private (Admin)
  */
-router.post('/stop-jobs', authenticateToken, (req, res) => {
+router.post('/stop-jobs', requireAuth, (req, res) => {
     try {
         scheduledJobsService.stop();
         
