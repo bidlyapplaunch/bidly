@@ -490,7 +490,7 @@
 }
 
 .bidly-bid-input-group input[type="number"] {
-    flex: 0 0 100px; /* Reduced from 120px to 100px */
+    flex: 0 0 140px; /* Increased back to 140px */
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -535,25 +535,24 @@
     cursor: not-allowed;
 }
 
-/* Buy Now button styles for inline form */
-.bidly-bid-input-group .bidly-buy-now-btn {
-    padding: 6px 10px; /* Smaller padding to match Place Bid */
+/* Buy Now button - positioned below input group */
+.bidly-buy-now-btn {
+    width: 100%; /* Full width of container */
+    padding: 8px 12px; /* Smaller padding */
     background: #ff6b6b;
     color: #fff;
     border: none;
     border-radius: 4px;
-    font-size: 12px; /* Smaller font to match Place Bid */
+    font-size: 12px; /* Smaller font */
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    white-space: nowrap;
-    flex: 0 0 auto; /* Don't grow */
-    min-width: 80px; /* Minimum width */
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    margin-top: 8px; /* Add some space from the input group */
 }
 
-.bidly-bid-input-group .bidly-buy-now-btn:hover {
+.bidly-buy-now-btn:hover {
     background: #ff5252;
 }
 

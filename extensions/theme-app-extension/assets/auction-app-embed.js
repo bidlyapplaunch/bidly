@@ -145,13 +145,14 @@
                                                placeholder="Min: $${Math.max(currentBid + 1, startingBid).toFixed(2)}"
                                                required>
                                         <button type="submit" class="bidly-submit-bid">Place Bid</button>
-                                        ${buyNowPrice > 0 ? `
-                                            <button type="button" class="bidly-buy-now-btn" onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})">
-                                                Buy Now ($${buyNowPrice.toFixed(2)})
-                                            </button>
-                                        ` : ''}
                                     </div>
                                 </form>
+                            </div>
+                            ${buyNowPrice > 0 ? `
+                                <button class="bidly-buy-now-btn" onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})">
+                                    Buy Now ($${buyNowPrice.toFixed(2)})
+                                </button>
+                            ` : ''}
                         </div>
                     ` : status === 'pending' ? `
                         <div class="bidly-pending-message">
