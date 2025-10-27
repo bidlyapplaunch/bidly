@@ -1387,12 +1387,11 @@
                 amount: bidAmount,
                 bidder: customer.fullName,
                 bidderEmail: customer.email,
-                customerId: customer.id,
-                shopDomain: CONFIG.shopDomain
+                customerId: customer.id
             };
 
             try {
-                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid`, {
+                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid?shop=${CONFIG.shopDomain}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
