@@ -747,8 +747,23 @@
                 console.log('Bidly: Real-time bid update received:', data);
                 if (data.auctionId === auctionId) {
                     updateWidgetData(auctionId, data.auction);
+                    
+                    // Get bidder information and product title for notification
+                    let latestBidder = null;
+                    let productTitle = 'this item';
+                    
+                    if (data.auction.bidHistory && data.auction.bidHistory.length > 0) {
+                        const latestBid = data.auction.bidHistory[data.auction.bidHistory.length - 1];
+                        latestBidder = latestBid.bidder;
+                    }
+                    
+                    const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
+                    if (productTitleElement) {
+                        productTitle = productTitleElement.textContent.trim();
+                    }
+                    
                     // Show notification for new bids
-                    showBidNotification(data.auction.currentBid, data.auction.bidHistory?.length || 0);
+                    showBidNotification(data.auction.currentBid, data.auction.bidHistory?.length || 0, latestBidder, productTitle);
                 }
             });
             
@@ -815,7 +830,23 @@
                     // Show notification if bid count increased or current bid increased significantly
                     if (currentBidCount > previousBidCount || currentCurrentBid > previousCurrentBid) {
                         console.log('Bidly: New bid detected! Showing notification...');
-                        showBidNotification(currentCurrentBid, currentBidCount);
+                        
+                        // Get the latest bidder information
+                        let latestBidder = null;
+                        let productTitle = 'this item';
+                        
+                        if (auctionData.bidHistory && auctionData.bidHistory.length > 0) {
+                            const latestBid = auctionData.bidHistory[auctionData.bidHistory.length - 1];
+                            latestBidder = latestBid.bidder;
+                        }
+                        
+                        // Try to get product title from the page
+                        const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
+                        if (productTitleElement) {
+                            productTitle = productTitleElement.textContent.trim();
+                        }
+                        
+                        showBidNotification(currentCurrentBid, currentBidCount, latestBidder, productTitle);
                     }
                 }
                 
@@ -949,7 +980,7 @@
     }
 
     // Show bid notification
-    function showBidNotification(currentBid, bidCount) {
+    function showBidNotification(currentBid, bidCount, bidderName = null, productTitle = null) {
         // Remove existing notification
         const existingNotification = document.querySelector('.bidly-bid-notification');
         if (existingNotification) {
@@ -972,6 +1003,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 14px;
             animation: slideIn 0.3s ease-out;
+            max-width: 300px;
         `;
         
         // Handle different message types
@@ -981,6 +1013,13 @@
             messageContent = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${bidCount}</div>
                 <div>Current Bid: $${currentBid.toFixed(2)}</div>
+            `;
+        } else if (bidderName && productTitle) {
+            // Enhanced notification with bidder name and product
+            const firstName = bidderName.split(' ')[0]; // Get first name only
+            messageContent = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${firstName} bid $${currentBid.toFixed(2)} on ${productTitle}</div>
+                <div style="font-size: 12px; opacity: 0.9;">Total Bids: ${bidCount}</div>
             `;
         } else {
             // Standard bid notification
@@ -1220,7 +1259,15 @@
                     
                     // Show immediate notification for the bid just placed
                     console.log('Bidly: Showing notification for bid just placed');
-                    showBidNotification(bidData.amount, 'New bid placed!');
+                    
+                    // Get product title for the notification
+                    let productTitle = 'this item';
+                    const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
+                    if (productTitleElement) {
+                        productTitle = productTitleElement.textContent.trim();
+                    }
+                    
+                    showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
                     
                     // Trigger immediate real-time update
                     console.log('Bidly: Triggering immediate update after bid placement');
@@ -1301,8 +1348,17 @@
             console.log('Bidly: Test auction data:', testAuctionData);
             updateWidgetData(auctionId, testAuctionData);
             
-            // Also show notification
-            showBidNotification(testAuctionData.currentBid, testAuctionData.bidCount);
+            // Also show notification with test bidder name
+            const testBidderNames = ['John', 'Sarah', 'Mike', 'Emma', 'Alex', 'Lisa', 'David', 'Anna'];
+            const randomBidder = testBidderNames[Math.floor(Math.random() * testBidderNames.length)];
+            
+            let productTitle = 'this item';
+            const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
+            if (productTitleElement) {
+                productTitle = productTitleElement.textContent.trim();
+            }
+            
+            showBidNotification(testAuctionData.currentBid, testAuctionData.bidCount, randomBidder, productTitle);
         },
 
         // Manual update function for testing
