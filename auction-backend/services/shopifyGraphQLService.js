@@ -107,7 +107,7 @@ class ShopifyGraphQLService {
         `;
 
         const variables = {
-            productId: `gid://shopify/Product/${originalProductId}`,
+            productId: originalProductId,
             newTitle: `${winnerData.productTitle} (Auction Winner - ${winnerData.winnerName})`,
             newStatus: 'DRAFT'
         };
