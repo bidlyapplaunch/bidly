@@ -587,9 +587,6 @@
         console.log('Bidly: Using STABLE positioning - widget will stay in place');
         
         // Use absolute positioning relative to the document to prevent scrolling issues
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-        
         widgetContainer.style.position = 'absolute';
         widgetContainer.style.top = (pricingRect.top + scrollTop + titleOffset) + 'px';
         widgetContainer.style.left = (pricingRect.left + scrollLeft) + 'px';
