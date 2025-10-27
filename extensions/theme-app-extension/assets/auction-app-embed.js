@@ -132,7 +132,7 @@
                                 <div class="bidly-bid-info">
                                     <div class="bidly-minimum-bid">
                                         <span class="bidly-label">Minimum Bid:</span>
-                                        <span class="bidly-amount" data-min-bid="${startingBid}">$${startingBid.toFixed(2)}</span>
+                                        <span class="bidly-amount" data-min-bid="${Math.max(currentBid + 1, startingBid)}">$${Math.max(currentBid + 1, startingBid).toFixed(2)}</span>
                                     </div>
                                 </div>
                                 <form onsubmit="window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')">
@@ -141,8 +141,8 @@
                                                id="bidly-bid-amount-${auctionId}" 
                                                name="amount" 
                                                step="0.01" 
-                                               min="${startingBid}" 
-                                               placeholder="Enter bid amount"
+                                               min="${Math.max(currentBid + 1, startingBid)}" 
+                                               placeholder="Min: $${Math.max(currentBid + 1, startingBid).toFixed(2)}"
                                                required>
                                         <button type="submit" class="bidly-submit-bid">Place Bid</button>
                                     </div>
@@ -925,7 +925,10 @@
         }
         
         if (minBidElement) {
-            const minBid = auctionData.minimumBid || auctionData.startingBid || 0;
+            // Calculate minimum bid as current bid + $1 minimum increment
+            const currentBid = auctionData.currentBid || auctionData.startingBid || 0;
+            const startingBid = auctionData.startingBid || 0;
+            const minBid = Math.max(currentBid + 1, startingBid);
             minBidElement.textContent = `$${minBid.toFixed(2)}`;
             minBidElement.setAttribute('data-min-bid', minBid);
             console.log('Bidly: Updated minimum bid to:', minBid, 'Element:', minBidElement);
@@ -973,8 +976,10 @@
                 const submitButton = bidForm.querySelector('.bidly-submit-bid');
                 
                 if (bidInput) {
-                    // Update minimum value for the input
-                    const newMinBid = auctionData.minimumBid || auctionData.startingBid || 0;
+                    // Update minimum value for the input - use current bid + $1 minimum increment
+                    const currentBid = auctionData.currentBid || auctionData.startingBid || 0;
+                    const startingBid = auctionData.startingBid || 0;
+                    const newMinBid = Math.max(currentBid + 1, startingBid);
                     bidInput.min = newMinBid;
                     bidInput.placeholder = `Min: $${newMinBid.toFixed(2)}`;
                 }

@@ -469,12 +469,13 @@
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    color: #666;
+    color: #555; /* Darker color for better visibility */
     margin-bottom: 4px;
 }
 
 .bidly-minimum-bid .bidly-label {
-    font-weight: 500;
+    font-weight: 600; /* Bolder text */
+    color: #333; /* Even darker for label */
 }
 
 .bidly-minimum-bid .bidly-amount {
@@ -489,13 +490,14 @@
 }
 
 .bidly-bid-input-group input[type="number"] {
-    flex: 1;
+    flex: 0 0 120px; /* Fixed width instead of flex: 1 */
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
     background: white;
     transition: border-color 0.2s ease;
+    color: #333; /* Darker text color */
 }
 
 .bidly-bid-input-group input[type="number"]:focus {
@@ -505,12 +507,12 @@
 }
 
 .bidly-bid-input-group input[type="number"]::placeholder {
-    color: #999;
+    color: #666; /* Darker placeholder color */
     font-size: 13px;
 }
 
 .bidly-submit-bid {
-    padding: 8px 16px;
+    padding: 8px 12px; /* Reduced padding */
     background: #4CAF50;
     color: white;
     border: none;
@@ -520,6 +522,7 @@
     cursor: pointer;
     transition: background-color 0.2s ease;
     white-space: nowrap;
+    flex: 0 0 auto; /* Don't grow */
 }
 
 .bidly-submit-bid:hover {
