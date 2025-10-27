@@ -777,22 +777,32 @@
         
         pollingInterval = setInterval(async () => {
             try {
-                console.log('Bidly: Polling for auction updates...');
+                console.log('Bidly: Polling for auction updates...', auctionId);
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
+                console.log('Bidly: Polling response status:', response.status);
+                
                 if (!response.ok) {
                     console.warn('Bidly: Polling response not ok:', response.status);
                     return;
                 }
 
                 const data = await response.json();
+                console.log('Bidly: Polling response data:', data);
+                
                 if (data.success && data.auction) {
                     console.log('Bidly: Polling update received:', data.auction);
                     updateWidgetData(auctionId, data.auction);
+                } else if (data.success && data.data) {
+                    // Handle different response format
+                    console.log('Bidly: Polling update received (data format):', data.data);
+                    updateWidgetData(auctionId, data.data);
+                } else {
+                    console.warn('Bidly: Polling response format unexpected:', data);
                 }
             } catch (error) {
                 console.warn('Bidly: Error updating auction data:', error);
             }
-        }, 3000); // More frequent polling for better real-time feel
+        }, 2000); // Even more frequent polling for testing
         
         // Clean up polling when widget is removed
         return () => {
@@ -817,31 +827,51 @@
             return;
         }
 
-        // Update current bid
-        const currentBidElement = widget.querySelector('[data-current-bid]');
+        console.log('Bidly: Found widget element:', widget);
+
+        // Update current bid - try multiple selectors
+        let currentBidElement = widget.querySelector('[data-current-bid]');
+        if (!currentBidElement) {
+            currentBidElement = widget.querySelector('.bidly-amount');
+        }
+        
         if (currentBidElement) {
             const newBid = auctionData.currentBid || auctionData.startingBid || 0;
             currentBidElement.textContent = `$${newBid.toFixed(2)}`;
             currentBidElement.setAttribute('data-current-bid', newBid);
-            console.log('Bidly: Updated current bid to:', newBid);
+            console.log('Bidly: Updated current bid to:', newBid, 'Element:', currentBidElement);
+        } else {
+            console.warn('Bidly: Current bid element not found');
         }
 
-        // Update minimum bid
-        const minBidElement = widget.querySelector('[data-min-bid]');
+        // Update minimum bid - try multiple selectors
+        let minBidElement = widget.querySelector('[data-min-bid]');
+        if (!minBidElement) {
+            minBidElement = widget.querySelector('.bidly-minimum-bid .bidly-amount');
+        }
+        
         if (minBidElement) {
             const minBid = auctionData.minimumBid || auctionData.startingBid || 0;
             minBidElement.textContent = `$${minBid.toFixed(2)}`;
             minBidElement.setAttribute('data-min-bid', minBid);
-            console.log('Bidly: Updated minimum bid to:', minBid);
+            console.log('Bidly: Updated minimum bid to:', minBid, 'Element:', minBidElement);
+        } else {
+            console.warn('Bidly: Minimum bid element not found');
         }
 
-        // Update bid count
-        const bidCountElement = widget.querySelector('[data-bid-count]');
+        // Update bid count - try multiple selectors
+        let bidCountElement = widget.querySelector('[data-bid-count]');
+        if (!bidCountElement) {
+            bidCountElement = widget.querySelector('.bidly-count');
+        }
+        
         if (bidCountElement) {
-            const bidCount = auctionData.bidHistory?.length || 0;
+            const bidCount = auctionData.bidHistory?.length || auctionData.bidCount || 0;
             bidCountElement.textContent = bidCount;
             bidCountElement.setAttribute('data-bid-count', bidCount);
-            console.log('Bidly: Updated bid count to:', bidCount);
+            console.log('Bidly: Updated bid count to:', bidCount, 'Element:', bidCountElement);
+        } else {
+            console.warn('Bidly: Bid count element not found');
         }
 
         // Update status if changed
@@ -855,7 +885,7 @@
             }
             
             // Disable bidding if auction ended
-            const bidButton = widget.querySelector('.bidly-place-bid');
+            const bidButton = widget.querySelector('.bidly-bid-btn');
             if (bidButton && auctionData.status === 'ended') {
                 bidButton.disabled = true;
                 bidButton.textContent = 'Auction Ended';
@@ -1208,7 +1238,32 @@
                 console.error('Error buying now:', error);
                 alert('Error completing purchase. Please try again.');
             }
-        }
+        },
+
+        // Test function for debugging real-time updates
+        testRealTimeUpdate: function(auctionId) {
+            console.log('Bidly: Testing real-time update for auction:', auctionId);
+            
+            // Simulate auction data update
+            const testAuctionData = {
+                auctionId: auctionId,
+                currentBid: Math.random() * 1000 + 100, // Random bid between 100-1100
+                bidCount: Math.floor(Math.random() * 10) + 1, // Random bid count 1-10
+                status: 'active',
+                endTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+                startingBid: 100,
+                minimumBid: 100
+            };
+            
+            console.log('Bidly: Test auction data:', testAuctionData);
+            updateWidgetData(auctionId, testAuctionData);
+            
+            // Also show notification
+            showBidNotification(testAuctionData.currentBid, testAuctionData.bidCount);
+        },
+
+        // Manual update function for testing
+        updateWidgetData: updateWidgetData
     };
 
     // Wait for pricing section to become visible
