@@ -492,11 +492,13 @@
         }
 
         const startDate = new Date(startTime);
-        console.log('Bidly: Initializing countdown for auction:', auctionId, 'Start time:', startDate);
+        console.log('Bidly: Initializing countdown for auction:', auctionId, 'Start time:', startDate, 'Current time:', new Date());
 
         function updateCountdown() {
             const now = new Date();
             const timeLeft = startDate - now;
+
+            console.log('Bidly: Countdown update - Time left:', timeLeft, 'Start:', startDate, 'Now:', now);
 
             if (timeLeft <= 0) {
                 // Auction should start - refresh the page to get updated status
@@ -730,7 +732,10 @@
         
         // Initialize countdown timer if auction is pending
         if (auctionData.status === 'pending' && auctionData.startTime) {
+            console.log('Bidly: Initializing countdown timer for pending auction:', auctionData._id, 'Start time:', auctionData.startTime);
             initializeCountdownTimer(auctionData._id, auctionData.startTime);
+        } else {
+            console.log('Bidly: Not initializing countdown timer. Status:', auctionData.status, 'Start time:', auctionData.startTime);
         }
         
         console.log('Bidly: Widget injection complete. Widget element:', widgetContainer);
