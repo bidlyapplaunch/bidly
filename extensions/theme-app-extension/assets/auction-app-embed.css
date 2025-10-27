@@ -451,6 +451,86 @@
     }
 }
 
+/* Inline Bidding Form Styles */
+.bidly-inline-bid-form {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.bidly-bid-info {
+    margin-bottom: 8px;
+}
+
+.bidly-minimum-bid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.bidly-minimum-bid .bidly-label {
+    font-weight: 500;
+}
+
+.bidly-minimum-bid .bidly-amount {
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.bidly-bid-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.bidly-bid-input-group input[type="number"] {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+    transition: border-color 0.2s ease;
+}
+
+.bidly-bid-input-group input[type="number"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.bidly-bid-input-group input[type="number"]::placeholder {
+    color: #999;
+    font-size: 13px;
+}
+
+.bidly-submit-bid {
+    padding: 8px 16px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.bidly-submit-bid:hover {
+    background: #45a049;
+}
+
+.bidly-submit-bid:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
 .bidly-modal-header {
     display: flex;
     justify-content: space-between;

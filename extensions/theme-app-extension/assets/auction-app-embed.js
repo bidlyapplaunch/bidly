@@ -128,9 +128,26 @@
 
                     ${status === 'active' ? `
                         <div class="bidly-widget-actions">
-                            <button class="bidly-bid-btn" onclick="window.BidlyAuctionWidget.openBidModal('${auctionId}')">
-                                Place a Bid
-                            </button>
+                            <div class="bidly-inline-bid-form" id="bidly-bid-form-${auctionId}">
+                                <div class="bidly-bid-info">
+                                    <div class="bidly-minimum-bid">
+                                        <span class="bidly-label">Minimum Bid:</span>
+                                        <span class="bidly-amount" data-min-bid="${startingBid}">$${startingBid.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <form onsubmit="window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')">
+                                    <div class="bidly-bid-input-group">
+                                        <input type="number" 
+                                               id="bidly-bid-amount-${auctionId}" 
+                                               name="amount" 
+                                               step="0.01" 
+                                               min="${startingBid}" 
+                                               placeholder="Enter bid amount"
+                                               required>
+                                        <button type="submit" class="bidly-submit-bid">Place Bid</button>
+                                    </div>
+                                </form>
+                            </div>
                             ${buyNowPrice > 0 ? `
                                 <button class="bidly-buy-now-btn" onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})">
                                     Buy Now ($${buyNowPrice.toFixed(2)})
@@ -948,6 +965,42 @@
                 bidButton.textContent = 'Auction Ended';
                 bidButton.style.opacity = '0.5';
             }
+            
+            // Update inline bid form if it exists
+            const bidForm = widget.querySelector('.bidly-inline-bid-form');
+            if (bidForm) {
+                const bidInput = bidForm.querySelector('input[type="number"]');
+                const submitButton = bidForm.querySelector('.bidly-submit-bid');
+                
+                if (bidInput) {
+                    // Update minimum value for the input
+                    const newMinBid = auctionData.minimumBid || auctionData.startingBid || 0;
+                    bidInput.min = newMinBid;
+                    bidInput.placeholder = `Min: $${newMinBid.toFixed(2)}`;
+                }
+                
+                // Disable form if auction ended
+                if (auctionData.status === 'ended') {
+                    if (bidInput) {
+                        bidInput.disabled = true;
+                        bidInput.placeholder = 'Auction Ended';
+                    }
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Auction Ended';
+                        submitButton.style.opacity = '0.5';
+                    }
+                } else {
+                    if (bidInput) {
+                        bidInput.disabled = false;
+                    }
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Place Bid';
+                        submitButton.style.opacity = '1';
+                    }
+                }
+            }
         }
 
         // Update timer if auction is active
@@ -1256,6 +1309,113 @@
                     
                     alert('Bid placed successfully!');
                     this.closeBidModal(auctionId);
+                    
+                    // Show immediate notification for the bid just placed
+                    console.log('Bidly: Showing notification for bid just placed');
+                    
+                    // Get product title for the notification
+                    let productTitle = 'this item';
+                    const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
+                    if (productTitleElement) {
+                        productTitle = productTitleElement.textContent.trim();
+                    }
+                    
+                    showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
+                    
+                    // Trigger immediate real-time update
+                    console.log('Bidly: Triggering immediate update after bid placement');
+                    
+                    // Refresh widget content instead of reloading page
+                    const existingWidget = document.querySelector('.bidly-auction-app-embed');
+                    if (existingWidget && window.currentAuctionCheck) {
+                        const settings = {
+                            show_timer: true,
+                            show_bid_history: true,
+                            widget_position: 'below_price'
+                        };
+                        refreshWidgetContent(existingWidget, window.currentAuctionCheck, settings);
+                    }
+                    
+                    // Also trigger a manual update via polling
+                    setTimeout(async () => {
+                        try {
+                            const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.success && data.auction) {
+                                    updateWidgetData(auctionId, data.auction);
+                                }
+                            }
+                        } catch (error) {
+                            console.warn('Bidly: Error in manual update after bid:', error);
+                        }
+                    }, 1000);
+                } else {
+                    alert('Error placing bid: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error placing bid:', error);
+                alert('Error placing bid. Please try again.');
+            }
+        },
+
+        submitInlineBid: async function(event, auctionId) {
+            event.preventDefault();
+            
+            // Check if user is logged in
+            if (!isUserLoggedIn() || !getCurrentCustomer()) {
+                alert('Please log in to place a bid');
+                return;
+            }
+            
+            const customer = getCurrentCustomer();
+            const form = event.target;
+            const formData = new FormData(form);
+            const bidAmount = parseFloat(formData.get('amount'));
+            
+            if (isNaN(bidAmount) || bidAmount <= 0) {
+                alert('Please enter a valid bid amount.');
+                return;
+            }
+
+            const bidData = {
+                amount: bidAmount,
+                bidder: customer.fullName,
+                bidderEmail: customer.email,
+                customerId: customer.id,
+                shopDomain: CONFIG.shopDomain
+            };
+
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(bidData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update customer's bid history in your DB
+                    await fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            auctionId: auctionId,
+                            amount: bidData.amount,
+                            isWinning: result.isWinning || false
+                        })
+                    });
+                    
+                    // Clear the input field
+                    const inputField = document.getElementById(`bidly-bid-amount-${auctionId}`);
+                    if (inputField) {
+                        inputField.value = '';
+                    }
                     
                     // Show immediate notification for the bid just placed
                     console.log('Bidly: Showing notification for bid just placed');
