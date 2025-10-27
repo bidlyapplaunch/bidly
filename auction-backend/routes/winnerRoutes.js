@@ -3,7 +3,7 @@ import winnerProcessingService from '../services/winnerProcessingService.js';
 import scheduledJobsService from '../services/scheduledJobsService.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { requireAuth } from '../middleware/auth.js';
-import { extractShopDomain } from '../middleware/storeMiddleware.js';
+import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
@@ -12,14 +12,10 @@ const router = express.Router();
  * @desc Process winner for a specific auction
  * @access Private (Admin)
  */
-router.post('/process/:auctionId', requireAuth, extractShopDomain, async (req, res, next) => {
+router.post('/process/:auctionId', requireAuth, identifyStore, async (req, res, next) => {
     try {
         const { auctionId } = req.params;
         const shopDomain = req.shopDomain;
-
-        if (!shopDomain) {
-            return next(new AppError('Shop domain is required', 400));
-        }
 
         await winnerProcessingService.processAuctionWinner(auctionId, shopDomain);
 
@@ -38,13 +34,9 @@ router.post('/process/:auctionId', requireAuth, extractShopDomain, async (req, r
  * @desc Process all ended auctions for a store
  * @access Private (Admin)
  */
-router.post('/process-all', requireAuth, extractShopDomain, async (req, res, next) => {
+router.post('/process-all', requireAuth, identifyStore, async (req, res, next) => {
     try {
         const shopDomain = req.shopDomain;
-
-        if (!shopDomain) {
-            return next(new AppError('Shop domain is required', 400));
-        }
 
         await winnerProcessingService.processAllEndedAuctions(shopDomain);
 
@@ -63,14 +55,10 @@ router.post('/process-all', requireAuth, extractShopDomain, async (req, res, nex
  * @desc Manually trigger winner processing (bypasses duplicate check)
  * @access Private (Admin)
  */
-router.post('/manual/:auctionId', requireAuth, extractShopDomain, async (req, res, next) => {
+router.post('/manual/:auctionId', requireAuth, identifyStore, async (req, res, next) => {
     try {
         const { auctionId } = req.params;
         const shopDomain = req.shopDomain;
-
-        if (!shopDomain) {
-            return next(new AppError('Shop domain is required', 400));
-        }
 
         await scheduledJobsService.processWinnerManually(auctionId, shopDomain);
 
