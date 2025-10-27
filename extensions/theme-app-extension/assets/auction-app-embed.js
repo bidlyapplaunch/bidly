@@ -951,6 +951,45 @@
             console.warn('Bidly: Bid count element not found');
         }
 
+        // Update inline bid form if it exists (for all statuses)
+        const bidForm = widget.querySelector('.bidly-inline-bid-form');
+        if (bidForm) {
+            const bidInput = bidForm.querySelector('input[type="number"]');
+            const submitButton = bidForm.querySelector('.bidly-submit-bid');
+            
+            if (bidInput) {
+                // Update minimum value for the input - use current bid + $1 minimum increment
+                const currentBid = auctionData.currentBid || auctionData.startingBid || 0;
+                const startingBid = auctionData.startingBid || 0;
+                const newMinBid = Math.max(currentBid + 1, startingBid);
+                bidInput.min = newMinBid;
+                bidInput.placeholder = `Min: $${newMinBid.toFixed(2)}`;
+                console.log('Bidly: Updated bid input min to:', newMinBid, 'Element:', bidInput);
+            }
+            
+            // Handle form state based on auction status
+            if (auctionData.status === 'ended') {
+                if (bidInput) {
+                    bidInput.disabled = true;
+                    bidInput.placeholder = 'Auction Ended';
+                }
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Auction Ended';
+                    submitButton.style.opacity = '0.5';
+                }
+            } else if (auctionData.status === 'active') {
+                if (bidInput) {
+                    bidInput.disabled = false;
+                }
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Place Bid';
+                    submitButton.style.opacity = '1';
+                }
+            }
+        }
+
         // Update status if changed
         if (auctionData.status !== 'active') {
             const statusElement = widget.querySelector('.bidly-widget-status');
@@ -967,44 +1006,6 @@
                 bidButton.disabled = true;
                 bidButton.textContent = 'Auction Ended';
                 bidButton.style.opacity = '0.5';
-            }
-            
-            // Update inline bid form if it exists
-            const bidForm = widget.querySelector('.bidly-inline-bid-form');
-            if (bidForm) {
-                const bidInput = bidForm.querySelector('input[type="number"]');
-                const submitButton = bidForm.querySelector('.bidly-submit-bid');
-                
-                if (bidInput) {
-                    // Update minimum value for the input - use current bid + $1 minimum increment
-                    const currentBid = auctionData.currentBid || auctionData.startingBid || 0;
-                    const startingBid = auctionData.startingBid || 0;
-                    const newMinBid = Math.max(currentBid + 1, startingBid);
-                    bidInput.min = newMinBid;
-                    bidInput.placeholder = `Min: $${newMinBid.toFixed(2)}`;
-                }
-                
-                // Disable form if auction ended
-                if (auctionData.status === 'ended') {
-                    if (bidInput) {
-                        bidInput.disabled = true;
-                        bidInput.placeholder = 'Auction Ended';
-                    }
-                    if (submitButton) {
-                        submitButton.disabled = true;
-                        submitButton.textContent = 'Auction Ended';
-                        submitButton.style.opacity = '0.5';
-                    }
-                } else {
-                    if (bidInput) {
-                        bidInput.disabled = false;
-                    }
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                        submitButton.textContent = 'Place Bid';
-                        submitButton.style.opacity = '1';
-                    }
-                }
             }
         }
 
@@ -1209,7 +1210,7 @@
                 }
                 
                 const auction = data.data;
-                const bidHistory = auction.bidHistory || [];
+                const bidHistory = (auction.bidHistory || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
                 // Create modal HTML
                 const modalHtml = `
@@ -1223,15 +1224,21 @@
                                 <div class="bidly-bid-history">
                                     ${bidHistory.length === 0 ? 
                                         '<p class="bidly-no-bids">No bids placed yet</p>' :
-                                        bidHistory.map((bid, index) => `
-                                            <div class="bidly-bid-item ${index === bidHistory.length - 1 ? 'bidly-current-bid' : ''}">
-                                                <div class="bidly-bid-info">
-                                                    <span class="bidly-bidder">${bid.bidder}</span>
-                                                    <span class="bidly-bid-time">${new Date(bid.timestamp).toLocaleString()}</span>
+                                        bidHistory.map((bid, index) => {
+                                            // Find the highest bid amount to identify current bid
+                                            const highestBid = Math.max(...bidHistory.map(b => b.amount));
+                                            const isCurrentBid = bid.amount === highestBid;
+                                            
+                                            return `
+                                                <div class="bidly-bid-item ${isCurrentBid ? 'bidly-current-bid' : ''}">
+                                                    <div class="bidly-bid-info">
+                                                        <span class="bidly-bidder">${bid.bidder}</span>
+                                                        <span class="bidly-bid-time">${new Date(bid.timestamp).toLocaleString()}</span>
+                                                    </div>
+                                                    <div class="bidly-bid-amount">$${bid.amount.toFixed(2)}</div>
                                                 </div>
-                                                <div class="bidly-bid-amount">$${bid.amount.toFixed(2)}</div>
-                                            </div>
-                                        `).join('')
+                                            `;
+                                        }).join('')
                                     }
                                 </div>
                             </div>
