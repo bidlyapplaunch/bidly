@@ -876,7 +876,8 @@
             
             const bidData = {
                 amount: parseFloat(formData.get('amount')),
-                bidder: customer.fullName
+                bidder: customer.fullName,
+                bidderEmail: customer.email
             };
 
             try {
