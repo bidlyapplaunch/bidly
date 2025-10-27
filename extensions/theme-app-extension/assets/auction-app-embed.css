@@ -262,7 +262,7 @@
     letter-spacing: 0.5px;
     margin-bottom: 4px;
     opacity: 0.9;
-    color: white !important;
+    color: rgb(0, 0, 0) !important;
 }
 
 .bidly-amount,
@@ -490,7 +490,7 @@
 }
 
 .bidly-bid-input-group input[type="number"] {
-    flex: 0 0 120px; /* Fixed width instead of flex: 1 */
+    flex: 0 0 100px; /* Reduced from 120px to 100px */
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -512,17 +512,18 @@
 }
 
 .bidly-submit-bid {
-    padding: 8px 12px; /* Reduced padding */
+    padding: 6px 10px; /* Smaller padding */
     background: #4CAF50;
     color: white;
     border: none;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 12px; /* Smaller font */
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
     white-space: nowrap;
     flex: 0 0 auto; /* Don't grow */
+    min-width: 70px; /* Minimum width */
 }
 
 .bidly-submit-bid:hover {
@@ -532,6 +533,28 @@
 .bidly-submit-bid:disabled {
     background: #ccc;
     cursor: not-allowed;
+}
+
+/* Buy Now button styles for inline form */
+.bidly-bid-input-group .bidly-buy-now-btn {
+    padding: 6px 10px; /* Smaller padding to match Place Bid */
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px; /* Smaller font to match Place Bid */
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+    flex: 0 0 auto; /* Don't grow */
+    min-width: 80px; /* Minimum width */
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.bidly-bid-input-group .bidly-buy-now-btn:hover {
+    background: #ff5252;
 }
 
 .bidly-modal-header {
