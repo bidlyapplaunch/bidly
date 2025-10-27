@@ -310,8 +310,9 @@
     }
 
     // Find pricing section to overlay widget - specifically the MAIN product price
+    // VERSION: FIXED - Original styling restored, only smart pricing detection
     function findPricingSection() {
-        console.log('Bidly: Looking for MAIN product pricing section...');
+        console.log('Bidly: VERSION FIXED - Looking for MAIN product pricing section...');
         
         // Strategy 1: Look for main product container first
         const mainProductSelectors = [
@@ -578,9 +579,11 @@
                 scrollLeft
             });
             
-        // Position widget to replace the pricing section (fixed positioning for stability)
+        // Position widget to replace the pricing section (ORIGINAL STYLING RESTORED)
         // Add some offset to move widget down and avoid covering the title
         const titleOffset = 40; // Add 40px offset to move widget below title
+        
+        console.log('Bidly: VERSION FIXED - Using original positioning (no Math.max, no stable positioning)');
         
         widgetContainer.style.position = 'fixed';
         widgetContainer.style.top = (pricingRect.top + titleOffset) + 'px';
