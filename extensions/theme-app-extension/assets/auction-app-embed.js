@@ -719,12 +719,18 @@
 
     // Initialize real-time updates via WebSocket
     let socket = null;
+    let pollingInterval = null;
+    
     function initializeRealTimeUpdates(auctionId) {
+        console.log('Bidly: Initializing real-time updates for auction:', auctionId);
+        
         // Connect to WebSocket if not already connected
-        if (!socket) {
+        if (!socket && window.io) {
             console.log('Bidly: Connecting to WebSocket for real-time updates...');
             socket = io(CONFIG.backendUrl, {
-                transports: ['websocket', 'polling']
+                transports: ['websocket', 'polling'],
+                timeout: 20000,
+                forceNew: true
             });
             
             socket.on('connect', () => {
@@ -741,6 +747,8 @@
                 console.log('Bidly: Real-time bid update received:', data);
                 if (data.auctionId === auctionId) {
                     updateWidgetData(auctionId, data.auction);
+                    // Show notification for new bids
+                    showBidNotification(data.auction.currentBid, data.auction.bidHistory?.length || 0);
                 }
             });
             
@@ -754,26 +762,44 @@
             socket.on('error', (error) => {
                 console.error('Bidly: WebSocket error:', error);
             });
+            
+            socket.on('connect_error', (error) => {
+                console.warn('Bidly: WebSocket connection error:', error);
+            });
+        } else if (!window.io) {
+            console.warn('Bidly: Socket.IO not available, using polling only');
         }
         
-        // Fallback to polling if WebSocket fails
-        const pollingInterval = setInterval(async () => {
+        // Always use polling as fallback/primary method
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+        
+        pollingInterval = setInterval(async () => {
             try {
+                console.log('Bidly: Polling for auction updates...');
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
-                if (!response.ok) return;
+                if (!response.ok) {
+                    console.warn('Bidly: Polling response not ok:', response.status);
+                    return;
+                }
 
                 const data = await response.json();
                 if (data.success && data.auction) {
+                    console.log('Bidly: Polling update received:', data.auction);
                     updateWidgetData(auctionId, data.auction);
                 }
             } catch (error) {
                 console.warn('Bidly: Error updating auction data:', error);
             }
-        }, 10000); // Reduced frequency since WebSocket handles real-time updates
+        }, 3000); // More frequent polling for better real-time feel
         
         // Clean up polling when widget is removed
         return () => {
-            clearInterval(pollingInterval);
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
             if (socket) {
                 socket.disconnect();
                 socket = null;
@@ -783,21 +809,39 @@
 
     // Update widget data in real-time
     function updateWidgetData(auctionId, auctionData) {
+        console.log('Bidly: Updating widget data for auction:', auctionId, auctionData);
+        
         const widget = document.querySelector(`#bidly-auction-widget-${auctionId}`);
-        if (!widget) return;
+        if (!widget) {
+            console.warn('Bidly: Widget not found for auction:', auctionId);
+            return;
+        }
 
         // Update current bid
         const currentBidElement = widget.querySelector('[data-current-bid]');
         if (currentBidElement) {
-            currentBidElement.textContent = `$${auctionData.currentBid.toFixed(2)}`;
-            currentBidElement.setAttribute('data-current-bid', auctionData.currentBid);
+            const newBid = auctionData.currentBid || auctionData.startingBid || 0;
+            currentBidElement.textContent = `$${newBid.toFixed(2)}`;
+            currentBidElement.setAttribute('data-current-bid', newBid);
+            console.log('Bidly: Updated current bid to:', newBid);
+        }
+
+        // Update minimum bid
+        const minBidElement = widget.querySelector('[data-min-bid]');
+        if (minBidElement) {
+            const minBid = auctionData.minimumBid || auctionData.startingBid || 0;
+            minBidElement.textContent = `$${minBid.toFixed(2)}`;
+            minBidElement.setAttribute('data-min-bid', minBid);
+            console.log('Bidly: Updated minimum bid to:', minBid);
         }
 
         // Update bid count
         const bidCountElement = widget.querySelector('[data-bid-count]');
         if (bidCountElement) {
-            bidCountElement.textContent = auctionData.bidHistory?.length || 0;
-            bidCountElement.setAttribute('data-bid-count', auctionData.bidHistory?.length || 0);
+            const bidCount = auctionData.bidHistory?.length || 0;
+            bidCountElement.textContent = bidCount;
+            bidCountElement.setAttribute('data-bid-count', bidCount);
+            console.log('Bidly: Updated bid count to:', bidCount);
         }
 
         // Update status if changed
@@ -807,8 +851,101 @@
                 statusElement.innerHTML = auctionData.status === 'ended' ? 
                     '<span class="bidly-status-ended">● ENDED</span>' : 
                     '<span class="bidly-status-pending">● PENDING</span>';
+                console.log('Bidly: Updated status to:', auctionData.status);
+            }
+            
+            // Disable bidding if auction ended
+            const bidButton = widget.querySelector('.bidly-place-bid');
+            if (bidButton && auctionData.status === 'ended') {
+                bidButton.disabled = true;
+                bidButton.textContent = 'Auction Ended';
+                bidButton.style.opacity = '0.5';
             }
         }
+
+        // Update timer if auction is active
+        if (auctionData.status === 'active' && auctionData.endTime) {
+            const countdownElement = widget.querySelector('.bidly-countdown');
+            if (countdownElement) {
+                const endTimestamp = new Date(auctionData.endTime).getTime();
+                const now = new Date().getTime();
+                const distance = endTimestamp - now;
+
+                if (distance > 0) {
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    countdownElement.innerHTML = `
+                        <span class="bidly-time-unit">${days}d</span>
+                        <span class="bidly-time-unit">${hours}h</span>
+                        <span class="bidly-time-unit">${minutes}m</span>
+                        <span class="bidly-time-unit">${seconds}s</span>
+                    `;
+                } else {
+                    countdownElement.innerHTML = '<span class="bidly-time-unit">Auction Ended</span>';
+                }
+            }
+        }
+
+        console.log('Bidly: Widget data update complete');
+    }
+
+    // Show bid notification
+    function showBidNotification(currentBid, bidCount) {
+        // Remove existing notification
+        const existingNotification = document.querySelector('.bidly-bid-notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = 'bidly-bid-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 100000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        notification.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 5px;">New Bid Placed!</div>
+            <div>Current Bid: $${currentBid.toFixed(2)}</div>
+            <div>Total Bids: ${bidCount}</div>
+        `;
+
+        // Add animation CSS
+        if (!document.querySelector('#bidly-notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'bidly-notification-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(notification);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 5000);
     }
 
 
@@ -1012,6 +1149,9 @@
                     alert('Bid placed successfully!');
                     this.closeBidModal(auctionId);
                     
+                    // Trigger immediate real-time update
+                    console.log('Bidly: Triggering immediate update after bid placement');
+                    
                     // Refresh widget content instead of reloading page
                     const existingWidget = document.querySelector('.bidly-auction-app-embed');
                     if (existingWidget && window.currentAuctionCheck) {
@@ -1022,6 +1162,21 @@
                         };
                         refreshWidgetContent(existingWidget, window.currentAuctionCheck, settings);
                     }
+                    
+                    // Also trigger a manual update via polling
+                    setTimeout(async () => {
+                        try {
+                            const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.success && data.auction) {
+                                    updateWidgetData(auctionId, data.auction);
+                                }
+                            }
+                        } catch (error) {
+                            console.warn('Bidly: Error in manual update after bid:', error);
+                        }
+                    }, 1000);
                 } else {
                     alert('Error placing bid: ' + result.message);
                 }

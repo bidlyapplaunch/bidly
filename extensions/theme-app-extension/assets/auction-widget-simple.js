@@ -1,6 +1,7 @@
 /**
  * Simplified Auction Widget - Following ChatGPT's recommended pattern
  * Uses Shopify customer data directly, falls back to temp login only if needed
+ * Includes persistent guest session management
  */
 
 (function() {
@@ -9,7 +10,9 @@
     // Configuration
     const CONFIG = {
         backendUrl: 'https://bidly-auction-backend.onrender.com',
-        shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname
+        shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname,
+        sessionKey: 'bidly_guest_session',
+        sessionExpiryHours: 6 // Guest sessions expire after 6 hours
     };
 
     console.log('Bidly: Simple auction widget initialized');
@@ -18,6 +21,64 @@
     // Customer state
     let currentCustomer = null;
     let isLoggedIn = false;
+
+    // Session management functions
+    function saveGuestSession(customerData) {
+        const sessionData = {
+            customer: customerData,
+            timestamp: Date.now(),
+            shopDomain: CONFIG.shopDomain
+        };
+        
+        try {
+            localStorage.setItem(CONFIG.sessionKey, JSON.stringify(sessionData));
+            console.log('Bidly: Guest session saved to localStorage');
+        } catch (error) {
+            console.warn('Bidly: Failed to save guest session:', error);
+        }
+    }
+
+    function loadGuestSession() {
+        try {
+            const sessionData = localStorage.getItem(CONFIG.sessionKey);
+            if (!sessionData) return null;
+
+            const parsed = JSON.parse(sessionData);
+            
+            // Check if session is for the same shop
+            if (parsed.shopDomain !== CONFIG.shopDomain) {
+                console.log('Bidly: Session is for different shop, clearing');
+                clearGuestSession();
+                return null;
+            }
+
+            // Check if session has expired
+            const sessionAge = Date.now() - parsed.timestamp;
+            const maxAge = CONFIG.sessionExpiryHours * 60 * 60 * 1000; // Convert hours to milliseconds
+            
+            if (sessionAge > maxAge) {
+                console.log('Bidly: Guest session expired, clearing');
+                clearGuestSession();
+                return null;
+            }
+
+            console.log('Bidly: Guest session loaded from localStorage');
+            return parsed.customer;
+        } catch (error) {
+            console.warn('Bidly: Failed to load guest session:', error);
+            clearGuestSession();
+            return null;
+        }
+    }
+
+    function clearGuestSession() {
+        try {
+            localStorage.removeItem(CONFIG.sessionKey);
+            console.log('Bidly: Guest session cleared from localStorage');
+        } catch (error) {
+            console.warn('Bidly: Failed to clear guest session:', error);
+        }
+    }
 
     // Check if Shopify customer is logged in
     function checkShopifyCustomer() {
@@ -51,6 +112,12 @@
                 const result = await response.json();
                 currentCustomer = result.customer;
                 isLoggedIn = true;
+                
+                // Save guest session if it's a temporary customer
+                if (!customerData.id) {
+                    saveGuestSession(currentCustomer);
+                }
+                
                 console.log('Bidly: Customer saved successfully:', currentCustomer);
                 return true;
             } else {
@@ -90,17 +157,20 @@
                 <form id="temp-login-form">
                     <div style="margin-bottom: 15px;">
                         <label>Name:</label>
-                        <input type="text" id="temp-name" required style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <input type="text" id="temp-name" required style="width: 100%; padding: 8px; margin-top: 5px;" autocomplete="name">
                     </div>
                     <div style="margin-bottom: 20px;">
                         <label>Email:</label>
-                        <input type="email" id="temp-email" required style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <input type="email" id="temp-email" required style="width: 100%; padding: 8px; margin-top: 5px;" autocomplete="email">
                     </div>
                     <div style="text-align: right;">
                         <button type="button" onclick="closeTempLogin()" style="margin-right: 10px; padding: 8px 16px;">Cancel</button>
                         <button type="submit" style="padding: 8px 16px; background: #007cba; color: white; border: none; border-radius: 4px;">Login</button>
                     </div>
                 </form>
+                <div style="margin-top: 15px; font-size: 12px; color: #666;">
+                    Your session will be remembered for 6 hours or until you close your browser.
+                </div>
             </div>
         `;
 
@@ -109,8 +179,13 @@
         // Handle form submission
         document.getElementById('temp-login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('temp-name').value;
-            const email = document.getElementById('temp-email').value;
+            const name = document.getElementById('temp-name').value.trim();
+            const email = document.getElementById('temp-email').value.trim();
+
+            if (!name || !email) {
+                alert('Please enter both name and email.');
+                return;
+            }
 
             // Create temp customer data
             const tempCustomer = {
@@ -139,6 +214,15 @@
         }
     }
 
+    // Logout function
+    function logout() {
+        currentCustomer = null;
+        isLoggedIn = false;
+        clearGuestSession();
+        console.log('Bidly: User logged out');
+        window.dispatchEvent(new CustomEvent('bidly-logout'));
+    }
+
     // Make functions globally available
     window.closeTempLogin = closeTempLogin;
 
@@ -157,7 +241,17 @@
                 window.dispatchEvent(new CustomEvent('bidly-login-success'));
             }
         } else {
-            console.log('Bidly: No Shopify customer - will show temp login when needed');
+            // Check for existing guest session
+            const guestSession = loadGuestSession();
+            if (guestSession) {
+                currentCustomer = guestSession;
+                isLoggedIn = true;
+                console.log('Bidly: Guest session restored:', currentCustomer);
+                // Dispatch login success event
+                window.dispatchEvent(new CustomEvent('bidly-login-success'));
+            } else {
+                console.log('Bidly: No Shopify customer or guest session - will show temp login when needed');
+            }
         }
     }
 
@@ -177,6 +271,8 @@
         isUserLoggedIn,
         getCurrentCustomer,
         showTempLoginPopup,
+        logout,
+        clearGuestSession,
         CONFIG
     };
 
