@@ -73,7 +73,6 @@ class ShopifyGraphQLService {
                                 sku
                                 inventoryQuantity
                                 inventoryPolicy
-                                inventoryManagement
                             }
                         }
                     }
