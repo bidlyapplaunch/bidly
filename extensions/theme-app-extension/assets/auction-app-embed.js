@@ -978,11 +978,18 @@
     function refreshWidgetContent(widgetElement, auctionCheck, settings) {
         console.log('Bidly: Refreshing widget content for auction:', auctionCheck);
         
-        // Find the inner widget content element
-        const innerWidget = widgetElement.querySelector('.bidly-auction-widget');
+        // Find the inner widget content element by ID
+        const auctionId = auctionCheck.auctionId;
+        let innerWidget = widgetElement.querySelector(`#bidly-auction-widget-${auctionId}`);
         if (!innerWidget) {
-            console.log('Bidly: Inner widget not found, skipping refresh');
-            return;
+            console.log('Bidly: Inner widget not found, trying alternative selector...');
+            // Try alternative selector
+            innerWidget = widgetElement.querySelector(`.${CONFIG.widgetClass}`);
+            if (!innerWidget) {
+                console.log('Bidly: Inner widget not found, skipping refresh');
+                return;
+            }
+            console.log('Bidly: Found widget using alternative selector');
         }
         
         // Generate new widget content
