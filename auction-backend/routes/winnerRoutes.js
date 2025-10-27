@@ -2,7 +2,7 @@ import express from 'express';
 import winnerProcessingService from '../services/winnerProcessingService.js';
 import scheduledJobsService from '../services/scheduledJobsService.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import { authenticateToken } from '../middleware/auth.js';
 import { extractShopDomain } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
