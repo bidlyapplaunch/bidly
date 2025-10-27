@@ -126,7 +126,7 @@ class WinnerProcessingService {
      * Get store access token
      */
     async getStoreAccessToken(shopDomain) {
-        const store = await Store.findOne({ shopDomain });
+        const store = await Store.findOne({ shopDomain }).select('+accessToken');
         
         if (!store) {
             throw new AppError('Store not found', 404);
