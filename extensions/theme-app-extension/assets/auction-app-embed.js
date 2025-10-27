@@ -314,54 +314,55 @@
     function findPricingSection() {
         console.log('Bidly: VERSION FIXED - Looking for MAIN product pricing section...');
         
-        // Strategy 1: Look for main product container first
-        const mainProductSelectors = [
-            '.product-single',
-            '.product-page',
-            '.product-detail',
-            '.product-main',
-            '.product-info',
+        // Strategy 1: Look for the ENTIRE pricing section container (price + quantity + buttons)
+        const pricingSectionSelectors = [
+            '.product-form',
+            '.product-form__price',
+            '.product__form',
+            '.product-single__form',
+            '.product-form__buttons',
+            '.product-form__actions',
+            '.product-actions',
+            '.product-buy',
+            '.product-purchase',
             '.product-details',
-            '.product-content',
-            '.product-wrapper',
-            '.product-container',
-            '.product-layout',
-            '.product-grid',
-            '.product-area',
-            '.main-product',
-            '.primary-product'
+            '.product-info',
+            '.product-main',
+            '.product-single',
+            '.product-page'
         ];
         
-        for (const selector of mainProductSelectors) {
-            const mainContainer = document.querySelector(selector);
-            if (mainContainer) {
-                console.log(`Bidly: Found main product container: ${selector}`);
+        for (const selector of pricingSectionSelectors) {
+            const elements = document.querySelectorAll(selector);
+            console.log(`Bidly: Checking pricing section selector "${selector}": Found ${elements.length} elements`);
+            
+            for (const element of elements) {
+                // Skip elements that are in "You may also like" or similar sections
+                const isInRecommendationSection = element.closest('[class*="recommend"], [class*="related"], [class*="similar"], [class*="also"], [class*="suggest"], [class*="like"]');
+                if (isInRecommendationSection) {
+                    console.log(`Bidly: Skipping element in recommendation section: ${selector}`);
+                    continue;
+                }
                 
-                // Look for price within this main container
-                const priceElements = mainContainer.querySelectorAll('.price, [class*="price"], [class*="cost"], [class*="amount"]');
-                console.log(`Bidly: Found ${priceElements.length} price elements in main container`);
+                const rect = element.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(element);
                 
-                for (const element of priceElements) {
-                    const text = element.textContent || element.innerText || '';
-                    const rect = element.getBoundingClientRect();
-                    const computedStyle = window.getComputedStyle(element);
-                    
-                    console.log(`Bidly: Main container price element: "${text}", rect:`, rect);
-                    
-                    // Skip hidden elements
-                    if (computedStyle.display === 'none' || 
-                        computedStyle.visibility === 'hidden' || 
-                        computedStyle.opacity === '0' ||
-                        element.style.display === 'none') {
-                        console.log(`Bidly: Skipping hidden main price element: "${text}"`);
-                        continue;
-                    }
-                    
-                    // Look for elements with actual price values and visible dimensions
-                    if (text.includes('$') && !text.includes('$0.00') && rect.width > 0 && rect.height > 0 && rect.top > 0 && rect.left >= 0) {
-                        console.log('Bidly: Found MAIN product pricing element:', element);
-                        return element;
-                    }
+                // Skip hidden elements
+                if (computedStyle.display === 'none' || 
+                    computedStyle.visibility === 'hidden' || 
+                    computedStyle.opacity === '0' ||
+                    element.style.display === 'none') {
+                    continue;
+                }
+                
+                // Look for elements that contain price, quantity, and buttons (the ENTIRE pricing section)
+                const hasPrice = element.querySelector('.price, [class*="price"], [class*="cost"], [class*="amount"]');
+                const hasQuantity = element.querySelector('input[type="number"], .quantity, [class*="quantity"]');
+                const hasButtons = element.querySelector('button, .btn, [class*="button"], [class*="add-to-cart"], [class*="buy"]');
+                
+                if (hasPrice && (hasQuantity || hasButtons) && rect.width > 200 && rect.height > 50) {
+                    console.log('Bidly: Found ENTIRE pricing section container:', element, rect);
+                    return element;
                 }
             }
         }
