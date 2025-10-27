@@ -492,7 +492,42 @@
         }
 
         const startDate = new Date(startTime);
-        console.log('Bidly: Initializing countdown for auction:', auctionId, 'Start time:', startDate, 'Current time:', new Date());
+        const now = new Date();
+        const timeLeft = startDate - now;
+        
+        console.log('Bidly: Initializing countdown for auction:', auctionId);
+        console.log('Bidly: Start time string:', startTime);
+        console.log('Bidly: Start time parsed:', startDate);
+        console.log('Bidly: Current time:', now);
+        console.log('Bidly: Time left (ms):', timeLeft);
+        console.log('Bidly: Time left (seconds):', Math.floor(timeLeft / 1000));
+        
+        // Check if startTime is valid
+        if (isNaN(startDate.getTime())) {
+            console.error('Bidly: Invalid start time:', startTime);
+            return;
+        }
+        
+        // If time has already passed, show "Starting soon" and refresh in 30 seconds
+        if (timeLeft <= 0) {
+            console.log('Bidly: Start time has passed, showing "Starting soon"');
+            const daysSpan = countdownElement.querySelector('.bidly-countdown-days');
+            const hoursSpan = countdownElement.querySelector('.bidly-countdown-hours');
+            const minutesSpan = countdownElement.querySelector('.bidly-countdown-minutes');
+            const secondsSpan = countdownElement.querySelector('.bidly-countdown-seconds');
+
+            if (daysSpan) daysSpan.textContent = 'Soon';
+            if (hoursSpan) hoursSpan.textContent = '';
+            if (minutesSpan) minutesSpan.textContent = '';
+            if (secondsSpan) secondsSpan.textContent = '';
+            
+            // Refresh page in 30 seconds to check for status update
+            setTimeout(() => {
+                console.log('Bidly: Refreshing page to check auction status...');
+                window.location.reload();
+            }, 30000);
+            return;
+        }
 
         function updateCountdown() {
             const now = new Date();
