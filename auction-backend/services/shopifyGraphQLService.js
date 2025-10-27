@@ -90,8 +90,8 @@ class ShopifyGraphQLService {
      */
     async duplicateProductForWinner(storeDomain, accessToken, originalProductId, winnerData) {
         const query = `
-            mutation productDuplicate($input: ProductDuplicateInput!) {
-                productDuplicate(input: $input) {
+            mutation productDuplicate($productId: ID!, $newTitle: String!, $newStatus: ProductStatus) {
+                productDuplicate(productId: $productId, newTitle: $newTitle, newStatus: $newStatus) {
                     newProduct {
                         id
                         title
@@ -107,11 +107,9 @@ class ShopifyGraphQLService {
         `;
 
         const variables = {
-            input: {
-                productId: `gid://shopify/Product/${originalProductId}`,
-                newTitle: `${winnerData.productTitle} (Auction Winner - ${winnerData.winnerName})`,
-                newStatus: 'DRAFT'
-            }
+            productId: `gid://shopify/Product/${originalProductId}`,
+            newTitle: `${winnerData.productTitle} (Auction Winner - ${winnerData.winnerName})`,
+            newStatus: 'DRAFT'
         };
 
         return await this.executeGraphQL(storeDomain, accessToken, query, variables);
