@@ -501,26 +501,9 @@
             console.log('Bidly: Countdown update - Time left:', timeLeft, 'Start:', startDate, 'Now:', now);
 
             if (timeLeft <= 0) {
-                // If time has passed but auction is still pending, show "Starting soon" instead of refreshing
-                console.log('Bidly: Start time has passed but auction is still pending');
-                
-                // Update display to show "Starting soon" message
-                const daysSpan = countdownElement.querySelector('.bidly-countdown-days');
-                const hoursSpan = countdownElement.querySelector('.bidly-countdown-hours');
-                const minutesSpan = countdownElement.querySelector('.bidly-countdown-minutes');
-                const secondsSpan = countdownElement.querySelector('.bidly-countdown-seconds');
-
-                if (daysSpan) daysSpan.textContent = 'Soon';
-                if (hoursSpan) hoursSpan.textContent = '';
-                if (minutesSpan) minutesSpan.textContent = '';
-                if (secondsSpan) secondsSpan.textContent = '';
-
-                // Clear the interval to stop updating
-                if (window.bidlyCountdownIntervals && window.bidlyCountdownIntervals[auctionId]) {
-                    clearInterval(window.bidlyCountdownIntervals[auctionId]);
-                    delete window.bidlyCountdownIntervals[auctionId];
-                }
-                
+                // Auction should start - refresh the page to get updated status
+                console.log('Bidly: Auction should start now, refreshing...');
+                window.location.reload();
                 return;
             }
 
