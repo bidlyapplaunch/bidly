@@ -588,8 +588,8 @@
         widgetContainer.style.position = 'fixed';
         widgetContainer.style.top = (pricingRect.top + titleOffset) + 'px';
         widgetContainer.style.left = pricingRect.left + 'px';
-        widgetContainer.style.width = pricingRect.width + 'px';
-        widgetContainer.style.height = pricingRect.height + 'px';
+        widgetContainer.style.width = Math.max(400, pricingRect.width) + 'px'; // Minimum 400px width
+        widgetContainer.style.height = Math.max(300, pricingRect.height) + 'px'; // Minimum 300px height
         widgetContainer.style.minHeight = 'auto';
         widgetContainer.style.zIndex = '9999';
             
@@ -628,7 +628,7 @@
             widgetContainer.style.left = '50%';
             widgetContainer.style.transform = 'translateX(-50%)'; // Center horizontally
             widgetContainer.style.width = '400px'; // Reasonable fallback width
-            widgetContainer.style.height = '200px'; // Reasonable fallback height
+            widgetContainer.style.height = '300px'; // Reasonable fallback height
             widgetContainer.style.minHeight = 'auto'; // Remove minHeight
             widgetContainer.style.zIndex = '9999';
             console.log('Bidly: Pricing section not found, using centered fallback positioning');
