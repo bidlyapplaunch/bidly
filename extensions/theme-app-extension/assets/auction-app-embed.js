@@ -582,28 +582,13 @@
         // Add some offset to move widget down and avoid covering the title
         const titleOffset = 40; // Add 40px offset to move widget below title
         
-        // Ensure stable positioning regardless of scroll
-        const stableTop = Math.max(100, pricingRect.top + titleOffset); // Minimum 100px from top
-        const stableLeft = Math.max(20, pricingRect.left); // Minimum 20px from left
-        
         widgetContainer.style.position = 'fixed';
-        widgetContainer.style.top = stableTop + 'px';
-        widgetContainer.style.left = stableLeft + 'px';
-        widgetContainer.style.width = Math.max(300, pricingRect.width) + 'px'; // Minimum 300px width
-        widgetContainer.style.height = Math.max(200, pricingRect.height) + 'px'; // Minimum 200px height
+        widgetContainer.style.top = (pricingRect.top + titleOffset) + 'px';
+        widgetContainer.style.left = pricingRect.left + 'px';
+        widgetContainer.style.width = pricingRect.width + 'px';
+        widgetContainer.style.height = pricingRect.height + 'px';
         widgetContainer.style.minHeight = 'auto';
         widgetContainer.style.zIndex = '9999';
-        
-        console.log('Bidly: Stable positioning applied:', {
-            originalTop: pricingRect.top,
-            stableTop: stableTop,
-            originalLeft: pricingRect.left,
-            stableLeft: stableLeft,
-            originalWidth: pricingRect.width,
-            stableWidth: Math.max(300, pricingRect.width),
-            originalHeight: pricingRect.height,
-            stableHeight: Math.max(200, pricingRect.height)
-        });
             
             // Hide only specific pricing elements, not the entire container
             // This prevents hiding the product title
