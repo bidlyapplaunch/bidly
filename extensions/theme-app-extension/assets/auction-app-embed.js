@@ -44,6 +44,10 @@
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
         
+        // Determine the display bid and minimum bid logic
+        const displayBid = bidCount > 0 ? currentBid : startingBid;
+        const minBidAmount = bidCount > 0 ? Math.max(currentBid + 1, startingBid) : startingBid;
+        
         // If not logged in, show login prompt
         if (!isUserLoggedIn()) {
             return `
@@ -112,7 +116,7 @@
                     <div class="bidly-widget-pricing">
                         <div class="bidly-current-bid">
                             <span class="bidly-label">Current Bid:</span>
-                            <span class="bidly-amount" data-current-bid="${currentBid}">$${currentBid.toFixed(2)}</span>
+                            <span class="bidly-amount" data-current-bid="${displayBid}">$${displayBid.toFixed(2)}</span>
                         </div>
                         ${reservePrice > 0 ? `
                             <div class="bidly-reserve-price">
@@ -132,7 +136,7 @@
                                 <div class="bidly-bid-info">
                                     <div class="bidly-minimum-bid">
                                         <span class="bidly-label">Minimum Bid:</span>
-                                        <span class="bidly-amount" data-min-bid="${Math.max(currentBid + 1, startingBid)}">$${Math.max(currentBid + 1, startingBid).toFixed(2)}</span>
+                                        <span class="bidly-amount" data-min-bid="${minBidAmount}">$${minBidAmount.toFixed(2)}</span>
                                     </div>
                                 </div>
                                 <form onsubmit="window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')">
@@ -141,8 +145,8 @@
                                                id="bidly-bid-amount-${auctionId}" 
                                                name="amount" 
                                                step="0.01" 
-                                               min="${Math.max(currentBid + 1, startingBid)}" 
-                                               placeholder="Min: $${Math.max(currentBid + 1, startingBid).toFixed(2)}"
+                                               min="${minBidAmount}" 
+                                               placeholder="Min: $${minBidAmount.toFixed(2)}"
                                                required>
                                         <button type="submit" class="bidly-submit-bid">Place Bid</button>
                                     </div>
@@ -168,7 +172,7 @@
                         </div>
                     ` : `
                         <div class="bidly-ended-message">
-                            Auction has ended. Final bid: $${currentBid.toFixed(2)}
+                            Auction has ended. Final bid: $${displayBid.toFixed(2)}
                         </div>
                     `}
 
@@ -978,10 +982,12 @@
         }
         
         if (currentBidElement) {
-            const newBid = auctionData.currentBid || auctionData.startingBid || 0;
-            currentBidElement.textContent = `$${newBid.toFixed(2)}`;
-            currentBidElement.setAttribute('data-current-bid', newBid);
-            console.log('Bidly: Updated current bid to:', newBid, 'Element:', currentBidElement);
+            // Use same logic as widget creation
+            const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
+            const displayBid = bidCount > 0 ? auctionData.currentBid : auctionData.startingBid;
+            currentBidElement.textContent = `$${displayBid.toFixed(2)}`;
+            currentBidElement.setAttribute('data-current-bid', displayBid);
+            console.log('Bidly: Updated current bid to:', displayBid, 'Element:', currentBidElement);
         } else {
             console.warn('Bidly: Current bid element not found');
         }
@@ -993,13 +999,12 @@
         }
         
         if (minBidElement) {
-            // Calculate minimum bid as current bid + $1 minimum increment
-            const currentBid = auctionData.currentBid || auctionData.startingBid || 0;
-            const startingBid = auctionData.startingBid || 0;
-            const minBid = Math.max(currentBid + 1, startingBid);
-            minBidElement.textContent = `$${minBid.toFixed(2)}`;
-            minBidElement.setAttribute('data-min-bid', minBid);
-            console.log('Bidly: Updated minimum bid to:', minBid, 'Element:', minBidElement);
+            // Use same logic as widget creation
+            const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
+            const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
+            minBidElement.textContent = `$${minBidAmount.toFixed(2)}`;
+            minBidElement.setAttribute('data-min-bid', minBidAmount);
+            console.log('Bidly: Updated minimum bid to:', minBidAmount, 'Element:', minBidElement);
         } else {
             console.warn('Bidly: Minimum bid element not found');
         }
@@ -1026,10 +1031,9 @@
             const submitButton = bidForm.querySelector('.bidly-submit-bid');
             
             if (bidInput) {
-                // Update minimum value for the input - use current bid + $1 minimum increment
-                const currentBid = auctionData.currentBid || auctionData.startingBid || 0;
-                const startingBid = auctionData.startingBid || 0;
-                const newMinBid = Math.max(currentBid + 1, startingBid);
+                // Use same logic as widget creation
+                const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
+                const newMinBid = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
                 bidInput.min = newMinBid;
                 bidInput.placeholder = `Min: $${newMinBid.toFixed(2)}`;
                 console.log('Bidly: Updated bid input min to:', newMinBid, 'Element:', bidInput);
