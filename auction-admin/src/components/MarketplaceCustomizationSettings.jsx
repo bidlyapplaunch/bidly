@@ -6,7 +6,6 @@ import {
   TextField, 
   Select, 
   Button, 
-  ColorPicker,
   Text,
   Divider,
   Banner
@@ -95,6 +94,27 @@ const MarketplaceCustomizationSettings = () => {
     }));
   };
 
+  const ColorInput = ({ label, colorKey }) => (
+    <div style={{ minWidth: 220 }}>
+      <Text as="p" variant="bodySm" tone="subdued">
+        {label}
+      </Text>
+      <input
+        type="color"
+        value={customization.colors[colorKey]}
+        onChange={(e) => handleColorChange(colorKey, e.target.value)}
+        style={{ width: 220, height: 40, border: '1px solid #DFE3E8', borderRadius: 6, background: '#fff' }}
+      />
+      <TextField
+        label="Hex"
+        labelHidden
+        value={customization.colors[colorKey]}
+        onChange={(v) => handleColorChange(colorKey, v)}
+        autoComplete="off"
+      />
+    </div>
+  );
+
   const handleTemplateChange = (value) => {
     setCustomization(prev => ({
       ...prev,
@@ -152,65 +172,55 @@ const MarketplaceCustomizationSettings = () => {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Primary Color"
-                color={customization.colors.primary}
-                onChange={(color) => handleColorChange('primary', color)}
-              />
-              <ColorPicker
-                label="Background Color"
-                color={customization.colors.background}
-                onChange={(color) => handleColorChange('background', color)}
-              />
-              <ColorPicker
-                label="Surface Color"
-                color={customization.colors.surface}
-                onChange={(color) => handleColorChange('surface', color)}
-              />
+              <ColorInput label="Primary" colorKey="primary" />
+              <ColorInput label="Background" colorKey="background" />
+              <ColorInput label="Surface" colorKey="surface" />
             </div>
             
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Primary Text"
-                color={customization.colors.textPrimary}
-                onChange={(color) => handleColorChange('textPrimary', color)}
-              />
-              <ColorPicker
-                label="Secondary Text"
-                color={customization.colors.textSecondary}
-                onChange={(color) => handleColorChange('textSecondary', color)}
-              />
-              <ColorPicker
-                label="Border Color"
-                color={customization.colors.border}
-                onChange={(color) => handleColorChange('border', color)}
-              />
+              <ColorInput label="Text Primary" colorKey="textPrimary" />
+              <ColorInput label="Text Secondary" colorKey="textSecondary" />
+              <ColorInput label="Border" colorKey="border" />
             </div>
             
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Accent Color"
-                color={customization.colors.accent}
-                onChange={(color) => handleColorChange('accent', color)}
-              />
-              <ColorPicker
-                label="Success Color"
-                color={customization.colors.success}
-                onChange={(color) => handleColorChange('success', color)}
-              />
-              <ColorPicker
-                label="Error Color"
-                color={customization.colors.error}
-                onChange={(color) => handleColorChange('error', color)}
-              />
+              <ColorInput label="Accent" colorKey="accent" />
+              <ColorInput label="Success" colorKey="success" />
+              <ColorInput label="Error" colorKey="error" />
             </div>
             
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Hover Color"
-                color={customization.colors.hover}
-                onChange={(color) => handleColorChange('hover', color)}
-              />
+              <ColorInput label="Hover" colorKey="hover" />
+            </div>
+
+            {/* Live preview */}
+            <div style={{
+              marginTop: 8,
+              border: '1px solid #DFE3E8',
+              borderRadius: 8,
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                background: customization.colors.surface,
+                padding: 16,
+                borderBottom: `1px solid ${customization.colors.border}`
+              }}>
+                <Text variant="headingMd" as="h3" style={{ color: customization.colors.textPrimary }}>
+                  Marketplace Preview
+                </Text>
+                <Text as="p" tone="subdued" style={{ color: customization.colors.textSecondary }}>
+                  Cards, headings, and text will reflect your selections.
+                </Text>
+              </div>
+              <div style={{ padding: 16, background: customization.colors.background }}>
+                <button style={{
+                  background: customization.colors.primary,
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: 6
+                }}>Primary Button</button>
+              </div>
             </div>
           </div>
           

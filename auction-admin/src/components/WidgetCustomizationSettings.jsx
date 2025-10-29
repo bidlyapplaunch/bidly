@@ -6,7 +6,6 @@ import {
   TextField, 
   Select, 
   Button, 
-  ColorPicker,
   Text,
   Divider,
   Banner,
@@ -105,6 +104,27 @@ const WidgetCustomizationSettings = () => {
     }));
   };
 
+  const ColorInput = ({ label, colorKey }) => (
+    <div style={{ minWidth: 220 }}>
+      <Text as="p" variant="bodySm" tone="subdued">
+        {label}
+      </Text>
+      <input
+        type="color"
+        value={customization.colors[colorKey]}
+        onChange={(e) => handleColorChange(colorKey, e.target.value)}
+        style={{ width: 220, height: 40, border: '1px solid #DFE3E8', borderRadius: 6, background: '#fff' }}
+      />
+      <TextField
+        label="Hex"
+        labelHidden
+        value={customization.colors[colorKey]}
+        onChange={(v) => handleColorChange(colorKey, v)}
+        autoComplete="off"
+      />
+    </div>
+  );
+
   const handleTemplateChange = (value) => {
     setCustomization(prev => ({
       ...prev,
@@ -163,117 +183,85 @@ const WidgetCustomizationSettings = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Text variant="headingSm">Basic Colors</Text>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Primary Color"
-                color={customization.colors.primary}
-                onChange={(color) => handleColorChange('primary', color)}
-              />
-              <ColorPicker
-                label="Background Color"
-                color={customization.colors.background}
-                onChange={(color) => handleColorChange('background', color)}
-              />
-              <ColorPicker
-                label="Surface Color"
-                color={customization.colors.surface}
-                onChange={(color) => handleColorChange('surface', color)}
-              />
+              <ColorInput label="Primary" colorKey="primary" />
+              <ColorInput label="Background" colorKey="background" />
+              <ColorInput label="Surface" colorKey="surface" />
             </div>
             
             <Text variant="headingSm">Text Colors</Text>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Primary Text"
-                color={customization.colors.textPrimary}
-                onChange={(color) => handleColorChange('textPrimary', color)}
-              />
-              <ColorPicker
-                label="Secondary Text"
-                color={customization.colors.textSecondary}
-                onChange={(color) => handleColorChange('textSecondary', color)}
-              />
-              <ColorPicker
-                label="Title Text"
-                color={customization.colors.textTitle}
-                onChange={(color) => handleColorChange('textTitle', color)}
-              />
+              <ColorInput label="Text Primary" colorKey="textPrimary" />
+              <ColorInput label="Text Secondary" colorKey="textSecondary" />
+              <ColorInput label="Title" colorKey="textTitle" />
             </div>
             
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Timer Text"
-                color={customization.colors.textTimer}
-                onChange={(color) => handleColorChange('textTimer', color)}
-              />
-              <ColorPicker
-                label="Status Text"
-                color={customization.colors.textStatus}
-                onChange={(color) => handleColorChange('textStatus', color)}
-              />
-              <ColorPicker
-                label="Count Text"
-                color={customization.colors.textCount}
-                onChange={(color) => handleColorChange('textCount', color)}
-              />
+              <ColorInput label="Timer" colorKey="textTimer" />
+              <ColorInput label="Status" colorKey="textStatus" />
+              <ColorInput label="Count" colorKey="textCount" />
             </div>
             
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Label Text"
-                color={customization.colors.textLabel}
-                onChange={(color) => handleColorChange('textLabel', color)}
-              />
-              <ColorPicker
-                label="Amount Text"
-                color={customization.colors.textAmount}
-                onChange={(color) => handleColorChange('textAmount', color)}
-              />
+              <ColorInput label="Label" colorKey="textLabel" />
+              <ColorInput label="Amount" colorKey="textAmount" />
             </div>
             
             <Text variant="headingSm">UI Elements</Text>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Border Color"
-                color={customization.colors.border}
-                onChange={(color) => handleColorChange('border', color)}
-              />
-              <ColorPicker
-                label="Accent Color"
-                color={customization.colors.accent}
-                onChange={(color) => handleColorChange('accent', color)}
-              />
-              <ColorPicker
-                label="Success Color"
-                color={customization.colors.success}
-                onChange={(color) => handleColorChange('success', color)}
-              />
+              <ColorInput label="Border" colorKey="border" />
+              <ColorInput label="Accent" colorKey="accent" />
+              <ColorInput label="Success" colorKey="success" />
             </div>
             
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Error Color"
-                color={customization.colors.error}
-                onChange={(color) => handleColorChange('error', color)}
-              />
-              <ColorPicker
-                label="Hover Color"
-                color={customization.colors.hover}
-                onChange={(color) => handleColorChange('hover', color)}
-              />
+              <ColorInput label="Error" colorKey="error" />
+              <ColorInput label="Hover" colorKey="hover" />
             </div>
             
             <Text variant="headingSm">Buttons</Text>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <ColorPicker
-                label="Primary Button"
-                color={customization.colors.buttonPrimary}
-                onChange={(color) => handleColorChange('buttonPrimary', color)}
-              />
-              <ColorPicker
-                label="Secondary Button"
-                color={customization.colors.buttonSecondary}
-                onChange={(color) => handleColorChange('buttonSecondary', color)}
-              />
+              <ColorInput label="Button Primary" colorKey="buttonPrimary" />
+              <ColorInput label="Button Secondary" colorKey="buttonSecondary" />
+            </div>
+
+            {/* Live preview */}
+            <div style={{
+              marginTop: 8,
+              border: '1px solid #DFE3E8',
+              borderRadius: 8,
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                background: customization.colors.surface,
+                padding: 16,
+                borderBottom: `1px solid ${customization.colors.border}`
+              }}>
+                <Text variant="headingMd" as="h3" style={{ color: customization.colors.textTitle }}>
+                  Widget Preview
+                </Text>
+                <div style={{ fontFamily: 'monospace', color: customization.colors.textTimer, marginTop: 6 }}>
+                  00d 12h 45m 20s
+                </div>
+              </div>
+              <div style={{ padding: 16, background: customization.colors.background }}>
+                <div style={{ color: customization.colors.textLabel, marginBottom: 6 }}>Minimum Bid</div>
+                <div style={{ color: customization.colors.textAmount, fontWeight: 700, fontSize: 18, marginBottom: 12 }}>$123.00</div>
+                <button style={{
+                  background: customization.colors.buttonPrimary,
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: 6,
+                  marginRight: 8
+                }}>Place Bid</button>
+                <button style={{
+                  background: customization.colors.success,
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: 6
+                }}>Buy Now</button>
+              </div>
             </div>
           </div>
           
