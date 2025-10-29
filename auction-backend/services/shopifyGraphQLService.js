@@ -30,12 +30,40 @@ class ShopifyGraphQLService {
 
             if (response.data.errors) {
                 console.error('GraphQL Errors:', response.data.errors);
-                throw new Error(`GraphQL Error: ${response.data.errors[0].message}`);
+                const firstError = response.data.errors[0];
+                
+                // Create error with more details for permission errors
+                const error = new Error(`GraphQL Error: ${firstError.message}`);
+                error.graphqlErrors = response.data.errors;
+                error.isPermissionError = firstError.extensions?.code === 'ACCESS_DENIED' || 
+                                         firstError.message.includes('ACCESS_DENIED') ||
+                                         firstError.message.includes('access scope') ||
+                                         firstError.message.includes('permission');
+                
+                throw error;
             }
 
             return response.data.data;
         } catch (error) {
             console.error('GraphQL Request Failed:', error.message);
+            
+            // Preserve permission error flag if it exists
+            if (error.isPermissionError) {
+                throw error;
+            }
+            
+            // Check if it's a permission error from Axios response
+            if (error.response?.data?.errors) {
+                const firstError = error.response.data.errors[0];
+                if (firstError.extensions?.code === 'ACCESS_DENIED' || 
+                    firstError.message?.includes('ACCESS_DENIED') ||
+                    firstError.message?.includes('access scope') ||
+                    firstError.message?.includes('permission')) {
+                    error.isPermissionError = true;
+                    error.graphqlErrors = error.response.data.errors;
+                }
+            }
+            
             throw error;
         }
     }
@@ -83,6 +111,69 @@ class ShopifyGraphQLService {
         return await this.executeGraphQL(storeDomain, accessToken, query, {
             id: `gid://shopify/Product/${productId}`
         });
+    }
+
+    /**
+     * Create a product manually (fallback when duplication fails)
+     */
+    async createProductManually(storeDomain, accessToken, originalProduct, winnerData, winningBidAmount) {
+        const query = `
+            mutation productCreate($input: ProductInput!) {
+                productCreate(input: $input) {
+                    product {
+                        id
+                        title
+                        handle
+                        status
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        `;
+
+        // Get images from original product
+        const imageInputs = originalProduct.images?.edges?.map(edge => ({
+            src: edge.node.url,
+            altText: edge.node.altText || originalProduct.title
+        })) || [];
+
+        // Create variants with winning bid price
+        const variantInputs = originalProduct.variants?.edges?.map(edge => ({
+            price: winningBidAmount.toString(),
+            title: edge.node.title || 'Default Title',
+            sku: edge.node.sku || `auction-winner-${Date.now()}`,
+            inventoryPolicy: 'DENY',
+            inventoryManagement: null // No inventory tracking for auction winner products
+        })) || [{
+            price: winningBidAmount.toString(),
+            title: 'Default Title',
+            inventoryPolicy: 'DENY',
+            inventoryManagement: null
+        }];
+
+        const variables = {
+            input: {
+                title: `${originalProduct.title} (Auction Winner - ${winnerData.bidder})`,
+                descriptionHtml: originalProduct.description || '',
+                status: 'DRAFT',
+                productType: originalProduct.productType || '',
+                vendor: originalProduct.vendor || '',
+                tags: [...(originalProduct.tags || []), 'auction-winner'],
+                images: imageInputs,
+                variants: variantInputs
+            }
+        };
+
+        const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
+
+        if (result.productCreate.userErrors.length > 0) {
+            throw new Error(`Product creation failed: ${result.productCreate.userErrors[0].message}`);
+        }
+
+        return result.productCreate.product;
     }
 
     /**
@@ -148,32 +239,57 @@ class ShopifyGraphQLService {
      * Create a private product for auction winner
      */
     async createPrivateProductForWinner(storeDomain, accessToken, originalProduct, winnerData, winningBidAmount) {
-        // First, duplicate the product
-        const duplicateResult = await this.duplicateProductForWinner(storeDomain, accessToken, originalProduct.id, {
-            productTitle: originalProduct.title,
-            winnerName: winnerData.bidder
-        });
+        let newProduct;
 
-        if (duplicateResult.productDuplicate.userErrors.length > 0) {
-            throw new Error(`Product duplication failed: ${duplicateResult.productDuplicate.userErrors[0].message}`);
+        try {
+            // First, try to duplicate the product
+            const duplicateResult = await this.duplicateProductForWinner(storeDomain, accessToken, originalProduct.id, {
+                productTitle: originalProduct.title,
+                winnerName: winnerData.bidder
+            });
+
+            if (duplicateResult.productDuplicate.userErrors.length > 0) {
+                throw new Error(`Product duplication failed: ${duplicateResult.productDuplicate.userErrors[0].message}`);
+            }
+
+            newProduct = duplicateResult.productDuplicate.newProduct;
+
+            // Get the duplicated product details to update variant prices
+            const productDetails = await this.getProduct(storeDomain, accessToken, newProduct.id.split('/').pop());
+
+            // Update all variant prices to the winning bid amount
+            const variantUpdates = productDetails.product.variants.edges.map(async (variantEdge) => {
+                return await this.updateProductVariantPrice(
+                    storeDomain, 
+                    accessToken, 
+                    variantEdge.node.id, 
+                    winningBidAmount
+                );
+            });
+
+            await Promise.all(variantUpdates);
+        } catch (error) {
+            // If duplication fails due to permissions, fallback to manual creation
+            if (error.isPermissionError || error.message.includes('ACCESS_DENIED') || error.message.includes('write_products') || error.message.includes('permission')) {
+                console.log('⚠️ Product duplication failed due to permissions, falling back to manual creation...');
+                
+                // originalProduct should already be a full product object from getProduct
+                // But if it's missing title or other fields, fetch it again
+                let fullProduct = originalProduct;
+                if (!fullProduct.title || !fullProduct.variants) {
+                    console.log('⚠️ Fetching full product details for manual creation...');
+                    const productId = typeof originalProduct === 'string' ? originalProduct : originalProduct.id.split('/').pop();
+                    const productData = await this.getProduct(storeDomain, accessToken, productId);
+                    fullProduct = productData.product;
+                }
+
+                // Create product manually with winning bid price already set
+                newProduct = await this.createProductManually(storeDomain, accessToken, fullProduct, winnerData, winningBidAmount);
+            } else {
+                // Re-throw if it's a different error
+                throw error;
+            }
         }
-
-        const newProduct = duplicateResult.productDuplicate.newProduct;
-
-        // Get the duplicated product details to update variant prices
-        const productDetails = await this.getProduct(storeDomain, accessToken, newProduct.id.split('/').pop());
-
-        // Update all variant prices to the winning bid amount
-        const variantUpdates = productDetails.product.variants.edges.map(async (variantEdge) => {
-            return await this.updateProductVariantPrice(
-                storeDomain, 
-                accessToken, 
-                variantEdge.node.id, 
-                winningBidAmount
-            );
-        });
-
-        await Promise.all(variantUpdates);
 
         return {
             productId: newProduct.id,
