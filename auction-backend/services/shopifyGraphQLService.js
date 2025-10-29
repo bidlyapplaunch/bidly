@@ -208,8 +208,10 @@ class ShopifyGraphQLService {
 
     /**
      * Update product variant prices for winner using REST API (more reliable)
+     * Version 2.0 - Fixed GraphQL mutation issue
      */
     async updateProductVariantPrices(storeDomain, accessToken, productId, variants, winningBidAmount) {
+        console.log('🔄 Using REST API to update variant prices (Version 2.0)');
         // Use REST API to update variant prices
         const variantUpdates = [];
         
