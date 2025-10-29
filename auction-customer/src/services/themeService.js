@@ -19,7 +19,8 @@ class ThemeService {
         return this.getDefaultTheme();
       }
 
-      const response = await fetch(`/api/customization/theme?shop=${encodeURIComponent(shopDomain)}`, {
+      const backendUrl = 'https://bidly-auction-backend.onrender.com';
+      const response = await fetch(`${backendUrl}/api/customization/theme?shop=${encodeURIComponent(shopDomain)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'text/css'
