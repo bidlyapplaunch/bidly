@@ -767,8 +767,8 @@
         
         // Initialize countdown timer if auction is pending
         if (auctionData.status === 'pending' && auctionData.startTime) {
-            console.log('Bidly: Initializing countdown timer for pending auction:', auctionData._id, 'Start time:', auctionData.startTime);
-            initializeCountdownTimer(auctionData._id, auctionData.startTime);
+            console.log('Bidly: Initializing countdown timer for pending auction:', auctionData.auctionId, 'Start time:', auctionData.startTime);
+            initializeCountdownTimer(auctionData.auctionId, auctionData.startTime);
         } else {
             console.log('Bidly: Not initializing countdown timer. Status:', auctionData.status, 'Start time:', auctionData.startTime);
         }
