@@ -286,9 +286,26 @@
     // Check if product has auction data by fetching from backend API
     async function checkProductForAuction() {
         try {
-            const productId = await getProductIdFromPage();
+            // Wait for Shopify data to load
+            let productId = await getProductIdFromPage();
+            
+            // Retry up to 3 times if product ID not found
             if (!productId) {
-                console.log('Bidly: Could not determine product ID');
+                console.log('Bidly: Product ID not found, retrying...');
+                for (let i = 0; i < 3; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    productId = await getProductIdFromPage();
+                    if (productId) {
+                        console.log('Bidly: Product ID found on retry', i + 1);
+                        break;
+                    }
+                }
+            }
+            
+            if (!productId) {
+                console.error('Bidly: Could not determine product ID after retries');
+                console.log('Bidly: window.Shopify:', window.Shopify);
+                console.log('Bidly: document.readyState:', document.readyState);
                 return { hasAuction: false };
             }
 

@@ -49,7 +49,7 @@
 }
 {% endschema %}
 
-<link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}?v=156">
+<link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}?v=157">
 
 <!-- Inject Shopify customer data -->
 <script>
@@ -63,8 +63,8 @@
 </script>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="{{ 'auction-widget-simple.js' | asset_url }}?v=156" defer></script>
-<script src="{{ 'auction-app-embed.js' | asset_url }}?v=156" defer></script>
+<script src="{{ 'auction-widget-simple.js' | asset_url }}?v=157" defer></script>
+<script src="{{ 'auction-app-embed.js' | asset_url }}?v=157" defer></script>
 
 <script>
 // Initialize the auction app embed
@@ -147,11 +147,77 @@ window.BidlyAuctionEmbed = {
                 }
             }
 
+            // If metafields not found, fallback to API call
+            console.log('Bidly: Metafields not found, falling back to API...');
+            const productId = await this.getProductIdForApi();
+            if (!productId) {
+                console.log('Bidly: Could not get product ID for API fallback');
+                return { hasAuction: false };
+            }
+            
+            // Call the API endpoint
+            try {
+                const CONFIG = window.BidlyConfig || {
+                    backendUrl: 'https://bidly-auction-backend.onrender.com',
+                    shopDomain: '{{ shop.domain }}'
+                };
+                
+                const apiUrl = `${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`;
+                console.log('Bidly: Fetching auction data from API:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.auction) {
+                        console.log('Bidly: Found auction via API:', data.auction);
+                        return {
+                            hasAuction: true,
+                            auctionId: data.auction._id,
+                            status: data.auction.status || 'pending',
+                            currentBid: parseFloat(data.auction.currentBid) || 0,
+                            startingBid: parseFloat(data.auction.startingBid) || 0,
+                            reservePrice: parseFloat(data.auction.reservePrice) || 0,
+                            endTime: data.auction.endTime,
+                            startTime: data.auction.startTime,
+                            bidCount: data.auction.bidHistory?.length || 0,
+                            buyNowPrice: parseFloat(data.auction.buyNowPrice) || 0
+                        };
+                    }
+                }
+            } catch (apiError) {
+                console.warn('Bidly: API fallback failed:', apiError);
+            }
+
             return { hasAuction: false };
         } catch (error) {
             console.warn('Bidly: Error checking product metafields:', error);
             return { hasAuction: false };
         }
+    },
+    
+    getProductIdForApi: async function() {
+        // Try to get product ID from various sources
+        if (window.Shopify?.analytics?.meta?.product?.id) {
+            return window.Shopify.analytics.meta.product.id.toString();
+        }
+        
+        const productJson = document.querySelector('script[type="application/json"][data-product-json]');
+        if (productJson) {
+            try {
+                const product = JSON.parse(productJson.textContent);
+                if (product.id) {
+                    return product.id.toString();
+                }
+            } catch (e) {
+                console.warn('Bidly: Error parsing product JSON:', e);
+            }
+        }
+        
+        if (window.Shopify?.product?.id) {
+            return window.Shopify.product.id.toString();
+        }
+        
+        return null;
     },
     
     injectWidget: function(auctionData, settings) {
