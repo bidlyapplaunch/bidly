@@ -115,7 +115,7 @@
 
                     <div class="bidly-widget-pricing">
                         <div class="bidly-current-bid">
-                            <span class="bidly-label">Current Bid:</span>
+                            <span class="bidly-label">${bidCount > 0 ? 'Current Bid:' : 'Starting Bid:'}</span>
                             <span class="bidly-amount" data-current-bid="${displayBid}">$${displayBid.toFixed(2)}</span>
                         </div>
                         ${reservePrice > 0 ? `
@@ -1052,6 +1052,16 @@
             console.log('Bidly: Updated current bid to:', displayBid, 'Element:', currentBidElement);
         } else {
             console.warn('Bidly: Current bid element not found');
+        }
+
+        // Update the label (Starting Bid vs Current Bid)
+        const bidLabelElement = widget.querySelector('.bidly-label');
+        if (bidLabelElement) {
+            const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
+            bidLabelElement.textContent = bidCount > 0 ? 'Current Bid:' : 'Starting Bid:';
+            console.log('Bidly: Updated bid label to:', bidLabelElement.textContent);
+        } else {
+            console.warn('Bidly: Bid label element not found');
         }
 
         // Update minimum bid - try multiple selectors
