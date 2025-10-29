@@ -114,7 +114,15 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint for Render (moved after Shopify embedded app route)
+// Root endpoint for Render - responds immediately
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bidly Auction API Server',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // API routes
 app.use('/api/auctions', auctionRoutes);
@@ -122,23 +130,77 @@ app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Customization routes
-const { default: customizationRoutes } = await import('./routes/customization.js');
-app.use('/api/customization', customizationRoutes);
+// Load optional routes asynchronously without blocking server startup
+(async () => {
+  const routeLoaders = [
+    {
+      name: 'customization',
+      import: () => import('./routes/customization.js'),
+      mount: (routes) => app.use('/api/customization', routes.default)
+    },
+    {
+      name: 'customer',
+      import: () => import('./routes/customerRoutes.js'),
+      mount: (routes) => app.use('/api/customers', routes.default)
+    },
+    {
+      name: 'winner',
+      import: () => import('./routes/winnerRoutes.js'),
+      mount: (routes) => app.use('/api/winner', routes.default)
+    },
+    {
+      name: 'metafields',
+      import: () => import('./routes/metafields.js'),
+      mount: (routes) => app.use('/api/metafields', routes.default)
+    },
+    {
+      name: 'product-duplication',
+      import: () => import('./routes/productDuplication.js'),
+      mount: (routes) => app.use('/api/product-duplication', routes.default)
+    }
+  ];
 
-// Customer routes for hybrid login system
-const { default: customerRoutes } = await import('./routes/customerRoutes.js');
-app.use('/api/customers', customerRoutes);
+  // Use Promise.allSettled to load all routes without blocking, even if some fail
+  const results = await Promise.allSettled(
+    routeLoaders.map(async (loader) => {
+      try {
+        const module = await loader.import();
+        loader.mount(module);
+        console.log(`✅ ${loader.name} routes loaded`);
+        return { name: loader.name, success: true };
+      } catch (error) {
+        console.error(`⚠️ Failed to load ${loader.name} routes:`, error.message);
+        // Add fallback route
+        if (loader.name === 'customization') {
+          app.use('/api/customization', (req, res) => {
+            res.status(500).json({ success: false, message: 'Customization routes not available' });
+          });
+        } else if (loader.name === 'customer') {
+          app.use('/api/customers', (req, res) => {
+            res.status(500).json({ success: false, message: 'Customer routes not available' });
+          });
+        } else if (loader.name === 'winner') {
+          app.use('/api/winner', (req, res) => {
+            res.status(500).json({ success: false, message: 'Winner routes not available' });
+          });
+        } else if (loader.name === 'metafields') {
+          app.use('/api/metafields', (req, res) => {
+            res.status(500).json({ success: false, message: 'Metafields routes not available' });
+          });
+        } else if (loader.name === 'product-duplication') {
+          app.use('/api/product-duplication', (req, res) => {
+            res.status(500).json({ success: false, message: 'Product duplication routes not available' });
+          });
+        }
+        return { name: loader.name, success: false, error: error.message };
+      }
+    })
+  );
 
-// Winner processing routes
-const { default: winnerRoutes } = await import('./routes/winnerRoutes.js');
-app.use('/api/winner', winnerRoutes);
-
-// Widget features re-enabled with fixed imports
-const { default: metafieldsRoutes } = await import('./routes/metafields.js');
-const { default: productDuplicationRoutes } = await import('./routes/productDuplication.js');
-app.use('/api/metafields', metafieldsRoutes);
-app.use('/api/product-duplication', productDuplicationRoutes);
+  const successful = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
+  const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
+  console.log(`📦 Routes loaded: ${successful} successful, ${failed} failed`);
+})();
 
 // OAuth routes for Shopify app installation
 app.use('/auth/shopify', oauthRoutes);
