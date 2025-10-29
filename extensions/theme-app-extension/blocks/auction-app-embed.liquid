@@ -49,7 +49,7 @@
 }
 {% endschema %}
 
-<link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}?v=145">
+<link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}?v=150">
 
 <!-- Inject Shopify customer data -->
 <script>
@@ -63,8 +63,8 @@
 </script>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="{{ 'auction-widget-simple.js' | asset_url }}?v=145" defer></script>
-<script src="{{ 'auction-app-embed.js' | asset_url }}?v=145" defer></script>
+<script src="{{ 'auction-widget-simple.js' | asset_url }}?v=150" defer></script>
+<script src="{{ 'auction-app-embed.js' | asset_url }}?v=150" defer></script>
 
 <script>
 // Initialize the auction app embed
@@ -98,19 +98,21 @@ window.BidlyAuctionEmbed = {
                 
                 // Check if product has auction metafields
                 if (product.metafields && product.metafields.auction) {
-                    const auctionData = product.metafields.auction;
-                    if (auctionData.is_auction && auctionData.auction_id) {
+                    const mf = product.metafields.auction;
+                    const isAuction = mf.is_auction?.value === true || mf.is_auction?.value === 'true' || mf.is_auction === true || mf.is_auction === 'true';
+                    const auctionId = mf.auction_id?.value || mf.auction_id;
+                    if (isAuction && auctionId) {
                         return {
                             hasAuction: true,
-                            auctionId: auctionData.auction_id,
-                            status: auctionData.status || 'pending',
-                            currentBid: parseFloat(auctionData.current_bid) || 0,
-                            startingBid: parseFloat(auctionData.starting_bid) || 0,
-                            reservePrice: parseFloat(auctionData.reserve_price) || 0,
-                            endTime: auctionData.end_time,
-                            startTime: auctionData.start_time,
-                            bidCount: parseInt(auctionData.bid_count) || 0,
-                            buyNowPrice: parseFloat(auctionData.buy_now_price) || 0
+                            auctionId: auctionId,
+                            status: mf.status?.value || mf.status || 'pending',
+                            currentBid: parseFloat(mf.current_bid?.value ?? mf.current_bid ?? 0) || 0,
+                            startingBid: parseFloat(mf.starting_bid?.value ?? mf.starting_bid ?? 0) || 0,
+                            reservePrice: parseFloat(mf.reserve_price?.value ?? mf.reserve_price ?? 0) || 0,
+                            endTime: mf.end_time?.value || mf.end_time,
+                            startTime: mf.start_time?.value || mf.start_time,
+                            bidCount: parseInt(mf.bid_count?.value ?? mf.bid_count ?? 0) || 0,
+                            buyNowPrice: parseFloat(mf.buy_now_price?.value ?? mf.buy_now_price ?? 0) || 0
                         };
                     }
                 }
@@ -122,19 +124,21 @@ window.BidlyAuctionEmbed = {
                 try {
                     const product = JSON.parse(productJson.textContent);
                     if (product.metafields && product.metafields.auction) {
-                        const auctionData = product.metafields.auction;
-                        if (auctionData.is_auction && auctionData.auction_id) {
+                        const mf = product.metafields.auction;
+                        const isAuction = mf.is_auction?.value === true || mf.is_auction?.value === 'true' || mf.is_auction === true || mf.is_auction === 'true';
+                        const auctionId = mf.auction_id?.value || mf.auction_id;
+                        if (isAuction && auctionId) {
                             return {
                                 hasAuction: true,
-                                auctionId: auctionData.auction_id,
-                                status: auctionData.status || 'pending',
-                                currentBid: parseFloat(auctionData.current_bid) || 0,
-                                startingBid: parseFloat(auctionData.starting_bid) || 0,
-                                reservePrice: parseFloat(auctionData.reserve_price) || 0,
-                                endTime: auctionData.end_time,
-                                startTime: auctionData.start_time,
-                                bidCount: parseInt(auctionData.bid_count) || 0,
-                                buyNowPrice: parseFloat(auctionData.buy_now_price) || 0
+                                auctionId: auctionId,
+                                status: mf.status?.value || mf.status || 'pending',
+                                currentBid: parseFloat(mf.current_bid?.value ?? mf.current_bid ?? 0) || 0,
+                                startingBid: parseFloat(mf.starting_bid?.value ?? mf.starting_bid ?? 0) || 0,
+                                reservePrice: parseFloat(mf.reserve_price?.value ?? mf.reserve_price ?? 0) || 0,
+                                endTime: mf.end_time?.value || mf.end_time,
+                                startTime: mf.start_time?.value || mf.start_time,
+                                bidCount: parseInt(mf.bid_count?.value ?? mf.bid_count ?? 0) || 0,
+                                buyNowPrice: parseFloat(mf.buy_now_price?.value ?? mf.buy_now_price ?? 0) || 0
                             };
                         }
                     }
