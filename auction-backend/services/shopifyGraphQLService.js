@@ -158,7 +158,7 @@ class ShopifyGraphQLService {
             input: {
                 title: `${originalProduct.title} (Auction Winner - ${winnerData.bidder})`,
                 descriptionHtml: originalProduct.description || '',
-                status: 'UNLISTED',
+                status: 'DRAFT',
                 productType: originalProduct.productType || '',
                 vendor: originalProduct.vendor || '',
                 tags: [...(originalProduct.tags || []), 'auction-winner'],
@@ -200,7 +200,7 @@ class ShopifyGraphQLService {
         const variables = {
             productId: originalProductId,
             newTitle: `${winnerData.productTitle} (Auction Winner - ${winnerData.winnerName})`,
-            newStatus: 'UNLISTED'
+            newStatus: 'DRAFT'
         };
 
         return await this.executeGraphQL(storeDomain, accessToken, query, variables);

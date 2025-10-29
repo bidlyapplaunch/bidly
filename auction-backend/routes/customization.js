@@ -4,6 +4,17 @@ import { optionalStoreIdentification } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
+// Add debugging middleware
+router.use((req, res, next) => {
+  console.log('🎨 Customization route hit:', {
+    method: req.method,
+    path: req.path,
+    url: req.url,
+    query: req.query
+  });
+  next();
+});
+
 /**
  * GET /api/customization
  * Get customization settings for the current shop

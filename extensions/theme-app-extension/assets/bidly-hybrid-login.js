@@ -31,7 +31,7 @@
             let customerData = null;
             
             // Method 1: Check window.Shopify.customer
-            if (window.Shopify?.customer) {
+            if (window.Shopify?.customer && window.Shopify.customer.id) {
                 customerData = {
                     id: window.Shopify.customer.id,
                     email: window.Shopify.customer.email,
@@ -80,7 +80,7 @@
             }
             
             // Method 4: Check for customer data in global variables
-            if (!customerData && window.customer) {
+            if (!customerData && window.customer && window.customer.id) {
                 customerData = {
                     id: window.customer.id,
                     email: window.customer.email,
@@ -88,6 +88,48 @@
                     lastName: window.customer.last_name
                 };
                 console.log('Bidly: Found customer via window.customer:', customerData);
+            }
+            
+            // Method 5: Check for customer data in window.customerData
+            if (!customerData && window.customerData) {
+                try {
+                    const customerJson = typeof window.customerData === 'string' 
+                        ? JSON.parse(window.customerData) 
+                        : window.customerData;
+                    
+                    if (customerJson.id) {
+                        customerData = {
+                            id: customerJson.id,
+                            email: customerJson.email,
+                            firstName: customerJson.first_name || customerJson.firstName,
+                            lastName: customerJson.last_name || customerJson.lastName
+                        };
+                        console.log('Bidly: Found customer via window.customerData:', customerData);
+                    }
+                } catch (e) {
+                    console.log('Bidly: Failed to parse window.customerData:', e);
+                }
+            }
+            
+            // Method 6: Check for customer data in Shopify global object
+            if (!customerData && window.Shopify?.customerData) {
+                try {
+                    const customerJson = typeof window.Shopify.customerData === 'string' 
+                        ? JSON.parse(window.Shopify.customerData) 
+                        : window.Shopify.customerData;
+                    
+                    if (customerJson.id) {
+                        customerData = {
+                            id: customerJson.id,
+                            email: customerJson.email,
+                            firstName: customerJson.first_name || customerJson.firstName,
+                            lastName: customerJson.last_name || customerJson.lastName
+                        };
+                        console.log('Bidly: Found customer via window.Shopify.customerData:', customerData);
+                    }
+                } catch (e) {
+                    console.log('Bidly: Failed to parse window.Shopify.customerData:', e);
+                }
             }
             
             // Method 5: Check for customer data in localStorage/sessionStorage
@@ -110,30 +152,50 @@
             }
             
             if (customerData && customerData.email) {
-                // Sync customer with backend
-                const response = await fetch(`${CONFIG.backendUrl}/api/customers/sync`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        shopifyId: customerData.id,
-                        email: customerData.email,
-                        firstName: customerData.firstName,
-                        lastName: customerData.lastName,
-                        shopDomain: CONFIG.shopDomain
-                    })
-                });
+                // Set customer data locally first
+                currentCustomer = {
+                    id: customerData.id,
+                    email: customerData.email,
+                    firstName: customerData.firstName,
+                    lastName: customerData.lastName,
+                    fullName: `${customerData.firstName} ${customerData.lastName}`,
+                    shopifyId: customerData.id,
+                    isTemp: false
+                };
+                isLoggedIn = true;
+                console.log('Bidly: Customer detected locally:', currentCustomer);
                 
-                if (response.ok) {
-                    const result = await response.json();
-                    currentCustomer = result.customer;
-                    isLoggedIn = true;
-                    console.log('Bidly: Customer synced successfully:', currentCustomer);
-                    return true;
-                } else {
-                    console.warn('Bidly: Failed to sync customer:', response.status);
+                // Try to sync with backend (but don't fail if it doesn't work)
+                try {
+                    const response = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            shopifyId: customerData.id,
+                            email: customerData.email,
+                            firstName: customerData.firstName,
+                            lastName: customerData.lastName,
+                            shopDomain: CONFIG.shopDomain
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        currentCustomer = result.customer;
+                        console.log('Bidly: Customer synced with backend:', currentCustomer);
+                    } else {
+                        const errorText = await response.text();
+                        console.warn('Bidly: Failed to sync customer with backend:', response.status, errorText);
+                        // Continue with local customer data
+                    }
+                } catch (error) {
+                    console.warn('Bidly: Error syncing customer with backend:', error);
+                    // Continue with local customer data
                 }
+                
+                return true;
             }
             
             return false;
