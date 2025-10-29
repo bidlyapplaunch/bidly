@@ -268,4 +268,25 @@ export const analyticsAPI = {
   }
 };
 
+// Customization API endpoints
+export const customizationAPI = {
+  // Get customization settings
+  getCustomization: async (shopDomain = null) => {
+    const shop = shopDomain || getShopFromURL();
+    const response = await api.get('/customization', {
+      params: { shop }
+    });
+    return response.data;
+  },
+
+  // Save customization settings
+  saveCustomization: async (shopDomain, customizationData) => {
+    const shop = shopDomain || getShopFromURL();
+    const response = await api.post('/customization', customizationData, {
+      params: { shop }
+    });
+    return response.data;
+  }
+};
+
 export default api;

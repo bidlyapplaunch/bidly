@@ -9,8 +9,13 @@ import {
   Text,
   Divider
 } from '@shopify/polaris';
+import { customizationAPI } from '../services/api';
+import { useAppBridgeActions } from '../hooks/useAppBridge';
 
 const CustomizationSettings = () => {
+  const { getShopInfo } = useAppBridgeActions();
+  const shopInfo = getShopInfo();
+  const shopDomain = shopInfo?.shop;
   const [customization, setCustomization] = useState({
     primaryColor: '#3B82F6',
     font: 'Poppins',
@@ -50,25 +55,24 @@ const CustomizationSettings = () => {
 
   // Load customization settings on component mount
   useEffect(() => {
-    loadCustomizationSettings();
-  }, []);
+    if (shopDomain) {
+      loadCustomizationSettings();
+    }
+  }, [shopDomain]);
 
   const loadCustomizationSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/customization', {
-        credentials: 'include'
-      });
+      const response = await customizationAPI.getCustomization(shopDomain);
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setCustomization(data.customization);
-        }
+      if (response.success) {
+        setCustomization(response.customization);
+      } else {
+        setMessage({ type: 'error', text: response.message || 'Failed to load customization settings' });
       }
     } catch (error) {
       console.error('Error loading customization settings:', error);
-      setMessage({ type: 'error', text: 'Failed to load customization settings' });
+      setMessage({ type: 'error', text: error.message || 'Failed to load customization settings' });
     } finally {
       setLoading(false);
     }
@@ -79,28 +83,16 @@ const CustomizationSettings = () => {
       setSaving(true);
       setMessage({ type: '', text: '' });
 
-      const response = await fetch('/api/customization', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(customization)
-      });
+      const response = await customizationAPI.saveCustomization(shopDomain, customization);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setMessage({ type: 'success', text: 'Customization settings saved successfully!' });
-        } else {
-          setMessage({ type: 'error', text: data.message || 'Failed to save settings' });
-        }
+      if (response.success) {
+        setMessage({ type: 'success', text: 'Customization settings saved successfully!' });
       } else {
-        setMessage({ type: 'error', text: 'Failed to save customization settings' });
+        setMessage({ type: 'error', text: response.message || 'Failed to save settings' });
       }
     } catch (error) {
       console.error('Error saving customization settings:', error);
-      setMessage({ type: 'error', text: 'Failed to save customization settings' });
+      setMessage({ type: 'error', text: error.message || 'Failed to save customization settings' });
     } finally {
       setSaving(false);
     }
