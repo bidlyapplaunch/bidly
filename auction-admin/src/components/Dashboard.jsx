@@ -20,7 +20,8 @@ import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
-import CustomizationSettings from './CustomizationSettings';
+import MarketplaceCustomizationSettings from './MarketplaceCustomizationSettings';
+import WidgetCustomizationSettings from './WidgetCustomizationSettings';
 import AppBridgeToast from './AppBridgeToast';
 import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
 import socketService from '../services/socket';
@@ -293,9 +294,14 @@ const Dashboard = ({ onLogout }) => {
                     panelID: 'analytics-panel'
                   },
                   {
-                    id: 'customization',
-                    content: '🎨 Customization',
-                    panelID: 'customization-panel'
+                    id: 'marketplace-customization',
+                    content: '🎨 Marketplace Style',
+                    panelID: 'marketplace-customization-panel'
+                  },
+                  {
+                    id: 'widget-customization',
+                    content: '🧩 Widget Style',
+                    panelID: 'widget-customization-panel'
                   }
                 ]}
                 selected={selectedTab}
@@ -318,7 +324,12 @@ const Dashboard = ({ onLogout }) => {
                 )}
                 {selectedTab === 2 && (
                   <div style={{ padding: '16px' }}>
-                    <CustomizationSettings />
+                    <MarketplaceCustomizationSettings />
+                  </div>
+                )}
+                {selectedTab === 3 && (
+                  <div style={{ padding: '16px' }}>
+                    <WidgetCustomizationSettings />
                   </div>
                 )}
               </Tabs>
