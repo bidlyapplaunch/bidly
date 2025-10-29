@@ -67,10 +67,14 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error fetching customization settings:', error);
+        console.error('❌ Error fetching customization settings:', error);
+        console.error('   Error message:', error.message);
+        console.error('   Error stack:', error.stack);
         res.status(500).json({
             success: false,
-            message: 'Failed to fetch customization settings'
+            message: 'Failed to fetch customization settings',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });

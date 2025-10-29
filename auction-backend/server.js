@@ -164,16 +164,28 @@ app.use('/api/analytics', analyticsRoutes);
   const results = await Promise.allSettled(
     routeLoaders.map(async (loader) => {
       try {
+        console.log(`🔄 Loading ${loader.name} routes...`);
         const module = await loader.import();
+        console.log(`📦 ${loader.name} module imported:`, {
+          hasDefault: !!module.default,
+          keys: Object.keys(module)
+        });
+        
+        if (!module.default) {
+          throw new Error(`Module ${loader.name} does not have a default export`);
+        }
+        
         loader.mount(module);
-        console.log(`✅ ${loader.name} routes loaded`);
+        console.log(`✅ ${loader.name} routes loaded and mounted`);
         return { name: loader.name, success: true };
       } catch (error) {
-        console.error(`⚠️ Failed to load ${loader.name} routes:`, error.message);
+        console.error(`❌ Failed to load ${loader.name} routes:`, error);
+        console.error(`   Error stack:`, error.stack);
         // Add fallback route
         if (loader.name === 'customization') {
           app.use('/api/customization', (req, res) => {
-            res.status(500).json({ success: false, message: 'Customization routes not available' });
+            console.error('⚠️ Customization routes not available, using fallback');
+            res.status(500).json({ success: false, message: 'Customization routes not available', error: error.message });
           });
         } else if (loader.name === 'customer') {
           app.use('/api/customers', (req, res) => {
