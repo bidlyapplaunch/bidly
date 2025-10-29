@@ -1,6 +1,6 @@
 import express from 'express';
 import Customization from '../models/Customization.js';
-import { identifyStore } from '../middleware/storeMiddleware.js';
+import { optionalStoreIdentification } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ const router = express.Router();
  * GET /api/customization
  * Get customization settings for the current shop
  */
-router.get('/', identifyStore, async (req, res) => {
+router.get('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         
@@ -21,10 +21,9 @@ router.get('/', identifyStore, async (req, res) => {
 
         let customization = await Customization.findOne({ shopDomain });
         
-        // If no customization exists, create default one
+        // If no customization exists, return default settings without saving
         if (!customization) {
-            customization = new Customization({
-                shopDomain,
+            customization = {
                 template: 'Classic',
                 font: 'Inter',
                 colors: {
@@ -39,8 +38,7 @@ router.get('/', identifyStore, async (req, res) => {
                     error: '#ff4444',
                     hover: '#0056b3'
                 }
-            });
-            await customization.save();
+            };
         }
 
         res.json({
@@ -65,7 +63,7 @@ router.get('/', identifyStore, async (req, res) => {
  * POST /api/customization
  * Update customization settings for the current shop
  */
-router.post('/', identifyStore, async (req, res) => {
+router.post('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         const { template, font, colors } = req.body;
@@ -163,7 +161,7 @@ router.post('/', identifyStore, async (req, res) => {
  * GET /api/customization/theme
  * Get theme CSS variables for frontend consumption
  */
-router.get('/theme', identifyStore, async (req, res) => {
+router.get('/theme', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         
