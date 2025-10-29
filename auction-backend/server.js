@@ -407,10 +407,10 @@ const { default: scheduledJobsService } = await import('./services/scheduledJobs
 scheduledJobsService.start();
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Auction API server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API base URL: http://localhost:${PORT}/api/auctions`);
+  console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
+  console.log(`🔗 API base URL: http://0.0.0.0:${PORT}/api/auctions`);
   console.log(`🔌 WebSocket server ready for real-time updates`);
   console.log(`⏰ Scheduled jobs started for winner processing`);
 });
