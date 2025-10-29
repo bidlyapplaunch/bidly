@@ -212,7 +212,35 @@ app.use('/api/analytics', analyticsRoutes);
   const successful = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
   const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
   console.log(`📦 Routes loaded: ${successful} successful, ${failed} failed`);
+  
+  // Log detailed results for debugging
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      if (result.value?.success) {
+        console.log(`  ✅ ${routeLoaders[index].name}: Success`);
+      } else {
+        console.log(`  ❌ ${routeLoaders[index].name}: Failed - ${result.value?.error}`);
+      }
+    } else {
+      console.log(`  ❌ ${routeLoaders[index].name}: Rejected - ${result.reason}`);
+    }
+  });
 })();
+
+// Add diagnostic endpoint to check route loading status
+app.get('/api/debug/routes', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Route diagnostic endpoint',
+    routes: {
+      customization: 'Check /api/customization',
+      customer: 'Check /api/customers',
+      winner: 'Check /api/winner',
+      metafields: 'Check /api/metafields',
+      'product-duplication': 'Check /api/product-duplication'
+    }
+  });
+});
 
 // OAuth routes for Shopify app installation
 app.use('/auth/shopify', oauthRoutes);
