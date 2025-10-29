@@ -7,8 +7,6 @@ import {
   Banner,
   Spinner,
   Text,
-  Stack,
-  ColorPicker,
   Divider
 } from '@shopify/polaris';
 
@@ -123,17 +121,17 @@ const CustomizationSettings = () => {
   if (loading) {
     return (
       <Card sectioned>
-        <Stack alignment="center">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
           <Spinner size="large" />
           <Text>Loading customization settings...</Text>
-        </Stack>
+        </div>
       </Card>
     );
   }
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <Stack vertical spacing="loose">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <Text variant="headingMd" as="h1">
           Customization Settings
         </Text>
@@ -262,7 +260,7 @@ const CustomizationSettings = () => {
           <Text variant="headingSm" as="h2">
             Template Descriptions
           </Text>
-          <Stack vertical spacing="tight">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
               <Text variant="bodyMd" fontWeight="semibold" as="p">Classic</Text>
               <Text variant="bodyMd" color="subdued" as="p">
@@ -287,9 +285,9 @@ const CustomizationSettings = () => {
                 Eye-catching design with larger spacing and prominent shadows.
               </Text>
             </div>
-          </Stack>
+          </div>
         </Card>
-      </Stack>
+      </div>
     </div>
   );
 };
