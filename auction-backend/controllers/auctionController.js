@@ -44,6 +44,13 @@ const updateProductMetafields = async (auction, shopDomain) => {
       buyNowPrice: auction.buyNowPrice || 0
     };
 
+    console.log('🔍 Debug - updateProductMetafields:', {
+      auctionId: auction._id,
+      startTime: auction.startTime,
+      startTimeType: typeof auction.startTime,
+      auctionDataStartTime: auctionData.startTime
+    });
+
     // Update metafields via API call
     const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:5000'}/api/metafields/products/${auction.shopifyProductId}/auction-metafields`, {
       method: 'POST',

@@ -44,6 +44,13 @@ router.post('/products/:productId/auction-metafields', requireAuth, async (req, 
     const { productId } = req.params;
     const { shop, auctionData } = req.body;
     
+    console.log('🔍 Debug - metafields POST:', {
+      shop,
+      auctionDataStartTime: auctionData?.startTime,
+      auctionDataStartTimeType: typeof auctionData?.startTime,
+      fullAuctionData: auctionData
+    });
+    
     if (!shop) {
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
