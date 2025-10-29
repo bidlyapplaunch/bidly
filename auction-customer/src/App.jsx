@@ -398,6 +398,20 @@ function App() {
             }
           ]}
         >
+          <style>{`
+            body {
+              font-family: var(--bidly-font-family, Inter, sans-serif) !important;
+              background-color: var(--bidly-color-background, #f5f5f5) !important;
+              color: var(--bidly-color-text-primary, #222222) !important;
+            }
+            .Polaris-Page {
+              background-color: var(--bidly-color-background, #f5f5f5) !important;
+            }
+            .Polaris-Card {
+              background-color: var(--bidly-color-surface, #ffffff) !important;
+              border-color: var(--bidly-color-border, #dddddd) !important;
+            }
+          `}</style>
           {/* Shop Information and Connection Status */}
           <div style={{ marginBottom: '1rem' }}>
             {shopName && (

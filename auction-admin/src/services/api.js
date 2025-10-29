@@ -286,6 +286,15 @@ export const customizationAPI = {
       params: { shop }
     });
     return response.data;
+  },
+
+  // Get theme CSS
+  getThemeCSS: async (shopDomain = null) => {
+    const shop = shopDomain || getShopFromURL();
+    const response = await api.get('/customization/theme', {
+      params: { shop }
+    });
+    return response.data;
   }
 };
 

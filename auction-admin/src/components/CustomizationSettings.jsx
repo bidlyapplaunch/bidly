@@ -7,7 +7,8 @@ import {
   Banner,
   Spinner,
   Text,
-  Divider
+  Divider,
+  TextField
 } from '@shopify/polaris';
 import { customizationAPI } from '../services/api';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
@@ -16,33 +17,33 @@ const CustomizationSettings = () => {
   const { getShopInfo } = useAppBridgeActions();
   const shopInfo = getShopInfo();
   const shopDomain = shopInfo?.shop;
+
   const [customization, setCustomization] = useState({
-    primaryColor: '#3B82F6',
-    font: 'Poppins',
-    template: 'Classic'
+    template: 'Classic',
+    font: 'Inter',
+    colors: {
+      primary: '#007bff',
+      background: '#f5f5f5',
+      surface: '#ffffff',
+      textPrimary: '#222222',
+      textSecondary: '#666666',
+      border: '#dddddd',
+      accent: '#00b894',
+      success: '#00c851',
+      error: '#ff4444',
+      hover: '#0056b3'
+    }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Color options
-  const colorOptions = [
-    { label: 'Red', value: '#EF4444' },
-    { label: 'Blue', value: '#3B82F6' },
-    { label: 'Green', value: '#10B981' },
-    { label: 'Black', value: '#000000' },
-    { label: 'White', value: '#FFFFFF' },
-    { label: 'Gold', value: '#F59E0B' },
-    { label: 'Silver', value: '#6B7280' },
-    { label: 'Purple', value: '#8B5CF6' }
-  ];
-
   // Font options
   const fontOptions = [
+    { label: 'Inter', value: 'Inter' },
     { label: 'Poppins', value: 'Poppins' },
     { label: 'Roboto', value: 'Roboto' },
-    { label: 'Montserrat', value: 'Montserrat' },
-    { label: 'Inter', value: 'Inter' }
+    { label: 'Montserrat', value: 'Montserrat' }
   ];
 
   // Template options
@@ -51,6 +52,20 @@ const CustomizationSettings = () => {
     { label: 'Modern', value: 'Modern' },
     { label: 'Minimal', value: 'Minimal' },
     { label: 'Bold', value: 'Bold' }
+  ];
+
+  // Color field definitions
+  const colorFields = [
+    { key: 'primary', label: 'Primary Color', description: 'Main action buttons and highlights' },
+    { key: 'background', label: 'Background Color', description: 'Main page background' },
+    { key: 'surface', label: 'Surface Color', description: 'Card and widget backgrounds' },
+    { key: 'textPrimary', label: 'Primary Text', description: 'Main text color' },
+    { key: 'textSecondary', label: 'Secondary Text', description: 'Muted text and labels' },
+    { key: 'border', label: 'Border Color', description: 'Borders and dividers' },
+    { key: 'accent', label: 'Accent Color', description: 'Prices, timers, and highlights' },
+    { key: 'success', label: 'Success Color', description: 'Success messages and winning bids' },
+    { key: 'error', label: 'Error Color', description: 'Error messages and failed actions' },
+    { key: 'hover', label: 'Hover Color', description: 'Button hover states' }
   ];
 
   // Load customization settings on component mount
@@ -98,8 +113,14 @@ const CustomizationSettings = () => {
     }
   };
 
-  const handleColorChange = (color) => {
-    setCustomization(prev => ({ ...prev, primaryColor: color }));
+  const handleColorChange = (colorKey, value) => {
+    setCustomization(prev => ({
+      ...prev,
+      colors: {
+        ...prev.colors,
+        [colorKey]: value
+      }
+    }));
   };
 
   const handleFontChange = (font) => {
@@ -122,14 +143,14 @@ const CustomizationSettings = () => {
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <Text variant="headingMd" as="h1">
           Customization Settings
         </Text>
         
         <Text variant="bodyMd" color="subdued">
-          Customize the appearance of your auction marketplace and product widgets.
+          Customize every aspect of your auction marketplace and product widgets with comprehensive color and design controls.
         </Text>
 
         {message.text && (
@@ -143,42 +164,8 @@ const CustomizationSettings = () => {
         <Card sectioned>
           <FormLayout>
             <Text variant="headingSm" as="h2">
-              Design Customization
+              Design Template & Font
             </Text>
-
-            {/* Primary Color Selection */}
-            <div>
-              <Text variant="bodyMd" fontWeight="semibold" as="p">
-                Primary Color
-              </Text>
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                {colorOptions.map((color) => (
-                  <div
-                    key={color.value}
-                    onClick={() => handleColorChange(color.value)}
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      backgroundColor: color.value,
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      border: customization.primaryColor === color.value ? '3px solid #000' : '2px solid #e5e7eb',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: color.value === '#FFFFFF' ? '#000' : '#fff',
-                      fontSize: '12px',
-                      fontWeight: 'bold'
-                    }}
-                    title={color.label}
-                  >
-                    {customization.primaryColor === color.value && '✓'}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Divider />
 
             {/* Font Selection */}
             <Select
@@ -188,8 +175,6 @@ const CustomizationSettings = () => {
               onChange={handleFontChange}
               helpText="Choose the font for your auction interface"
             />
-
-            <Divider />
 
             {/* Template Selection */}
             <Select
@@ -202,40 +187,146 @@ const CustomizationSettings = () => {
 
             <Divider />
 
-            {/* Preview Section */}
+            <Text variant="headingSm" as="h2">
+              Color Customization
+            </Text>
+            <Text variant="bodyMd" color="subdued" as="p">
+              Customize every color in your auction interface. Each color affects different UI elements.
+            </Text>
+
+            {/* Color Fields */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '20px' }}>
+              {colorFields.map((field) => (
+                <div key={field.key}>
+                  <Text variant="bodyMd" fontWeight="semibold" as="p">
+                    {field.label}
+                  </Text>
+                  <Text variant="bodyMd" color="subdued" as="p" style={{ fontSize: '12px', marginBottom: '8px' }}>
+                    {field.description}
+                  </Text>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input
+                      type="color"
+                      value={customization.colors[field.key]}
+                      onChange={(e) => handleColorChange(field.key, e.target.value)}
+                      style={{
+                        width: '50px',
+                        height: '40px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <TextField
+                      value={customization.colors[field.key]}
+                      onChange={(value) => handleColorChange(field.key, value)}
+                      placeholder="#000000"
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Divider />
+
+            {/* Live Preview */}
             <div>
-              <Text variant="bodyMd" fontWeight="semibold" as="p">
-                Preview
+              <Text variant="headingSm" as="h2">
+                Live Preview
+              </Text>
+              <Text variant="bodyMd" color="subdued" as="p" style={{ marginBottom: '16px' }}>
+                See how your customization will look in the auction interface.
               </Text>
               <div
                 style={{
-                  marginTop: '12px',
-                  padding: '20px',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  backgroundColor: '#f9fafb',
-                  fontFamily: customization.font
+                  padding: '24px',
+                  border: `1px solid ${customization.colors.border}`,
+                  borderRadius: 'var(--bidly-border-radius, 6px)',
+                  backgroundColor: customization.colors.background,
+                  fontFamily: `'${customization.font}', sans-serif`,
+                  boxShadow: 'var(--bidly-shadow, 0 2px 4px 0 rgba(0, 0, 0, 0.1))'
                 }}
               >
+                {/* Auction Card Preview */}
                 <div
                   style={{
-                    backgroundColor: customization.primaryColor,
-                    color: customization.primaryColor === '#FFFFFF' ? '#000' : '#fff',
-                    padding: '12px 16px',
-                    borderRadius: '6px',
-                    marginBottom: '12px',
-                    fontWeight: 'bold'
+                    backgroundColor: customization.colors.surface,
+                    border: `1px solid ${customization.colors.border}`,
+                    borderRadius: 'var(--bidly-border-radius, 6px)',
+                    padding: '20px',
+                    marginBottom: '16px'
                   }}
                 >
-                  Sample Button
+                  <Text variant="headingMd" as="h3" style={{ color: customization.colors.textPrimary, marginBottom: '8px' }}>
+                    Sample Auction Item
+                  </Text>
+                  <Text variant="bodyMd" as="p" style={{ color: customization.colors.textSecondary, marginBottom: '12px' }}>
+                    Current Bid: <span style={{ color: customization.colors.accent, fontWeight: 'bold' }}>$150.00</span>
+                  </Text>
+                  <Text variant="bodyMd" as="p" style={{ color: customization.colors.textSecondary, marginBottom: '16px' }}>
+                    Time Remaining: <span style={{ color: customization.colors.accent }}>2h 15m</span>
+                  </Text>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <Button
+                      primary
+                      onClick={() => alert('Simulated Bid!')}
+                      style={{
+                        backgroundColor: customization.colors.primary,
+                        borderColor: customization.colors.primary,
+                        color: 'white',
+                        padding: 'var(--bidly-button-padding, 0.625rem 1.25rem)',
+                        borderRadius: 'var(--bidly-border-radius, 6px)',
+                        fontFamily: `'${customization.font}', sans-serif`
+                      }}
+                    >
+                      Place Bid
+                    </Button>
+                    <Button
+                      onClick={() => alert('Simulated Buy Now!')}
+                      style={{
+                        backgroundColor: customization.colors.success,
+                        borderColor: customization.colors.success,
+                        color: 'white',
+                        padding: 'var(--bidly-button-padding, 0.625rem 1.25rem)',
+                        borderRadius: 'var(--bidly-border-radius, 6px)',
+                        fontFamily: `'${customization.font}', sans-serif`
+                      }}
+                    >
+                      Buy Now
+                    </Button>
+                  </div>
                 </div>
-                <Text variant="bodyMd" as="p">
-                  This is how your auction interface will look with the selected settings.
-                </Text>
+
+                {/* Status Messages Preview */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: customization.colors.success,
+                      color: 'white',
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Success Message
+                  </div>
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: customization.colors.error,
+                      color: 'white',
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Error Message
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style={{ marginTop: '20px' }}>
+            <div style={{ marginTop: '24px' }}>
               <Button
                 primary
                 onClick={handleSave}

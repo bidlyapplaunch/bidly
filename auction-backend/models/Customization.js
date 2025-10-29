@@ -7,23 +7,69 @@ const customizationSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
-    primaryColor: {
-        type: String,
-        required: true,
-        default: '#3B82F6', // Default blue
-        enum: ['#EF4444', '#3B82F6', '#10B981', '#000000', '#FFFFFF', '#F59E0B', '#6B7280', '#8B5CF6'] // Red, Blue, Green, Black, White, Gold, Silver, Purple
-    },
-    font: {
-        type: String,
-        required: true,
-        default: 'Poppins',
-        enum: ['Poppins', 'Roboto', 'Montserrat', 'Inter']
-    },
     template: {
         type: String,
         required: true,
         default: 'Classic',
         enum: ['Classic', 'Modern', 'Minimal', 'Bold']
+    },
+    font: {
+        type: String,
+        required: true,
+        default: 'Inter',
+        enum: ['Poppins', 'Roboto', 'Montserrat', 'Inter']
+    },
+    colors: {
+        primary: {
+            type: String,
+            required: true,
+            default: '#007bff'
+        },
+        background: {
+            type: String,
+            required: true,
+            default: '#f5f5f5'
+        },
+        surface: {
+            type: String,
+            required: true,
+            default: '#ffffff'
+        },
+        textPrimary: {
+            type: String,
+            required: true,
+            default: '#222222'
+        },
+        textSecondary: {
+            type: String,
+            required: true,
+            default: '#666666'
+        },
+        border: {
+            type: String,
+            required: true,
+            default: '#dddddd'
+        },
+        accent: {
+            type: String,
+            required: true,
+            default: '#00b894'
+        },
+        success: {
+            type: String,
+            required: true,
+            default: '#00c851'
+        },
+        error: {
+            type: String,
+            required: true,
+            default: '#ff4444'
+        },
+        hover: {
+            type: String,
+            required: true,
+            default: '#0056b3'
+        }
     },
     createdAt: {
         type: Date,

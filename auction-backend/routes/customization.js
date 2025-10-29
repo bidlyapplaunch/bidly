@@ -25,9 +25,20 @@ router.get('/', identifyStore, async (req, res) => {
         if (!customization) {
             customization = new Customization({
                 shopDomain,
-                primaryColor: '#3B82F6',
-                font: 'Poppins',
-                template: 'Classic'
+                template: 'Classic',
+                font: 'Inter',
+                colors: {
+                    primary: '#007bff',
+                    background: '#f5f5f5',
+                    surface: '#ffffff',
+                    textPrimary: '#222222',
+                    textSecondary: '#666666',
+                    border: '#dddddd',
+                    accent: '#00b894',
+                    success: '#00c851',
+                    error: '#ff4444',
+                    hover: '#0056b3'
+                }
             });
             await customization.save();
         }
@@ -35,9 +46,9 @@ router.get('/', identifyStore, async (req, res) => {
         res.json({
             success: true,
             customization: {
-                primaryColor: customization.primaryColor,
+                template: customization.template,
                 font: customization.font,
-                template: customization.template
+                colors: customization.colors
             }
         });
 
@@ -57,7 +68,7 @@ router.get('/', identifyStore, async (req, res) => {
 router.post('/', identifyStore, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
-        const { primaryColor, font, template } = req.body;
+        const { template, font, colors } = req.body;
         
         if (!shopDomain) {
             return res.status(400).json({
@@ -67,16 +78,8 @@ router.post('/', identifyStore, async (req, res) => {
         }
 
         // Validate input
-        const validColors = ['#EF4444', '#3B82F6', '#10B981', '#000000', '#FFFFFF', '#F59E0B', '#6B7280', '#8B5CF6'];
         const validFonts = ['Poppins', 'Roboto', 'Montserrat', 'Inter'];
         const validTemplates = ['Classic', 'Modern', 'Minimal', 'Bold'];
-
-        if (primaryColor && !validColors.includes(primaryColor)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid primary color'
-            });
-        }
 
         if (font && !validFonts.includes(font)) {
             return res.status(400).json({
@@ -92,15 +95,44 @@ router.post('/', identifyStore, async (req, res) => {
             });
         }
 
+        // Validate colors if provided
+        if (colors) {
+            const colorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'border', 'accent', 'success', 'error', 'hover'];
+            for (const key of colorKeys) {
+                if (colors[key] && !/^#[0-9A-Fa-f]{6}$/.test(colors[key])) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Invalid color format for ${key}`
+                    });
+                }
+            }
+        }
+
         // Update or create customization
+        const updateData = {
+            template: template || 'Classic',
+            font: font || 'Inter',
+            updatedAt: new Date()
+        };
+
+        if (colors) {
+            updateData.colors = {
+                primary: colors.primary || '#007bff',
+                background: colors.background || '#f5f5f5',
+                surface: colors.surface || '#ffffff',
+                textPrimary: colors.textPrimary || '#222222',
+                textSecondary: colors.textSecondary || '#666666',
+                border: colors.border || '#dddddd',
+                accent: colors.accent || '#00b894',
+                success: colors.success || '#00c851',
+                error: colors.error || '#ff4444',
+                hover: colors.hover || '#0056b3'
+            };
+        }
+
         const customization = await Customization.findOneAndUpdate(
             { shopDomain },
-            {
-                primaryColor: primaryColor || '#3B82F6',
-                font: font || 'Poppins',
-                template: template || 'Classic',
-                updatedAt: new Date()
-            },
+            updateData,
             { 
                 upsert: true, 
                 new: true,
@@ -112,9 +144,9 @@ router.post('/', identifyStore, async (req, res) => {
             success: true,
             message: 'Customization settings updated successfully',
             customization: {
-                primaryColor: customization.primaryColor,
+                template: customization.template,
                 font: customization.font,
-                template: customization.template
+                colors: customization.colors
             }
         });
 
@@ -147,13 +179,24 @@ router.get('/theme', identifyStore, async (req, res) => {
         // If no customization exists, use defaults
         if (!customization) {
             customization = {
-                primaryColor: '#3B82F6',
-                font: 'Poppins',
-                template: 'Classic'
+                template: 'Classic',
+                font: 'Inter',
+                colors: {
+                    primary: '#007bff',
+                    background: '#f5f5f5',
+                    surface: '#ffffff',
+                    textPrimary: '#222222',
+                    textSecondary: '#666666',
+                    border: '#dddddd',
+                    accent: '#00b894',
+                    success: '#00c851',
+                    error: '#ff4444',
+                    hover: '#0056b3'
+                }
             };
         }
 
-        // Generate CSS variables based on template and color
+        // Generate CSS variables based on template and colors
         const theme = generateThemeCSS(customization);
         
         res.set('Content-Type', 'text/css');
@@ -169,11 +212,20 @@ router.get('/theme', identifyStore, async (req, res) => {
  * Generate CSS variables based on customization settings
  */
 function generateThemeCSS(customization) {
-    const { primaryColor, font, template } = customization;
+    const { template, font, colors } = customization;
     
     // Base CSS variables
     let css = `:root {
-    --bidly-primary-color: ${primaryColor};
+    --bidly-color-primary: ${colors.primary};
+    --bidly-color-background: ${colors.background};
+    --bidly-color-surface: ${colors.surface};
+    --bidly-color-text-primary: ${colors.textPrimary};
+    --bidly-color-text-secondary: ${colors.textSecondary};
+    --bidly-color-border: ${colors.border};
+    --bidly-color-accent: ${colors.accent};
+    --bidly-color-success: ${colors.success};
+    --bidly-color-error: ${colors.error};
+    --bidly-color-hover: ${colors.hover};
     --bidly-font-family: '${font}', sans-serif;
     --bidly-template: '${template}';
 `;
@@ -213,14 +265,10 @@ function generateThemeCSS(customization) {
 `;
     }
 
-    // Color variations
+    // Additional utility variables
     css += `
-    --bidly-primary-hover: color-mix(in srgb, var(--bidly-primary-color) 80%, black);
-    --bidly-primary-light: color-mix(in srgb, var(--bidly-primary-color) 90%, white);
-    --bidly-text-primary: #1f2937;
-    --bidly-text-secondary: #6b7280;
-    --bidly-background: #ffffff;
-    --bidly-border: #e5e7eb;
+    --bidly-primary-hover: color-mix(in srgb, var(--bidly-color-primary) 80%, black);
+    --bidly-primary-light: color-mix(in srgb, var(--bidly-color-primary) 90%, white);
 }
 `;
 

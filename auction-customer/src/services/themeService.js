@@ -68,19 +68,24 @@ class ThemeService {
   getDefaultTheme() {
     const defaultCSS = `
       :root {
-        --bidly-primary-color: #3B82F6;
-        --bidly-font-family: 'Poppins', sans-serif;
+        --bidly-color-primary: #007bff;
+        --bidly-color-background: #f5f5f5;
+        --bidly-color-surface: #ffffff;
+        --bidly-color-text-primary: #222222;
+        --bidly-color-text-secondary: #666666;
+        --bidly-color-border: #dddddd;
+        --bidly-color-accent: #00b894;
+        --bidly-color-success: #00c851;
+        --bidly-color-error: #ff4444;
+        --bidly-color-hover: #0056b3;
+        --bidly-font-family: 'Inter', sans-serif;
         --bidly-template: 'Classic';
         --bidly-border-radius: 6px;
         --bidly-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
         --bidly-spacing: 1.25rem;
         --bidly-button-padding: 0.625rem 1.25rem;
-        --bidly-primary-hover: color-mix(in srgb, var(--bidly-primary-color) 80%, black);
-        --bidly-primary-light: color-mix(in srgb, var(--bidly-primary-color) 90%, white);
-        --bidly-text-primary: #1f2937;
-        --bidly-text-secondary: #6b7280;
-        --bidly-background: #ffffff;
-        --bidly-border: #e5e7eb;
+        --bidly-primary-hover: color-mix(in srgb, var(--bidly-color-primary) 80%, black);
+        --bidly-primary-light: color-mix(in srgb, var(--bidly-color-primary) 90%, white);
       }
     `;
     

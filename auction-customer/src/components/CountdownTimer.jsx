@@ -41,15 +41,31 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
   if (isExpired) {
     if (status === 'pending') {
       return (
-        <Badge status="success">
-          <Text variant="bodyMd" fontWeight="bold">Auction Started</Text>
-        </Badge>
+        <div style={{
+          backgroundColor: 'var(--bidly-color-success, #00c851)',
+          color: 'white',
+          padding: '4px 8px',
+          borderRadius: 'var(--bidly-border-radius, 4px)',
+          fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
+          fontSize: '14px',
+          fontWeight: 'bold'
+        }}>
+          Auction Started
+        </div>
       );
     } else {
       return (
-        <Badge status="critical">
-          <Text variant="bodyMd" fontWeight="bold">Auction Ended</Text>
-        </Badge>
+        <div style={{
+          backgroundColor: 'var(--bidly-color-error, #ff4444)',
+          color: 'white',
+          padding: '4px 8px',
+          borderRadius: 'var(--bidly-border-radius, 4px)',
+          fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
+          fontSize: '14px',
+          fontWeight: 'bold'
+        }}>
+          Auction Ended
+        </div>
       );
     }
   }
@@ -58,13 +74,19 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <Badge status={status === 'pending' ? 'warning' : 'info'}>
-        <Text variant="bodyMd" fontWeight="bold">
-          {timeLeft.days > 0 && `${timeLeft.days}d `}
-          {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
-        </Text>
-      </Badge>
-      <Text variant="bodySm" color="subdued">
+      <div style={{
+        backgroundColor: 'var(--bidly-color-accent, #00b894)',
+        color: 'white',
+        padding: '4px 8px',
+        borderRadius: 'var(--bidly-border-radius, 4px)',
+        fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
+        fontSize: '14px',
+        fontWeight: 'bold'
+      }}>
+        {timeLeft.days > 0 && `${timeLeft.days}d `}
+        {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
+      </div>
+      <Text variant="bodySm" style={{ color: 'var(--bidly-color-text-secondary, #666666)' }}>
         {status === 'pending' ? 
           (timeLeft.days > 0 ? 'until start' : 'until start') : 
           (timeLeft.days > 0 ? 'remaining' : 'left')
