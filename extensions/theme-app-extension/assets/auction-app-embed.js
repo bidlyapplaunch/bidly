@@ -1623,12 +1623,25 @@
 
         confirmBuyNow: async function(auctionId, price) {
             try {
+                // Require logged-in customer (Shopify or guest temp)
+                const customer = getCurrentCustomer && getCurrentCustomer();
+                if (!isUserLoggedIn() || !customer) {
+                    alert('Please log in to continue');
+                    return;
+                }
+
+                const payload = {
+                    bidder: customer.fullName,
+                    customerEmail: customer.email,
+                    price
+                };
+
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/buy-now?shop=${CONFIG.shopDomain}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ price })
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();
