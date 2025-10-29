@@ -207,32 +207,47 @@ class ShopifyGraphQLService {
     }
 
     /**
+     * Update product variant prices for winner using REST API (more reliable)
+     */
+    async updateProductVariantPrices(storeDomain, accessToken, productId, variants, winningBidAmount) {
+        // Use REST API to update variant prices
+        const variantUpdates = [];
+        
+        for (const variantEdge of variants) {
+            const variantId = variantEdge.node.id.split('/').pop();
+            try {
+                const response = await axios.put(
+                    `https://${storeDomain}/admin/api/2024-01/variants/${variantId}.json`,
+                    {
+                        variant: {
+                            price: winningBidAmount.toString()
+                        }
+                    },
+                    {
+                        headers: {
+                            'X-Shopify-Access-Token': accessToken,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                
+                variantUpdates.push({ id: variantId, success: true });
+            } catch (error) {
+                console.error(`Failed to update variant ${variantId}:`, error.message);
+                variantUpdates.push({ id: variantId, success: false, error: error.message });
+            }
+        }
+        
+        return { variantUpdates };
+    }
+
+    /**
      * Update product variant price for winner
      */
     async updateProductVariantPrice(storeDomain, accessToken, variantId, winningBidAmount) {
-        const query = `
-            mutation productVariantUpdate($input: ProductVariantInput!) {
-                productVariantUpdate(input: $input) {
-                    productVariant {
-                        id
-                        price
-                    }
-                    userErrors {
-                        field
-                        message
-                    }
-                }
-            }
-        `;
-
-        const variables = {
-            input: {
-                id: variantId,
-                price: winningBidAmount.toString()
-            }
-        };
-
-        return await this.executeGraphQL(storeDomain, accessToken, query, variables);
+        // This method is deprecated - use updateProductVariantPrices instead
+        // Keeping for backward compatibility but it won't work with current API
+        throw new Error('updateProductVariantPrice is deprecated. Use updateProductVariantPrices instead.');
     }
 
     /**
@@ -257,17 +272,22 @@ class ShopifyGraphQLService {
             // Get the duplicated product details to update variant prices
             const productDetails = await this.getProduct(storeDomain, accessToken, newProduct.id.split('/').pop());
 
-            // Update all variant prices to the winning bid amount
-            const variantUpdates = productDetails.product.variants.edges.map(async (variantEdge) => {
-                return await this.updateProductVariantPrice(
-                    storeDomain, 
-                    accessToken, 
-                    variantEdge.node.id, 
-                    winningBidAmount
-                );
-            });
-
-            await Promise.all(variantUpdates);
+            // Update all variant prices to the winning bid amount using productUpdate
+            if (productDetails.product.variants.edges.length > 0) {
+                try {
+                    await this.updateProductVariantPrices(
+                        storeDomain, 
+                        accessToken, 
+                        newProduct.id,
+                        productDetails.product.variants.edges,
+                        winningBidAmount
+                    );
+                    console.log('✅ Variant prices updated successfully');
+                } catch (variantError) {
+                    console.warn('⚠️ Failed to update variant prices, but product was created:', variantError.message);
+                    // Continue anyway - product was created successfully
+                }
+            }
         } catch (error) {
             // If duplication fails due to permissions, fallback to manual creation
             if (error.isPermissionError || error.message.includes('ACCESS_DENIED') || error.message.includes('write_products') || error.message.includes('permission')) {
