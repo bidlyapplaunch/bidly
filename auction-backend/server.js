@@ -130,14 +130,21 @@ app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Load optional routes asynchronously without blocking server startup
+// Load customization routes synchronously (essential for admin)
+try {
+  const { default: customizationRoutes } = await import('./routes/customization.js');
+  app.use('/api/customization', customizationRoutes);
+  console.log('✅ Customization routes loaded synchronously');
+} catch (error) {
+  console.error('❌ Failed to load customization routes:', error.message);
+  app.use('/api/customization', (req, res) => {
+    res.status(500).json({ success: false, message: 'Customization routes not available', error: error.message });
+  });
+}
+
+// Load other optional routes asynchronously without blocking server startup
 (async () => {
   const routeLoaders = [
-    {
-      name: 'customization',
-      import: () => import('./routes/customization.js'),
-      mount: (routes) => app.use('/api/customization', routes.default)
-    },
     {
       name: 'customer',
       import: () => import('./routes/customerRoutes.js'),
@@ -182,12 +189,7 @@ app.use('/api/analytics', analyticsRoutes);
         console.error(`❌ Failed to load ${loader.name} routes:`, error);
         console.error(`   Error stack:`, error.stack);
         // Add fallback route
-        if (loader.name === 'customization') {
-          app.use('/api/customization', (req, res) => {
-            console.error('⚠️ Customization routes not available, using fallback');
-            res.status(500).json({ success: false, message: 'Customization routes not available', error: error.message });
-          });
-        } else if (loader.name === 'customer') {
+        if (loader.name === 'customer') {
           app.use('/api/customers', (req, res) => {
             res.status(500).json({ success: false, message: 'Customer routes not available' });
           });
