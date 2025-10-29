@@ -114,15 +114,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint for Render
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Bidly Auction API Server',
-    status: 'running',
-    timestamp: new Date().toISOString()
-  });
-});
+// Root endpoint for Render (moved after Shopify embedded app route)
 
 // API routes
 app.use('/api/auctions', auctionRoutes);
@@ -202,6 +194,16 @@ app.get('/', (req, res) => {
   const indexPath = path.join(frontendDistPath, 'index.html');
   console.log('📄 Serving ADMIN index.html from:', indexPath);
   res.sendFile(indexPath);
+});
+
+// Render health check endpoint (after Shopify embedded app route)
+app.get('/render-health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bidly Auction API Server',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // 404 handler
