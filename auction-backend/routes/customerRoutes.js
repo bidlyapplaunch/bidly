@@ -5,9 +5,18 @@ import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
+// Test route to check if customer routes are working
+router.get('/test', (req, res) => {
+  res.json({ success: true, message: 'Customer routes are working' });
+});
+
 // Save customer data (simplified version of sync)
 router.post('/saveCustomer', async (req, res, next) => {
   try {
+    console.log('📧 Customer save endpoint hit');
+    console.log('📧 Request body:', req.body);
+    console.log('📧 Request headers:', req.headers);
+    
     const { 
       shopifyId, 
       email, 
@@ -32,6 +41,15 @@ router.post('/saveCustomer', async (req, res, next) => {
     // Handle missing lastName (some Shopify customers might not have last name)
     const customerLastName = lastName || 'Customer';
 
+    console.log('📧 About to call Customer.findOrCreate with:', {
+      shopifyId,
+      email,
+      firstName,
+      lastName: customerLastName,
+      isTemp: !shopifyId,
+      shopDomain
+    });
+
     // Find or create customer
     const customer = await Customer.findOrCreate({
       shopifyId,
@@ -40,6 +58,13 @@ router.post('/saveCustomer', async (req, res, next) => {
       lastName: customerLastName,
       isTemp: !shopifyId // If no shopifyId, it's a temp customer
     }, shopDomain);
+
+    console.log('📧 Customer.findOrCreate result:', {
+      id: customer._id,
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName
+    });
 
     console.log('✅ Customer saved/updated successfully:', {
       id: customer._id,
@@ -69,12 +94,23 @@ router.post('/saveCustomer', async (req, res, next) => {
       stack: error.stack,
       code: error.code,
       keyPattern: error.keyPattern,
-      keyValue: error.keyValue
+      keyValue: error.keyValue,
+      name: error.name
     });
     
     // Handle duplicate key errors (email already exists)
     if (error.code === 11000) {
       return next(new AppError('Customer with this email already exists in this store', 409));
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      return next(new AppError(`Validation error: ${error.message}`, 400));
+    }
+    
+    // Handle cast errors
+    if (error.name === 'CastError') {
+      return next(new AppError(`Invalid data format: ${error.message}`, 400));
     }
     
     next(error);
