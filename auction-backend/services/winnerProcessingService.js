@@ -68,6 +68,15 @@ class WinnerProcessingService {
             
         } catch (error) {
             console.error(`❌ Error processing winner for auction ${auctionId}:`, error);
+            
+            // Handle specific error types gracefully
+            if (error.statusCode === 401) {
+                console.error(`⚠️ Skipping auction ${auctionId} due to invalid access token. Store needs to reinstall the app.`);
+                // Mark auction as failed but don't throw to prevent blocking other auctions
+                await this.markAuctionAsFailed(auctionId, error.message);
+                return;
+            }
+            
             throw error;
         } finally {
             this.isProcessing.delete(processingKey);
@@ -160,7 +169,15 @@ class WinnerProcessingService {
             return productData.product;
         } catch (error) {
             console.error('Error fetching original product:', error);
-            throw new AppError('Failed to fetch original product details', 500);
+            
+            // Handle specific error types
+            if (error.response?.status === 401) {
+                throw new AppError('Invalid or expired Shopify access token. Please reinstall the app.', 401);
+            } else if (error.response?.status === 404) {
+                throw new AppError('Original product not found in Shopify', 404);
+            } else {
+                throw new AppError('Failed to fetch original product details', 500);
+            }
         }
     }
 
@@ -252,6 +269,25 @@ class WinnerProcessingService {
     }
 
     /**
+     * Mark auction as failed due to processing error
+     */
+    async markAuctionAsFailed(auctionId, errorMessage) {
+        try {
+            await Auction.findByIdAndUpdate(auctionId, {
+                $set: {
+                    status: 'failed',
+                    winnerProcessed: false,
+                    processingError: errorMessage,
+                    updatedAt: new Date()
+                }
+            });
+            console.log(`⚠️ Marked auction ${auctionId} as failed: ${errorMessage}`);
+        } catch (error) {
+            console.error('Error marking auction as failed:', error);
+        }
+    }
+
+    /**
      * Send winner notification email
      */
     async sendWinnerNotification(winner, auction, privateProduct) {
@@ -272,7 +308,7 @@ class WinnerProcessingService {
                 }
             };
 
-            await emailService.sendEmail(emailData);
+            await emailService.sendWinnerNotification(emailData);
             console.log(`📧 Winner notification sent to ${winner.bidderEmail}`);
             
         } catch (error) {
