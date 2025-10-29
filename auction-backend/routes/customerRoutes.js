@@ -16,18 +16,36 @@ router.post('/saveCustomer', async (req, res, next) => {
       shopDomain 
     } = req.body;
 
-    if (!email || !firstName || !lastName || !shopDomain) {
-      return next(new AppError('Missing required customer data', 400));
+    console.log('📧 Customer save request:', {
+      shopifyId,
+      email,
+      firstName,
+      lastName,
+      shopDomain
+    });
+
+    if (!email || !firstName || !shopDomain) {
+      console.error('❌ Missing required fields:', { email: !!email, firstName: !!firstName, shopDomain: !!shopDomain });
+      return next(new AppError('Missing required customer data: email, firstName, and shopDomain are required', 400));
     }
+
+    // Handle missing lastName (some Shopify customers might not have last name)
+    const customerLastName = lastName || 'Customer';
 
     // Find or create customer
     const customer = await Customer.findOrCreate({
       shopifyId,
       email,
       firstName,
-      lastName,
+      lastName: customerLastName,
       isTemp: !shopifyId // If no shopifyId, it's a temp customer
     }, shopDomain);
+
+    console.log('✅ Customer saved/updated successfully:', {
+      id: customer._id,
+      email: customer.email,
+      shopDomain
+    });
 
     res.json({
       success: true,
@@ -45,6 +63,20 @@ router.post('/saveCustomer', async (req, res, next) => {
       }
     });
   } catch (error) {
+    console.error('❌ Error saving customer:', error);
+    console.error('   Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      keyPattern: error.keyPattern,
+      keyValue: error.keyValue
+    });
+    
+    // Handle duplicate key errors (email already exists)
+    if (error.code === 11000) {
+      return next(new AppError('Customer with this email already exists in this store', 409));
+    }
+    
     next(error);
   }
 });

@@ -12,7 +12,6 @@ const customerSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
     lowercase: true,
     trim: true
   },
@@ -112,7 +111,7 @@ const customerSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
-customerSchema.index({ email: 1, shopDomain: 1 });
+customerSchema.index({ email: 1, shopDomain: 1 }, { unique: true }); // Email must be unique per shop
 customerSchema.index({ shopifyId: 1, shopDomain: 1 });
 customerSchema.index({ isTemp: 1, shopDomain: 1 });
 

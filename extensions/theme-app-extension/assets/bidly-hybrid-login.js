@@ -36,7 +36,7 @@
                     id: window.Shopify.customer.id,
                     email: window.Shopify.customer.email,
                     firstName: window.Shopify.customer.first_name,
-                    lastName: window.Shopify.customer.last_name
+                    lastName: window.Shopify.customer.last_name || 'Customer'
                 };
                 console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
             }
@@ -51,7 +51,7 @@
                             id: customerJson.id,
                             email: customerJson.email,
                             firstName: customerJson.first_name,
-                            lastName: customerJson.last_name
+                            lastName: customerJson.last_name || 'Customer'
                         };
                         console.log('Bidly: Found customer via meta tag:', customerData);
                     } catch (e) {
@@ -70,7 +70,7 @@
                             id: customerJson.id,
                             email: customerJson.email,
                             firstName: customerJson.first_name,
-                            lastName: customerJson.last_name
+                            lastName: customerJson.last_name || 'Customer'
                         };
                         console.log('Bidly: Found customer via script tag:', customerData);
                     } catch (e) {
@@ -85,7 +85,7 @@
                     id: window.customer.id,
                     email: window.customer.email,
                     firstName: window.customer.first_name,
-                    lastName: window.customer.last_name
+                    lastName: window.customer.last_name || 'Customer'
                 };
                 console.log('Bidly: Found customer via window.customer:', customerData);
             }
@@ -102,7 +102,7 @@
                             id: customerJson.id,
                             email: customerJson.email,
                             firstName: customerJson.first_name || customerJson.firstName,
-                            lastName: customerJson.last_name || customerJson.lastName
+                            lastName: customerJson.last_name || customerJson.lastName || 'Customer'
                         };
                         console.log('Bidly: Found customer via window.customerData:', customerData);
                     }
@@ -123,7 +123,7 @@
                             id: customerJson.id,
                             email: customerJson.email,
                             firstName: customerJson.first_name || customerJson.firstName,
-                            lastName: customerJson.last_name || customerJson.lastName
+                            lastName: customerJson.last_name || customerJson.lastName || 'Customer'
                         };
                         console.log('Bidly: Found customer via window.Shopify.customerData:', customerData);
                     }
@@ -142,7 +142,7 @@
                             id: customerJson.id,
                             email: customerJson.email,
                             firstName: customerJson.first_name,
-                            lastName: customerJson.last_name
+                            lastName: customerJson.last_name || 'Customer'
                         };
                         console.log('Bidly: Found customer via storage:', customerData);
                     } catch (e) {
@@ -153,12 +153,13 @@
             
             if (customerData && customerData.email) {
                 // Set customer data locally first
+                const customerLastName = customerData.lastName || 'Customer';
                 currentCustomer = {
                     id: customerData.id,
                     email: customerData.email,
                     firstName: customerData.firstName,
-                    lastName: customerData.lastName,
-                    fullName: `${customerData.firstName} ${customerData.lastName}`,
+                    lastName: customerLastName,
+                    fullName: `${customerData.firstName} ${customerLastName}`,
                     shopifyId: customerData.id,
                     isTemp: false
                 };
@@ -172,13 +173,13 @@
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({
-                            shopifyId: customerData.id,
-                            email: customerData.email,
-                            firstName: customerData.firstName,
-                            lastName: customerData.lastName,
-                            shopDomain: CONFIG.shopDomain
-                        })
+                    body: JSON.stringify({
+                        shopifyId: customerData.id,
+                        email: customerData.email,
+                        firstName: customerData.firstName,
+                        lastName: customerData.lastName || 'Customer', // Fallback for missing last names
+                        shopDomain: CONFIG.shopDomain
+                    })
                     });
                     
                     if (response.ok) {
