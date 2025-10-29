@@ -154,6 +154,30 @@ try {
   });
 }
 
+// Load marketplace customization routes synchronously
+try {
+  const { default: marketplaceCustomizationRoutes } = await import('./routes/marketplaceCustomization.js');
+  app.use('/api/marketplace-customization', marketplaceCustomizationRoutes);
+  console.log('✅ Marketplace customization routes loaded synchronously');
+} catch (error) {
+  console.error('❌ Failed to load marketplace customization routes:', error.message);
+  app.use('/api/marketplace-customization', (req, res) => {
+    res.status(500).json({ success: false, message: 'Marketplace customization routes not available', error: error.message });
+  });
+}
+
+// Load widget customization routes synchronously
+try {
+  const { default: widgetCustomizationRoutes } = await import('./routes/widgetCustomization.js');
+  app.use('/api/widget-customization', widgetCustomizationRoutes);
+  console.log('✅ Widget customization routes loaded synchronously');
+} catch (error) {
+  console.error('❌ Failed to load widget customization routes:', error.message);
+  app.use('/api/widget-customization', (req, res) => {
+    res.status(500).json({ success: false, message: 'Widget customization routes not available', error: error.message });
+  });
+}
+
 // Load other optional routes asynchronously without blocking server startup
 (async () => {
   const routeLoaders = [

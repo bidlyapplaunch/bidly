@@ -268,7 +268,7 @@ export const analyticsAPI = {
   }
 };
 
-// Customization API endpoints
+// Customization API endpoints (legacy - for backward compatibility)
 export const customizationAPI = {
   // Get customization settings
   getCustomization: async (shopDomain = null) => {
@@ -294,6 +294,38 @@ export const customizationAPI = {
     const response = await api.get('/customization/theme', {
       params: { shop }
     });
+    return response.data;
+  }
+};
+
+// Marketplace Customization API
+export const marketplaceCustomizationAPI = {
+  getCustomization: async () => {
+    const response = await api.get('/marketplace-customization');
+    return response.data;
+  },
+  saveCustomization: async (data) => {
+    const response = await api.post('/marketplace-customization', data);
+    return response.data;
+  },
+  getThemeCSS: async () => {
+    const response = await api.get('/marketplace-customization/theme');
+    return response.data;
+  }
+};
+
+// Widget Customization API
+export const widgetCustomizationAPI = {
+  getCustomization: async () => {
+    const response = await api.get('/widget-customization');
+    return response.data;
+  },
+  saveCustomization: async (data) => {
+    const response = await api.post('/widget-customization', data);
+    return response.data;
+  },
+  getThemeCSS: async () => {
+    const response = await api.get('/widget-customization/theme');
     return response.data;
   }
 };

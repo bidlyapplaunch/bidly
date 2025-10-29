@@ -1,389 +1,328 @@
-/* Auction App Embed Styles with Comprehensive Color Variables */
+/* Auction App Embed Styles with Widget-Specific Color Variables */
 .bidly-auction-app-embed {
     margin: 20px 0;
     animation: slideInUp 0.5s ease-out;
-    font-family: var(--bidly-font-family, 'Inter', sans-serif);
-    color: var(--bidly-color-text-primary, #1f2937);
+    font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
+    color: var(--bidly-widget-color-text-primary, #1f2937);
 }
 
 /* Login Required Styles */
 .bidly-login-required {
     text-align: center;
     padding: 30px 20px;
-    background: var(--bidly-color-surface, #ffffff);
-    border: 1px solid var(--bidly-color-border, #e5e7eb);
-    border-radius: var(--bidly-border-radius, 8px);
+    background: var(--bidly-widget-color-surface, #ffffff);
+    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+    border-radius: var(--bidly-widget-border-radius, 8px);
 }
 
 .bidly-login-message h4 {
     font-size: 20px;
     margin: 0 0 10px 0;
-    color: var(--bidly-color-text-primary, #1f2937);
+    color: var(--bidly-widget-color-text-primary, #1f2937);
     font-weight: 600;
 }
 
 .bidly-login-message p {
     font-size: 16px;
     margin: 0 0 25px 0;
-    color: var(--bidly-color-text-secondary, #6b7280);
+    color: var(--bidly-widget-color-text-secondary, #6b7280);
 }
 
 .bidly-login-options {
     display: flex;
-    flex-direction: column;
     gap: 15px;
-    max-width: 300px;
-    margin: 0 auto;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .bidly-btn {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: var(--bidly-button-padding, 12px 24px);
+    gap: 8px;
+    padding: var(--bidly-widget-button-padding, 12px 24px);
     border: none;
-    border-radius: var(--bidly-border-radius, 8px);
-    font-size: 16px;
-    font-weight: 600;
+    border-radius: var(--bidly-widget-border-radius, 6px);
+    font-size: 14px;
+    font-weight: 500;
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.3s ease;
-    gap: 8px;
-    font-family: var(--bidly-font-family, 'Inter', sans-serif);
+    transition: all 0.2s ease;
+    font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
 }
 
 .bidly-btn-primary {
-    background: var(--bidly-color-primary, #007bff);
+    background: var(--bidly-widget-color-button-primary, #007bff);
     color: white;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
 }
 
 .bidly-btn-primary:hover {
-    background: var(--bidly-color-hover, #0056b3);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    background: var(--bidly-widget-color-hover, #0056b3);
+    transform: translateY(-1px);
 }
 
 .bidly-btn-secondary {
-    background: var(--bidly-color-surface, #ffffff);
-    color: var(--bidly-color-text-primary, #1f2937);
-    border: 1px solid var(--bidly-color-border, #e5e7eb);
+    background: var(--bidly-widget-color-button-secondary, #6c757d);
+    color: white;
 }
 
 .bidly-btn-secondary:hover {
-    background: var(--bidly-color-hover, #0056b3);
-    color: white;
-    transform: translateY(-2px);
-}
-
-.bidly-btn-success {
-    background: var(--bidly-color-success, #00c851);
-    color: white;
-    box-shadow: 0 4px 15px rgba(0, 200, 81, 0.3);
-}
-
-.bidly-btn-success:hover {
-    background: color-mix(in srgb, var(--bidly-color-success, #00c851) 80%, black);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 200, 81, 0.4);
+    background: var(--bidly-widget-color-text-secondary, #495057);
+    transform: translateY(-1px);
 }
 
 .bidly-btn-icon {
-    font-size: 18px;
-}
-
-/* Customer Info Styles */
-.bidly-customer-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: auto;
-}
-
-.bidly-customer-name {
-    font-size: 14px;
-    color: var(--bidly-color-text-secondary, #6b7280);
-    font-weight: 500;
-}
-
-.bidly-logout-btn {
-    background: var(--bidly-color-surface, #ffffff);
-    border: 1px solid var(--bidly-color-border, #e5e7eb);
-    color: var(--bidly-color-text-primary, #1f2937);
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
     font-size: 16px;
-    transition: all 0.2s ease;
 }
 
-.bidly-logout-btn:hover {
-    background: var(--bidly-color-error, #ff4444);
-    color: white;
-    transform: scale(1.1);
-}
-
-/* Auction Widget Styles */
+/* Widget Container */
 .bidly-widget-container {
-    background: var(--bidly-color-surface, #ffffff);
-    border: 1px solid var(--bidly-color-border, #e5e7eb);
-    border-radius: var(--bidly-border-radius, 12px);
-    box-shadow: var(--bidly-shadow, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
-    padding: var(--bidly-spacing, 20px);
-    margin: 20px 0;
-    font-family: var(--bidly-font-family, 'Inter', sans-serif);
-    color: var(--bidly-color-text-primary, #1f2937);
+    background: var(--bidly-widget-color-background, #ffffff);
+    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+    border-radius: var(--bidly-widget-border-radius, 8px);
+    box-shadow: var(--bidly-widget-shadow, 0 2px 4px 0 rgba(0, 0, 0, 0.1));
+    overflow: hidden;
+    font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
 }
 
+/* Widget Header */
 .bidly-widget-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--bidly-color-border, #e5e7eb);
+    padding: 15px 20px;
+    background: var(--bidly-widget-color-surface, #f8f9fa);
+    border-bottom: 1px solid var(--bidly-widget-color-border, #e5e7eb);
 }
 
 .bidly-widget-title {
     font-size: 18px;
     font-weight: 600;
-    color: var(--bidly-color-text-primary, #1f2937);
     margin: 0;
+    color: var(--bidly-widget-color-text-title, #212529);
+    flex: 1;
+}
+
+.bidly-widget-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--bidly-widget-color-text-secondary, #6c757d);
+    font-size: 14px;
 }
 
 .bidly-widget-close {
     background: none;
     border: none;
-    color: var(--bidly-color-text-secondary, #6b7280);
+    color: var(--bidly-widget-color-text-secondary, #6c757d);
     cursor: pointer;
-    font-size: 20px;
-    padding: 4px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+    padding: 5px;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
 }
 
 .bidly-widget-close:hover {
-    background: var(--bidly-color-error, #ff4444);
-    color: white;
+    background: var(--bidly-widget-color-surface, #f8f9fa);
 }
 
-/* Auction Info Styles */
-.bidly-auction-info {
-    margin-bottom: 20px;
+/* Widget Content */
+.bidly-widget-content {
+    padding: 20px;
 }
 
-.bidly-auction-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--bidly-color-text-primary, #1f2937);
-    margin: 0 0 8px 0;
-}
-
-.bidly-auction-description {
-    font-size: 14px;
-    color: var(--bidly-color-text-secondary, #6b7280);
-    margin: 0 0 12px 0;
-    line-height: 1.4;
-}
-
-.bidly-price-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.bidly-current-bid {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--bidly-color-accent, #00b894);
-}
-
-.bidly-minimum-bid {
-    font-size: 14px;
-    color: var(--bidly-color-text-secondary, #6b7280);
-}
-
-.bidly-minimum-bid .bidly-amount {
-    font-weight: 600;
-    color: var(--bidly-color-accent, #00b894);
-}
-
-/* Timer Styles */
-.bidly-timer {
+/* Timer Section */
+.bidly-timer-section {
     text-align: center;
     margin-bottom: 20px;
-    padding: 12px;
-    background: var(--bidly-color-background, #f5f5f5);
-    border-radius: var(--bidly-border-radius, 8px);
-    border: 1px solid var(--bidly-color-border, #e5e7eb);
 }
 
 .bidly-timer-label {
+    font-size: 14px;
+    color: var(--bidly-widget-color-text-label, #495057);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.bidly-timer-display {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--bidly-widget-color-text-timer, #dc3545);
+    font-family: 'Courier New', monospace;
+    background: var(--bidly-widget-color-surface, #f8f9fa);
+    padding: 10px 15px;
+    border-radius: var(--bidly-widget-border-radius, 6px);
+    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+    display: inline-block;
+}
+
+.bidly-timer-expired {
+    color: var(--bidly-widget-color-error, #dc3545);
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+/* Status Section */
+.bidly-status-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--bidly-widget-color-surface, #f8f9fa);
+    border-radius: var(--bidly-widget-border-radius, 6px);
+    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+}
+
+.bidly-status-item {
+    text-align: center;
+    flex: 1;
+}
+
+.bidly-status-label {
     font-size: 12px;
-    color: var(--bidly-color-text-secondary, #6b7280);
+    color: var(--bidly-widget-color-text-label, #495057);
     margin-bottom: 4px;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.bidly-timer-display {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--bidly-color-accent, #00b894);
-    font-family: 'Courier New', monospace;
+.bidly-status-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--bidly-widget-color-text-amount, #007bff);
 }
 
-.bidly-timer.ended .bidly-timer-display {
-    color: var(--bidly-color-error, #ff4444);
+.bidly-status-count {
+    color: var(--bidly-widget-color-text-count, #6c757d);
 }
 
-.bidly-timer.pending .bidly-timer-display {
-    color: var(--bidly-color-text-secondary, #6b7280);
+.bidly-status-ended {
+    color: var(--bidly-widget-color-text-status, #28a745);
 }
 
-/* Bidding Form Styles */
-.bidly-bid-form {
+/* Bidding Section */
+.bidly-bidding-section {
     margin-bottom: 20px;
 }
 
 .bidly-bid-input-group {
     display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
 .bidly-bid-input {
     flex: 1;
-    padding: 10px 12px;
-    border: 1px solid var(--bidly-color-border, #e5e7eb);
-    border-radius: var(--bidly-border-radius, 6px);
+    padding: 12px 15px;
+    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+    border-radius: var(--bidly-widget-border-radius, 6px);
     font-size: 14px;
-    font-family: var(--bidly-font-family, 'Inter', sans-serif);
-    color: var(--bidly-color-text-primary, #1f2937);
-    background: var(--bidly-color-surface, #ffffff);
+    font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
+    background: var(--bidly-widget-color-background, #ffffff);
+    color: var(--bidly-widget-color-text-primary, #212529);
 }
 
 .bidly-bid-input:focus {
     outline: none;
-    border-color: var(--bidly-color-primary, #007bff);
+    border-color: var(--bidly-widget-color-primary, #007bff);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.bidly-bid-input::placeholder {
-    color: var(--bidly-color-text-secondary, #6b7280);
+.bidly-bid-button {
+    background: var(--bidly-widget-color-button-primary, #007bff);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--bidly-widget-border-radius, 6px);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
 }
 
-.bidly-label {
+.bidly-bid-button:hover {
+    background: var(--bidly-widget-color-hover, #0056b3);
+    transform: translateY(-1px);
+}
+
+.bidly-bid-button:disabled {
+    background: var(--bidly-widget-color-text-secondary, #6c757d);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Minimum Bid Display */
+.bidly-minimum-bid {
+    text-align: center;
+    padding: 10px;
+    background: var(--bidly-widget-color-surface, #f8f9fa);
+    border-radius: var(--bidly-widget-border-radius, 6px);
+    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+    margin-bottom: 15px;
+}
+
+.bidly-minimum-bid-label {
     font-size: 12px;
-    color: var(--bidly-color-text-secondary, #6b7280);
+    color: var(--bidly-widget-color-text-label, #495057);
     margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.bidly-minimum-bid-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--bidly-widget-color-text-amount, #007bff);
+}
+
+/* Buy Now Button */
+.bidly-buy-now-button {
+    background: var(--bidly-widget-color-success, #28a745);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: var(--bidly-widget-border-radius, 6px);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.bidly-buy-now-button:hover {
+    background: var(--bidly-widget-color-accent, #28a745);
+    transform: translateY(-1px);
+}
+
+.bidly-buy-now-button:disabled {
+    background: var(--bidly-widget-color-text-secondary, #6c757d);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Bid History Link */
+.bidly-bid-history-link {
     display: block;
-    font-weight: 500;
-}
-
-.bidly-widget-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.bidly-widget-actions .bidly-btn {
-    flex: 1;
-    min-width: 120px;
+    text-align: center;
+    color: var(--bidly-widget-color-text-secondary, #6c757d);
+    text-decoration: none;
     font-size: 14px;
-    padding: 10px 16px;
+    padding: 10px;
+    border-radius: var(--bidly-widget-border-radius, 6px);
+    transition: all 0.2s ease;
 }
 
-/* Bid History Styles */
-.bidly-bid-history {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid var(--bidly-color-border, #e5e7eb);
-    border-radius: var(--bidly-border-radius, 6px);
-    background: var(--bidly-color-surface, #ffffff);
-}
-
-.bidly-bid-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--bidly-color-border, #e5e7eb);
-    font-size: 13px;
-}
-
-.bidly-bid-item:last-child {
-    border-bottom: none;
-}
-
-.bidly-bid-amount {
-    font-weight: 600;
-    color: var(--bidly-color-accent, #00b894);
-}
-
-.bidly-bid-bidder {
-    color: var(--bidly-color-text-secondary, #6b7280);
-}
-
-.bidly-bid-time {
-    color: var(--bidly-color-text-secondary, #6b7280);
-    font-size: 11px;
-}
-
-/* Status Messages */
-.bidly-status-message {
-    padding: 12px;
-    border-radius: var(--bidly-border-radius, 6px);
-    margin-bottom: 16px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.bidly-status-message.success {
-    background: color-mix(in srgb, var(--bidly-color-success, #00c851) 10%, white);
-    color: var(--bidly-color-success, #00c851);
-    border: 1px solid color-mix(in srgb, var(--bidly-color-success, #00c851) 30%, white);
-}
-
-.bidly-status-message.error {
-    background: color-mix(in srgb, var(--bidly-color-error, #ff4444) 10%, white);
-    color: var(--bidly-color-error, #ff4444);
-    border: 1px solid color-mix(in srgb, var(--bidly-color-error, #ff4444) 30%, white);
-}
-
-.bidly-status-message.info {
-    background: color-mix(in srgb, var(--bidly-color-primary, #007bff) 10%, white);
-    color: var(--bidly-color-primary, #007bff);
-    border: 1px solid color-mix(in srgb, var(--bidly-color-primary, #007bff) 30%, white);
-}
-
-/* Loading States */
-.bidly-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    color: var(--bidly-color-text-secondary, #6b7280);
-}
-
-.bidly-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--bidly-color-border, #e5e7eb);
-    border-top: 2px solid var(--bidly-color-primary, #007bff);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-right: 8px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.bidly-bid-history-link:hover {
+    background: var(--bidly-widget-color-surface, #f8f9fa);
+    color: var(--bidly-widget-color-text-primary, #212529);
 }
 
 /* Animations */
@@ -398,80 +337,53 @@
     }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
-.bidly-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
+.bidly-loading {
+    animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* Responsive Design */
 @media (max-width: 480px) {
     .bidly-widget-container {
         margin: 10px;
-        padding: 16px;
     }
     
-    .bidly-widget-actions {
+    .bidly-widget-content {
+        padding: 15px;
+    }
+    
+    .bidly-status-section {
         flex-direction: column;
-    }
-    
-    .bidly-widget-actions .bidly-btn {
-        flex: none;
-        width: 100%;
+        gap: 10px;
     }
     
     .bidly-bid-input-group {
         flex-direction: column;
     }
     
-    .bidly-price-info {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+    .bidly-bid-button {
+        width: 100%;
     }
 }
 
-/* Dark mode support (if needed) */
-@media (prefers-color-scheme: dark) {
-    .bidly-auction-app-embed {
-        --bidly-color-background: #1a1a1a;
-        --bidly-color-surface: #2d2d2d;
-        --bidly-color-text-primary: #ffffff;
-        --bidly-color-text-secondary: #a0a0a0;
-        --bidly-color-border: #404040;
-    }
+/* Gradient Support */
+.bidly-gradient-primary {
+    background: linear-gradient(135deg, var(--bidly-widget-color-primary, #007bff), var(--bidly-widget-color-hover, #0056b3));
 }
 
-/* Utility Classes */
-.bidly-text-center { text-align: center; }
-.bidly-text-left { text-align: left; }
-.bidly-text-right { text-align: right; }
-.bidly-mb-0 { margin-bottom: 0; }
-.bidly-mb-1 { margin-bottom: 8px; }
-.bidly-mb-2 { margin-bottom: 16px; }
-.bidly-mb-3 { margin-bottom: 24px; }
-.bidly-mt-0 { margin-top: 0; }
-.bidly-mt-1 { margin-top: 8px; }
-.bidly-mt-2 { margin-top: 16px; }
-.bidly-mt-3 { margin-top: 24px; }
-.bidly-hidden { display: none; }
-.bidly-visible { display: block; }
-
-/* Focus states for accessibility */
-.bidly-btn:focus,
-.bidly-bid-input:focus,
-.bidly-widget-close:focus {
-    outline: 2px solid var(--bidly-color-primary, #007bff);
-    outline-offset: 2px;
+.bidly-gradient-success {
+    background: linear-gradient(135deg, var(--bidly-widget-color-success, #28a745), var(--bidly-widget-color-accent, #28a745));
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-    .bidly-auction-app-embed {
-        --bidly-color-border: #000000;
-        --bidly-color-text-secondary: #000000;
-    }
+.bidly-gradient-surface {
+    background: linear-gradient(135deg, var(--bidly-widget-color-surface, #f8f9fa), var(--bidly-widget-color-background, #ffffff));
+}
 }
