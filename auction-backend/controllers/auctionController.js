@@ -52,11 +52,10 @@ const updateProductMetafields = async (auction, shopDomain) => {
     });
 
     // Update metafields via API call
-    const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:5000'}/api/metafields/products/${auction.shopifyProductId}/auction-metafields`, {
+    const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:5000'}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.ADMIN_TOKEN || 'temp-token'}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         shop: shopDomain,

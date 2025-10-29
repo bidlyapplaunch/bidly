@@ -1,6 +1,7 @@
 import express from 'express';
 import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
@@ -175,11 +176,11 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // Update customer bid history
-router.post('/:id/bid', async (req, res, next) => {
+router.post('/:id/bid', identifyStore, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { auctionId, amount, isWinning } = req.body;
-    const { shopDomain } = req.query;
+    const shopDomain = req.shopDomain || req.query.shopDomain;
 
     if (!shopDomain) {
       return next(new AppError('Shop domain is required', 400));

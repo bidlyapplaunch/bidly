@@ -1,11 +1,11 @@
 import express from 'express';
-import { requireAuth } from '../middleware/auth.js';
+import { identifyStore } from '../middleware/storeMiddleware.js';
 import getShopifyService from '../services/shopifyService.js';
 
 const router = express.Router();
 
 // Get metafields for a product
-router.get('/products/:productId/metafields', requireAuth, async (req, res) => {
+router.get('/products/:productId/metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
     const { shop } = req.query;
@@ -39,23 +39,24 @@ router.get('/products/:productId/metafields', requireAuth, async (req, res) => {
 });
 
 // Set auction metafields for a product
-router.post('/products/:productId/auction-metafields', requireAuth, async (req, res) => {
+router.post('/products/:productId/auction-metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
-    const { shop, auctionData } = req.body;
+    const { auctionData } = req.body;
+    const shopDomain = req.shopDomain || req.query.shop || req.body.shop;
     
     console.log('🔍 Debug - metafields POST:', {
-      shop,
+      shopDomain,
       auctionDataStartTime: auctionData?.startTime,
       auctionDataStartTimeType: typeof auctionData?.startTime,
       fullAuctionData: auctionData
     });
     
-    if (!shop) {
+    if (!shopDomain) {
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyService().getClient(shop);
+    const shopify = getShopifyService().getClient(shopDomain);
     if (!shopify) {
       return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
     }
