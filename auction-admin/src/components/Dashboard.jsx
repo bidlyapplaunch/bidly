@@ -20,6 +20,7 @@ import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
+import CustomizationSettings from './CustomizationSettings';
 import AppBridgeToast from './AppBridgeToast';
 import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
 import socketService from '../services/socket';
@@ -290,6 +291,11 @@ const Dashboard = ({ onLogout }) => {
                     id: 'analytics',
                     content: '📊 Analytics',
                     panelID: 'analytics-panel'
+                  },
+                  {
+                    id: 'customization',
+                    content: '🎨 Customization',
+                    panelID: 'customization-panel'
                   }
                 ]}
                 selected={selectedTab}
@@ -308,6 +314,11 @@ const Dashboard = ({ onLogout }) => {
                 {selectedTab === 1 && (
                   <div style={{ padding: '16px' }}>
                     <Analytics />
+                  </div>
+                )}
+                {selectedTab === 2 && (
+                  <div style={{ padding: '16px' }}>
+                    <CustomizationSettings />
                   </div>
                 )}
               </Tabs>

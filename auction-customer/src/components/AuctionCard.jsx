@@ -47,7 +47,15 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
   return (
     <>
-      <Card sectioned>
+      <Card 
+        sectioned
+        style={{
+          fontFamily: 'var(--bidly-font-family, Poppins, sans-serif)',
+          borderRadius: 'var(--bidly-border-radius, 6px)',
+          boxShadow: 'var(--bidly-shadow, 0 2px 4px 0 rgba(0, 0, 0, 0.1))',
+          border: '1px solid var(--bidly-border, #e5e7eb)'
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
           <div>
             <Text variant="headingLg" as="h2">
@@ -160,11 +168,23 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
             primary 
             onClick={() => setBidModalOpen(true)}
             disabled={auction.status !== 'active'}
+            style={{
+              backgroundColor: 'var(--bidly-primary-color, #3B82F6)',
+              borderColor: 'var(--bidly-primary-color, #3B82F6)',
+              padding: 'var(--bidly-button-padding, 0.625rem 1.25rem)',
+              borderRadius: 'var(--bidly-border-radius, 6px)'
+            }}
           >
             {auction.status === 'active' ? 'Place Bid' : 
              auction.status === 'pending' ? 'Starting Soon' : 'View Details'}
           </Button>
-          <Button onClick={() => setDetailsModalOpen(true)}>
+          <Button 
+            onClick={() => setDetailsModalOpen(true)}
+            style={{
+              padding: 'var(--bidly-button-padding, 0.625rem 1.25rem)',
+              borderRadius: 'var(--bidly-border-radius, 6px)'
+            }}
+          >
             View Details
           </Button>
         </div>

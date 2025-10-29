@@ -76,6 +76,18 @@ class SocketService {
     }
   }
 
+  onTimeExtension(callback) {
+    if (this.socket) {
+      this.socket.on('auction-time-extended', callback);
+    }
+  }
+
+  offTimeExtension(callback) {
+    if (this.socket) {
+      this.socket.off('auction-time-extended', callback);
+    }
+  }
+
   getSocket() {
     return this.socket;
   }

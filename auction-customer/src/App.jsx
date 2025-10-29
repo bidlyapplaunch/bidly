@@ -14,6 +14,7 @@ import {
 import { auctionAPI } from './services/api';
 import socketService from './services/socket';
 import customerAuthService from './services/customerAuth';
+import themeService from './services/themeService';
 import AuctionCard from './components/AuctionCard';
 import CustomerAuth from './components/CustomerAuth';
 
@@ -45,6 +46,14 @@ function App() {
   const { shop, shopName } = getShopInfo();
 
   useEffect(() => {
+    // Load theme first
+    const loadTheme = async () => {
+      if (shop) {
+        await themeService.loadTheme(shop);
+      }
+    };
+    loadTheme();
+
     // Initialize customer authentication
     if (customerAuthService.isAuthenticated()) {
       setCustomer(customerAuthService.getCustomer());
@@ -140,8 +149,30 @@ function App() {
       setShowToast(true);
     };
     
+    // Listen for time extension events (popcorn auctions)
+    const handleTimeExtension = (extensionData) => {
+      console.log('🍿 Received time extension:', extensionData);
+      
+      // Update the auction in the local state with new end time
+      setAuctions(prevAuctions => 
+        prevAuctions.map(auction => 
+          auction._id === extensionData.auctionId || auction.id === extensionData.auctionId
+            ? {
+                ...auction,
+                endTime: extensionData.newEndTime
+              }
+            : auction
+        )
+      );
+      
+      // Show notification for time extension
+      setToastMessage(`🍿 ${extensionData.message}`);
+      setShowToast(true);
+    };
+    
     socketService.onBidUpdate(handleBidUpdate);
     socketService.onStatusUpdate(handleStatusUpdate);
+    socketService.onTimeExtension(handleTimeExtension);
     
     // Set up automatic refresh every 10 seconds to detect status changes (as backup)
     const refreshInterval = setInterval(() => {

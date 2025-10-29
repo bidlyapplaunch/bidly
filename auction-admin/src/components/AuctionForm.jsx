@@ -9,7 +9,8 @@ import {
   Text,
   List,
   Spinner,
-  Banner
+  Banner,
+  Checkbox
 } from '@shopify/polaris';
 import { shopifyAPI } from '../services/api';
 
@@ -63,6 +64,10 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
     buyNowPrice: '',
     status: 'pending',
     productData: null,
+    // Popcorn auction settings
+    popcornEnabled: false,
+    popcornExtendSeconds: 15,
+    popcornTriggerSeconds: 10,
   });
   const [errors, setErrors] = useState({});
   const [productSearchQuery, setProductSearchQuery] = useState('');
@@ -81,6 +86,10 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         buyNowPrice: auction.buyNowPrice || '',
         status: auction.status || 'pending',
         productData: auction.productData || null,
+        // Popcorn auction settings
+        popcornEnabled: auction.popcornEnabled || false,
+        popcornExtendSeconds: auction.popcornExtendSeconds || 15,
+        popcornTriggerSeconds: auction.popcornTriggerSeconds || 10,
       });
       if (auction.productData?.title) {
         setProductSearchQuery(auction.productData.title);
@@ -94,6 +103,10 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
               buyNowPrice: '',
               status: 'pending',
               productData: null,
+              // Popcorn auction settings
+              popcornEnabled: false,
+              popcornExtendSeconds: 15,
+              popcornTriggerSeconds: 10,
             });
             setProductSearchQuery('');
           }
@@ -360,6 +373,46 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
             onChange={(value) => handleChange(value, 'buyNowPrice')}
             error={errors.buyNowPrice}
           />
+
+          <Card sectioned>
+            <Text variant="headingMd">🍿 Popcorn Auction Settings (Premium Feature)</Text>
+            <Text variant="bodyMd" color="subdued">
+              Enable automatic time extension when bids are placed near the end of the auction.
+            </Text>
+            
+            <div style={{ marginTop: '16px' }}>
+              <Checkbox
+                label="Enable Popcorn Bidding"
+                checked={formData.popcornEnabled}
+                onChange={(checked) => handleChange(checked, 'popcornEnabled')}
+                helpText="Automatically extend auction time when bids are placed near the end"
+              />
+            </div>
+
+            {formData.popcornEnabled && (
+              <FormLayout.Group>
+                <TextField
+                  label="Trigger Threshold (seconds)"
+                  type="number"
+                  value={String(formData.popcornTriggerSeconds)}
+                  onChange={(value) => handleChange(parseInt(value) || 10, 'popcornTriggerSeconds')}
+                  helpText="Extend auction when this many seconds remain"
+                  min="1"
+                  max="60"
+                />
+                <TextField
+                  label="Extension Duration (seconds)"
+                  type="number"
+                  value={String(formData.popcornExtendSeconds)}
+                  onChange={(value) => handleChange(parseInt(value) || 15, 'popcornExtendSeconds')}
+                  helpText="How many seconds to add to the auction"
+                  min="5"
+                  max="300"
+                />
+              </FormLayout.Group>
+            )}
+          </Card>
+
           {errors.general && <Text color="critical">{errors.general}</Text>}
         </FormLayout>
       </Modal.Section>

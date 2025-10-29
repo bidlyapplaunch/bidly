@@ -489,6 +489,44 @@ export const placeBid = async (req, res, next) => {
     // Refresh auction data
     const updatedAuction = await Auction.findById(req.params.id);
     
+    // Check for popcorn auction time extension
+    let timeExtended = false;
+    if (updatedAuction.popcornEnabled && !auctionEnded) {
+      const now = new Date();
+      const timeRemaining = (updatedAuction.endTime - now) / 1000; // seconds
+      
+      if (timeRemaining <= updatedAuction.popcornTriggerSeconds) {
+        // Extend the auction time
+        const newEndTime = new Date(now.getTime() + (updatedAuction.popcornExtendSeconds * 1000));
+        updatedAuction.endTime = newEndTime;
+        await updatedAuction.save();
+        timeExtended = true;
+        
+        console.log(`🍿 Popcorn auction extended! New end time: ${newEndTime.toISOString()}`);
+        
+        // Broadcast time extension to all clients
+        const io = req.app.get('io');
+        if (io) {
+          io.to(`auction-${req.params.id}`).emit('auction-time-extended', {
+            auctionId: req.params.id,
+            newEndTime: newEndTime.toISOString(),
+            extensionSeconds: updatedAuction.popcornExtendSeconds,
+            bidder: sanitizedBidder,
+            message: `Auction extended by ${updatedAuction.popcornExtendSeconds} seconds due to last-minute bid!`
+          });
+          
+          // Also broadcast globally
+          io.emit('auction-time-extended', {
+            auctionId: req.params.id,
+            newEndTime: newEndTime.toISOString(),
+            extensionSeconds: updatedAuction.popcornExtendSeconds,
+            bidder: sanitizedBidder,
+            message: `Auction extended by ${updatedAuction.popcornExtendSeconds} seconds due to last-minute bid!`
+          });
+        }
+      }
+    }
+    
     // Check if bid matches buy now price
     let auctionEnded = false;
     if (amount >= auction.buyNowPrice) {
@@ -567,7 +605,10 @@ export const placeBid = async (req, res, next) => {
         timestamp: new Date().toISOString(),
         auctionEnded: auctionEnded,
         winner: auctionEnded ? sanitizedBidder : null,
-        productTitle: updatedAuction.productData?.title || 'Unknown Product'
+        productTitle: updatedAuction.productData?.title || 'Unknown Product',
+        timeExtended: timeExtended,
+        newEndTime: timeExtended ? updatedAuction.endTime.toISOString() : null,
+        extensionSeconds: timeExtended ? updatedAuction.popcornExtendSeconds : null
       };
 
       // Send to auction-specific room

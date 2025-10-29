@@ -135,6 +135,24 @@ const auctionSchema = new mongoose.Schema({
     type: Date
   },
   
+  // Popcorn auction settings
+  popcornEnabled: {
+    type: Boolean,
+    default: false
+  },
+  popcornExtendSeconds: {
+    type: Number,
+    default: 15,
+    min: 5,
+    max: 300 // Max 5 minutes extension
+  },
+  popcornTriggerSeconds: {
+    type: Number,
+    default: 10,
+    min: 1,
+    max: 60 // Max 1 minute trigger threshold
+  },
+  
   createdAt: {
     type: Date,
     default: Date.now

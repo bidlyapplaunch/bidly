@@ -122,6 +122,10 @@ app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+// Customization routes
+const { default: customizationRoutes } = await import('./routes/customization.js');
+app.use('/api/customization', customizationRoutes);
+
 // Customer routes for hybrid login system
 const { default: customerRoutes } = await import('./routes/customerRoutes.js');
 app.use('/api/customers', customerRoutes);
