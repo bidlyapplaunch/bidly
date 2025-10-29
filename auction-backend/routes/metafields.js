@@ -173,16 +173,17 @@ router.post('/products/:productId/auction-metafields', identifyStore, async (req
 });
 
 // Update auction metafields
-router.put('/products/:productId/auction-metafields', requireAuth, async (req, res) => {
+router.put('/products/:productId/auction-metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
-    const { shop, updates } = req.body;
+    const { updates } = req.body;
+    const shopDomain = req.shopDomain || req.query.shop || req.body.shop;
     
-    if (!shop) {
+    if (!shopDomain) {
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyService().getClient(shop);
+    const shopify = getShopifyService().getClient(shopDomain);
     if (!shopify) {
       return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
     }
@@ -239,16 +240,16 @@ router.put('/products/:productId/auction-metafields', requireAuth, async (req, r
 });
 
 // Remove auction metafields (when auction is deleted)
-router.delete('/products/:productId/auction-metafields', requireAuth, async (req, res) => {
+router.delete('/products/:productId/auction-metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
-    const { shop } = req.query;
+    const shopDomain = req.shopDomain || req.query.shop || req.body.shop;
     
-    if (!shop) {
+    if (!shopDomain) {
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyService().getClient(shop);
+    const shopify = getShopifyService().getClient(shopDomain);
     if (!shopify) {
       return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
     }
