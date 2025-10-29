@@ -12,17 +12,33 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         
+        console.log('🎨 Customization GET request:', {
+            shopDomain,
+            query: req.query,
+            hasStore: !!req.store
+        });
+        
         if (!shopDomain) {
+            console.log('❌ No shop domain found in request');
             return res.status(400).json({
                 success: false,
                 message: 'Shop domain is required'
             });
         }
 
-        let customization = await Customization.findOne({ shopDomain });
+        let customization;
+        
+        try {
+            customization = await Customization.findOne({ shopDomain });
+            console.log('🔍 Customization lookup result:', !!customization);
+        } catch (dbError) {
+            console.error('❌ Database error in customization lookup:', dbError.message);
+            // Continue with default settings if database fails
+        }
         
         // If no customization exists, return default settings without saving
         if (!customization) {
+            console.log('📝 Using default customization settings');
             customization = {
                 template: 'Classic',
                 font: 'Inter',

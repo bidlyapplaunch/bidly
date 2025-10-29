@@ -142,15 +142,22 @@ export const optionalStoreIdentification = async (req, res, next) => {
     const shopDomain = extractShopDomain(req);
     
     if (shopDomain) {
-      const store = await Store.findByDomain(shopDomain);
+      // Always set the shop domain, even if store is not found
+      req.shopDomain = shopDomain;
       
-      if (store && store.isInstalled) {
-        await store.updateLastAccess();
-        req.store = store;
-        req.shopDomain = shopDomain;
-        console.log('✅ Optional store identified:', store.storeName);
-      } else {
-        console.log('⚠️ Store not found or not installed:', shopDomain);
+      try {
+        const store = await Store.findByDomain(shopDomain);
+        
+        if (store && store.isInstalled) {
+          await store.updateLastAccess();
+          req.store = store;
+          console.log('✅ Optional store identified:', store.storeName);
+        } else {
+          console.log('⚠️ Store not found or not installed:', shopDomain);
+        }
+      } catch (storeError) {
+        console.log('⚠️ Error looking up store:', storeError.message);
+        // Continue without store context
       }
     } else {
       console.log('ℹ️ No shop domain provided - running without store context');
