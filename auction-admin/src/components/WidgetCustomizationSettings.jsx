@@ -7,7 +7,6 @@ import {
   Select, 
   Button, 
   ColorPicker,
-  Stack,
   Text,
   Divider,
   Banner,
@@ -161,9 +160,9 @@ const WidgetCustomizationSettings = () => {
           
           <Text variant="headingMd">Color Scheme</Text>
           
-          <Stack spacing="loose">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Text variant="headingSm">Basic Colors</Text>
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Primary Color"
                 color={customization.colors.primary}
@@ -179,10 +178,10 @@ const WidgetCustomizationSettings = () => {
                 color={customization.colors.surface}
                 onChange={(color) => handleColorChange('surface', color)}
               />
-            </Stack>
+            </div>
             
             <Text variant="headingSm">Text Colors</Text>
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Primary Text"
                 color={customization.colors.textPrimary}
@@ -198,9 +197,9 @@ const WidgetCustomizationSettings = () => {
                 color={customization.colors.textTitle}
                 onChange={(color) => handleColorChange('textTitle', color)}
               />
-            </Stack>
+            </div>
             
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Timer Text"
                 color={customization.colors.textTimer}
@@ -216,9 +215,9 @@ const WidgetCustomizationSettings = () => {
                 color={customization.colors.textCount}
                 onChange={(color) => handleColorChange('textCount', color)}
               />
-            </Stack>
+            </div>
             
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Label Text"
                 color={customization.colors.textLabel}
@@ -229,10 +228,10 @@ const WidgetCustomizationSettings = () => {
                 color={customization.colors.textAmount}
                 onChange={(color) => handleColorChange('textAmount', color)}
               />
-            </Stack>
+            </div>
             
             <Text variant="headingSm">UI Elements</Text>
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Border Color"
                 color={customization.colors.border}
@@ -248,9 +247,9 @@ const WidgetCustomizationSettings = () => {
                 color={customization.colors.success}
                 onChange={(color) => handleColorChange('success', color)}
               />
-            </Stack>
+            </div>
             
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Error Color"
                 color={customization.colors.error}
@@ -261,10 +260,10 @@ const WidgetCustomizationSettings = () => {
                 color={customization.colors.hover}
                 onChange={(color) => handleColorChange('hover', color)}
               />
-            </Stack>
+            </div>
             
             <Text variant="headingSm">Buttons</Text>
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Primary Button"
                 color={customization.colors.buttonPrimary}
@@ -275,8 +274,8 @@ const WidgetCustomizationSettings = () => {
                 color={customization.colors.buttonSecondary}
                 onChange={(color) => handleColorChange('buttonSecondary', color)}
               />
-            </Stack>
-          </Stack>
+            </div>
+          </div>
           
           <Divider />
           

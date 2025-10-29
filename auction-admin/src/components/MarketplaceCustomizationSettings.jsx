@@ -7,7 +7,6 @@ import {
   Select, 
   Button, 
   ColorPicker,
-  Stack,
   Text,
   Divider,
   Banner
@@ -151,8 +150,8 @@ const MarketplaceCustomizationSettings = () => {
           
           <Text variant="headingMd">Color Scheme</Text>
           
-          <Stack spacing="loose">
-            <Stack distribution="fillEvenly">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Primary Color"
                 color={customization.colors.primary}
@@ -168,9 +167,9 @@ const MarketplaceCustomizationSettings = () => {
                 color={customization.colors.surface}
                 onChange={(color) => handleColorChange('surface', color)}
               />
-            </Stack>
+            </div>
             
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Primary Text"
                 color={customization.colors.textPrimary}
@@ -186,9 +185,9 @@ const MarketplaceCustomizationSettings = () => {
                 color={customization.colors.border}
                 onChange={(color) => handleColorChange('border', color)}
               />
-            </Stack>
+            </div>
             
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Accent Color"
                 color={customization.colors.accent}
@@ -204,16 +203,16 @@ const MarketplaceCustomizationSettings = () => {
                 color={customization.colors.error}
                 onChange={(color) => handleColorChange('error', color)}
               />
-            </Stack>
+            </div>
             
-            <Stack distribution="fillEvenly">
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorPicker
                 label="Hover Color"
                 color={customization.colors.hover}
                 onChange={(color) => handleColorChange('hover', color)}
               />
-            </Stack>
-          </Stack>
+            </div>
+          </div>
           
           <Divider />
           

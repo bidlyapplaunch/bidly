@@ -386,4 +386,3 @@
 .bidly-gradient-surface {
     background: linear-gradient(135deg, var(--bidly-widget-color-surface, #f8f9fa), var(--bidly-widget-color-background, #ffffff));
 }
-}
