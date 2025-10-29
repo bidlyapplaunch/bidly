@@ -114,6 +114,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Root endpoint for Render
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bidly Auction API Server',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API routes
 app.use('/api/auctions', auctionRoutes);
 app.use('/api/shopify', shopifyRoutes);
@@ -402,17 +412,23 @@ const checkAuctionStatusChanges = async () => {
 // Check for status changes every 5 seconds for faster response
 setInterval(checkAuctionStatusChanges, 5000);
 
-// Start scheduled jobs for winner processing
-const { default: scheduledJobsService } = await import('./services/scheduledJobsService.js');
-scheduledJobsService.start();
-
-// Start server
+// Start server first
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Auction API server running on port ${PORT}`);
   console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
   console.log(`🔗 API base URL: http://0.0.0.0:${PORT}/api/auctions`);
   console.log(`🔌 WebSocket server ready for real-time updates`);
-  console.log(`⏰ Scheduled jobs started for winner processing`);
+  
+  // Start scheduled jobs after server is running
+  setTimeout(async () => {
+    try {
+      const { default: scheduledJobsService } = await import('./services/scheduledJobsService.js');
+      scheduledJobsService.start();
+      console.log(`⏰ Scheduled jobs started for winner processing`);
+    } catch (error) {
+      console.error('⚠️ Failed to start scheduled jobs:', error.message);
+    }
+  }, 2000); // Wait 2 seconds after server starts
 });
 
 export default app;
