@@ -158,7 +158,7 @@ class ShopifyGraphQLService {
             input: {
                 title: `${originalProduct.title} (Auction Winner - ${winnerData.bidder})`,
                 descriptionHtml: originalProduct.description || '',
-                status: 'DRAFT',
+                status: 'UNLISTED',
                 productType: originalProduct.productType || '',
                 vendor: originalProduct.vendor || '',
                 tags: [...(originalProduct.tags || []), 'auction-winner'],
@@ -200,10 +200,61 @@ class ShopifyGraphQLService {
         const variables = {
             productId: originalProductId,
             newTitle: `${winnerData.productTitle} (Auction Winner - ${winnerData.winnerName})`,
-            newStatus: 'DRAFT'
+            newStatus: 'UNLISTED'
         };
 
         return await this.executeGraphQL(storeDomain, accessToken, query, variables);
+    }
+
+    /**
+     * Copy product images from original to duplicated product
+     */
+    async copyProductImages(storeDomain, accessToken, productId, originalImages) {
+        const query = `
+            mutation productUpdate($input: ProductInput!) {
+                productUpdate(input: $input) {
+                    product {
+                        id
+                        images(first: 10) {
+                            edges {
+                                node {
+                                    id
+                                    url
+                                }
+                            }
+                        }
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        `;
+
+        const imageInputs = originalImages.map(edge => ({
+            src: edge.node.url,
+            altText: edge.node.altText || 'Product Image'
+        }));
+
+        const variables = {
+            input: {
+                id: productId,
+                images: imageInputs
+            }
+        };
+
+        try {
+            const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
+            
+            if (result.productUpdate.userErrors.length > 0) {
+                console.warn('Failed to copy images:', result.productUpdate.userErrors[0].message);
+            } else {
+                console.log('✅ Images copied successfully');
+            }
+        } catch (error) {
+            console.warn('Failed to copy images:', error.message);
+        }
     }
 
     /**
@@ -273,6 +324,12 @@ class ShopifyGraphQLService {
 
             // Get the duplicated product details to update variant prices
             const productDetails = await this.getProduct(storeDomain, accessToken, newProduct.id.split('/').pop());
+
+            // Ensure images are copied (duplication should preserve them, but let's verify)
+            if (productDetails.product.images.edges.length === 0 && originalProduct.images?.edges?.length > 0) {
+                console.log('⚠️ Duplicated product has no images, copying from original...');
+                await this.copyProductImages(storeDomain, accessToken, newProduct.id, originalProduct.images.edges);
+            }
 
             // Update all variant prices to the winning bid amount using productUpdate
             if (productDetails.product.variants.edges.length > 0) {
