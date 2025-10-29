@@ -576,11 +576,33 @@
     }
 
     // Inject widget into pricing section
-    function injectWidget(auctionData, settings) {
+    async function injectWidget(auctionData, settings) {
         // Check if we have valid auction data
         if (!auctionData || !auctionData.hasAuction) {
             console.log('Bidly: No auction data available, not injecting widget');
             return;
+        }
+
+        // Fallback: if pending but no startTime, fetch from backend
+        try {
+            if (auctionData.status === 'pending' && !auctionData.startTime && auctionData.auctionId) {
+                console.log('Bidly: startTime missing; attempting backend fetch for auction', auctionData.auctionId);
+                const res = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionData.auctionId}?shop=${CONFIG.shopDomain}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    const start = (json.data && json.data.startTime) || (json.auction && json.auction.startTime) || null;
+                    if (start) {
+                        auctionData.startTime = start;
+                        console.log('Bidly: Fallback startTime retrieved from backend:', start);
+                    } else {
+                        console.log('Bidly: Backend did not return startTime');
+                    }
+                } else {
+                    console.log('Bidly: Backend fetch failed with status', res.status);
+                }
+            }
+        } catch (e) {
+            console.warn('Bidly: Error during fallback startTime fetch', e);
         }
         
         const pricingSection = findPricingSection();
