@@ -130,6 +130,18 @@ app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+// Load customer routes synchronously to ensure availability for widget login
+try {
+  const { default: customerRoutes } = await import('./routes/customerRoutes.js');
+  app.use('/api/customers', customerRoutes);
+  console.log('✅ Customer routes loaded synchronously');
+} catch (error) {
+  console.error('❌ Failed to load customer routes:', error.message);
+  app.use('/api/customers', (req, res) => {
+    res.status(500).json({ success: false, message: 'Customer routes not available', error: error.message });
+  });
+}
+
 // Load customization routes synchronously (essential for admin)
 try {
   const { default: customizationRoutes } = await import('./routes/customization.js');
@@ -145,11 +157,6 @@ try {
 // Load other optional routes asynchronously without blocking server startup
 (async () => {
   const routeLoaders = [
-    {
-      name: 'customer',
-      import: () => import('./routes/customerRoutes.js'),
-      mount: (routes) => app.use('/api/customers', routes.default)
-    },
     {
       name: 'winner',
       import: () => import('./routes/winnerRoutes.js'),
