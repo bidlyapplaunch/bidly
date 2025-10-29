@@ -100,13 +100,13 @@ router.post('/products/:productId/auction-metafields', requireAuth, async (req, 
       {
         namespace: 'auction',
         key: 'start_time',
-        value: auctionData.startTime,
+        value: auctionData.startTime instanceof Date ? auctionData.startTime.toISOString() : auctionData.startTime,
         type: 'date_time'
       },
       {
         namespace: 'auction',
         key: 'end_time',
-        value: auctionData.endTime,
+        value: auctionData.endTime instanceof Date ? auctionData.endTime.toISOString() : auctionData.endTime,
         type: 'date_time'
       },
       {
