@@ -1030,20 +1030,28 @@
 }
 
 .bidly-chat-messages::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .bidly-chat-messages::-webkit-scrollbar-track {
-    background: #1f2937;
+    background: #111827; /* Match the messages area background */
+    border-radius: 4px;
 }
 
 .bidly-chat-messages::-webkit-scrollbar-thumb {
-    background: #4b5563;
-    border-radius: 3px;
+    background: #374151; /* Dark grey matching message bubbles */
+    border-radius: 4px;
+    border: 1px solid #1f2937; /* Subtle border for depth */
 }
 
 .bidly-chat-messages::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
+    background: #4b5563; /* Slightly lighter on hover */
+}
+
+/* Firefox scrollbar styling */
+.bidly-chat-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 #111827; /* thumb color, track color */
 }
 
 .bidly-chat-message {
