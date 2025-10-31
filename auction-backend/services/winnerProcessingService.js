@@ -294,11 +294,11 @@ class WinnerProcessingService {
         try {
             const emailData = {
                 to: winner.bidderEmail,
-                subject: `🎉 Congratulations! You Won the Auction for ${auction.productTitle}`,
+                subject: `🎉 Congratulations! You Won the Auction for ${privateProduct.productTitle || auction.productTitle || 'the auction item'}`,
                 template: 'auction-winner',
                 data: {
                     winnerName: winner.bidder,
-                    productTitle: auction.productTitle,
+                    productTitle: privateProduct.productTitle || auction.productTitle || 'the auction item',
                     productImage: auction.productImage,
                     winningBid: winner.amount,
                     auctionEndTime: auction.endTime,
