@@ -967,6 +967,14 @@
                     showBidNotification(null, null, null, null, `🍿 ${data.message}`);
                 }
             });
+
+            // Some backends also include time extension in a generic bid update; be resilient
+            socket.on('bid-update', (data) => {
+                if (data.auctionId === auctionId && data.timeExtended && data.newEndTime) {
+                    console.log('Bidly: Time extension via bid-update:', data.newEndTime);
+                    initializeCountdown(auctionId, data.newEndTime);
+                }
+            });
             
             socket.on('error', (error) => {
                 console.error('Bidly: WebSocket error:', error);
@@ -1201,7 +1209,19 @@
             const countdownElement = widget.querySelector('.bidly-countdown');
             if (countdownElement) {
                 window.bidlyAuctionEndTimes = window.bidlyAuctionEndTimes || {};
-                const authoritativeEnd = window.bidlyAuctionEndTimes[auctionId] || auctionData.endTime;
+                // Prefer the later of (stored authoritative end, backend endTime)
+                const storedEnd = window.bidlyAuctionEndTimes[auctionId] || null;
+                const backendEnd = auctionData.endTime || null;
+                let authoritativeEnd = backendEnd;
+                if (storedEnd && backendEnd) {
+                    authoritativeEnd = new Date(storedEnd) > new Date(backendEnd) ? storedEnd : backendEnd;
+                } else if (storedEnd) {
+                    authoritativeEnd = storedEnd;
+                }
+                // Persist authoritative value back
+                if (authoritativeEnd) {
+                    window.bidlyAuctionEndTimes[auctionId] = authoritativeEnd;
+                }
                 if (authoritativeEnd) {
                     const endTimestamp = new Date(authoritativeEnd).getTime();
                     const now = new Date().getTime();
