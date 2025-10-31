@@ -499,8 +499,10 @@ export const placeBid = async (req, res, next) => {
       const timeRemaining = (updatedAuction.endTime - now) / 1000; // seconds
       
       if (timeRemaining <= updatedAuction.popcornTriggerSeconds) {
-        // Extend the auction time
-        const newEndTime = new Date(now.getTime() + (updatedAuction.popcornExtendSeconds * 1000));
+        // Extend the auction time by adding to the existing end time (or now if past)
+        const currentEnd = new Date(updatedAuction.endTime);
+        const baseTime = currentEnd > now ? currentEnd : now;
+        const newEndTime = new Date(baseTime.getTime() + (updatedAuction.popcornExtendSeconds * 1000));
         updatedAuction.endTime = newEndTime;
         await updatedAuction.save();
         timeExtended = true;
