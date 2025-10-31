@@ -173,12 +173,14 @@
 
                     ${show_timer && status === 'active' && endTime ? `
                         <div class="bidly-widget-timer">
-                            <div class="bidly-timer-label">Ends In:</div>
-                            <div class="bidly-countdown" data-end-time="${endTime}">
-                                <span class="bidly-timer-days">0</span>d 
-                                <span class="bidly-timer-hours">0</span>h 
-                                <span class="bidly-timer-minutes">0</span>m 
-                                <span class="bidly-timer-seconds">0</span>s
+                            <div class="bidly-timer-card">
+                                <div class="bidly-timer-label">Ends In:</div>
+                                <div class="bidly-countdown" data-end-time="${endTime}">
+                                    <span class="bidly-timer-days">0</span>d 
+                                    <span class="bidly-timer-hours">0</span>h 
+                                    <span class="bidly-timer-minutes">0</span>m 
+                                    <span class="bidly-timer-seconds">0</span>s
+                                </div>
                             </div>
                         </div>
                     ` : ''}
@@ -208,14 +210,12 @@
                                 </div>
                             ` : ''}
                             <div class="bidly-inline-bid-form ${isGuestViewOnly ? 'bidly-blurred' : ''}" id="bidly-bid-form-${auctionId}">
-                                <div class="bidly-bid-info">
+                                <div class="bidly-bid-action-card">
                                     <div class="bidly-minimum-bid">
                                         <span class="bidly-label">MINIMUM BID:</span>
-                                        <span class="bidly-amount" data-min-bid="${minBidAmount}">$${minBidAmount.toFixed(2)}</span>
+                                        <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">$${minBidAmount.toFixed(2)}</span>
                                     </div>
-                                </div>
-                                <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
-                                    <div class="bidly-bid-input-container">
+                                    <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
                                         <div class="bidly-bid-input-group">
                                             <input type="number" 
                                                    id="bidly-bid-amount-${auctionId}" 
@@ -226,8 +226,8 @@
                                                    ${isGuestViewOnly ? 'disabled' : 'required'}>
                                             <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>Place Bid</button>
                                         </div>
-                                    </div>
-                                </form>
+                                    </form>
+                                </div>
                             </div>
                             ${buyNowPrice > 0 ? `
                                 <button class="bidly-buy-now-btn ${isGuestViewOnly ? 'bidly-blurred' : ''}" 
