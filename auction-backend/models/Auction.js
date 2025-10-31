@@ -101,11 +101,26 @@ const auctionSchema = new mongoose.Schema({
     type: Number,
     min: 0
   },
+  reservePrice: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   status: {
     type: String,
-    enum: ['pending', 'active', 'ended', 'closed'],
+    enum: ['pending', 'active', 'ended', 'closed', 'reserve_not_met'],
     default: 'pending',
     index: true
+  },
+  // Soft delete fields
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  deletedAt: {
+    type: Date,
+    default: null
   },
   bidHistory: [bidSchema],
   

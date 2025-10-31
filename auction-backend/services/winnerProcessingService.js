@@ -36,6 +36,23 @@ class WinnerProcessingService {
             // 2. Determine winner
             const winner = this.determineWinner(auction);
             
+            // 3. Check reserve price
+            const reservePrice = auction.reservePrice || 0;
+            const highestBid = auction.currentBid || 0;
+            
+            if (reservePrice > 0 && highestBid < reservePrice) {
+                // Reserve price not met - mark auction as reserve_not_met
+                console.log(`⚠️ Reserve price not met for auction ${auctionId}. Reserve: $${reservePrice}, Highest bid: $${highestBid}`);
+                await Auction.findByIdAndUpdate(auctionId, {
+                    status: 'reserve_not_met',
+                    winner: null,
+                    winnerProcessed: true,
+                    winnerProcessedAt: new Date()
+                });
+                console.log(`✅ Auction ${auctionId} marked as reserve_not_met`);
+                return;
+            }
+            
             if (!winner) {
                 console.log(`⚠️ No winner found for auction ${auctionId}`);
                 return;
@@ -90,7 +107,8 @@ class WinnerProcessingService {
         const auction = await Auction.findOne({ 
             _id: auctionId, 
             shopDomain,
-            status: 'ended'
+            status: 'ended',
+            isDeleted: { $ne: true } // Exclude soft-deleted auctions
         });
 
         if (!auction) {

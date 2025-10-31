@@ -162,6 +162,7 @@
                         <div class="bidly-widget-status">
                             ${status === 'active' ? '<span class="bidly-status-active">● LIVE</span>' : 
                               status === 'pending' ? '<span class="bidly-status-pending">● STARTING SOON</span>' : 
+                              status === 'reserve_not_met' ? '<span class="bidly-status-ended">● RESERVE NOT MET</span>' :
                               '<span class="bidly-status-ended">● ENDED</span>'}
                         </div>
                         <div class="bidly-customer-info">
@@ -248,7 +249,9 @@
                         </div>
                     ` : `
                         <div class="bidly-ended-message">
-                            Auction has ended. Final bid: $${displayBid.toFixed(2)}
+                            ${status === 'reserve_not_met' 
+                                ? 'Auction ended — reserve not met'
+                                : `Auction has ended. Final bid: $${displayBid.toFixed(2)}`}
                         </div>
                     `}
 
@@ -1274,17 +1277,21 @@
         if (auctionData.status !== 'active') {
             const statusElement = widget.querySelector('.bidly-widget-status');
             if (statusElement) {
-                statusElement.innerHTML = auctionData.status === 'ended' ? 
-                    '<span class="bidly-status-ended">● ENDED</span>' : 
-                    '<span class="bidly-status-pending">● PENDING</span>';
+                if (auctionData.status === 'reserve_not_met') {
+                    statusElement.innerHTML = '<span class="bidly-status-ended">● RESERVE NOT MET</span>';
+                } else if (auctionData.status === 'ended') {
+                    statusElement.innerHTML = '<span class="bidly-status-ended">● ENDED</span>';
+                } else {
+                    statusElement.innerHTML = '<span class="bidly-status-pending">● PENDING</span>';
+                }
                 console.log('Bidly: Updated status to:', auctionData.status);
             }
             
-            // Disable bidding if auction ended
+            // Disable bidding if auction ended or reserve not met
             const bidButton = widget.querySelector('.bidly-bid-btn');
-            if (bidButton && auctionData.status === 'ended') {
+            if (bidButton && (auctionData.status === 'ended' || auctionData.status === 'reserve_not_met')) {
                 bidButton.disabled = true;
-                bidButton.textContent = 'Auction Ended';
+                bidButton.textContent = auctionData.status === 'reserve_not_met' ? 'Reserve Not Met' : 'Auction Ended';
                 bidButton.style.opacity = '0.5';
             }
         }

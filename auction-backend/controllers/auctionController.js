@@ -12,6 +12,11 @@ const computeAuctionStatus = (auction) => {
     return 'closed';
   }
   
+  // Preserve reserve_not_met status (set by backend after processing)
+  if (auction.status === 'reserve_not_met') {
+    return 'reserve_not_met';
+  }
+  
   const now = new Date();
   const startTime = new Date(auction.startTime);
   const endTime = new Date(auction.endTime);
@@ -77,9 +82,11 @@ const processEndedAuctions = async () => {
     console.log('🔄 Checking for ended auctions...');
     
     // Find auctions that have ended but haven't been processed
+    // Exclude soft-deleted auctions
     const endedAuctions = await Auction.find({
       status: 'ended',
-      completedAt: { $exists: false }
+      completedAt: { $exists: false },
+      isDeleted: { $ne: true }
     });
 
     console.log(`📊 Found ${endedAuctions.length} ended auctions to process`);
@@ -111,6 +118,18 @@ export const createAuction = async (req, res, next) => {
     
     if (!shopDomain) {
       throw new AppError('Store domain is required', 400);
+    }
+    
+    // Check for existing active/pending auction with same product (ignore soft-deleted auctions)
+    const existingAuction = await Auction.findOne({
+      shopifyProductId: shopifyProductId,
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true }, // Ignore soft-deleted auctions
+      status: { $in: ['pending', 'active'] } // Only check active/pending auctions
+    });
+    
+    if (existingAuction) {
+      throw new AppError('An active or pending auction already exists for this product. Please delete the existing auction first or use a different product.', 400);
     }
     
     // Fetch product data from Shopify
@@ -181,8 +200,11 @@ export const getAllAuctions = async (req, res, next) => {
       throw new AppError('Store domain is required', 400);
     }
     
-    // Build filter object - ALWAYS filter by store domain
-    const filter = { shopDomain: shopDomain };
+    // Build filter object - ALWAYS filter by store domain and exclude soft-deleted auctions
+    const filter = { 
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true } // Exclude soft-deleted auctions
+    };
     if (status) filter.status = status;
     if (shopifyProductId) filter.shopifyProductId = shopifyProductId;
     
@@ -228,16 +250,19 @@ export const getAuctionById = async (req, res, next) => {
     }
     
     // Try to find auction by Shopify product ID first (priority), then by MongoDB ObjectId
+    // Exclude soft-deleted auctions
     let auction = await Auction.findOne({ 
       shopifyProductId: req.params.id, 
-      shopDomain: shopDomain 
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true }
     });
     
     // If not found by Shopify product ID, try by MongoDB ObjectId
     if (!auction) {
       auction = await Auction.findOne({ 
         _id: req.params.id, 
-        shopDomain: shopDomain 
+        shopDomain: shopDomain,
+        isDeleted: { $ne: true }
       });
     }
     
@@ -272,7 +297,8 @@ export const updateAuction = async (req, res, next) => {
     
     const auction = await Auction.findOne({ 
       _id: req.params.id, 
-      shopDomain: shopDomain 
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true }
     });
     
     if (!auction) {
@@ -357,7 +383,8 @@ export const deleteAuction = async (req, res, next) => {
     
     const auction = await Auction.findOne({ 
       _id: req.params.id, 
-      shopDomain: shopDomain 
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true }
     });
     
     if (!auction) {
@@ -374,12 +401,15 @@ export const deleteAuction = async (req, res, next) => {
     
     // Allow deletion but warn if auction has bids
     if (auction.bidHistory.length > 0) {
-      console.log(`⚠️ Deleting auction with ${auction.bidHistory.length} bids: ${auction._id}`);
+      console.log(`⚠️ Soft deleting auction with ${auction.bidHistory.length} bids: ${auction._id}`);
     }
     
-    await Auction.findByIdAndDelete(req.params.id);
+    // Soft delete: set isDeleted = true and deletedAt = now
+    auction.isDeleted = true;
+    auction.deletedAt = new Date();
+    await auction.save();
     
-    console.log('✅ Auction deleted successfully:', req.params.id);
+    console.log('✅ Auction soft deleted successfully:', req.params.id);
     
     res.json({
       success: true,
@@ -426,7 +456,8 @@ export const placeBid = async (req, res, next) => {
     
     const auction = await Auction.findOne({ 
       _id: req.params.id, 
-      shopDomain: shopDomain 
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true }
     });
     
     if (!auction) {
@@ -673,7 +704,8 @@ export const buyNow = async (req, res, next) => {
     
     const auction = await Auction.findOne({ 
       _id: req.params.id, 
-      shopDomain: shopDomain 
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true }
     });
     if (!auction) {
       throw new AppError('Auction not found', 404);
@@ -854,8 +886,10 @@ export const getAuctionsWithProductData = async (req, res, next) => {
   try {
     const { status, shopifyProductId, page = 1, limit = 10, refresh = false } = req.query;
     
-    // Build filter object
-    const filter = {};
+    // Build filter object - exclude soft-deleted auctions
+    const filter = {
+      isDeleted: { $ne: true }
+    };
     if (status) filter.status = status;
     if (shopifyProductId) filter.shopifyProductId = shopifyProductId;
     

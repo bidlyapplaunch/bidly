@@ -179,10 +179,12 @@ class ScheduledJobsService {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+            // Only delete old processed auctions that are NOT soft-deleted
             const result = await Auction.deleteMany({
                 status: 'ended',
                 winnerProcessed: true,
-                winnerProcessedAt: { $lt: thirtyDaysAgo }
+                winnerProcessedAt: { $lt: thirtyDaysAgo },
+                isDeleted: { $ne: true } // Don't delete soft-deleted auctions in cleanup
             });
 
             if (result.deletedCount > 0) {

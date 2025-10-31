@@ -62,6 +62,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
     endTime: createSafeDate(new Date(Date.now() + 24 * 60 * 60 * 1000)), // Tomorrow
     startingBid: 0,
     buyNowPrice: '',
+    reservePrice: 0,
     status: 'pending',
     productData: null,
     // Popcorn auction settings
@@ -84,6 +85,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         endTime: createSafeDate(auction.endTime ? new Date(auction.endTime) : new Date(Date.now() + 24 * 60 * 60 * 1000)),
         startingBid: auction.startingBid || 0,
         buyNowPrice: auction.buyNowPrice || '',
+        reservePrice: auction.reservePrice || 0,
         status: auction.status || 'pending',
         productData: auction.productData || null,
         // Popcorn auction settings
@@ -101,6 +103,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
               endTime: createSafeDate(new Date(Date.now() + 24 * 60 * 60 * 1000)), // Tomorrow
               startingBid: 0,
               buyNowPrice: '',
+              reservePrice: 0,
               status: 'pending',
               productData: null,
               // Popcorn auction settings
@@ -225,6 +228,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         endTime: formData.endTime.toISOString(),
         startingBid: parseFloat(formData.startingBid),
         buyNowPrice: formData.buyNowPrice ? parseFloat(formData.buyNowPrice) : undefined,
+        reservePrice: formData.reservePrice ? parseFloat(formData.reservePrice) : 0,
       });
       onClose();
     } catch (err) {
@@ -372,6 +376,15 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
             value={String(formData.buyNowPrice)}
             onChange={(value) => handleChange(value, 'buyNowPrice')}
             error={errors.buyNowPrice}
+          />
+          <TextField
+            label="Reserve Price (Optional)"
+            type="number"
+            value={String(formData.reservePrice)}
+            onChange={(value) => handleChange(value, 'reservePrice')}
+            error={errors.reservePrice}
+            helpText="Minimum bid amount required for auction to have a valid winner. Hidden from bidders."
+            min="0"
           />
 
           <Card sectioned>
