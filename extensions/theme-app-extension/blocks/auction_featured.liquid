@@ -1,21 +1,19 @@
 {% comment %}
-  Bidly Featured Auction Block
-  Displays a single featured auction prominently
+  Bidly Featured Auction Block (Info Only - No Login/Bidding)
+  Displays auction information and redirects to Shopify product page on click
 {% endcomment %}
 
 {%- liquid
   assign block_id = block.id
-  assign section_id = section.id
   assign shop_domain = shop.permanent_domain
-  assign app_proxy_url = '/apps/bidly'
   assign auction_id = block.settings.auction_id
 -%}
 
 <div id="bidly-featured-auction-{{ block_id }}" 
-     class="bidly-featured-auction" 
+     class="bidly-featured-auction-info" 
      data-block-id="{{ block_id }}" 
      data-shop="{{ shop_domain }}" 
-     data-auction-id="{{ auction_id }}" 
+     data-auction-id="{{ auction_id }}"
      {{ block.shopify_attributes }}
      style="{% if shop.design_mode %}min-height: 200px;{% endif %}">
   <div class="bidly-loading" id="bidly-loading-{{ block_id }}">
@@ -28,8 +26,7 @@
   </div>
   
   <div class="bidly-featured-container" id="bidly-featured-container-{{ block_id }}" style="display: none;">
-    <div class="bidly-featured-badge">Featured Auction</div>
-    <!-- Featured auction content will be populated by JavaScript -->
+    <!-- Auction info will be populated by JavaScript -->
   </div>
   
   <!-- Theme Editor Placeholder -->
@@ -40,9 +37,7 @@
       <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 4px;">
         <p style="margin: 0; font-size: 0.9rem; color: #6c757d;">
           <strong>Settings:</strong><br>
-          Featured Auction ID: {{ block.settings.auction_id | default: 'Not set' }}<br>
-          Title: {{ block.settings.title | default: 'Featured Auction' }}<br>
-          Show Buy Now: {{ block.settings.show_buy_now | default: true }}
+          Featured Auction ID: {{ block.settings.auction_id | default: 'Not set' }}
         </p>
       </div>
     </div>
@@ -50,11 +45,18 @@
 </div>
 
 <style>
-  .bidly-featured-auction {
+  .bidly-featured-auction-info {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     max-width: 100%;
     margin: 0 auto;
     position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .bidly-featured-auction-info:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25) !important;
   }
   
   .bidly-loading {
@@ -173,7 +175,7 @@
   
   .bidly-featured-time {
     font-size: 1.2rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     opacity: 0.9;
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
@@ -186,89 +188,32 @@
     font-size: 0.9rem;
     font-weight: 600;
     text-transform: uppercase;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     background-color: rgba(255,255,255,0.2);
     backdrop-filter: blur(10px);
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   }
   
-  .bidly-featured-bidding {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-  }
-  
-  .bidly-featured-bid-input {
-    flex: 1;
-    padding: 1rem;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 8px;
-    font-size: 1.1rem;
-    background-color: rgba(255,255,255,0.1);
-    color: white;
-    backdrop-filter: blur(10px);
-  }
-  
-  .bidly-featured-bid-input::placeholder {
-    color: rgba(255,255,255,0.7);
-  }
-  
-  .bidly-featured-bid-input:focus {
-    outline: none;
-    border-color: rgba(255,255,255,0.6);
-  }
-  
-  .bidly-featured-bid-button {
-    background-color: #ff6b6b;
-    color: white;
-    border: none;
+  .bidly-view-product {
+    margin-top: 1.5rem;
     padding: 1rem 2rem;
+    background-color: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.4);
     border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-  }
-  
-  .bidly-featured-bid-button:hover:not(:disabled) {
-    background-color: #ff5252;
-    transform: translateY(-2px);
-  }
-  
-  .bidly-featured-bid-button:disabled {
-    background-color: rgba(255,255,255,0.3);
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  .bidly-featured-buy-now {
-    margin-top: 1rem;
-  }
-  
-  .bidly-featured-buy-now-button {
-    width: 100%;
-    background-color: #4ecdc4;
     color: white;
-    border: none;
-    padding: 1rem;
-    border-radius: 8px;
     font-size: 1.1rem;
     font-weight: 600;
-    cursor: pointer;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     transition: all 0.2s ease;
   }
   
-  .bidly-featured-buy-now-button:hover:not(:disabled) {
-    background-color: #45b7b8;
-    transform: translateY(-2px);
-  }
-  
-  .bidly-featured-buy-now-button:disabled {
+  .bidly-featured-auction-info:hover .bidly-view-product {
     background-color: rgba(255,255,255,0.3);
-    cursor: not-allowed;
-    transform: none;
+    border-color: rgba(255,255,255,0.6);
   }
   
   @media (max-width: 768px) {
@@ -292,161 +237,147 @@
     .bidly-price-amount {
       font-size: 2rem;
     }
-    
-    .bidly-featured-bidding {
-      flex-direction: column;
-    }
-    
-    .bidly-featured-bid-button {
-      width: 100%;
-    }
   }
 </style>
 
 <script>
   (function() {
-    // Wait for DOM to be ready and avoid conflicts
-    function initBidlyWidget() {
+    function initFeaturedAuction() {
       const blockId = '{{ block_id }}';
       const shopDomain = '{{ shop_domain }}';
-      const appProxyUrl = '{{ app_proxy_url }}';
       const auctionId = '{{ auction_id }}';
       
-      console.log('🎯 Featured Auction Block - initBidlyWidget called for blockId:', blockId);
-      console.log('🎯 Featured Auction Block - auctionId:', auctionId);
-      console.log('🎯 Featured Auction Block - shopDomain:', shopDomain);
-      console.log('🎯 Featured Auction Block - appProxyUrl:', appProxyUrl);
-      
-      // More robust theme editor detection
-      const isThemeEditor = window.Shopify && (
-        window.Shopify.designMode || 
-        window.location.search.includes('preview_theme_id') ||
-        document.body.classList.contains('shopify-design-mode') ||
-        window.location.pathname.includes('editor')
-      );
-      
-      console.log('🎯 Featured Auction Block - Theme editor check:', {
-        isThemeEditor: isThemeEditor,
-        hasShopify: !!window.Shopify,
-        designMode: window.Shopify?.designMode,
-        search: window.location.search,
-        bodyClasses: document.body.classList.toString(),
-        pathname: window.location.pathname
-      });
-      
-      if (isThemeEditor) {
-        console.log('🎨 Featured Auction Block - Theme editor detected, showing placeholder');
-        // Show placeholder immediately
-        setTimeout(function() {
-          const placeholder = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-theme-editor-placeholder`);
-          const loading = document.querySelector(`#bidly-loading-${blockId}`);
-          
-          if (placeholder) placeholder.style.display = 'block';
-          if (loading) loading.style.display = 'none';
-        }, 50);
+      if (!auctionId) {
+        document.querySelector(`#bidly-error-${blockId}`).style.display = 'block';
+        document.querySelector(`#bidly-loading-${blockId}`).style.display = 'none';
         return;
       }
       
-      console.log('🎯 Featured Auction Block - Not in theme editor, continuing with initialization');
+      // Check if in theme editor
+      const isThemeEditor = window.Shopify && (
+        window.Shopify.designMode || 
+        window.location.search.includes('preview_theme_id') ||
+        document.body.classList.contains('shopify-design-mode')
+      );
       
-      // Load the Bidly auction widget
-      window.BidlyAuctionWidget = window.BidlyAuctionWidget || {};
-      window.BidlyAuctionWidget.loadedInstances = window.BidlyAuctionWidget.loadedInstances || new Set();
-      
-      if (!window.BidlyAuctionWidget.loadedInstances.has(blockId)) {
-        // Load CSS
-        const cssLink = document.createElement('link');
-        cssLink.rel = 'stylesheet';
-        cssLink.href = '{{ "bidly-widget.css" | asset_url }}?v=2';
-        cssLink.onerror = function() {
-          console.warn('Bidly: Failed to load CSS');
-        };
-        document.head.appendChild(cssLink);
-        
-        // Load shared login system first
-        const loginScript = document.createElement('script');
-        loginScript.src = '{{ "bidly-hybrid-login.js" | asset_url }}?v=2&t=' + Date.now();
-        loginScript.onload = function() {
-          // Load main widget JavaScript after login system
-          const script = document.createElement('script');
-          script.src = '{{ "bidly-widget.js" | asset_url }}?v=2021&t=' + Date.now();
-          script.onload = function() {
-            if (window.initBidlyBlock) {
-              window.BidlyAuctionWidget.loadedInstances.add(blockId);
-              window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'featured');
-            } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initFeatured) {
-              window.BidlyAuctionWidget.loadedInstances.add(blockId);
-              window.BidlyAuctionWidget.initFeatured(blockId, shopDomain, appProxyUrl, auctionId);
-            }
-          };
-          script.onerror = function() {
-            console.error('Bidly: Failed to load JavaScript');
-          };
-          document.head.appendChild(script);
-        };
-        loginScript.onerror = function() {
-          console.error('Bidly: Failed to load login system');
-        };
-        document.head.appendChild(loginScript);
-        
-        window.BidlyAuctionWidget.loaded = true;
-      } else {
-        // Widget already loaded, initialize this block
-        console.log('🔄 Widget already loaded, trying to initialize featured block:', blockId);
-        console.log('🔄 window.initBidlyBlock available:', !!window.initBidlyBlock);
-        console.log('🔄 window.BidlyAuctionWidget available:', !!window.BidlyAuctionWidget);
-        console.log('🔄 window.BidlyAuctionWidget.initFeatured available:', !!(window.BidlyAuctionWidget && window.BidlyAuctionWidget.initFeatured));
-        
-        // Force initialization by calling the global function directly
-        if (window.initBidlyBlock) {
-          console.log('✅ Using window.initBidlyBlock');
-          window.initBidlyBlock(blockId, shopDomain, appProxyUrl, auctionId, 'featured');
-        } else if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.initFeatured) {
-          console.log('✅ Using window.BidlyAuctionWidget.initFeatured');
-          window.BidlyAuctionWidget.initFeatured(blockId, shopDomain, appProxyUrl, auctionId);
-        } else {
-          console.error('❌ No initialization method available for featured block');
-          // Fallback: try to initialize manually
-          console.log('🔄 Attempting manual initialization...');
-          console.log('🔄 window.BidlyAuctionWidget available:', !!window.BidlyAuctionWidget);
-          console.log('🔄 window.BidlyAuctionWidget.ensureLoadedInstances available:', !!(window.BidlyAuctionWidget && window.BidlyAuctionWidget.ensureLoadedInstances));
-          
-          if (window.BidlyAuctionWidget) {
-            console.log('🔄 Calling ensureLoadedInstances...');
-            window.BidlyAuctionWidget.ensureLoadedInstances();
-            
-            console.log('🔄 Creating instance for blockId:', blockId);
-            window.BidlyAuctionWidget.instances[blockId] = {
-              blockId: blockId,
-              shopDomain: shopDomain,
-              appProxyUrl: appProxyUrl,
-              auctionId: auctionId,
-              type: 'featured'
-            };
-            
-            console.log('🔄 Calling initializeCustomerAuth...');
-            window.BidlyAuctionWidget.initializeCustomerAuth(blockId);
-            
-            console.log('🔄 Calling initializeSocket...');
-            window.BidlyAuctionWidget.initializeSocket();
-            
-            console.log('🔄 Calling loadSingleAuction...');
-            window.BidlyAuctionWidget.loadSingleAuction(blockId, auctionId);
-            
-            console.log('✅ Manual initialization completed for featured block');
-            console.log('📋 All instances after manual init:', Object.keys(window.BidlyAuctionWidget.instances));
-          } else {
-            console.error('❌ window.BidlyAuctionWidget not available for manual initialization');
-          }
-        }
+      if (isThemeEditor) {
+        const placeholder = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-theme-editor-placeholder`);
+        const loading = document.querySelector(`#bidly-loading-${blockId}`);
+        if (placeholder) placeholder.style.display = 'block';
+        if (loading) loading.style.display = 'none';
+        return;
       }
+      
+      // Fetch auction data
+      fetch(`/apps/bidly/api/auctions/${auctionId}?shop=${shopDomain}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.data) {
+            renderFeaturedAuction(blockId, data.data, shopDomain);
+          } else {
+            showError(blockId);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading featured auction:', error);
+          showError(blockId);
+        });
     }
     
-    // Initialize when DOM is ready
+    function renderFeaturedAuction(blockId, auction, shopDomain) {
+      const container = document.querySelector(`#bidly-featured-container-${blockId}`);
+      const loading = document.querySelector(`#bidly-loading-${blockId}`);
+      
+      if (!container) return;
+      
+      const productHandle = auction.productData?.handle || '';
+      const productUrl = productHandle ? `https://${shopDomain}/products/${productHandle}` : '#';
+      const productImage = auction.productData?.images?.[0]?.src || auction.productData?.image?.src || '';
+      const productTitle = auction.productData?.title || auction.productTitle || 'Auction Item';
+      
+      const status = computeAuctionStatus(auction);
+      const timeLeft = formatTimeLeft(auction.endTime);
+      const currentBid = auction.currentBid || 0;
+      const startingBid = auction.startingBid || 0;
+      const displayPrice = currentBid > 0 ? currentBid : startingBid;
+      const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+      const bidCount = auction.bidHistory?.length || 0;
+      
+      const statusClass = status === 'active' ? 'bidly-status-active' : status === 'ended' ? 'bidly-status-ended' : 'bidly-status-pending';
+      const statusText = status === 'active' ? '● LIVE' : status === 'ended' ? '● ENDED' : '● PENDING';
+      
+      container.innerHTML = `
+        <div class="bidly-featured-badge">Featured Auction</div>
+        <div class="bidly-featured-content">
+          <div class="bidly-featured-image-container">
+            ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-featured-image">` : ''}
+          </div>
+          <div class="bidly-featured-info">
+            <h2 class="bidly-featured-title">${productTitle}</h2>
+            <div class="bidly-featured-price">
+              <div class="bidly-price-label">${priceLabel}</div>
+              <div class="bidly-price-amount">$${displayPrice.toFixed(2)}</div>
+              ${startingBid > 0 && currentBid === 0 ? `<div class="bidly-starting-bid">Starting: $${startingBid.toFixed(2)}</div>` : ''}
+            </div>
+            <div class="bidly-featured-status ${statusClass}">${statusText}</div>
+            ${timeLeft ? `<div class="bidly-featured-time">⏱️ ${timeLeft}</div>` : ''}
+            ${bidCount > 0 ? `<div style="color: white; font-size: 1rem; margin-top: 0.5rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${bidCount} Bid${bidCount !== 1 ? 's' : ''}</div>` : ''}
+            <div class="bidly-view-product">View Product →</div>
+          </div>
+        </div>
+      `;
+      
+      // Make entire container clickable
+      container.addEventListener('click', function(e) {
+        if (productUrl && productUrl !== '#') {
+          window.location.href = productUrl;
+        }
+      });
+      
+      container.style.display = 'block';
+      if (loading) loading.style.display = 'none';
+    }
+    
+    function computeAuctionStatus(auction) {
+      const now = new Date();
+      const startTime = new Date(auction.startTime);
+      const endTime = new Date(auction.endTime);
+      
+      if (now < startTime) return 'pending';
+      if (now >= startTime && now < endTime) return 'active';
+      return 'ended';
+    }
+    
+    function formatTimeLeft(endTime) {
+      if (!endTime) return '';
+      const now = new Date();
+      const end = new Date(endTime);
+      const distance = end - now;
+      
+      if (distance < 0) return 'Auction Ended';
+      
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      
+      if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+      if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+      if (minutes > 0) return `${minutes}m ${seconds}s`;
+      return `${seconds}s`;
+    }
+    
+    function showError(blockId) {
+      const error = document.querySelector(`#bidly-error-${blockId}`);
+      const loading = document.querySelector(`#bidly-loading-${blockId}`);
+      if (error) error.style.display = 'block';
+      if (loading) loading.style.display = 'none';
+    }
+    
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initBidlyWidget);
+      document.addEventListener('DOMContentLoaded', initFeaturedAuction);
     } else {
-      initBidlyWidget();
+      initFeaturedAuction();
     }
   })();
 </script>
@@ -461,34 +392,6 @@
       "id": "auction_id",
       "label": "Featured Auction ID",
       "info": "Enter the auction ID to feature prominently"
-    },
-    {
-      "type": "text",
-      "id": "title",
-      "label": "Section Title",
-      "default": "Featured Auction"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_buy_now",
-      "label": "Show Buy Now Button",
-      "default": true
-    },
-    {
-      "type": "select",
-      "id": "style",
-      "label": "Display Style",
-      "options": [
-        {
-          "value": "gradient",
-          "label": "Gradient Background"
-        },
-        {
-          "value": "minimal",
-          "label": "Minimal Style"
-        }
-      ],
-      "default": "gradient"
     }
   ]
 }

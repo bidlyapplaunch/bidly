@@ -33,13 +33,37 @@
     // Theme loading functionality - DISABLED (reverted to original design)
     // Theme customization is temporarily disabled
 
-    // Use simplified login system
+    // Use hybrid login system
     function getCurrentCustomer() {
-        return window.BidlySimpleLogin?.getCurrentCustomer() || null;
+        return window.BidlyHybridLogin?.getCurrentCustomer() || null;
     }
 
     function isUserLoggedIn() {
-        return window.BidlySimpleLogin?.isUserLoggedIn() || false;
+        return window.BidlyHybridLogin?.isUserLoggedIn() || false;
+    }
+    
+    // Check if current user is a Shopify customer (not a guest)
+    function isShopifyCustomer() {
+        const customer = getCurrentCustomer();
+        if (!customer) return false;
+        
+        // Check if it's a Shopify customer (has shopifyId or window.Shopify.customer exists)
+        if (customer.shopifyId || window.Shopify?.customer?.id) {
+            return true;
+        }
+        
+        // Check if customer data matches Shopify customer data
+        if (window.customerData?.id && customer.id === window.customerData.id) {
+            return true;
+        }
+        
+        // If isTemp is explicitly false, it's a Shopify customer
+        if (customer.isTemp === false) {
+            return true;
+        }
+        
+        // Otherwise, it's likely a guest
+        return false;
     }
 
     // Widget HTML template
@@ -51,8 +75,13 @@
         const displayBid = bidCount > 0 ? currentBid : startingBid;
         const minBidAmount = bidCount > 0 ? Math.max(currentBid + 1, startingBid) : startingBid;
         
-        // If not logged in, show login prompt
-        if (!isUserLoggedIn()) {
+        // Check if user is logged in and if they're a Shopify customer
+        const loggedIn = isUserLoggedIn();
+        const isShopify = isShopifyCustomer();
+        const isGuest = loggedIn && !isShopify;
+        
+        // If not logged in, show login options but still display auction info
+        if (!loggedIn) {
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
                     <div class="bidly-widget-container">
@@ -64,11 +93,34 @@
                                   '<span class="bidly-status-ended">● ENDED</span>'}
                             </div>
                         </div>
-                        
+
+                        ${show_timer && status === 'active' && endTime ? `
+                            <div class="bidly-widget-timer">
+                                <div class="bidly-timer-label">Ends In:</div>
+                                <div class="bidly-countdown" data-end-time="${endTime}">
+                                    <span class="bidly-timer-days">0</span>d 
+                                    <span class="bidly-timer-hours">0</span>h 
+                                    <span class="bidly-timer-minutes">0</span>m 
+                                    <span class="bidly-timer-seconds">0</span>s
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div class="bidly-widget-pricing">
+                            <div class="bidly-current-bid">
+                                <span class="bidly-label">${bidCount > 0 ? 'CURRENT BID:' : 'STARTING BID:'}</span>
+                                <span class="bidly-amount" data-current-bid="${displayBid}">$${displayBid.toFixed(2)}</span>
+                            </div>
+                            <div class="bidly-bid-count">
+                                <span class="bidly-label">BIDS:</span>
+                                <span class="bidly-count" data-bid-count="${bidCount}">${bidCount}</span>
+                            </div>
+                        </div>
+
                         <div class="bidly-login-required">
                             <div class="bidly-login-message">
-                                <h4>Login Required to Bid</h4>
-                                <p>Please log in to participate in this auction</p>
+                                <h4>Login to Enter Auction</h4>
+                                <p>Log in with Shopify to place bids</p>
                             </div>
                             
                             <div class="bidly-login-options">
@@ -77,9 +129,9 @@
                                     Log in with Shopify
                                 </button>
                                 
-                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlySimpleLogin?.showTempLoginPopup()">
+                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
                                     <span class="bidly-btn-icon">👤</span>
-                                    Continue as Guest
+                                    Continue as Guest (View Only)
                                 </button>
                             </div>
                         </div>
@@ -87,6 +139,9 @@
                 </div>
             `;
         }
+        
+        // If guest (logged in but not Shopify customer), show widget with blurred bidding section
+        const isGuestViewOnly = isGuest;
         
         return `
             <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
@@ -128,15 +183,26 @@
                     </div>
 
                     ${status === 'active' ? `
-                        <div class="bidly-widget-actions">
-                            <div class="bidly-inline-bid-form" id="bidly-bid-form-${auctionId}">
+                        <div class="bidly-widget-actions ${isGuestViewOnly ? 'bidly-guest-view-only' : ''}">
+                            ${isGuestViewOnly ? `
+                                <div class="bidly-guest-overlay">
+                                    <div class="bidly-guest-message">
+                                        <p style="font-weight: 600; margin-bottom: 0.5rem;">View Only</p>
+                                        <p style="font-size: 0.9rem; opacity: 0.9;">Login to Shopify to enter the auction</p>
+                                        <button class="bidly-btn bidly-btn-primary" onclick="window.location.href='/account/login'" style="margin-top: 1rem;">
+                                            Log in with Shopify
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div class="bidly-inline-bid-form ${isGuestViewOnly ? 'bidly-blurred' : ''}" id="bidly-bid-form-${auctionId}">
                                 <div class="bidly-bid-info">
                                     <div class="bidly-minimum-bid">
                                         <span class="bidly-label">MINIMUM BID:</span>
                                         <span class="bidly-amount" data-min-bid="${minBidAmount}">$${minBidAmount.toFixed(2)}</span>
                                     </div>
                                 </div>
-                                <form onsubmit="window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')">
+                                <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
                                     <div class="bidly-bid-input-group">
                                         <input type="number" 
                                                id="bidly-bid-amount-${auctionId}" 
@@ -144,13 +210,15 @@
                                                step="0.01" 
                                                min="${minBidAmount}" 
                                                placeholder="Min: $${minBidAmount.toFixed(2)}"
-                                               required>
-                                        <button type="submit" class="bidly-submit-bid">Place Bid</button>
+                                               ${isGuestViewOnly ? 'disabled' : 'required'}>
+                                        <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>Place Bid</button>
                                     </div>
                                 </form>
                             </div>
                             ${buyNowPrice > 0 ? `
-                                <button class="bidly-buy-now-btn" onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})">
+                                <button class="bidly-buy-now-btn ${isGuestViewOnly ? 'bidly-blurred' : ''}" 
+                                        ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})"`}
+                                        ${isGuestViewOnly ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                                     Buy Now ($${buyNowPrice.toFixed(2)})
                                 </button>
                             ` : ''}

@@ -874,3 +874,54 @@
         width: 100%;
     }
 }
+
+/* Guest View-Only Styles */
+.bidly-guest-view-only {
+    position: relative;
+}
+
+.bidly-guest-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 2rem;
+}
+
+.bidly-guest-message {
+    text-align: center;
+    color: #1f2937;
+    z-index: 101;
+}
+
+.bidly-guest-message p {
+    margin: 0;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.bidly-blurred {
+    filter: blur(4px);
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.bidly-widget-actions.bidly-guest-view-only {
+    position: relative;
+}
+
+.bidly-widget-actions.bidly-guest-view-only .bidly-inline-bid-form,
+.bidly-widget-actions.bidly-guest-view-only .bidly-buy-now-btn {
+    filter: blur(4px);
+    pointer-events: none;
+    opacity: 0.5;
+}

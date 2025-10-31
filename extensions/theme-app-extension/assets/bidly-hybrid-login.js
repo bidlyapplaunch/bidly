@@ -166,6 +166,14 @@
                 isLoggedIn = true;
                 console.log('Bidly: Customer detected locally:', currentCustomer);
                 
+                // Clear any guest customer data from sessionStorage since we have a Shopify customer
+                try {
+                    sessionStorage.removeItem('bidly_guest_customer');
+                    console.log('Bidly: Cleared guest customer from sessionStorage (Shopify customer detected)');
+                } catch (storageError) {
+                    console.warn('Bidly: Could not clear guest storage:', storageError);
+                }
+                
                 // Try to sync with backend (but don't fail if it doesn't work)
                 try {
                     const response = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
@@ -206,45 +214,41 @@
         }
     }
 
-    // Guest login function
+    // Guest login function (session-only, no database saving)
     async function guestLogin(name, email) {
         try {
-            console.log('Bidly: Attempting guest login...');
+            console.log('Bidly: Attempting guest login (session-only)...');
             
             // Parse name into first and last name
             const nameParts = name.trim().split(' ');
             const firstName = nameParts[0];
             const lastName = nameParts.slice(1).join(' ') || 'Guest';
             
-            const requestData = {
-                firstName,
-                lastName,
-                email,
-                shopDomain: CONFIG.shopDomain
+            // Create guest customer object (NOT saved to database)
+            const guestCustomer = {
+                id: 'guest_' + Date.now(), // Temporary ID
+                email: email,
+                firstName: firstName,
+                lastName: lastName,
+                fullName: `${firstName} ${lastName}`,
+                isTemp: true,
+                shopifyId: null // No Shopify ID = guest
             };
             
-            console.log('Bidly: Request data:', requestData);
-            console.log('Bidly: Backend URL:', `${CONFIG.backendUrl}/api/customers/temp-login`);
-            
-            const response = await fetch(`${CONFIG.backendUrl}/api/customers/temp-login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData)
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                currentCustomer = result.customer;
-                isLoggedIn = true;
-                console.log('Bidly: Guest login successful:', currentCustomer);
-                return true;
-            } else {
-                const errorText = await response.text();
-                console.error('Bidly: Guest login failed:', response.status, errorText);
-                return false;
+            // Store in sessionStorage only (cleared when browser closes)
+            try {
+                sessionStorage.setItem('bidly_guest_customer', JSON.stringify(guestCustomer));
+                console.log('Bidly: Guest customer stored in sessionStorage');
+            } catch (storageError) {
+                console.warn('Bidly: Could not store guest in sessionStorage:', storageError);
             }
+            
+            // Set current customer (session-only)
+            currentCustomer = guestCustomer;
+            isLoggedIn = true;
+            
+            console.log('Bidly: Guest login successful (session-only):', currentCustomer);
+            return true;
         } catch (error) {
             console.error('Bidly: Error during guest login:', error);
             return false;
@@ -380,7 +384,7 @@
     async function init() {
         console.log('Bidly: Initializing hybrid login system...');
         
-        // Try to detect Shopify customer
+        // First, try to detect Shopify customer (this takes priority)
         const shopifyCustomerDetected = await detectShopifyCustomer();
         
         if (shopifyCustomerDetected) {
@@ -390,7 +394,20 @@
                 detail: { customer: currentCustomer } 
             }));
         } else {
-            console.log('Bidly: No Shopify customer detected, will show login options when needed');
+            // If no Shopify customer, check for guest customer in sessionStorage
+            try {
+                const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
+                if (guestCustomerStr) {
+                    const guestCustomer = JSON.parse(guestCustomerStr);
+                    currentCustomer = guestCustomer;
+                    isLoggedIn = true;
+                    console.log('Bidly: Guest customer restored from sessionStorage:', guestCustomer);
+                } else {
+                    console.log('Bidly: No customer detected, will show login options when needed');
+                }
+            } catch (storageError) {
+                console.warn('Bidly: Error reading guest customer from sessionStorage:', storageError);
+            }
         }
     }
 
