@@ -945,11 +945,11 @@
             socket.on('auction-time-extended', (data) => {
                 console.log('Bidly: Time extension received:', data);
                 if (data.auctionId === auctionId) {
-                    // Reinitialize countdown with the new end time
+                    // Reinitialize countdown with the new end time (this will clear the old interval)
                     initializeCountdown(auctionId, data.newEndTime);
                     
                     // Show notification for time extension
-                    showBidNotification(null, null, data.bidder, 'Auction Extended!', `🍿 ${data.message}`);
+                    showBidNotification(null, null, null, null, `🍿 ${data.message}`);
                 }
             });
             
@@ -1211,7 +1211,7 @@
     }
 
     // Show bid notification
-    function showBidNotification(currentBid, bidCount, bidderName = null, productTitle = null) {
+    function showBidNotification(currentBid, bidCount, bidderName = null, productTitle = null, customMessage = null) {
         // Remove existing notification
         const existingNotification = document.querySelector('.bidly-bid-notification');
         if (existingNotification) {
@@ -1239,25 +1239,35 @@
         
         // Handle different message types
         let messageContent = '';
-        if (typeof bidCount === 'string') {
+        if (customMessage) {
+            // Custom message (for time extension, etc.)
+            messageContent = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${customMessage}</div>
+            `;
+        } else if (typeof bidCount === 'string') {
             // Custom message (like "New bid placed!")
             messageContent = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${bidCount}</div>
-                <div>Current Bid: $${currentBid.toFixed(2)}</div>
+                ${currentBid != null ? `<div>Current Bid: $${currentBid.toFixed(2)}</div>` : ''}
             `;
-        } else if (bidderName && productTitle) {
+        } else if (bidderName && productTitle && currentBid != null) {
             // Enhanced notification with bidder name and product
             const firstName = bidderName.split(' ')[0]; // Get first name only
             messageContent = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${firstName} bid $${currentBid.toFixed(2)} on ${productTitle}</div>
-                <div style="font-size: 12px; opacity: 0.9;">Total Bids: ${bidCount}</div>
+                ${bidCount != null ? `<div style="font-size: 12px; opacity: 0.9;">Total Bids: ${bidCount}</div>` : ''}
             `;
-        } else {
+        } else if (currentBid != null) {
             // Standard bid notification
             messageContent = `
                 <div style="font-weight: bold; margin-bottom: 5px;">New Bid Placed!</div>
                 <div>Current Bid: $${currentBid.toFixed(2)}</div>
-                <div>Total Bids: ${bidCount}</div>
+                ${bidCount != null ? `<div>Total Bids: ${bidCount}</div>` : ''}
+            `;
+        } else {
+            // Fallback for invalid data
+            messageContent = `
+                <div style="font-weight: bold;">Auction Update</div>
             `;
         }
         
