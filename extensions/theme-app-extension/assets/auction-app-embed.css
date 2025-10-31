@@ -931,7 +931,7 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 9999;
+    z-index: 99999; /* Higher than widget z-index (9999) to overlay on top */
     font-family: 'Inter', sans-serif;
 }
 
@@ -950,6 +950,7 @@
     justify-content: center;
     transition: all 0.3s ease;
     position: relative;
+    z-index: 99999; /* Ensure toggle button is always on top */
 }
 
 .bidly-chat-toggle:hover {
@@ -990,6 +991,7 @@
     position: absolute;
     bottom: 70px;
     right: 0;
+    z-index: 99999; /* Ensure chat box overlays on top of everything */
 }
 
 .bidly-chat-box.hidden {
