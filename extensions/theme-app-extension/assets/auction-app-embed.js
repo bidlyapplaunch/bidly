@@ -1845,26 +1845,41 @@
     // Refresh widget content without changing position
     function refreshWidgetContent(widgetElement, auctionCheck, settings) {
         console.log('Bidly: Refreshing widget content for auction:', auctionCheck);
+        console.log('Bidly: Current login state:', { 
+            loggedIn: isUserLoggedIn(), 
+            isShopify: isShopifyCustomer(),
+            customer: getCurrentCustomer() 
+        });
         
         // Find the inner widget content element by ID
         const auctionId = auctionCheck.auctionId;
         let innerWidget = widgetElement.querySelector(`#bidly-auction-widget-${auctionId}`);
         if (!innerWidget) {
-            console.log('Bidly: Inner widget not found, trying alternative selector...');
+            console.log('Bidly: Inner widget not found by ID, trying alternative selector...');
             // Try alternative selector
             innerWidget = widgetElement.querySelector(`.${CONFIG.widgetClass}`);
             if (!innerWidget) {
-                console.log('Bidly: Inner widget not found, skipping refresh');
-                return;
+                console.log('Bidly: Inner widget not found, trying direct child...');
+                // Try finding it directly in the widget element
+                innerWidget = widgetElement.querySelector('div[data-auction-id]');
+                if (!innerWidget) {
+                    console.log('Bidly: Inner widget not found, using widgetElement itself');
+                    innerWidget = widgetElement;
+                }
             }
-            console.log('Bidly: Found widget using alternative selector');
         }
         
         // Generate new widget content
         const newContent = createWidgetHTML(auctionCheck, settings);
         
         // Replace the inner content without affecting positioning
-        innerWidget.innerHTML = newContent;
+        if (innerWidget === widgetElement) {
+            // Replace the entire widget element's innerHTML
+            widgetElement.innerHTML = newContent;
+        } else {
+            // Replace only the inner widget content
+            innerWidget.innerHTML = newContent;
+        }
         
         // Event listeners are handled through HTML form submissions and event delegation
         // No need to manually re-attach them
@@ -1938,24 +1953,37 @@
 
     // Listen for login status changes and refresh widget content only (not position)
     window.addEventListener('bidly-login-success', function(event) {
-        console.log('Bidly: Login success detected, refreshing widget content only...');
+        console.log('Bidly: Login success detected, refreshing widget content only...', event.detail);
         
-        // Find existing widget and refresh its content without repositioning
-        const existingWidget = document.querySelector('.bidly-auction-app-embed');
-        if (existingWidget && window.currentAuctionCheck) {
-            console.log('Bidly: Refreshing existing widget content...');
+        // Wait a moment for login state to fully update
+        setTimeout(() => {
+            // Check login state
+            const loggedIn = isUserLoggedIn();
+            const isShopify = isShopifyCustomer();
+            console.log('Bidly: Login state after login event:', { loggedIn, isShopify, customer: getCurrentCustomer() });
             
-            // Get current auction data
-            const auctionCheck = window.currentAuctionCheck;
-            const settings = {
-                show_timer: true,
-                show_bid_history: true,
-                widget_position: 'below_price'
-            };
-            
-            // Refresh widget content without changing position
-            refreshWidgetContent(existingWidget, auctionCheck, settings);
-        }
+            // Find existing widget and refresh its content without repositioning
+            const existingWidget = document.querySelector('.bidly-auction-app-embed');
+            if (existingWidget && window.currentAuctionCheck) {
+                console.log('Bidly: Refreshing existing widget content...');
+                
+                // Get current auction data
+                const auctionCheck = window.currentAuctionCheck;
+                const settings = {
+                    show_timer: true,
+                    show_bid_history: true,
+                    widget_position: 'below_price'
+                };
+                
+                // Refresh widget content without changing position
+                refreshWidgetContent(existingWidget, auctionCheck, settings);
+            } else {
+                console.log('Bidly: Widget or auction check not found, cannot refresh', { 
+                    hasWidget: !!existingWidget, 
+                    hasAuctionCheck: !!window.currentAuctionCheck 
+                });
+            }
+        }, 300);
     });
 
     window.addEventListener('bidly-logout', function(event) {
