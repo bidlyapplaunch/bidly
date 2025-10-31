@@ -358,16 +358,26 @@
 
     // Logout function
     function logout() {
+        console.log('Bidly: Logging out...', { currentCustomer });
+        
+        // Clear guest data from sessionStorage
+        try {
+            sessionStorage.removeItem('bidly_guest_customer');
+            console.log('Bidly: Cleared guest customer from sessionStorage');
+        } catch (storageError) {
+            console.warn('Bidly: Could not clear guest storage:', storageError);
+        }
+        
         currentCustomer = null;
         isLoggedIn = false;
+        
         // Trigger custom event for components to listen to
         window.dispatchEvent(new CustomEvent('bidly-logout', { 
             detail: { customer: null } 
         }));
-        // Refresh the page to ensure all components update
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
+        
+        // Don't reload automatically - let the widget handle it
+        console.log('Bidly: Logout complete, event dispatched');
     }
 
     // Get current customer

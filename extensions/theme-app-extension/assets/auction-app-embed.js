@@ -65,6 +65,40 @@
         // Otherwise, it's likely a guest
         return false;
     }
+    
+    // Logout handler
+    function handleLogout() {
+        console.log('Bidly: Logout button clicked');
+        
+        const customer = getCurrentCustomer();
+        const isShopify = isShopifyCustomer();
+        
+        if (isShopify) {
+            // Shopify customer - redirect to Shopify logout with return URL
+            const currentUrl = encodeURIComponent(window.location.href);
+            const logoutUrl = `/account/logout?return_url=${currentUrl}`;
+            console.log('Bidly: Redirecting Shopify customer to logout:', logoutUrl);
+            window.location.href = logoutUrl;
+        } else {
+            // Guest - clear data and refresh widget
+            console.log('Bidly: Logging out guest user');
+            if (window.BidlyHybridLogin && window.BidlyHybridLogin.logout) {
+                window.BidlyHybridLogin.logout();
+                // The logout event listener will handle refreshing the widget
+            } else {
+                // Fallback: manually clear sessionStorage and reload
+                try {
+                    sessionStorage.removeItem('bidly_guest_customer');
+                } catch (e) {
+                    console.warn('Bidly: Could not clear guest storage:', e);
+                }
+                window.location.reload();
+            }
+        }
+    }
+    
+    // Expose logout handler globally so it can be called from onclick
+    window.BidlyAuctionWidgetLogout = handleLogout;
 
     // Widget HTML template
     function createWidgetHTML(auctionData, settings) {
@@ -132,7 +166,7 @@
                         </div>
                         <div class="bidly-customer-info">
                             <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.fullName || 'Guest User'}</span>
-                            <button class="bidly-logout-btn" onclick="window.location.reload()" title="Logout">×</button>
+                            <button class="bidly-logout-btn" onclick="window.BidlyAuctionWidgetLogout && window.BidlyAuctionWidgetLogout(); return false;" title="Logout">×</button>
                         </div>
                     </div>
 
@@ -1988,26 +2022,45 @@
 
     window.addEventListener('bidly-logout', function(event) {
         console.log('Bidly: Logout detected, refreshing widget...');
-        // Re-check for auction data and refresh widget
-        setTimeout(async () => {
-            try {
-                const auctionCheck = await checkProductForAuction();
-                if (auctionCheck.hasAuction) {
-                    console.log('Bidly: Re-injecting widget after logout...', auctionCheck);
-                    window.currentAuctionCheck = auctionCheck;
-                    const settings = {
-                        show_timer: true,
-                        show_bid_history: true,
-                        widget_position: 'below_price'
-                    };
-                    injectWidget(auctionCheck, settings);
-                } else {
-                    console.log('Bidly: No auction data found after logout');
-                }
-            } catch (error) {
-                console.error('Bidly: Error refreshing widget after logout:', error);
+        
+        // Wait a moment for logout to complete
+        setTimeout(() => {
+            // Check login state after logout
+            const loggedIn = isUserLoggedIn();
+            console.log('Bidly: Login state after logout event:', { loggedIn, customer: getCurrentCustomer() });
+            
+            // Find existing widget and refresh its content
+            const existingWidget = document.querySelector('.bidly-auction-app-embed');
+            if (existingWidget && window.currentAuctionCheck) {
+                console.log('Bidly: Refreshing widget content after logout...');
+                
+                // Get current auction data
+                const auctionCheck = window.currentAuctionCheck;
+                const settings = {
+                    show_timer: true,
+                    show_bid_history: true,
+                    widget_position: 'below_price'
+                };
+                
+                // Refresh widget content (will show login panel since user is logged out)
+                refreshWidgetContent(existingWidget, auctionCheck, settings);
+            } else if (existingWidget) {
+                // Widget exists but no auction check - re-check and refresh
+                checkProductForAuction().then(auctionCheck => {
+                    if (auctionCheck.hasAuction) {
+                        window.currentAuctionCheck = auctionCheck;
+                        const settings = {
+                            show_timer: true,
+                            show_bid_history: true,
+                            widget_position: 'below_price'
+                        };
+                        refreshWidgetContent(existingWidget, auctionCheck, settings);
+                    }
+                }).catch(error => {
+                    console.error('Bidly: Error refreshing widget after logout:', error);
+                });
             }
-        }, 100);
+        }, 300);
     });
 
     // Initialize when DOM is ready
