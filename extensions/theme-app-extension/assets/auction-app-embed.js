@@ -118,17 +118,11 @@
 
                     <div class="bidly-widget-pricing">
                         <div class="bidly-current-bid">
-                            <span class="bidly-label">${bidCount > 0 ? 'Current Bid:' : 'Starting Bid:'}</span>
+                            <span class="bidly-label">${bidCount > 0 ? 'CURRENT BID:' : 'STARTING BID:'}</span>
                             <span class="bidly-amount" data-current-bid="${displayBid}">$${displayBid.toFixed(2)}</span>
                         </div>
-                        ${reservePrice > 0 ? `
-                            <div class="bidly-reserve-price">
-                                <span class="bidly-label">Reserve:</span>
-                                <span class="bidly-amount">$${reservePrice.toFixed(2)}</span>
-                            </div>
-                        ` : ''}
                         <div class="bidly-bid-count">
-                            <span class="bidly-label">Bids:</span>
+                            <span class="bidly-label">BIDS:</span>
                             <span class="bidly-count" data-bid-count="${bidCount}">${bidCount}</span>
                         </div>
                     </div>
@@ -138,7 +132,7 @@
                             <div class="bidly-inline-bid-form" id="bidly-bid-form-${auctionId}">
                                 <div class="bidly-bid-info">
                                     <div class="bidly-minimum-bid">
-                                        <span class="bidly-label">Minimum Bid:</span>
+                                        <span class="bidly-label">MINIMUM BID:</span>
                                         <span class="bidly-amount" data-min-bid="${minBidAmount}">$${minBidAmount.toFixed(2)}</span>
                                     </div>
                                 </div>

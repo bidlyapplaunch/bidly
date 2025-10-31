@@ -137,7 +137,7 @@
 
 /* Widget Content */
 .bidly-widget-content {
-    padding: 24px;
+    padding: 0;
     background: #ffffff;
 }
 
@@ -231,8 +231,8 @@
 .bidly-bid-input {
     flex: 1;
     padding: 14px 18px;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
     font-size: 15px;
     font-family: 'Inter', sans-serif;
     background: #ffffff;
@@ -243,30 +243,29 @@
 .bidly-bid-input:focus {
     outline: none;
     border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .bidly-bid-button,
 .bidly-submit-bid {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    background: #6366f1;
     color: white;
     border: none;
     padding: 14px 24px;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .bidly-bid-button:hover,
 .bidly-submit-bid:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    background: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .bidly-bid-button:disabled {
@@ -276,53 +275,61 @@
 }
 
 /* Minimum Bid Display */
+.bidly-bid-info {
+    margin-bottom: 15px;
+}
+
 .bidly-minimum-bid {
-    text-align: center;
-    padding: 16px;
-    background: rgba(99, 102, 241, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    margin-bottom: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
 }
 
-.bidly-minimum-bid-label {
-    font-size: 12px;
-    color: #495057;
-    margin-bottom: 4px;
-    font-weight: 500;
-    text-transform: uppercase;
-}
-
-.bidly-minimum-bid-amount {
-    font-size: 20px;
+.bidly-minimum-bid .bidly-label {
+    font-size: 11px;
+    color: #475569;
+    margin-bottom: 0;
     font-weight: 700;
-    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bidly-minimum-bid .bidly-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10b981;
+    margin-top: 0;
 }
 
 /* Buy Now Button */
 .bidly-buy-now-button,
 .bidly-buy-now-btn {
-    background: linear-gradient(135deg, #4ecdc4 0%, #45b7b8 100%);
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
     color: white;
     border: none;
     padding: 14px 24px;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
     width: 100%;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .bidly-buy-now-button:hover,
 .bidly-buy-now-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
 }
 
 .bidly-buy-now-button:disabled {
@@ -456,55 +463,79 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* Widget Timer Section */
+/* Widget Timer Section - Whitish-grey box */
 .bidly-widget-timer {
     padding: 20px 24px;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-    border-top: 1px solid rgba(102, 126, 234, 0.1);
+    background: #f5f7fa;
+    border-top: 1px solid #e2e8f0;
+    margin-bottom: 0;
 }
 
 .bidly-timer-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #475569;
     margin-bottom: 12px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    display: block;
 }
 
 .bidly-countdown {
     font-size: 28px;
     font-weight: 700;
-    color: #6366f1;
+    color: #fbbf24;
     font-family: 'Courier New', monospace;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    display: inline-block;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Widget Pricing Section */
+/* Widget Pricing Section - Whitish-grey box with side-by-side layout */
 .bidly-widget-pricing {
     padding: 20px 24px;
+    background: #f5f7fa;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.bidly-current-bid {
+    flex: 1;
     background: #ffffff;
-    border-top: 1px solid rgba(102, 126, 234, 0.1);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-.bidly-current-bid,
-.bidly-reserve-price,
 .bidly-bid-count {
-    margin-bottom: 16px;
-}
-
-.bidly-current-bid:last-child,
-.bidly-reserve-price:last-child,
-.bidly-bid-count:last-child {
-    margin-bottom: 0;
+    flex: 1;
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .bidly-label {
     display: block;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     color: #475569;
-    margin-bottom: 6px;
-    letter-spacing: 0.3px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
@@ -512,28 +543,29 @@
     display: block;
     font-size: 24px;
     font-weight: 700;
-    color: #6366f1;
+    color: #10b981;
     line-height: 1.2;
 }
 
 .bidly-count {
-    font-size: 16px;
-    font-weight: 600;
-    color: #64748b;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
 }
 
-/* Widget Actions Section */
+/* Widget Actions Section - Whitish-grey box */
 .bidly-widget-actions {
     padding: 20px 24px;
-    background: #ffffff;
-    border-top: 1px solid rgba(102, 126, 234, 0.1);
+    background: #f5f7fa;
+    border-top: 1px solid #e2e8f0;
 }
 
 /* Widget Footer */
 .bidly-widget-footer {
-    padding: 16px 24px;
-    background: #ffffff;
-    border-top: 1px solid rgba(102, 126, 234, 0.1);
+    padding: 12px 24px;
+    background: #f5f7fa;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
 }
 
 /* Pending/Ended Messages */
