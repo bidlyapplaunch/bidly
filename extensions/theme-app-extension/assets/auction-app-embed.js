@@ -1090,7 +1090,49 @@
                 console.log('Bidly: Polling response status:', response.status);
                 
                 if (!response.ok) {
-                    console.warn('Bidly: Polling response not ok:', response.status);
+                    if (response.status === 404) {
+                        // Auction not found - it may have been deleted or doesn't exist
+                        console.warn('Bidly: Auction not found (404), re-checking for auctions...');
+                        
+                        // Stop polling this auction ID
+                        if (pollingInterval) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                        }
+                        
+                        // Re-check for auctions by product ID
+                        const auctionCheck = await checkProductForAuction();
+                        if (auctionCheck.hasAuction) {
+                            // Found a new auction - refresh the widget
+                            console.log('Bidly: Found new auction, refreshing widget...');
+                            window.currentAuctionCheck = auctionCheck;
+                            const settings = {
+                                show_timer: true,
+                                show_bid_history: true,
+                                widget_position: 'below_price'
+                            };
+                            const existingWidget = document.querySelector('.bidly-auction-app-embed');
+                            if (existingWidget) {
+                                refreshWidgetContent(existingWidget, auctionCheck, settings);
+                            } else {
+                                injectWidget(auctionCheck, settings);
+                            }
+                        } else {
+                            // No auction found - remove widget
+                            console.log('Bidly: No auction found, removing widget...');
+                            const existingWidget = document.querySelector('.bidly-auction-app-embed');
+                            if (existingWidget) {
+                                existingWidget.remove();
+                            }
+                            // Stop polling
+                            if (pollingInterval) {
+                                clearInterval(pollingInterval);
+                                pollingInterval = null;
+                            }
+                        }
+                    } else {
+                        console.warn('Bidly: Polling response not ok:', response.status);
+                    }
                     return;
                 }
 

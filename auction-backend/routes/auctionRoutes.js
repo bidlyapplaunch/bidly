@@ -52,11 +52,12 @@ router.get('/by-product/:productId', identifyStore, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Store domain is required' });
     }
     
-    // Find auction by Shopify product ID
+    // Find auction by Shopify product ID (exclude soft-deleted auctions)
     const Auction = (await import('../models/Auction.js')).default;
     const auction = await Auction.findOne({ 
       shopifyProductId: productId, 
-      shopDomain: shopDomain 
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true } // Exclude soft-deleted auctions
     });
     
     if (!auction) {

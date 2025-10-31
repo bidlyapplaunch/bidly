@@ -444,6 +444,25 @@ export const deleteAuction = async (req, res, next) => {
     auction.deletedAt = new Date();
     await auction.save();
     
+    // Clear product metafields so widget doesn't try to load the deleted auction
+    try {
+      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:5000'}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.warn('Failed to clear product metafields after soft delete:', await response.text());
+      } else {
+        console.log('✅ Cleared product metafields after soft delete');
+      }
+    } catch (metafieldError) {
+      console.warn('Error clearing product metafields:', metafieldError.message);
+      // Non-critical, continue
+    }
+    
     console.log('✅ Auction soft deleted successfully:', req.params.id);
     
     res.json({
