@@ -208,52 +208,42 @@ class ShopifyGraphQLService {
 
     /**
      * Copy product images from original to duplicated product
+     * Uses REST API since GraphQL ProductInput no longer supports images in API 2025-10
      */
     async copyProductImages(storeDomain, accessToken, productId, originalImages) {
-        const query = `
-            mutation productUpdate($input: ProductInput!) {
-                productUpdate(input: $input) {
-                    product {
-                        id
-                        images(first: 10) {
-                            edges {
-                                node {
-                                    id
-                                    url
-                                }
-                            }
-                        }
+        try {
+            // Extract product ID (remove 'gid://shopify/Product/' prefix if present)
+            const cleanProductId = productId.replace('gid://shopify/Product/', '');
+            
+            // Prepare images array for REST API
+            const images = originalImages.map(edge => ({
+                src: edge.node.url,
+                alt: edge.node.altText || 'Product Image'
+            }));
+
+            // Use REST API to update product with images
+            const response = await axios.put(
+                `https://${storeDomain}/admin/api/2025-10/products/${cleanProductId}.json`,
+                {
+                    product: {
+                        id: cleanProductId,
+                        images: images
                     }
-                    userErrors {
-                        field
-                        message
+                },
+                {
+                    headers: {
+                        'X-Shopify-Access-Token': accessToken,
+                        'Content-Type': 'application/json'
                     }
                 }
-            }
-        `;
+            );
 
-        const imageInputs = originalImages.map(edge => ({
-            src: edge.node.url,
-            altText: edge.node.altText || 'Product Image'
-        }));
-
-        const variables = {
-            input: {
-                id: productId,
-                images: imageInputs
-            }
-        };
-
-        try {
-            const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
-            
-            if (result.productUpdate.userErrors.length > 0) {
-                console.warn('Failed to copy images:', result.productUpdate.userErrors[0].message);
-            } else {
-                console.log('✅ Images copied successfully');
-            }
+            console.log('✅ Images copied successfully via REST API');
+            return { success: true, product: response.data.product };
         } catch (error) {
-            console.warn('Failed to copy images:', error.message);
+            console.warn('Failed to copy images:', error.response?.data?.errors || error.message);
+            // Don't throw - this is non-critical, product was still created
+            return { success: false, error: error.message };
         }
     }
 
