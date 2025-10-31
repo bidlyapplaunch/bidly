@@ -6,7 +6,7 @@ import axios from 'axios';
  */
 class ShopifyGraphQLService {
     constructor() {
-        this.baseUrl = 'https://api.shopify.com/admin/api/2024-01/graphql.json';
+        this.baseUrl = 'https://api.shopify.com/admin/api/2025-10/graphql.json';
     }
 
     /**
@@ -15,7 +15,7 @@ class ShopifyGraphQLService {
     async executeGraphQL(storeDomain, accessToken, query, variables = {}) {
         try {
             const response = await axios.post(
-                `https://${storeDomain}/admin/api/2024-01/graphql.json`,
+                `https://${storeDomain}/admin/api/2025-10/graphql.json`,
                 {
                     query,
                     variables
@@ -270,7 +270,7 @@ class ShopifyGraphQLService {
             const variantId = variantEdge.node.id.split('/').pop();
             try {
                 const response = await axios.put(
-                    `https://${storeDomain}/admin/api/2024-01/variants/${variantId}.json`,
+                    `https://${storeDomain}/admin/api/2025-10/variants/${variantId}.json`,
                     {
                         variant: {
                             price: winningBidAmount.toString()

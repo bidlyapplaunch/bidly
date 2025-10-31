@@ -8,7 +8,7 @@ import Store from '../models/Store.js';
  */
 class ShopifyService {
   constructor() {
-    this.apiVersion = '2024-10';
+    this.apiVersion = '2025-10';
     
     console.log('🔧 ShopifyService initialized with OAuth support');
     console.log('  - API Version:', this.apiVersion);

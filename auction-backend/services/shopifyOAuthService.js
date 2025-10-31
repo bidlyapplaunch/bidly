@@ -13,7 +13,7 @@ class ShopifyOAuthService {
     this._clientSecret = null;
     this._redirectUri = null;
     this.scopes = 'read_products,read_product_listings,read_orders,write_orders';
-    this.apiVersion = '2024-10';
+    this.apiVersion = '2025-10';
   }
 
   /**

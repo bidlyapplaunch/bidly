@@ -6,7 +6,7 @@ const shopifyConfig = {
   apiSecretKey: process.env.SHOPIFY_API_SECRET_KEY,
   scopes: ['read_products', 'read_product_listings'],
   hostName: process.env.SHOPIFY_SHOP_DOMAIN, // e.g., 'your-shop.myshopify.com'
-  apiVersion: '2024-01',
+  apiVersion: '2025-10',
   isEmbeddedApp: false,
   isPrivateApp: true, // Set to true if using private app
 };
