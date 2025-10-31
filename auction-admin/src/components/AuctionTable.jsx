@@ -105,7 +105,16 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   const handleClose = async () => {
     try {
-      await auctionAPI.closeAuction(selectedAuction.id);
+      const auctionId = selectedAuction?._id || selectedAuction?.id;
+      
+      if (!auctionId) {
+        console.error('❌ No auction ID found in selectedAuction:', selectedAuction);
+        setError('Failed to close auction: Auction ID not found');
+        return;
+      }
+      
+      console.log('🔍 Closing auction with ID:', auctionId);
+      await auctionAPI.closeAuction(auctionId);
       setToastMessage('Auction closed successfully');
       setShowToast(true);
       setCloseModalOpen(false);
