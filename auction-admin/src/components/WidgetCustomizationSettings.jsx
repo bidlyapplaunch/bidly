@@ -243,91 +243,193 @@ const WidgetCustomizationSettings = () => {
               Gradient Preview
             </div>
 
-            {/* Live preview */}
+            {/* Live preview - matches actual widget structure */}
             <div style={{
               marginTop: 16,
-              border: '1px solid #DFE3E8',
+              border: `1px solid ${customization.colors.border}`,
               borderRadius: 8,
               overflow: 'hidden',
-              fontFamily: customization.font || 'Inter, sans-serif'
+              fontFamily: customization.font || 'Inter, sans-serif',
+              background: customization.colors.background,
+              boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.1)'
             }}>
+              {/* Header bar - matches actual widget */}
               <div style={{
                 background: customization.colors.surface,
-                padding: 16,
-                borderBottom: `1px solid ${customization.colors.border}`
+                padding: '15px 20px',
+                borderBottom: `1px solid ${customization.colors.border}`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}>
                 <div style={{ 
                   fontSize: 18, 
                   fontWeight: 600, 
-                  color: customization.colors.textTitle,
-                  marginBottom: 8
+                  color: customization.colors.textTitle
                 }}>
                   Live Auction
                 </div>
-                <div style={{ 
-                  fontFamily: 'monospace', 
-                  fontSize: 16,
-                  color: customization.colors.textTimer, 
-                  marginTop: 6,
-                  marginBottom: 4
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
                 }}>
-                  00d 12h 45m 20s
-                </div>
-                <div style={{ 
-                  fontSize: 12,
-                  color: customization.colors.textStatus 
-                }}>
-                  ● ACTIVE
+                  <span style={{
+                    fontSize: 12,
+                    color: customization.colors.textStatus,
+                    fontWeight: 500
+                  }}>● LIVE</span>
+                  <span style={{
+                    fontSize: 14,
+                    color: customization.colors.textSecondary
+                  }}>👤 Guest</span>
+                  <button style={{
+                    background: 'none',
+                    border: 'none',
+                    color: customization.colors.textSecondary,
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    borderRadius: '4px'
+                  }}>×</button>
                 </div>
               </div>
-              <div style={{ 
-                padding: 16, 
-                background: customization.colors.background 
+
+              {/* Timer section */}
+              <div style={{
+                padding: '15px 20px',
+                background: customization.colors.background
               }}>
-                <div style={{ 
-                  fontSize: 12,
-                  color: customization.colors.textLabel, 
-                  marginBottom: 4 
+                <div style={{
+                  fontSize: 14,
+                  color: customization.colors.textLabel,
+                  marginBottom: 8
                 }}>
-                  Current Bid:
+                  Ends In:
                 </div>
-                <div style={{ 
-                  color: customization.colors.textAmount, 
-                  fontWeight: 700, 
-                  fontSize: 24, 
-                  marginBottom: 8 
+                <div style={{
+                  fontFamily: 'monospace',
+                  fontSize: 16,
+                  color: customization.colors.textTimer,
+                  fontWeight: 600
                 }}>
-                  $123.00
+                  0d 5h 46m 7s
                 </div>
-                <div style={{ 
-                  fontSize: 12,
-                  color: customization.colors.textCount, 
-                  marginBottom: 12 
+              </div>
+
+              {/* Pricing section */}
+              <div style={{
+                padding: '15px 20px',
+                background: customization.colors.background,
+                borderTop: `1px solid ${customization.colors.border}`
+              }}>
+                <div style={{
+                  fontSize: 14,
+                  color: customization.colors.textLabel,
+                  marginBottom: 4
                 }}>
-                  5 bids
+                  Starting Bid:
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{
+                  fontSize: 18,
+                  color: customization.colors.textAmount,
+                  fontWeight: 600,
+                  marginBottom: 8
+                }}>
+                  $400.00
+                </div>
+                <div style={{
+                  fontSize: 14,
+                  color: customization.colors.textLabel,
+                  marginBottom: 4
+                }}>
+                  Bids:
+                </div>
+                <div style={{
+                  fontSize: 14,
+                  color: customization.colors.textCount
+                }}>
+                  0
+                </div>
+              </div>
+
+              {/* Minimum Bid section */}
+              <div style={{
+                padding: '12px 20px',
+                background: customization.colors.surface,
+                borderTop: `1px solid ${customization.colors.border}`
+              }}>
+                <div style={{
+                  fontSize: 14,
+                  color: customization.colors.textLabel,
+                  marginBottom: 8
+                }}>
+                  Minimum Bid:
+                </div>
+                <div style={{
+                  fontSize: 16,
+                  color: customization.colors.textAmount,
+                  fontWeight: 600
+                }}>
+                  $400.00
+                </div>
+              </div>
+
+              {/* Bid input and button */}
+              <div style={{
+                padding: '15px 20px',
+                background: customization.colors.background,
+                borderTop: `1px solid ${customization.colors.border}`
+              }}>
+                <div style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'center'
+                }}>
+                  <input
+                    type="text"
+                    placeholder="Min: $400.00"
+                    style={{
+                      flex: 1,
+                      padding: '12px 15px',
+                      border: `1px solid ${customization.colors.border}`,
+                      borderRadius: 6,
+                      fontSize: 14,
+                      fontFamily: customization.font || 'Inter, sans-serif',
+                      background: '#fff',
+                      color: customization.colors.textPrimary
+                    }}
+                    readOnly
+                  />
                   <button style={{
                     background: customization.colors.buttonPrimary,
                     color: '#fff',
                     border: 'none',
-                    padding: '10px 16px',
+                    padding: '12px 20px',
                     borderRadius: 6,
                     cursor: 'pointer',
                     fontSize: 14,
-                    fontWeight: 500
-                  }}>Place Bid</button>
-                  <button style={{
-                    background: customization.colors.success,
-                    color: '#fff',
-                    border: 'none',
-                    padding: '10px 16px',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    fontWeight: 500
-                  }}>Buy Now</button>
+                    fontWeight: 500,
+                    fontFamily: customization.font || 'Inter, sans-serif'
+                  }}>
+                    Place Bid
+                  </button>
                 </div>
+              </div>
+
+              {/* View Bid History link */}
+              <div style={{
+                padding: '12px 20px',
+                background: customization.colors.background,
+                borderTop: `1px solid ${customization.colors.border}`,
+                textAlign: 'center'
+              }}>
+                <a href="#" style={{
+                  fontSize: 14,
+                  color: customization.colors.textSecondary,
+                  textDecoration: 'none'
+                }}>
+                  View Bid History
+                </a>
               </div>
             </div>
           </div>
