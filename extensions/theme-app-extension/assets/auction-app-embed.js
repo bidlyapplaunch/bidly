@@ -122,9 +122,9 @@
                         <div class="bidly-widget-header">
                             <h3 class="bidly-widget-title">Live Auction</h3>
                             <div class="bidly-widget-status">
-                                ${status === 'active' ? '<span class="bidly-status-active">● LIVE</span>' : 
-                                  status === 'pending' ? '<span class="bidly-status-pending">● STARTING SOON</span>' : 
-                                  '<span class="bidly-status-ended">● ENDED</span>'}
+                                ${status === 'active' ? '<span class="bidly-status-active">LIVE</span>' : 
+                                  status === 'pending' ? '<span class="bidly-status-pending">STARTING SOON</span>' : 
+                                  '<span class="bidly-status-ended">ENDED</span>'}
                             </div>
                         </div>
                         
@@ -160,10 +160,10 @@
                     <div class="bidly-widget-header">
                         <h3 class="bidly-widget-title">Live Auction</h3>
                         <div class="bidly-widget-status">
-                            ${status === 'active' ? '<span class="bidly-status-active">● LIVE</span>' : 
-                              status === 'pending' ? '<span class="bidly-status-pending">● STARTING SOON</span>' : 
-                              status === 'reserve_not_met' ? '<span class="bidly-status-ended">● RESERVE NOT MET</span>' :
-                              '<span class="bidly-status-ended">● ENDED</span>'}
+                            ${status === 'active' ? '<span class="bidly-status-active">LIVE</span>' : 
+                              status === 'pending' ? '<span class="bidly-status-pending">STARTING SOON</span>' : 
+                              status === 'reserve_not_met' ? '<span class="bidly-status-ended">RESERVE NOT MET</span>' :
+                              '<span class="bidly-status-ended">ENDED</span>'}
                         </div>
                         <div class="bidly-customer-info">
                             <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.fullName || 'Guest User'}</span>
