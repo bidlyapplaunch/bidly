@@ -1300,6 +1300,7 @@
         const customer = getCurrentCustomer();
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
+        modal.setAttribute('data-auction-id', auctionId);
         modal.innerHTML = `
             <div class="bidly-modal-content">
                 <div class="bidly-modal-header">
