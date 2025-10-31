@@ -405,6 +405,56 @@ io.on('connection', (socket) => {
     socket.emit('pong', { timestamp: new Date().toISOString() });
   });
   
+  // ===== CHAT FUNCTIONALITY =====
+  // Join product chat room
+  socket.on('join-chat-room', (productId) => {
+    socket.join(`chat-${productId}`);
+    console.log(`💬 Client ${socket.id} joined chat room for product ${productId}`);
+    
+    // Send existing messages for this room
+    const messages = chatRooms.get(productId) || [];
+    socket.emit('chat-history', { productId, messages });
+  });
+  
+  // Leave product chat room
+  socket.on('leave-chat-room', (productId) => {
+    socket.leave(`chat-${productId}`);
+    console.log(`👋 Client ${socket.id} left chat room for product ${productId}`);
+  });
+  
+  // Handle new chat message
+  socket.on('new-chat-message', ({ productId, username, message }) => {
+    if (!productId || !username || !message) {
+      socket.emit('chat-error', { message: 'Missing required fields' });
+      return;
+    }
+    
+    // Initialize room if it doesn't exist
+    if (!chatRooms.has(productId)) {
+      chatRooms.set(productId, []);
+    }
+    
+    // Add message to room (keep last 100 messages per room)
+    const messages = chatRooms.get(productId);
+    const newMessage = {
+      username,
+      message: message.trim(),
+      timestamp: new Date().toISOString()
+    };
+    
+    messages.push(newMessage);
+    
+    // Keep only last 100 messages per room
+    if (messages.length > 100) {
+      messages.shift();
+    }
+    
+    // Broadcast to all clients in this product's chat room
+    io.to(`chat-${productId}`).emit('chat-message', newMessage);
+    
+    console.log(`💬 Chat message in product ${productId} from ${username}: ${message}`);
+  });
+  
   socket.on('disconnect', () => {
     console.log(`🔌 Client disconnected: ${socket.id} (${socket.userRole || 'guest'})`);
   });
@@ -416,6 +466,10 @@ io.on('connection', (socket) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// ===== CHAT FUNCTIONALITY =====
+// In-memory store for chat messages (per product room) - shared across all connections
+const chatRooms = new Map(); // productId -> [{ username, message, timestamp }]
 
 // Make io available to other modules
 app.set('io', io);

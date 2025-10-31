@@ -2112,6 +2112,310 @@
         }, 300);
     });
 
+    // ===== CHAT FUNCTIONALITY =====
+    let chatSocket = null;
+    let currentProductId = null;
+    let chatUsername = null;
+    let chatInitialized = false;
+
+    /**
+     * Initialize chat for the current product (only for Shopify customers)
+     */
+    function initializeChat() {
+        // Only show chat for Shopify customers
+        if (!isShopifyCustomer()) {
+            console.log('Bidly: Chat only available for Shopify customers');
+            return;
+        }
+
+        // Don't initialize twice
+        if (chatInitialized) {
+            return;
+        }
+
+        // Get product ID from URL or page
+        const productHandle = window.location.pathname.split('/products/')[1]?.split('?')[0]?.split('#')[0];
+        if (!productHandle) {
+            console.log('Bidly: Could not determine product handle for chat');
+            return;
+        }
+
+        // Try to get product ID from Shopify data
+        const productId = window.Shopify?.analytics?.meta?.page?.resourceId || 
+                         document.querySelector('[data-product-id]')?.getAttribute('data-product-id') ||
+                         productHandle; // Fallback to handle
+
+        currentProductId = productId;
+
+        // Get username from customer data
+        const customer = getCurrentCustomer();
+        if (customer) {
+            chatUsername = customer.fullName || customer.firstName || `Guest${Math.floor(Math.random() * 1000)}`;
+        } else {
+            chatUsername = `Guest${Math.floor(Math.random() * 1000)}`;
+        }
+
+        // Create chat UI
+        createChatUI();
+
+        // Connect to Socket.io for chat
+        if (window.io && socket) {
+            chatSocket = socket; // Reuse existing socket connection
+        } else if (window.io) {
+            chatSocket = io(CONFIG.backendUrl, {
+                transports: ['websocket', 'polling'],
+                timeout: 20000
+            });
+
+            chatSocket.on('connect', () => {
+                console.log('Bidly: Chat WebSocket connected');
+                // Join product chat room
+                if (currentProductId) {
+                    chatSocket.emit('join-chat-room', currentProductId);
+                }
+            });
+
+            chatSocket.on('disconnect', () => {
+                console.log('Bidly: Chat WebSocket disconnected');
+            });
+        }
+
+        // Set up chat event listeners
+        if (chatSocket) {
+            // Listen for chat history
+            chatSocket.on('chat-history', ({ productId, messages }) => {
+                if (productId === currentProductId) {
+                    displayChatMessages(messages);
+                }
+            });
+
+            // Listen for new messages
+            chatSocket.on('chat-message', (messageData) => {
+                addChatMessage(messageData);
+            });
+
+            // Listen for errors
+            chatSocket.on('chat-error', ({ message }) => {
+                console.error('Bidly: Chat error:', message);
+            });
+
+            // Join room if already connected
+            if (chatSocket.connected && currentProductId) {
+                chatSocket.emit('join-chat-room', currentProductId);
+            }
+        }
+
+        chatInitialized = true;
+    }
+
+    /**
+     * Create chat UI HTML
+     */
+    function createChatUI() {
+        // Remove existing chat if any
+        const existingChat = document.querySelector('.bidly-chat-container');
+        if (existingChat) {
+            existingChat.remove();
+        }
+
+        const chatContainer = document.createElement('div');
+        chatContainer.className = 'bidly-chat-container';
+        chatContainer.innerHTML = `
+            <button class="bidly-chat-toggle" id="bidly-chat-toggle" aria-label="Toggle chat">
+                <span class="chat-icon">💬</span>
+                <span class="close-icon">✕</span>
+            </button>
+            <div class="bidly-chat-box hidden" id="bidly-chat-box">
+                <div class="bidly-chat-header">
+                    <h3>
+                        <span class="online-indicator"></span>
+                        Live Chat
+                    </h3>
+                </div>
+                <div class="bidly-chat-messages" id="bidly-chat-messages">
+                    <div class="bidly-chat-empty">No messages yet. Start the conversation!</div>
+                </div>
+                <div class="bidly-chat-input-container">
+                    <form class="bidly-chat-input-form" id="bidly-chat-form">
+                        <input 
+                            type="text" 
+                            class="bidly-chat-input" 
+                            id="bidly-chat-input" 
+                            placeholder="Type a message..." 
+                            maxlength="500"
+                            autocomplete="off"
+                        />
+                        <button type="submit" class="bidly-chat-send-btn" id="bidly-chat-send">Send</button>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(chatContainer);
+
+        // Set up toggle button
+        const toggleBtn = document.getElementById('bidly-chat-toggle');
+        const chatBox = document.getElementById('bidly-chat-box');
+        
+        toggleBtn.addEventListener('click', () => {
+            chatBox.classList.toggle('hidden');
+            toggleBtn.classList.toggle('minimized');
+            
+            // Scroll to bottom when opening
+            if (!chatBox.classList.contains('hidden')) {
+                scrollChatToBottom();
+            }
+        });
+
+        // Set up form submission
+        const chatForm = document.getElementById('bidly-chat-form');
+        const chatInput = document.getElementById('bidly-chat-input');
+        
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendChatMessage();
+        });
+
+        // Focus input when chat opens
+        toggleBtn.addEventListener('click', () => {
+            if (!chatBox.classList.contains('hidden')) {
+                setTimeout(() => chatInput.focus(), 100);
+            }
+        });
+    }
+
+    /**
+     * Send a chat message
+     */
+    function sendChatMessage() {
+        const chatInput = document.getElementById('bidly-chat-input');
+        const message = chatInput.value.trim();
+        const sendBtn = document.getElementById('bidly-chat-send');
+
+        if (!message || !chatSocket || !currentProductId || !chatUsername) {
+            return;
+        }
+
+        // Disable input while sending
+        chatInput.disabled = true;
+        sendBtn.disabled = true;
+
+        // Emit message
+        chatSocket.emit('new-chat-message', {
+            productId: currentProductId,
+            username: chatUsername,
+            message: message
+        });
+
+        // Clear input
+        chatInput.value = '';
+        chatInput.disabled = false;
+        sendBtn.disabled = false;
+        chatInput.focus();
+    }
+
+    /**
+     * Add a message to the chat display
+     */
+    function addChatMessage(messageData) {
+        const messagesContainer = document.getElementById('bidly-chat-messages');
+        if (!messagesContainer) return;
+
+        // Remove empty state if present
+        const emptyState = messagesContainer.querySelector('.bidly-chat-empty');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'bidly-chat-message';
+
+        const timestamp = new Date(messageData.timestamp).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        messageDiv.innerHTML = `
+            <div class="message-header">
+                <span class="username">${escapeHtml(messageData.username)}</span>
+                <span class="timestamp">${timestamp}</span>
+            </div>
+            <div class="message-content">${escapeHtml(messageData.message)}</div>
+        `;
+
+        messagesContainer.appendChild(messageDiv);
+        scrollChatToBottom();
+    }
+
+    /**
+     * Display chat history
+     */
+    function displayChatMessages(messages) {
+        const messagesContainer = document.getElementById('bidly-chat-messages');
+        if (!messagesContainer) return;
+
+        // Clear existing messages
+        messagesContainer.innerHTML = '';
+
+        if (messages.length === 0) {
+            messagesContainer.innerHTML = '<div class="bidly-chat-empty">No messages yet. Start the conversation!</div>';
+            return;
+        }
+
+        // Display all messages
+        messages.forEach(messageData => {
+            addChatMessage(messageData);
+        });
+
+        scrollChatToBottom();
+    }
+
+    /**
+     * Scroll chat to bottom
+     */
+    function scrollChatToBottom() {
+        const messagesContainer = document.getElementById('bidly-chat-messages');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Initialize chat after widget is injected
+    // Wrap the existing injectWidget function
+    const originalInjectWidget = window.injectWidget || injectWidget;
+    if (typeof injectWidget === 'function') {
+        const wrappedInjectWidget = function(auctionCheck, settings) {
+            originalInjectWidget(auctionCheck, settings);
+            // Initialize chat after widget is injected
+            setTimeout(() => {
+                initializeChat();
+            }, 1000);
+        };
+        // Replace the function
+        if (typeof window !== 'undefined') {
+            window.injectWidget = wrappedInjectWidget;
+        }
+        injectWidget = wrappedInjectWidget;
+    }
+
+    // Also initialize chat when login status changes
+    window.addEventListener('bidly-login-success', () => {
+        setTimeout(() => {
+            if (isShopifyCustomer()) {
+                initializeChat();
+            }
+        }, 500);
+    });
+
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
