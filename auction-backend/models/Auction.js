@@ -141,6 +141,20 @@ const auctionSchema = new mongoose.Schema({
     createdAt: Date
   },
   
+  // Draft order fields (for Shopify invoice system)
+  draftOrderId: {
+    type: String,
+    default: null
+  },
+  duplicatedProductId: {
+    type: String,
+    default: null
+  },
+  invoiceSent: {
+    type: Boolean,
+    default: false
+  },
+  
   winnerProcessed: {
     type: Boolean,
     default: false

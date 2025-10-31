@@ -699,6 +699,126 @@ class ShopifyService {
       };
     }
   }
+
+  /**
+   * Find or create a Shopify customer by email
+   * @param {string} shopDomain - The shop's domain
+   * @param {string} email - Customer email
+   * @param {string} firstName - Customer first name (optional)
+   * @param {string} lastName - Customer last name (optional)
+   * @returns {Object} Shopify customer data with ID
+   */
+  async findOrCreateCustomer(shopDomain, email, firstName = null, lastName = null) {
+    try {
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      // First, try to find existing customer by email
+      const searchResponse = await client.get('/customers/search.json', {
+        params: {
+          query: `email:${email}`
+        }
+      });
+
+      if (searchResponse.data.customers && searchResponse.data.customers.length > 0) {
+        console.log(`✅ Found existing customer: ${email}`);
+        return searchResponse.data.customers[0];
+      }
+
+      // Customer doesn't exist, create a new one
+      console.log(`🆕 Creating new customer: ${email}`);
+      const createResponse = await client.post('/customers.json', {
+        customer: {
+          email: email,
+          first_name: firstName || email.split('@')[0],
+          last_name: lastName || 'Customer',
+          send_email_welcome: false // Don't send welcome email
+        }
+      });
+
+      console.log(`✅ Created new customer: ${email}`);
+      return createResponse.data.customer;
+    } catch (error) {
+      console.error('Error finding or creating customer:', error.response?.data || error.message);
+      throw new Error(`Failed to find or create customer: ${error.response?.data?.errors || error.message}`);
+    }
+  }
+
+  /**
+   * Create a draft order in Shopify
+   * @param {string} shopDomain - The shop's domain
+   * @param {string} customerId - Shopify customer ID
+   * @param {string} productId - Shopify product ID (the duplicated product)
+   * @param {number} customPrice - Custom price (the winning bid amount)
+   * @param {string} note - Draft order note (optional)
+   * @returns {Object} Created draft order data
+   */
+  async createDraftOrder(shopDomain, customerId, productId, customPrice, note = '') {
+    try {
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      // Get the product to find the variant ID
+      const productResponse = await client.get(`/products/${productId}.json`);
+      const product = productResponse.data.product;
+      
+      if (!product.variants || product.variants.length === 0) {
+        throw new Error('Product has no variants');
+      }
+
+      const variantId = product.variants[0].id;
+
+      // Create the draft order
+      // Shopify requires variant_id, but we can also include product_id for reference
+      const draftOrderResponse = await client.post('/draft_orders.json', {
+        draft_order: {
+          line_items: [
+            {
+              variant_id: variantId,
+              quantity: 1,
+              price: customPrice.toString() // Custom price (winning bid amount)
+            }
+          ],
+          customer: {
+            id: customerId
+          },
+          note: note || 'Generated automatically by Bidly Auction App'
+        }
+      });
+
+      console.log(`✅ Draft order created: ${draftOrderResponse.data.draft_order.id}`);
+      return draftOrderResponse.data.draft_order;
+    } catch (error) {
+      console.error('Error creating draft order:', error.response?.data || error.message);
+      throw new Error(`Failed to create draft order: ${error.response?.data?.errors || error.message}`);
+    }
+  }
+
+  /**
+   * Send invoice for a draft order
+   * @param {string} shopDomain - The shop's domain
+   * @param {string} draftOrderId - Draft order ID
+   * @param {string} subject - Invoice email subject
+   * @param {string} customMessage - Invoice email message body
+   * @returns {Object} Invoice send result
+   */
+  async sendDraftOrderInvoice(shopDomain, draftOrderId, subject, customMessage) {
+    try {
+      const { client } = await this.getStoreClient(shopDomain);
+      
+      const invoiceResponse = await client.post(`/draft_orders/${draftOrderId}/send_invoice.json`, {
+        draft_order_invoice: {
+          to: null, // Send to draft order customer
+          subject: subject,
+          custom_message: customMessage
+        }
+      });
+
+      console.log(`✅ Invoice sent for draft order: ${draftOrderId}`);
+      return invoiceResponse.data;
+    } catch (error) {
+      console.error('Error sending draft order invoice:', error.response?.data || error.message);
+      throw new Error(`Failed to send draft order invoice: ${error.response?.data?.errors || error.message}`);
+    }
+  }
 }
 
 // Create a singleton instance with lazy initialization

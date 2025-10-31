@@ -124,10 +124,51 @@ class EmailService {
     return this.sendEmail(bidderEmail, subject, html);
   }
 
-  // Send winner notification with private product link
+  // Send winner notification (with or without product link based on template)
   async sendWinnerNotification(emailData) {
-    const { to, subject, data } = emailData;
+    const { to, subject, template, data } = emailData;
     
+    // If template is 'auction-winner-notification-only', send notification without product link
+    // The invoice with product link will be sent via Shopify's draft order invoice system
+    if (template === 'auction-winner-notification-only') {
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>
+          
+          <p>Dear ${data.winnerName},</p>
+          
+          <p>Congratulations! You have successfully won the auction for <strong>"${data.productTitle}"</strong> with a winning bid of <strong>$${data.winningBid}</strong>.</p>
+          
+          ${data.productImage ? `
+            <div style="text-align: center; margin: 20px 0;">
+              <img src="${data.productImage}" alt="${data.productTitle}" style="max-width: 300px; height: auto; border-radius: 8px;">
+            </div>
+          ` : ''}
+          
+          <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
+            <h3 style="color: #155724; margin-top: 0;">🏆 Auction Details</h3>
+            <p><strong>Product:</strong> ${data.productTitle}</p>
+            <p><strong>Winning Bid:</strong> $${data.winningBid}</p>
+            <p><strong>Auction Ended:</strong> ${new Date(data.auctionEndTime).toLocaleString()}</p>
+          </div>
+          
+          <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+            <h3 style="color: #856404; margin-top: 0;">📧 Next Steps</h3>
+            <p>You will receive an invoice from us shortly with a link to complete your purchase. Please wait for the invoice email which will contain all the details you need to claim your win.</p>
+            <p><strong>You have 30 minutes to claim your win</strong>, or the second highest bidder will receive the win instead.</p>
+          </div>
+          
+          <p style="color: #7f8c8d; font-size: 14px;">
+            Best regards,<br>
+            The Bidly Auction Team
+          </p>
+        </div>
+      `;
+      
+      return this.sendEmail(to, subject, html);
+    }
+    
+    // Legacy template with product link (for backwards compatibility, if needed)
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>

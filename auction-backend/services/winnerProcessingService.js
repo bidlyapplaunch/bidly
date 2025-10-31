@@ -2,6 +2,7 @@ import Auction from '../models/Auction.js';
 import Store from '../models/Store.js';
 import Customer from '../models/Customer.js';
 import shopifyGraphQLService from './shopifyGraphQLService.js';
+import getShopifyService from './shopifyService.js';
 import emailService from './emailService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
@@ -64,7 +65,7 @@ class WinnerProcessingService {
             // 4. Get original product details
             const originalProduct = await this.getOriginalProduct(store, auction.shopifyProductId);
             
-            // 5. Create private product for winner
+            // 5. Create private product for winner (duplicated product)
             const privateProduct = await this.createPrivateProductForWinner(
                 store, 
                 originalProduct, 
@@ -72,13 +73,53 @@ class WinnerProcessingService {
                 auction.currentBid
             );
             
-            // 6. Update auction with winner and private product info
-            await this.updateAuctionWithWinner(auction, winner, privateProduct);
+            // 6. Find or create Shopify customer
+            const shopifyService = getShopifyService();
+            const shopifyCustomer = await shopifyService.findOrCreateCustomer(
+                shopDomain,
+                winner.bidderEmail,
+                winner.bidder.split(' ')[0], // First name
+                winner.bidder.split(' ').slice(1).join(' ') || 'Customer' // Last name
+            );
             
-            // 7. Update customer stats
+            // 7. Extract numeric product ID from GraphQL ID (gid://shopify/Product/123 -> 123)
+            const duplicatedProductId = privateProduct.productId.includes('gid://')
+                ? privateProduct.productId.split('/').pop()
+                : privateProduct.productId;
+            
+            // 8. Create draft order with duplicated product
+            const draftOrder = await shopifyService.createDraftOrder(
+                shopDomain,
+                shopifyCustomer.id.toString(),
+                duplicatedProductId,
+                auction.currentBid,
+                `Generated automatically by Bidly Auction App for auction #${auctionId}`
+            );
+            
+            // 9. Send invoice via Shopify
+            const invoiceSubject = `Congratulations! You Won the Auction for ${privateProduct.productTitle || auction.productTitle || 'the auction item'}`;
+            const invoiceMessage = `Congratulations! You have successfully won the auction. You have 30 minutes to claim your win, or the second highest bidder will receive the win instead.`;
+            
+            await shopifyService.sendDraftOrderInvoice(
+                shopDomain,
+                draftOrder.id.toString(),
+                invoiceSubject,
+                invoiceMessage
+            );
+            
+            // 10. Update auction with winner, private product, and draft order info
+            await this.updateAuctionWithWinnerAndDraftOrder(
+                auction, 
+                winner, 
+                privateProduct, 
+                draftOrder.id.toString(),
+                duplicatedProductId
+            );
+            
+            // 11. Update customer stats
             await this.updateCustomerStats(winner, auction);
             
-            // 8. Send winner notification email
+            // 12. Send winner notification email (only notification, no product link)
             await this.sendWinnerNotification(winner, auction, privateProduct);
             
             console.log(`✅ Winner processing completed for auction ${auctionId}`);
@@ -224,9 +265,9 @@ class WinnerProcessingService {
     }
 
     /**
-     * Update auction with winner information
+     * Update auction with winner information and draft order details
      */
-    async updateAuctionWithWinner(auction, winner, privateProduct) {
+    async updateAuctionWithWinnerAndDraftOrder(auction, winner, privateProduct, draftOrderId, duplicatedProductId) {
         auction.winner = {
             bidder: winner.bidder,
             bidderEmail: winner.bidderEmail,
@@ -243,11 +284,16 @@ class WinnerProcessingService {
             createdAt: new Date()
         };
 
+        // Save draft order information
+        auction.draftOrderId = draftOrderId;
+        auction.duplicatedProductId = duplicatedProductId;
+        auction.invoiceSent = true;
+
         auction.winnerProcessed = true;
         auction.winnerProcessedAt = new Date();
 
         await auction.save();
-        console.log(`📝 Auction updated with winner information`);
+        console.log(`📝 Auction updated with winner information and draft order: ${draftOrderId}`);
     }
 
     /**
@@ -306,22 +352,20 @@ class WinnerProcessingService {
     }
 
     /**
-     * Send winner notification email
+     * Send winner notification email (notification only, invoice sent via Shopify)
      */
     async sendWinnerNotification(winner, auction, privateProduct) {
         try {
             const emailData = {
                 to: winner.bidderEmail,
                 subject: `🎉 Congratulations! You Won the Auction for ${privateProduct.productTitle || auction.productTitle || 'the auction item'}`,
-                template: 'auction-winner',
+                template: 'auction-winner-notification-only',
                 data: {
                     winnerName: winner.bidder,
                     productTitle: privateProduct.productTitle || auction.productTitle || 'the auction item',
                     productImage: auction.productImage,
                     winningBid: winner.amount,
                     auctionEndTime: auction.endTime,
-                    privateProductUrl: privateProduct.productUrl,
-                    productHandle: privateProduct.productHandle,
                     storeDomain: auction.shopDomain
                 }
             };
