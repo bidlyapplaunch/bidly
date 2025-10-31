@@ -64,7 +64,7 @@ async function fixIndex() {
         { shopDomain: 1, shopifyProductId: 1 },
         {
           unique: true,
-          partialFilterExpression: { isDeleted: { $ne: true } },
+          partialFilterExpression: { $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] },
           name: 'shopDomain_1_shopifyProductId_1_partial'
         }
       );
@@ -82,7 +82,7 @@ async function fixIndex() {
           { shopDomain: 1, shopifyProductId: 1 },
           {
             unique: true,
-            partialFilterExpression: { isDeleted: { $ne: true } },
+            partialFilterExpression: { $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] },
             name: 'shopDomain_1_shopifyProductId_1_partial'
           }
         );
