@@ -44,26 +44,26 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
                 template: 'Classic',
                 font: 'Inter',
                 colors: {
-                    primary: '#007bff',
+                    primary: '#6366f1',
                     background: '#ffffff',
-                    surface: '#f8f9fa',
-                    textPrimary: '#212529',
-                    textSecondary: '#6c757d',
-                    textTitle: '#212529',
-                    textTimer: '#dc3545',
-                    textStatus: '#28a745',
-                    textCount: '#6c757d',
-                    textLabel: '#495057',
-                    textAmount: '#007bff',
-                    border: '#dee2e6',
-                    accent: '#28a745',
-                    success: '#28a745',
-                    error: '#dc3545',
-                    hover: '#0056b3',
-                    buttonPrimary: '#007bff',
-                    buttonSecondary: '#6c757d',
-                    gradient1: '#007bff',
-                    gradient2: '#0056b3'
+                    surface: '#667eea',
+                    textPrimary: '#1e293b',
+                    textSecondary: '#64748b',
+                    textTitle: '#ffffff',
+                    textTimer: '#fbbf24',
+                    textStatus: '#10b981',
+                    textCount: '#64748b',
+                    textLabel: '#475569',
+                    textAmount: '#6366f1',
+                    border: '#e2e8f0',
+                    accent: '#8b5cf6',
+                    success: '#10b981',
+                    error: '#ef4444',
+                    hover: '#4f46e5',
+                    buttonPrimary: '#6366f1',
+                    buttonSecondary: '#64748b',
+                    gradient1: '#667eea',
+                    gradient2: '#764ba2'
                 }
             };
         }
@@ -191,26 +191,26 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
                 template: 'Classic',
                 font: 'Inter',
                 colors: {
-                    primary: '#007bff',
+                    primary: '#6366f1',
                     background: '#ffffff',
-                    surface: '#f8f9fa',
-                    textPrimary: '#212529',
-                    textSecondary: '#6c757d',
-                    textTitle: '#212529',
-                    textTimer: '#dc3545',
-                    textStatus: '#28a745',
-                    textCount: '#6c757d',
-                    textLabel: '#495057',
-                    textAmount: '#007bff',
-                    border: '#dee2e6',
-                    accent: '#28a745',
-                    success: '#28a745',
-                    error: '#dc3545',
-                    hover: '#0056b3',
-                    buttonPrimary: '#007bff',
-                    buttonSecondary: '#6c757d',
-                    gradient1: '#007bff',
-                    gradient2: '#0056b3'
+                    surface: '#667eea',
+                    textPrimary: '#1e293b',
+                    textSecondary: '#64748b',
+                    textTitle: '#ffffff',
+                    textTimer: '#fbbf24',
+                    textStatus: '#10b981',
+                    textCount: '#64748b',
+                    textLabel: '#475569',
+                    textAmount: '#6366f1',
+                    border: '#e2e8f0',
+                    accent: '#8b5cf6',
+                    success: '#10b981',
+                    error: '#ef4444',
+                    hover: '#4f46e5',
+                    buttonPrimary: '#6366f1',
+                    buttonSecondary: '#64748b',
+                    gradient1: '#667eea',
+                    gradient2: '#764ba2'
                 }
             };
         }
@@ -258,10 +258,10 @@ function generateWidgetThemeCSS(customization) {
     switch (template) {
         case 'Modern':
             css += `
-        --bidly-widget-border-radius: 12px;
-        --bidly-widget-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        --bidly-widget-spacing: 1.5rem;
-        --bidly-widget-button-padding: 0.75rem 1.5rem;
+        --bidly-widget-border-radius: 20px;
+        --bidly-widget-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        --bidly-widget-spacing: 1.75rem;
+        --bidly-widget-button-padding: 0.875rem 2rem;
     `;
             break;
         case 'Minimal':
@@ -282,10 +282,10 @@ function generateWidgetThemeCSS(customization) {
             break;
         default: // Classic
             css += `
-        --bidly-widget-border-radius: 6px;
-        --bidly-widget-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-        --bidly-widget-spacing: 1.25rem;
-        --bidly-widget-button-padding: 0.625rem 1.25rem;
+        --bidly-widget-border-radius: 16px;
+        --bidly-widget-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --bidly-widget-spacing: 1.5rem;
+        --bidly-widget-button-padding: 0.75rem 1.5rem;
     `;
     }
 

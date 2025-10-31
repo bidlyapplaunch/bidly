@@ -51,13 +51,15 @@
 }
 
 .bidly-btn-primary {
-    background: var(--bidly-widget-color-button-primary, #007bff);
+    background: var(--bidly-widget-color-button-primary, #6366f1);
     color: white;
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
 }
 
 .bidly-btn-primary:hover {
-    background: var(--bidly-widget-color-hover, #0056b3);
-    transform: translateY(-1px);
+    background: var(--bidly-widget-color-hover, #4f46e5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px -2px rgba(99, 102, 241, 0.4);
 }
 
 .bidly-btn-secondary {
@@ -77,11 +79,12 @@
 /* Widget Container */
 .bidly-widget-container {
     background: var(--bidly-widget-color-background, #ffffff);
-    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
-    border-radius: var(--bidly-widget-border-radius, 8px);
-    box-shadow: var(--bidly-widget-shadow, 0 2px 4px 0 rgba(0, 0, 0, 0.1));
+    border: 1px solid var(--bidly-widget-color-border, #e2e8f0);
+    border-radius: var(--bidly-widget-border-radius, 16px);
+    box-shadow: var(--bidly-widget-shadow, 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
     overflow: hidden;
     font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
+    margin: 20px 0;
 }
 
 /* Widget Header */
@@ -89,17 +92,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    background: var(--bidly-widget-color-surface, #f8f9fa);
-    border-bottom: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+    padding: 20px 24px;
+    background: var(--bidly-widget-color-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    border-bottom: none;
 }
 
 .bidly-widget-title {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
     margin: 0;
-    color: var(--bidly-widget-color-text-title, #212529);
+    color: var(--bidly-widget-color-text-title, #ffffff);
     flex: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .bidly-widget-user {
@@ -131,7 +135,8 @@
 
 /* Widget Content */
 .bidly-widget-content {
-    padding: 20px;
+    padding: 24px;
+    background: var(--bidly-widget-color-background, #ffffff);
 }
 
 /* Timer Section */
@@ -142,21 +147,24 @@
 
 .bidly-timer-label {
     font-size: 14px;
-    color: var(--bidly-widget-color-text-label, #495057);
-    margin-bottom: 8px;
-    font-weight: 500;
+    color: var(--bidly-widget-color-text-label, #475569);
+    margin-bottom: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .bidly-timer-display {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
-    color: var(--bidly-widget-color-text-timer, #dc3545);
+    color: var(--bidly-widget-color-text-timer, #fbbf24);
     font-family: 'Courier New', monospace;
-    background: var(--bidly-widget-color-surface, #f8f9fa);
-    padding: 10px 15px;
-    border-radius: var(--bidly-widget-border-radius, 6px);
-    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     display: inline-block;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .bidly-timer-expired {
@@ -219,37 +227,42 @@
 
 .bidly-bid-input {
     flex: 1;
-    padding: 12px 15px;
-    border: 1px solid var(--bidly-widget-color-border, #e5e7eb);
-    border-radius: var(--bidly-widget-border-radius, 6px);
-    font-size: 14px;
+    padding: 14px 18px;
+    border: 2px solid var(--bidly-widget-color-border, #e2e8f0);
+    border-radius: 12px;
+    font-size: 15px;
     font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
     background: var(--bidly-widget-color-background, #ffffff);
-    color: var(--bidly-widget-color-text-primary, #212529);
+    color: var(--bidly-widget-color-text-primary, #1e293b);
+    transition: all 0.2s ease;
 }
 
 .bidly-bid-input:focus {
     outline: none;
-    border-color: var(--bidly-widget-color-primary, #007bff);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    border-color: var(--bidly-widget-color-primary, #6366f1);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.bidly-bid-button {
-    background: var(--bidly-widget-color-button-primary, #007bff);
+.bidly-bid-button,
+.bidly-submit-bid {
+    background: var(--bidly-widget-color-button-primary, #6366f1);
     color: white;
     border: none;
-    padding: 12px 20px;
-    border-radius: var(--bidly-widget-border-radius, 6px);
-    font-size: 14px;
-    font-weight: 500;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
 }
 
-.bidly-bid-button:hover {
-    background: var(--bidly-widget-color-hover, #0056b3);
-    transform: translateY(-1px);
+.bidly-bid-button:hover,
+.bidly-submit-bid:hover {
+    background: var(--bidly-widget-color-hover, #4f46e5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px -2px rgba(99, 102, 241, 0.4);
 }
 
 .bidly-bid-button:disabled {
@@ -282,24 +295,28 @@
 }
 
 /* Buy Now Button */
-.bidly-buy-now-button {
-    background: var(--bidly-widget-color-success, #28a745);
+.bidly-buy-now-button,
+.bidly-buy-now-btn {
+    background: var(--bidly-widget-color-success, #10b981);
     color: white;
     border: none;
-    padding: 12px 20px;
-    border-radius: var(--bidly-widget-border-radius, 6px);
-    font-size: 14px;
-    font-weight: 500;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: var(--bidly-widget-font-family, 'Inter', sans-serif);
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
 
-.bidly-buy-now-button:hover {
-    background: var(--bidly-widget-color-accent, #28a745);
-    transform: translateY(-1px);
+.bidly-buy-now-button:hover,
+.bidly-buy-now-btn:hover {
+    background: var(--bidly-widget-color-success, #059669);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px -2px rgba(16, 185, 129, 0.4);
 }
 
 .bidly-buy-now-button:disabled {
@@ -312,11 +329,12 @@
 .bidly-bid-history-link {
     display: block;
     text-align: center;
-    color: var(--bidly-widget-color-text-secondary, #6c757d);
+    color: var(--bidly-widget-color-text-secondary, #64748b);
     text-decoration: none;
     font-size: 14px;
-    padding: 10px;
-    border-radius: var(--bidly-widget-border-radius, 6px);
+    font-weight: 500;
+    padding: 12px;
+    border-radius: var(--bidly-widget-border-radius, 8px);
     transition: all 0.2s ease;
 }
 
@@ -389,17 +407,88 @@
 
 /* Additional text element color variables */
 .bidly-widget-status {
-    color: var(--bidly-widget-color-text-status, #28a745);
+    color: var(--bidly-widget-color-text-status, #10b981);
+    font-weight: 600;
 }
 
 .bidly-widget-count-text {
-    color: var(--bidly-widget-color-text-count, #6c757d);
+    color: var(--bidly-widget-color-text-count, #64748b);
 }
 
-.bidly-current-bid-label {
-    color: var(--bidly-widget-color-text-label, #495057);
+/* Pricing Section */
+.bidly-widget-pricing {
+    padding: 20px 24px;
+    background: var(--bidly-widget-color-background, #ffffff);
+    border-top: 1px solid var(--bidly-widget-color-border, #e2e8f0);
 }
 
-.bidly-current-bid-amount {
-    color: var(--bidly-widget-color-text-amount, #007bff);
+.bidly-current-bid,
+.bidly-reserve-price,
+.bidly-bid-count {
+    margin-bottom: 16px;
+}
+
+.bidly-current-bid:last-child,
+.bidly-reserve-price:last-child,
+.bidly-bid-count:last-child {
+    margin-bottom: 0;
+}
+
+.bidly-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bidly-widget-color-text-label, #475569);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.bidly-amount {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--bidly-widget-color-text-amount, #6366f1);
+    line-height: 1.2;
+}
+
+.bidly-count {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--bidly-widget-color-text-count, #64748b);
+}
+
+.bidly-minimum-bid {
+    padding: 16px;
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid var(--bidly-widget-color-border, #e2e8f0);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.bidly-minimum-bid .bidly-label {
+    font-size: 12px;
+}
+
+.bidly-minimum-bid .bidly-amount {
+    font-size: 20px;
+}
+
+/* Widget timer section */
+.bidly-widget-timer {
+    padding: 20px 24px;
+    background: var(--bidly-widget-color-background, #ffffff);
+    border-top: 1px solid var(--bidly-widget-color-border, #e2e8f0);
+}
+
+.bidly-widget-actions {
+    padding: 20px 24px;
+    background: var(--bidly-widget-color-background, #ffffff);
+    border-top: 1px solid var(--bidly-widget-color-border, #e2e8f0);
+}
+
+.bidly-widget-footer {
+    padding: 16px 24px;
+    background: var(--bidly-widget-color-background, #ffffff);
+    border-top: 1px solid var(--bidly-widget-color-border, #e2e8f0);
 }
