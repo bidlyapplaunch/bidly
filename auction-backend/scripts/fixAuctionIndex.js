@@ -78,30 +78,30 @@ async function fixIndex() {
       console.log('🗑️  Found old unique index on shopifyProductId, dropping...');
       await collection.dropIndex('shopifyProductId_1');
       console.log('✅ Dropped old unique index on shopifyProductId');
+      // Refresh indexes after dropping
+      indexes.splice(indexes.indexOf(oldUniqueIndex), 1);
     }
 
-    // The new partial unique index will be created automatically by Mongoose on next model load
-    // But we can also create it explicitly here
-    console.log('\n📝 Creating new partial unique index...');
-    try {
-      await collection.createIndex(
-        { shopDomain: 1, shopifyProductId: 1 },
-        {
-          unique: true,
-          partialFilterExpression: { isDeleted: false },
-          name: 'shopDomain_1_shopifyProductId_1_partial'
-        }
-      );
-      console.log('✅ Created partial unique index');
-    } catch (createError) {
-      if (createError.code === 85) {
-        // Index already exists with different options
-        console.log('⚠️  Index already exists, dropping and recreating...');
-        try {
-          await collection.dropIndex('shopDomain_1_shopifyProductId_1_partial');
-        } catch (e) {
-          // Ignore if doesn't exist
-        }
+    // Check if the partial unique index already exists with correct specification
+    // Refresh indexes list to get latest state
+    const currentIndexes = await collection.indexes();
+    console.log('\n📝 Checking for existing partial unique index...');
+    const existingPartialIndex = currentIndexes.find(idx => 
+      idx.key &&
+      idx.key.shopDomain === 1 &&
+      idx.key.shopifyProductId === 1 &&
+      idx.unique === true &&
+      idx.partialFilterExpression &&
+      idx.partialFilterExpression.isDeleted === false
+    );
+
+    if (existingPartialIndex) {
+      console.log(`✅ Partial unique index already exists: ${existingPartialIndex.name}`);
+      console.log('   This index already has the correct specification for soft delete support.');
+    } else {
+      // Create the new partial unique index
+      console.log('\n📝 Creating new partial unique index...');
+      try {
         await collection.createIndex(
           { shopDomain: 1, shopifyProductId: 1 },
           {
@@ -110,9 +110,45 @@ async function fixIndex() {
             name: 'shopDomain_1_shopifyProductId_1_partial'
           }
         );
-        console.log('✅ Recreated partial unique index');
-      } else {
-        throw createError;
+        console.log('✅ Created partial unique index');
+      } catch (createError) {
+        if (createError.code === 85 || createError.codeName === 'IndexOptionsConflict') {
+          // Index already exists with same keys but different name/options
+          // Check if it's the one we want (with partial filter)
+          const currentIndexesForConflict = await collection.indexes();
+          const conflictingIndex = currentIndexesForConflict.find(idx => 
+            idx.key &&
+            idx.key.shopDomain === 1 &&
+            idx.key.shopifyProductId === 1
+          );
+          
+          if (conflictingIndex && conflictingIndex.partialFilterExpression && 
+              conflictingIndex.partialFilterExpression.isDeleted === false) {
+            console.log(`✅ Index already exists with correct specification: ${conflictingIndex.name}`);
+            console.log('   No action needed - the existing index supports soft delete relisting.');
+          } else {
+            console.log(`⚠️  Found conflicting index: ${conflictingIndex?.name || 'unknown'}`);
+            console.log('   Dropping and recreating with correct specification...');
+            if (conflictingIndex) {
+              try {
+                await collection.dropIndex(conflictingIndex.name);
+              } catch (e) {
+                // Ignore if doesn't exist
+              }
+            }
+            await collection.createIndex(
+              { shopDomain: 1, shopifyProductId: 1 },
+              {
+                unique: true,
+                partialFilterExpression: { isDeleted: false },
+                name: 'shopDomain_1_shopifyProductId_1_partial'
+              }
+            );
+            console.log('✅ Recreated partial unique index');
+          }
+        } else {
+          throw createError;
+        }
       }
     }
 
