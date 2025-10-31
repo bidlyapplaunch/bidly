@@ -866,10 +866,16 @@
         // Persist authoritative end time so polling/UI doesn't regress
         window.bidlyAuctionEndTimes = window.bidlyAuctionEndTimes || {};
         window.bidlyAuctionEndTimes[auctionId] = endTime;
-
-        const endTimestamp = new Date(endTime).getTime();
         
         function updateCountdown() {
+            // Always read from authoritative source to get latest end time (e.g., after time extension)
+            const authoritativeEndTime = window.bidlyAuctionEndTimes[auctionId];
+            if (!authoritativeEndTime) {
+                console.warn('Bidly: No authoritative end time found for auction:', auctionId);
+                return;
+            }
+            
+            const endTimestamp = new Date(authoritativeEndTime).getTime();
             const now = new Date().getTime();
             const distance = endTimestamp - now;
 
@@ -1204,49 +1210,27 @@
             }
         }
 
-        // Update timer if auction is active
+        // Update timer end time if auction is active (but don't touch the display - let initializeCountdown's interval handle it)
         if (auctionData.status === 'active') {
-            const countdownElement = widget.querySelector('.bidly-countdown');
-            if (countdownElement) {
-                window.bidlyAuctionEndTimes = window.bidlyAuctionEndTimes || {};
-                // Prefer the later of (stored authoritative end, backend endTime)
-                const storedEnd = window.bidlyAuctionEndTimes[auctionId] || null;
-                const backendEnd = auctionData.endTime || null;
-                let authoritativeEnd = backendEnd;
-                if (storedEnd && backendEnd) {
-                    authoritativeEnd = new Date(storedEnd) > new Date(backendEnd) ? storedEnd : backendEnd;
-                } else if (storedEnd) {
-                    authoritativeEnd = storedEnd;
+            window.bidlyAuctionEndTimes = window.bidlyAuctionEndTimes || {};
+            // Prefer the later of (stored authoritative end, backend endTime)
+            const storedEnd = window.bidlyAuctionEndTimes[auctionId] || null;
+            const backendEnd = auctionData.endTime || null;
+            let authoritativeEnd = backendEnd;
+            if (storedEnd && backendEnd) {
+                authoritativeEnd = new Date(storedEnd) > new Date(backendEnd) ? storedEnd : backendEnd;
+            } else if (storedEnd) {
+                authoritativeEnd = storedEnd;
+            }
+            // Persist authoritative value - the existing countdown timer will read from this
+            if (authoritativeEnd) {
+                window.bidlyAuctionEndTimes[auctionId] = authoritativeEnd;
+                // Only initialize if no timer is currently running
+                window.bidlyCountdownIntervals = window.bidlyCountdownIntervals || {};
+                if (!window.bidlyCountdownIntervals[auctionId]) {
+                    initializeCountdown(auctionId, authoritativeEnd);
                 }
-                // Persist authoritative value back
-                if (authoritativeEnd) {
-                    window.bidlyAuctionEndTimes[auctionId] = authoritativeEnd;
-                }
-                if (authoritativeEnd) {
-                    const endTimestamp = new Date(authoritativeEnd).getTime();
-                    const now = new Date().getTime();
-                    const distance = endTimestamp - now;
-
-                    if (distance > 0) {
-                        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                        countdownElement.innerHTML = `
-                            <span class="bidly-time-unit">${days}d</span>
-                            <span class="bidly-time-unit">${hours}h</span>
-                            <span class="bidly-time-unit">${minutes}m</span>
-                            <span class="bidly-time-unit">${seconds}s</span>
-                        `;
-                    } else {
-                        // Only show ended if there is no active interval for this auction
-                        window.bidlyCountdownIntervals = window.bidlyCountdownIntervals || {};
-                        if (!window.bidlyCountdownIntervals[auctionId]) {
-                            countdownElement.innerHTML = '<span class="bidly-time-unit">Auction Ended</span>';
-                        }
-                    }
-                }
+                // If timer is already running, it will automatically read from window.bidlyAuctionEndTimes[auctionId]
             }
         }
 
