@@ -147,7 +147,42 @@ export const createAuction = async (req, res, next) => {
       currentBid: 0, // Ensure currentBid starts at 0
       productData: productData // Cache the product data
     });
-    const savedAuction = await auction.save();
+    
+    let savedAuction;
+    try {
+      savedAuction = await auction.save();
+    } catch (saveError) {
+      // Handle duplicate key error (MongoDB unique index violation)
+      if (saveError.code === 11000) {
+        // Check what the duplicate is
+        const existingAuction = await Auction.findOne({
+          shopifyProductId: shopifyProductId,
+          shopDomain: shopDomain
+        });
+        
+        if (existingAuction) {
+          if (existingAuction.isDeleted) {
+            // The duplicate is a soft-deleted auction
+            // This happens when the old unique index is still in place
+            // The database needs a migration to drop the old index and use the partial unique index
+            // For now, provide a helpful error message
+            throw new AppError(
+              'Unable to create auction: The database needs to be updated to support relisting soft-deleted auctions. ' +
+              'This requires running a migration script. Please contact support or run: node auction-backend/scripts/fixAuctionIndex.js',
+              400
+            );
+          } else {
+            // It's a real duplicate (non-deleted auction)
+            throw new AppError('An active or pending auction already exists for this product. Please delete the existing auction first or use a different product.', 400);
+          }
+        } else {
+          // Duplicate key error but no auction found - this is unexpected
+          throw new AppError('Unable to create auction due to a database constraint. Please try again.', 400);
+        }
+      } else {
+        throw saveError;
+      }
+    }
     
     // Update product metafields for auction widget
     await updateProductMetafields(savedAuction, shopDomain);

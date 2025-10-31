@@ -180,7 +180,15 @@ const auctionSchema = new mongoose.Schema({
 
 // Index for efficient queries
 auctionSchema.index({ shopDomain: 1, status: 1 });
-auctionSchema.index({ shopDomain: 1, shopifyProductId: 1 });
+// Partial unique index: only enforce uniqueness for non-deleted auctions
+// This allows relisting products from soft-deleted auctions
+auctionSchema.index(
+  { shopDomain: 1, shopifyProductId: 1 },
+  { 
+    unique: true,
+    partialFilterExpression: { isDeleted: { $ne: true } }
+  }
+);
 auctionSchema.index({ shopDomain: 1, endTime: 1, status: 1 });
 
 // Virtual for checking if auction is currently active
