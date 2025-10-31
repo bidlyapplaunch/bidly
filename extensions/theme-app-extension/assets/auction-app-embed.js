@@ -1356,19 +1356,33 @@
         inject: injectWidget,
         
         openBidModal: function(auctionId) {
+            // Remove any existing modals first
+            const existingModals = document.querySelectorAll('.bidly-modal-overlay');
+            existingModals.forEach(modal => modal.remove());
+            
             const modal = createBidModal(auctionId);
+            modal.setAttribute('data-auction-id', auctionId);
             document.body.appendChild(modal);
             modal.style.display = 'flex';
         },
 
         openBuyNowModal: function(auctionId, price) {
+            // Remove any existing modals first
+            const existingModals = document.querySelectorAll('.bidly-modal-overlay');
+            existingModals.forEach(modal => modal.remove());
+            
             const modal = createBuyNowModal(auctionId, price);
+            modal.setAttribute('data-auction-id', auctionId);
             document.body.appendChild(modal);
             modal.style.display = 'flex';
         },
 
         openBidHistory: async function(auctionId) {
             try {
+                // Remove any existing modals first
+                const existingModals = document.querySelectorAll('.bidly-modal-overlay');
+                existingModals.forEach(modal => modal.remove());
+                
                 // Fetch bid history from backend
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
                 if (!response.ok) {
@@ -1385,46 +1399,48 @@
                 const auction = data.data;
                 const bidHistory = (auction.bidHistory || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
-                // Create modal HTML
-                const modalHtml = `
-                    <div class="bidly-modal-overlay">
-                        <div class="bidly-modal-content bidly-history-modal">
-                            <div class="bidly-modal-header">
-                                <h3>Bid History</h3>
-                                <span class="bidly-modal-close">&times;</span>
-                            </div>
-                            <div class="bidly-modal-body">
-                                <div class="bidly-bid-history">
-                                    ${bidHistory.length === 0 ? 
-                                        '<p class="bidly-no-bids">No bids placed yet</p>' :
-                                        bidHistory.map((bid, index) => {
-                                            // Find the highest bid amount to identify current bid
-                                            const highestBid = Math.max(...bidHistory.map(b => b.amount));
-                                            const isCurrentBid = bid.amount === highestBid;
-                                            
-                                            return `
-                                                <div class="bidly-bid-item ${isCurrentBid ? 'bidly-current-bid' : ''}">
-                                                    <div class="bidly-bid-info">
-                                                        <span class="bidly-bidder">${bid.bidder}</span>
-                                                        <span class="bidly-bid-time">${new Date(bid.timestamp).toLocaleString()}</span>
-                                                    </div>
-                                                    <div class="bidly-bid-amount">$${bid.amount.toFixed(2)}</div>
+                // Create modal element
+                const modal = document.createElement('div');
+                modal.className = 'bidly-modal-overlay';
+                modal.setAttribute('data-auction-id', auctionId);
+                modal.innerHTML = `
+                    <div class="bidly-modal-content bidly-history-modal">
+                        <div class="bidly-modal-header">
+                            <h3>Bid History</h3>
+                            <button class="bidly-modal-close">&times;</button>
+                        </div>
+                        <div class="bidly-modal-body">
+                            <div class="bidly-bid-history">
+                                ${bidHistory.length === 0 ? 
+                                    '<p class="bidly-no-bids">No bids placed yet</p>' :
+                                    bidHistory.map((bid, index) => {
+                                        // Find the highest bid amount to identify current bid
+                                        const highestBid = Math.max(...bidHistory.map(b => b.amount));
+                                        const isCurrentBid = bid.amount === highestBid;
+                                        
+                                        return `
+                                            <div class="bidly-bid-item ${isCurrentBid ? 'bidly-current-bid' : ''}">
+                                                <div class="bidly-bid-info">
+                                                    <span class="bidly-bidder">${bid.bidder}</span>
+                                                    <span class="bidly-bid-time">${new Date(bid.timestamp).toLocaleString()}</span>
                                                 </div>
-                                            `;
-                                        }).join('')
-                                    }
-                                </div>
+                                                <div class="bidly-bid-amount">$${bid.amount.toFixed(2)}</div>
+                                            </div>
+                                        `;
+                                    }).join('')
+                                }
                             </div>
                         </div>
                     </div>
                 `;
                 
                 // Add modal to page
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                document.body.appendChild(modal);
+                modal.style.display = 'flex';
                 
                 // Add close functionality
-                const modal = document.querySelector('.bidly-modal-overlay');
-                modal.querySelector('.bidly-modal-close').addEventListener('click', () => modal.remove());
+                const closeBtn = modal.querySelector('.bidly-modal-close');
+                closeBtn.addEventListener('click', () => modal.remove());
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) modal.remove();
                 });
@@ -1436,14 +1452,14 @@
         },
 
         closeBidModal: function(auctionId) {
-            const modal = document.querySelector(`#bidly-bid-form-${auctionId}`).closest('.bidly-modal-overlay');
+            const modal = document.querySelector(`.bidly-modal-overlay[data-auction-id="${auctionId}"]`);
             if (modal) {
                 modal.remove();
             }
         },
 
         closeBuyNowModal: function(auctionId) {
-            const modal = document.querySelector(`[onclick*="confirmBuyNow('${auctionId}'"]`).closest('.bidly-modal-overlay');
+            const modal = document.querySelector(`.bidly-modal-overlay[data-auction-id="${auctionId}"]`);
             if (modal) {
                 modal.remove();
             }
