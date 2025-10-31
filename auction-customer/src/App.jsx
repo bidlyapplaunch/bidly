@@ -14,7 +14,6 @@ import {
 import { auctionAPI } from './services/api';
 import socketService from './services/socket';
 import customerAuthService from './services/customerAuth';
-import themeService from './services/themeService';
 import AuctionCard from './components/AuctionCard';
 import CustomerAuth from './components/CustomerAuth';
 
@@ -46,13 +45,7 @@ function App() {
   const { shop, shopName } = getShopInfo();
 
   useEffect(() => {
-    // Load theme first
-    const loadTheme = async () => {
-      if (shop) {
-        await themeService.loadTheme(shop);
-      }
-    };
-    loadTheme();
+    // Theme loading disabled (reverted to original design)
 
     // Initialize customer authentication
     if (customerAuthService.isAuthenticated()) {
@@ -398,20 +391,6 @@ function App() {
             }
           ]}
         >
-          <style>{`
-            body {
-              font-family: var(--bidly-marketplace-font-family, Inter, sans-serif) !important;
-              background-color: var(--bidly-marketplace-color-background, #f5f5f5) !important;
-              color: var(--bidly-marketplace-color-text-primary, #222222) !important;
-            }
-            .Polaris-Page {
-              background-color: var(--bidly-marketplace-color-background, #f5f5f5) !important;
-            }
-            .Polaris-Card {
-              background-color: var(--bidly-marketplace-color-surface, #ffffff) !important;
-              border-color: var(--bidly-marketplace-color-border, #dddddd) !important;
-            }
-          `}</style>
           {/* Shop Information and Connection Status */}
           <div style={{ marginBottom: '1rem' }}>
             {shopName && (

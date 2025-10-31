@@ -295,13 +295,15 @@ const Dashboard = ({ onLogout }) => {
                   },
                   {
                     id: 'marketplace-customization',
-                    content: '🎨 Marketplace Style',
-                    panelID: 'marketplace-customization-panel'
+                    content: '🎨 Marketplace Style (Disabled)',
+                    panelID: 'marketplace-customization-panel',
+                    disabled: true
                   },
                   {
                     id: 'widget-customization',
-                    content: '🧩 Widget Style',
-                    panelID: 'widget-customization-panel'
+                    content: '🧩 Widget Style (Disabled)',
+                    panelID: 'widget-customization-panel',
+                    disabled: true
                   }
                 ]}
                 selected={selectedTab}

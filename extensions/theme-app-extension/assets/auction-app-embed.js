@@ -30,78 +30,8 @@
         ]
     };
 
-    // Theme loading functionality
-    async function loadTheme() {
-        try {
-            const response = await fetch(`${CONFIG.backendUrl}/api/widget-customization/theme?shop=${encodeURIComponent(CONFIG.shopDomain)}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'text/css'
-                }
-            });
-
-            if (response.ok) {
-                const css = await response.text();
-                applyTheme(css);
-                console.log('Bidly: Theme loaded successfully');
-            } else {
-                console.warn('Bidly: Failed to load theme, using defaults');
-                applyDefaultTheme();
-            }
-        } catch (error) {
-            console.error('Bidly: Error loading theme:', error);
-            applyDefaultTheme();
-        }
-    }
-
-    function applyTheme(css) {
-        // Remove existing theme style if it exists
-        const existingTheme = document.getElementById('bidly-widget-theme');
-        if (existingTheme) {
-            existingTheme.remove();
-        }
-
-        // Create new style element
-        const style = document.createElement('style');
-        style.id = 'bidly-widget-theme';
-        style.textContent = css;
-        document.head.appendChild(style);
-    }
-
-    function applyDefaultTheme() {
-        const defaultCSS = `
-            :root {
-                --bidly-widget-color-primary: #6366f1;
-                --bidly-widget-color-background: #ffffff;
-                --bidly-widget-color-surface: #667eea;
-                --bidly-widget-color-text-primary: #1e293b;
-                --bidly-widget-color-text-secondary: #64748b;
-                --bidly-widget-color-text-title: #ffffff;
-                --bidly-widget-color-text-timer: #fbbf24;
-                --bidly-widget-color-text-status: #10b981;
-                --bidly-widget-color-text-count: #64748b;
-                --bidly-widget-color-text-label: #475569;
-                --bidly-widget-color-text-amount: #6366f1;
-                --bidly-widget-color-border: #e2e8f0;
-                --bidly-widget-color-accent: #8b5cf6;
-                --bidly-widget-color-success: #10b981;
-                --bidly-widget-color-error: #ef4444;
-                --bidly-widget-color-hover: #4f46e5;
-                --bidly-widget-color-button-primary: #6366f1;
-                --bidly-widget-color-button-secondary: #64748b;
-                --bidly-widget-color-gradient1: #667eea;
-                --bidly-widget-color-gradient2: #764ba2;
-                --bidly-widget-font-family: 'Inter', sans-serif;
-                --bidly-widget-template: 'Classic';
-                --bidly-widget-border-radius: 16px;
-                --bidly-widget-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                --bidly-widget-spacing: 1.5rem;
-                --bidly-widget-button-padding: 0.75rem 1.5rem;
-                --bidly-widget-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            }
-        `;
-        applyTheme(defaultCSS);
-    }
+    // Theme loading functionality - DISABLED (reverted to original design)
+    // Theme customization is temporarily disabled
 
     // Use simplified login system
     function getCurrentCustomer() {
@@ -159,8 +89,8 @@
         }
         
         return `
-            <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" style="font-family: var(--bidly-font-family, 'Poppins', sans-serif);">
-                <div class="bidly-widget-container" style="border-radius: var(--bidly-border-radius, 6px); box-shadow: var(--bidly-shadow, 0 2px 4px 0 rgba(0, 0, 0, 0.1)); border: 1px solid var(--bidly-border, #e5e7eb); background: var(--bidly-background, #ffffff);">
+            <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
+                <div class="bidly-widget-container">
                     <div class="bidly-widget-header">
                         <h3 class="bidly-widget-title">Live Auction</h3>
                         <div class="bidly-widget-status">
@@ -221,12 +151,12 @@
                                                min="${minBidAmount}" 
                                                placeholder="Min: $${minBidAmount.toFixed(2)}"
                                                required>
-                                        <button type="submit" class="bidly-submit-bid" style="background-color: var(--bidly-primary-color, #3B82F6); color: white; border: none; padding: var(--bidly-button-padding, 0.625rem 1.25rem); border-radius: var(--bidly-border-radius, 6px); font-family: var(--bidly-font-family, 'Poppins', sans-serif);">Place Bid</button>
+                                        <button type="submit" class="bidly-submit-bid">Place Bid</button>
                                     </div>
                                 </form>
                             </div>
                             ${buyNowPrice > 0 ? `
-                                <button class="bidly-buy-now-btn" onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})" style="background-color: var(--bidly-primary-color, #3B82F6); color: white; border: none; padding: var(--bidly-button-padding, 0.625rem 1.25rem); border-radius: var(--bidly-border-radius, 6px); font-family: var(--bidly-font-family, 'Poppins', sans-serif);">
+                                <button class="bidly-buy-now-btn" onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})">
                                     Buy Now ($${buyNowPrice.toFixed(2)})
                                 </button>
                             ` : ''}
@@ -1873,8 +1803,7 @@
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
         
-        // Load theme first
-        await loadTheme();
+        // Theme loading disabled (reverted to original design)
         
         // Check if widget already exists to prevent reloading
         const existingWidget = document.querySelector('.bidly-auction-app-embed');
