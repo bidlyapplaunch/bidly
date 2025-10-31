@@ -215,15 +215,17 @@
                                     </div>
                                 </div>
                                 <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
-                                    <div class="bidly-bid-input-group">
-                                        <input type="number" 
-                                               id="bidly-bid-amount-${auctionId}" 
-                                               name="amount" 
-                                               step="0.01" 
-                                               min="${minBidAmount}" 
-                                               placeholder="Min: $${minBidAmount.toFixed(2)}"
-                                               ${isGuestViewOnly ? 'disabled' : 'required'}>
-                                        <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>Place Bid</button>
+                                    <div class="bidly-bid-input-container">
+                                        <div class="bidly-bid-input-group">
+                                            <input type="number" 
+                                                   id="bidly-bid-amount-${auctionId}" 
+                                                   name="amount" 
+                                                   step="0.01" 
+                                                   min="${minBidAmount}" 
+                                                   placeholder="Min: $${minBidAmount.toFixed(2)}"
+                                                   ${isGuestViewOnly ? 'disabled' : 'required'}>
+                                            <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>Place Bid</button>
+                                        </div>
                                     </div>
                                 </form>
                             </div>
