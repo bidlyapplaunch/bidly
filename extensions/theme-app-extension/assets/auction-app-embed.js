@@ -2389,23 +2389,18 @@
         return div.innerHTML;
     }
 
-    // Initialize chat after widget is injected
-    // Wrap the existing injectWidget function
-    const originalInjectWidget = window.injectWidget || injectWidget;
-    if (typeof injectWidget === 'function') {
-        const wrappedInjectWidget = function(auctionCheck, settings) {
-            originalInjectWidget(auctionCheck, settings);
-            // Initialize chat after widget is injected
-            setTimeout(() => {
+    // Initialize chat when widget is successfully injected
+    // This will be called after injectWidget completes
+    const originalInit = init;
+    init = async function() {
+        await originalInit();
+        // Initialize chat after init completes and widget is injected
+        setTimeout(() => {
+            if (document.querySelector('.bidly-auction-app-embed')) {
                 initializeChat();
-            }, 1000);
-        };
-        // Replace the function
-        if (typeof window !== 'undefined') {
-            window.injectWidget = wrappedInjectWidget;
-        }
-        injectWidget = wrappedInjectWidget;
-    }
+            }
+        }, 1500);
+    };
 
     // Also initialize chat when login status changes
     window.addEventListener('bidly-login-success', () => {
