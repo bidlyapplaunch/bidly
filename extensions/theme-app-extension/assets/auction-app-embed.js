@@ -1560,34 +1560,29 @@
                     
                     showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
                     
-                    // Trigger immediate real-time update
-                    console.log('Bidly: Triggering immediate update after bid placement');
-                    
-                    // Refresh widget content instead of reloading page
-                    const existingWidget = document.querySelector('.bidly-auction-app-embed');
-                    if (existingWidget && window.currentAuctionCheck) {
-                        const settings = {
-                            show_timer: true,
-                            show_bid_history: true,
-                            widget_position: 'below_price'
-                        };
-                        refreshWidgetContent(existingWidget, window.currentAuctionCheck, settings);
-                    }
-                    
-                    // Also trigger a manual update via polling
-                    setTimeout(async () => {
-                        try {
-                            const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
-                            if (response.ok) {
-                                const data = await response.json();
-                                if (data.success && data.auction) {
-                                    updateWidgetData(auctionId, data.auction);
+                    // Immediately fetch fresh auction data and update widget (no delay)
+                    console.log('Bidly: Fetching fresh auction data immediately after bid placement');
+                    try {
+                        const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.auction) {
+                                // Update widget with fresh data immediately
+                                updateWidgetData(auctionId, data.auction);
+                                // Also update cached auction check for future refreshes
+                                if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
+                                    window.currentAuctionCheck = { ...window.currentAuctionCheck, ...data.auction };
                                 }
+                                console.log('Bidly: Widget updated with fresh data immediately');
                             }
-                        } catch (error) {
-                            console.warn('Bidly: Error in manual update after bid:', error);
                         }
-                    }, 1000);
+                    } catch (error) {
+                        console.warn('Bidly: Error fetching fresh data after bid:', error);
+                        // Fallback: still update widget even if fetch fails (data might be in result)
+                        if (result.auction) {
+                            updateWidgetData(auctionId, result.auction);
+                        }
+                    }
                 } else {
                     alert('Error placing bid: ' + result.message);
                 }
@@ -1666,34 +1661,29 @@
                     
                     showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
                     
-                    // Trigger immediate real-time update
-                    console.log('Bidly: Triggering immediate update after bid placement');
-                    
-                    // Refresh widget content instead of reloading page
-                    const existingWidget = document.querySelector('.bidly-auction-app-embed');
-                    if (existingWidget && window.currentAuctionCheck) {
-                        const settings = {
-                            show_timer: true,
-                            show_bid_history: true,
-                            widget_position: 'below_price'
-                        };
-                        refreshWidgetContent(existingWidget, window.currentAuctionCheck, settings);
-                    }
-                    
-                    // Also trigger a manual update via polling
-                    setTimeout(async () => {
-                        try {
-                            const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
-                            if (response.ok) {
-                                const data = await response.json();
-                                if (data.success && data.auction) {
-                                    updateWidgetData(auctionId, data.auction);
+                    // Immediately fetch fresh auction data and update widget (no delay)
+                    console.log('Bidly: Fetching fresh auction data immediately after bid placement');
+                    try {
+                        const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.auction) {
+                                // Update widget with fresh data immediately
+                                updateWidgetData(auctionId, data.auction);
+                                // Also update cached auction check for future refreshes
+                                if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
+                                    window.currentAuctionCheck = { ...window.currentAuctionCheck, ...data.auction };
                                 }
+                                console.log('Bidly: Widget updated with fresh data immediately');
                             }
-                        } catch (error) {
-                            console.warn('Bidly: Error in manual update after bid:', error);
                         }
-                    }, 1000);
+                    } catch (error) {
+                        console.warn('Bidly: Error fetching fresh data after bid:', error);
+                        // Fallback: still update widget even if fetch fails (data might be in result)
+                        if (result.auction) {
+                            updateWidgetData(auctionId, result.auction);
+                        }
+                    }
                 } else {
                     alert('Error placing bid: ' + result.message);
                 }
