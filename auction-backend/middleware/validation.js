@@ -109,8 +109,8 @@ export const validateUpdateAuction = [
   
   body('status')
     .optional()
-    .isIn(['pending', 'active', 'ended', 'closed'])
-    .withMessage('Status must be either pending, active, ended, or closed'),
+    .isIn(['pending', 'active', 'ended', 'closed', 'reserve_not_met'])
+    .withMessage('Status must be either pending, active, ended, closed, or reserve_not_met'),
   
   handleValidationErrors
 ];
