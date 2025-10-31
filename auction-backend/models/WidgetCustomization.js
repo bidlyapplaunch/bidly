@@ -24,7 +24,7 @@ const widgetCustomizationSchema = new mongoose.Schema({
         primary: {
             type: String,
             required: true,
-            default: '#007bff'
+            default: '#6366f1'
         },
         background: {
             type: String,
@@ -34,92 +34,92 @@ const widgetCustomizationSchema = new mongoose.Schema({
         surface: {
             type: String,
             required: true,
-            default: '#f8f9fa'
+            default: '#667eea'
         },
         textPrimary: {
             type: String,
             required: true,
-            default: '#212529'
+            default: '#1e293b'
         },
         textSecondary: {
             type: String,
             required: true,
-            default: '#6c757d'
+            default: '#64748b'
         },
         textTitle: {
             type: String,
             required: true,
-            default: '#212529'
+            default: '#ffffff'
         },
         textTimer: {
             type: String,
             required: true,
-            default: '#dc3545'
+            default: '#fbbf24'
         },
         textStatus: {
             type: String,
             required: true,
-            default: '#28a745'
+            default: '#10b981'
         },
         textCount: {
             type: String,
             required: true,
-            default: '#6c757d'
+            default: '#64748b'
         },
         textLabel: {
             type: String,
             required: true,
-            default: '#495057'
+            default: '#475569'
         },
         textAmount: {
             type: String,
             required: true,
-            default: '#007bff'
+            default: '#6366f1'
         },
         border: {
             type: String,
             required: true,
-            default: '#dee2e6'
+            default: '#e2e8f0'
         },
         accent: {
             type: String,
             required: true,
-            default: '#28a745'
+            default: '#8b5cf6'
         },
         success: {
             type: String,
             required: true,
-            default: '#28a745'
+            default: '#10b981'
         },
         error: {
             type: String,
             required: true,
-            default: '#dc3545'
+            default: '#ef4444'
         },
         hover: {
             type: String,
             required: true,
-            default: '#0056b3'
+            default: '#4f46e5'
         },
         buttonPrimary: {
             type: String,
             required: true,
-            default: '#007bff'
+            default: '#6366f1'
         },
         buttonSecondary: {
             type: String,
             required: true,
-            default: '#6c757d'
+            default: '#64748b'
         },
         gradient1: {
             type: String,
             required: true,
-            default: '#007bff'
+            default: '#667eea'
         },
         gradient2: {
             type: String,
             required: true,
-            default: '#0056b3'
+            default: '#764ba2'
         }
     },
     createdAt: {
