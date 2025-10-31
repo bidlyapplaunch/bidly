@@ -306,9 +306,9 @@
             <div class="bidly-price-amount">$${displayPrice.toFixed(2)}</div>
             ${startingBid > 0 && currentBid === 0 ? `<div class="bidly-starting-bid">Starting: $${startingBid.toFixed(2)}</div>` : ''}
           </div>
-          ${timeLeft ? `<div class="bidly-auction-time">⏱️ Ends in: ${timeLeft}</div>` : ''}
-          ${bidCount > 0 ? `<div style="color: #666; font-size: 1rem; margin-top: 0.5rem;">${bidCount} Bid${bidCount !== 1 ? 's' : ''}</div>` : ''}
-          <div class="bidly-view-product">View Product →</div>
+              ${auction.endTime && status === 'active' ? `<div class="bidly-auction-time" data-end-time="${auction.endTime}">Time left: ${timeLeft}</div>` : ''}
+              ${bidCount > 0 ? `<div style="color: #666; font-size: 1rem; margin-top: 0.5rem;">${bidCount} Bid${bidCount !== 1 ? 's' : ''}</div>` : ''}
+              <div class="bidly-view-product">View Product →</div>
         </div>
       `;
       
@@ -327,8 +327,53 @@
         }
       });
       
+      // Start real-time timer if auction is active
+      if (auction.endTime && status === 'active') {
+        startCountdownTimer(blockId, auction.endTime);
+      }
+      
       container.style.display = 'grid';
       if (loading) loading.style.display = 'none';
+    }
+    
+    function startCountdownTimer(blockId, endTime) {
+      // Clear any existing timer for this block
+      if (window.bidlyBlockTimers && window.bidlyBlockTimers[blockId]) {
+        clearInterval(window.bidlyBlockTimers[blockId]);
+      }
+      
+      if (!window.bidlyBlockTimers) {
+        window.bidlyBlockTimers = {};
+      }
+      
+      const timerElement = document.querySelector(`#bidly-auction-detail-${blockId} .bidly-auction-time`);
+      if (!timerElement) return;
+      
+      // Update immediately
+      updateTimer(timerElement, endTime);
+      
+      // Update every second
+      window.bidlyBlockTimers[blockId] = setInterval(() => {
+        updateTimer(timerElement, endTime);
+      }, 1000);
+    }
+    
+    function updateTimer(element, endTime) {
+      if (!element || !endTime) return;
+      
+      const timeLeft = formatTimeLeft(endTime);
+      if (timeLeft === 'Auction Ended') {
+        element.textContent = 'Time left: Auction Ended';
+        if (window.bidlyBlockTimers) {
+          const blockId = element.closest('[id*="bidly-auction-detail"]')?.id?.replace('bidly-auction-detail-', '');
+          if (blockId && window.bidlyBlockTimers[blockId]) {
+            clearInterval(window.bidlyBlockTimers[blockId]);
+            delete window.bidlyBlockTimers[blockId];
+          }
+        }
+      } else {
+        element.textContent = `Time left: ${timeLeft}`;
+      }
     }
     
     function computeAuctionStatus(auction) {

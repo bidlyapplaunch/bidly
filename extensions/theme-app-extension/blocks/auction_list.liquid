@@ -301,8 +301,9 @@
         const statusClass = status === 'active' ? 'bidly-status-active' : status === 'ended' ? 'bidly-status-ended' : 'bidly-status-pending';
         const statusText = status === 'active' ? '● LIVE' : status === 'ended' ? '● ENDED' : '● PENDING';
         
+        const auctionId = auction._id || auction.id || Math.random().toString(36);
         return `
-          <div class="bidly-auction-card" data-product-url="${productUrl}">
+          <div class="bidly-auction-card" data-product-url="${productUrl}" data-auction-id="${auctionId}" data-end-time="${auction.endTime || ''}">
             ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-auction-card-image">` : '<div class="bidly-auction-card-image" style="display: flex; align-items: center; justify-content: center; color: #999;">No Image</div>'}
             <div class="bidly-auction-card-content">
               <h3 class="bidly-auction-card-title">${productTitle}</h3>
@@ -311,7 +312,7 @@
                 <div class="bidly-price-label">${priceLabel}</div>
                 <div class="bidly-price-amount">$${displayPrice.toFixed(2)}</div>
               </div>
-              ${timeLeft ? `<div class="bidly-auction-card-time">⏱️ ${timeLeft}</div>` : ''}
+              ${auction.endTime && status === 'active' ? `<div class="bidly-auction-card-time" data-end-time="${auction.endTime}">Time left: ${timeLeft}</div>` : ''}
               ${bidCount > 0 ? `<div class="bidly-auction-card-bids">${bidCount} Bid${bidCount !== 1 ? 's' : ''}</div>` : ''}
               <a href="${productUrl}" class="bidly-view-product-link" onclick="event.stopPropagation(); return true;">View Product →</a>
             </div>
@@ -331,8 +332,62 @@
         });
       });
       
+      // Start real-time timers for active auctions
+      auctions.forEach((auction, index) => {
+        const status = computeAuctionStatus(auction);
+        if (auction.endTime && status === 'active') {
+          const auctionId = auction._id || auction.id || `list-${blockId}-${index}`;
+          startCountdownTimer(`${blockId}-${auctionId}`, auction.endTime);
+        }
+      });
+      
       if (container) container.style.display = 'block';
       if (loading) loading.style.display = 'none';
+    }
+    
+    function startCountdownTimer(timerId, endTime) {
+      // Clear any existing timer
+      if (window.bidlyBlockTimers && window.bidlyBlockTimers[timerId]) {
+        clearInterval(window.bidlyBlockTimers[timerId]);
+      }
+      
+      if (!window.bidlyBlockTimers) {
+        window.bidlyBlockTimers = {};
+      }
+      
+      // Find timer element by data-end-time attribute
+      const timerElement = document.querySelector(`.bidly-auction-card-time[data-end-time="${endTime}"]`);
+      if (!timerElement) return;
+      
+      // Update immediately
+      updateTimer(timerElement, endTime);
+      
+      // Update every second
+      window.bidlyBlockTimers[timerId] = setInterval(() => {
+        updateTimer(timerElement, endTime);
+      }, 1000);
+    }
+    
+    function updateTimer(element, endTime) {
+      if (!element || !endTime) return;
+      
+      const timeLeft = formatTimeLeft(endTime);
+      if (timeLeft === 'Auction Ended') {
+        element.textContent = 'Time left: Auction Ended';
+        // Find timer ID and clear it
+        if (window.bidlyBlockTimers) {
+          const timerId = Object.keys(window.bidlyBlockTimers).find(id => {
+            const timerEl = document.querySelector(`.bidly-auction-card-time[data-end-time="${endTime}"]`);
+            return timerEl === element;
+          });
+          if (timerId && window.bidlyBlockTimers[timerId]) {
+            clearInterval(window.bidlyBlockTimers[timerId]);
+            delete window.bidlyBlockTimers[timerId];
+          }
+        }
+      } else {
+        element.textContent = `Time left: ${timeLeft}`;
+      }
     }
     
     function computeAuctionStatus(auction) {

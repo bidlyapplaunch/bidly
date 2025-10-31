@@ -80,7 +80,7 @@
         const isShopify = isShopifyCustomer();
         const isGuest = loggedIn && !isShopify;
         
-        // If not logged in, show login options but still display auction info
+        // If not logged in, show ONLY login prompt (no auction info)
         if (!loggedIn) {
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
@@ -93,34 +93,11 @@
                                   '<span class="bidly-status-ended">● ENDED</span>'}
                             </div>
                         </div>
-
-                        ${show_timer && status === 'active' && endTime ? `
-                            <div class="bidly-widget-timer">
-                                <div class="bidly-timer-label">Ends In:</div>
-                                <div class="bidly-countdown" data-end-time="${endTime}">
-                                    <span class="bidly-timer-days">0</span>d 
-                                    <span class="bidly-timer-hours">0</span>h 
-                                    <span class="bidly-timer-minutes">0</span>m 
-                                    <span class="bidly-timer-seconds">0</span>s
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <div class="bidly-widget-pricing">
-                            <div class="bidly-current-bid">
-                                <span class="bidly-label">${bidCount > 0 ? 'CURRENT BID:' : 'STARTING BID:'}</span>
-                                <span class="bidly-amount" data-current-bid="${displayBid}">$${displayBid.toFixed(2)}</span>
-                            </div>
-                            <div class="bidly-bid-count">
-                                <span class="bidly-label">BIDS:</span>
-                                <span class="bidly-count" data-bid-count="${bidCount}">${bidCount}</span>
-                            </div>
-                        </div>
-
+                        
                         <div class="bidly-login-required">
                             <div class="bidly-login-message">
-                                <h4>Login to Enter Auction</h4>
-                                <p>Log in with Shopify to place bids</p>
+                                <h4>Login Required</h4>
+                                <p>Please log in to view this auction</p>
                             </div>
                             
                             <div class="bidly-login-options">
