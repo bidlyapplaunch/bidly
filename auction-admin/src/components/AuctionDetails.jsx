@@ -39,8 +39,24 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       setLoading(true);
       console.log('🔍 Fetching auction details for ID:', auctionId);
       const response = await auctionAPI.getAuctionById(auctionId);
-      console.log('✅ Auction details fetched:', response.data);
-      setAuctionData(response.data);
+      console.log('✅ Auction details fetched, full response:', response);
+      
+      // auctionAPI.getAuctionById returns response.data from axios
+      // Backend returns: { success: true, data: {...auction object...} }
+      // So response will be: { success: true, data: {...} }
+      let data;
+      if (response.success && response.data) {
+        data = response.data;
+      } else if (response.data) {
+        // Fallback: response might already be the data object
+        data = response.data;
+      } else {
+        data = response;
+      }
+      
+      console.log('✅ Extracted auction data:', data);
+      console.log('✅ Auction ID in data:', data?._id || data?.id);
+      setAuctionData(data);
     } catch (error) {
       console.error('❌ Error fetching auction details:', error);
       console.error('Error details:', error.response?.data);
@@ -51,7 +67,24 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
 
   const handleCloseAuction = async () => {
     try {
-      const auctionId = auctionData?.id || auctionData?._id;
+      // Try multiple possible ID fields - prioritize auctionData since it's the fetched data
+      const auctionId = auctionData?._id || auctionData?.id || auction?._id || auction?.id;
+      
+      console.log('🔍 Attempting to close auction. Available IDs:');
+      console.log('  - auctionData?._id:', auctionData?._id);
+      console.log('  - auctionData?.id:', auctionData?.id);
+      console.log('  - auction?._id:', auction?._id);
+      console.log('  - auction?.id:', auction?.id);
+      console.log('  - Selected ID:', auctionId);
+      
+      if (!auctionId) {
+        console.error('❌ No auction ID found. auctionData:', auctionData, 'auction:', auction);
+        setToastMessage('Error: Auction ID not found');
+        setShowToast(true);
+        return;
+      }
+      
+      console.log('🔍 Closing auction with ID:', auctionId);
       await auctionAPI.closeAuction(auctionId);
       setToastMessage('Auction closed successfully');
       setShowToast(true);
@@ -59,6 +92,8 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       onRefresh?.();
     } catch (error) {
       console.error('Error closing auction:', error);
+      setToastMessage(`Error closing auction: ${error.response?.data?.message || error.message}`);
+      setShowToast(true);
     }
   };
 
