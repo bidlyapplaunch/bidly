@@ -53,7 +53,31 @@ async function fixIndex() {
       await collection.dropIndex(oldIndex.name);
       console.log('✅ Dropped old index');
     } else {
-      console.log('\n✅ No old index found (may have been already dropped)');
+      console.log('\n✅ No old compound index found (may have been already dropped)');
+    }
+
+    // First, ensure all documents have isDeleted field set to false if missing
+    console.log('\n📝 Ensuring all documents have isDeleted field...');
+    const updateResult = await collection.updateMany(
+      { isDeleted: { $exists: false } },
+      { $set: { isDeleted: false } }
+    );
+    if (updateResult.modifiedCount > 0) {
+      console.log(`✅ Updated ${updateResult.modifiedCount} documents to have isDeleted: false`);
+    } else {
+      console.log('✅ All documents already have isDeleted field');
+    }
+
+    // Drop the old unique index on shopifyProductId alone (index #2)
+    console.log('\n🗑️  Checking for old unique index on shopifyProductId...');
+    const oldUniqueIndex = indexes.find(idx => 
+      idx.name === 'shopifyProductId_1' && idx.unique === true
+    );
+    
+    if (oldUniqueIndex) {
+      console.log('🗑️  Found old unique index on shopifyProductId, dropping...');
+      await collection.dropIndex('shopifyProductId_1');
+      console.log('✅ Dropped old unique index on shopifyProductId');
     }
 
     // The new partial unique index will be created automatically by Mongoose on next model load
@@ -64,7 +88,7 @@ async function fixIndex() {
         { shopDomain: 1, shopifyProductId: 1 },
         {
           unique: true,
-          partialFilterExpression: { $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] },
+          partialFilterExpression: { isDeleted: false },
           name: 'shopDomain_1_shopifyProductId_1_partial'
         }
       );
@@ -82,7 +106,7 @@ async function fixIndex() {
           { shopDomain: 1, shopifyProductId: 1 },
           {
             unique: true,
-            partialFilterExpression: { $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] },
+            partialFilterExpression: { isDeleted: false },
             name: 'shopDomain_1_shopifyProductId_1_partial'
           }
         );

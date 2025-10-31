@@ -182,12 +182,12 @@ const auctionSchema = new mongoose.Schema({
 auctionSchema.index({ shopDomain: 1, status: 1 });
 // Partial unique index: only enforce uniqueness for non-deleted auctions
 // This allows relisting products from soft-deleted auctions
-// MongoDB doesn't support $ne in partial indexes, so we check for false or missing
+// Note: All documents should have isDeleted field (defaults to false)
 auctionSchema.index(
   { shopDomain: 1, shopifyProductId: 1 },
   { 
     unique: true,
-    partialFilterExpression: { $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] }
+    partialFilterExpression: { isDeleted: false }
   }
 );
 auctionSchema.index({ shopDomain: 1, endTime: 1, status: 1 });
