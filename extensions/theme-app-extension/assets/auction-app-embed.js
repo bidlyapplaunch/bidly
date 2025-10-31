@@ -863,7 +863,7 @@
             const distance = endTimestamp - now;
 
             if (distance < 0) {
-                countdownElement.innerHTML = 'Auction Ended';
+                countdownElement.innerHTML = '<span class="bidly-time-unit">Auction Ended</span>';
                 return;
             }
 
@@ -872,10 +872,13 @@
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            countdownElement.querySelector('.bidly-timer-days').textContent = days;
-            countdownElement.querySelector('.bidly-timer-hours').textContent = hours;
-            countdownElement.querySelector('.bidly-timer-minutes').textContent = minutes;
-            countdownElement.querySelector('.bidly-timer-seconds').textContent = seconds;
+            // Render fresh markup to avoid querying non-existent child nodes
+            countdownElement.innerHTML = `
+                <span class="bidly-time-unit">${days}d</span>
+                <span class="bidly-time-unit">${hours}h</span>
+                <span class="bidly-time-unit">${minutes}m</span>
+                <span class="bidly-time-unit">${seconds}s</span>
+            `;
         }
 
         updateCountdown();
@@ -942,12 +945,8 @@
             socket.on('auction-time-extended', (data) => {
                 console.log('Bidly: Time extension received:', data);
                 if (data.auctionId === auctionId) {
-                    // Update the countdown timer with new end time
-                    const countdownElement = document.querySelector(`#bidly-countdown-${auctionId}`);
-                    if (countdownElement) {
-                        countdownElement.setAttribute('data-end-time', data.newEndTime);
-                        console.log('Bidly: Updated countdown timer with new end time');
-                    }
+                    // Reinitialize countdown with the new end time
+                    initializeCountdown(auctionId, data.newEndTime);
                     
                     // Show notification for time extension
                     showBidNotification(null, null, data.bidder, 'Auction Extended!', `🍿 ${data.message}`);

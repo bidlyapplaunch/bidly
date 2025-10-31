@@ -488,7 +488,10 @@ export const placeBid = async (req, res, next) => {
     
     // Refresh auction data
     const updatedAuction = await Auction.findById(req.params.id);
-    
+
+    // Track if auction ended (e.g., via Buy Now) — declare BEFORE any checks that reference it
+    let auctionEnded = false;
+
     // Check for popcorn auction time extension
     let timeExtended = false;
     if (updatedAuction.popcornEnabled && !auctionEnded) {
@@ -528,7 +531,6 @@ export const placeBid = async (req, res, next) => {
     }
     
     // Check if bid matches buy now price
-    let auctionEnded = false;
     if (amount >= auction.buyNowPrice) {
       updatedAuction.status = 'ended';
       updatedAuction.endTime = new Date(); // End immediately
