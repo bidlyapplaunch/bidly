@@ -856,6 +856,13 @@
         const countdownElement = document.querySelector(`#bidly-auction-widget-${auctionId} .bidly-countdown`);
         if (!countdownElement) return;
 
+        // Clear any existing interval for this auction
+        window.bidlyCountdownIntervals = window.bidlyCountdownIntervals || {};
+        if (window.bidlyCountdownIntervals[auctionId]) {
+            clearInterval(window.bidlyCountdownIntervals[auctionId]);
+            console.log('Bidly: Cleared existing countdown interval for auction:', auctionId);
+        }
+
         const endTimestamp = new Date(endTime).getTime();
         
         function updateCountdown() {
@@ -882,7 +889,11 @@
         }
 
         updateCountdown();
-        setInterval(updateCountdown, 1000);
+        const intervalId = setInterval(updateCountdown, 1000);
+        
+        // Store interval ID for cleanup
+        window.bidlyCountdownIntervals[auctionId] = intervalId;
+        console.log('Bidly: Countdown timer initialized/updated for auction:', auctionId, 'End time:', endTime);
     }
 
     // Initialize real-time updates via WebSocket
