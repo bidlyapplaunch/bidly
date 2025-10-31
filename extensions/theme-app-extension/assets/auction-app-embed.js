@@ -71,19 +71,33 @@
     function applyDefaultTheme() {
         const defaultCSS = `
             :root {
-                --bidly-primary-color: #3B82F6;
-                --bidly-font-family: 'Poppins', sans-serif;
-                --bidly-template: 'Classic';
-                --bidly-border-radius: 6px;
-                --bidly-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-                --bidly-spacing: 1.25rem;
-                --bidly-button-padding: 0.625rem 1.25rem;
-                --bidly-primary-hover: color-mix(in srgb, var(--bidly-primary-color) 80%, black);
-                --bidly-primary-light: color-mix(in srgb, var(--bidly-primary-color) 90%, white);
-                --bidly-text-primary: #1f2937;
-                --bidly-text-secondary: #6b7280;
-                --bidly-background: #ffffff;
-                --bidly-border: #e5e7eb;
+                --bidly-widget-color-primary: #6366f1;
+                --bidly-widget-color-background: #ffffff;
+                --bidly-widget-color-surface: #667eea;
+                --bidly-widget-color-text-primary: #1e293b;
+                --bidly-widget-color-text-secondary: #64748b;
+                --bidly-widget-color-text-title: #ffffff;
+                --bidly-widget-color-text-timer: #fbbf24;
+                --bidly-widget-color-text-status: #10b981;
+                --bidly-widget-color-text-count: #64748b;
+                --bidly-widget-color-text-label: #475569;
+                --bidly-widget-color-text-amount: #6366f1;
+                --bidly-widget-color-border: #e2e8f0;
+                --bidly-widget-color-accent: #8b5cf6;
+                --bidly-widget-color-success: #10b981;
+                --bidly-widget-color-error: #ef4444;
+                --bidly-widget-color-hover: #4f46e5;
+                --bidly-widget-color-button-primary: #6366f1;
+                --bidly-widget-color-button-secondary: #64748b;
+                --bidly-widget-color-gradient1: #667eea;
+                --bidly-widget-color-gradient2: #764ba2;
+                --bidly-widget-font-family: 'Inter', sans-serif;
+                --bidly-widget-template: 'Classic';
+                --bidly-widget-border-radius: 16px;
+                --bidly-widget-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                --bidly-widget-spacing: 1.5rem;
+                --bidly-widget-button-padding: 0.75rem 1.5rem;
+                --bidly-widget-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             }
         `;
         applyTheme(defaultCSS);
