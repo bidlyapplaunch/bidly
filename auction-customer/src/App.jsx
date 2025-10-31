@@ -400,16 +400,16 @@ function App() {
         >
           <style>{`
             body {
-              font-family: var(--bidly-font-family, Inter, sans-serif) !important;
-              background-color: var(--bidly-color-background, #f5f5f5) !important;
-              color: var(--bidly-color-text-primary, #222222) !important;
+              font-family: var(--bidly-marketplace-font-family, Inter, sans-serif) !important;
+              background-color: var(--bidly-marketplace-color-background, #f5f5f5) !important;
+              color: var(--bidly-marketplace-color-text-primary, #222222) !important;
             }
             .Polaris-Page {
-              background-color: var(--bidly-color-background, #f5f5f5) !important;
+              background-color: var(--bidly-marketplace-color-background, #f5f5f5) !important;
             }
             .Polaris-Card {
-              background-color: var(--bidly-color-surface, #ffffff) !important;
-              border-color: var(--bidly-color-border, #dddddd) !important;
+              background-color: var(--bidly-marketplace-color-surface, #ffffff) !important;
+              border-color: var(--bidly-marketplace-color-border, #dddddd) !important;
             }
           `}</style>
           {/* Shop Information and Connection Status */}

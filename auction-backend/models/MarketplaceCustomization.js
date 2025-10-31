@@ -69,6 +69,16 @@ const marketplaceCustomizationSchema = new mongoose.Schema({
             type: String,
             required: true,
             default: '#0056b3'
+        },
+        gradient1: {
+            type: String,
+            required: true,
+            default: '#007bff'
+        },
+        gradient2: {
+            type: String,
+            required: true,
+            default: '#0056b3'
         }
     },
     createdAt: {

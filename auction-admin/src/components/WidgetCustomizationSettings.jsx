@@ -35,7 +35,9 @@ const WidgetCustomizationSettings = () => {
       error: '#dc3545',
       hover: '#0056b3',
       buttonPrimary: '#007bff',
-      buttonSecondary: '#6c757d'
+      buttonSecondary: '#6c757d',
+      gradient1: '#007bff',
+      gradient2: '#0056b3'
     }
   });
   const [loading, setLoading] = useState(true);
@@ -223,44 +225,109 @@ const WidgetCustomizationSettings = () => {
               <ColorInput label="Button Primary" colorKey="buttonPrimary" />
               <ColorInput label="Button Secondary" colorKey="buttonSecondary" />
             </div>
+            
+            <Text variant="headingSm">Gradients</Text>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <ColorInput label="Gradient Start" colorKey="gradient1" />
+              <ColorInput label="Gradient End" colorKey="gradient2" />
+            </div>
+            <div style={{
+              marginTop: 8,
+              padding: 16,
+              background: `linear-gradient(135deg, ${customization.colors.gradient1 || '#007bff'}, ${customization.colors.gradient2 || '#0056b3'})`,
+              borderRadius: 8,
+              textAlign: 'center',
+              color: '#fff',
+              fontWeight: 600
+            }}>
+              Gradient Preview
+            </div>
 
             {/* Live preview */}
             <div style={{
-              marginTop: 8,
+              marginTop: 16,
               border: '1px solid #DFE3E8',
               borderRadius: 8,
-              overflow: 'hidden'
+              overflow: 'hidden',
+              fontFamily: customization.font || 'Inter, sans-serif'
             }}>
               <div style={{
                 background: customization.colors.surface,
                 padding: 16,
                 borderBottom: `1px solid ${customization.colors.border}`
               }}>
-                <Text variant="headingMd" as="h3" style={{ color: customization.colors.textTitle }}>
-                  Widget Preview
-                </Text>
-                <div style={{ fontFamily: 'monospace', color: customization.colors.textTimer, marginTop: 6 }}>
+                <div style={{ 
+                  fontSize: 18, 
+                  fontWeight: 600, 
+                  color: customization.colors.textTitle,
+                  marginBottom: 8
+                }}>
+                  Live Auction
+                </div>
+                <div style={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: 16,
+                  color: customization.colors.textTimer, 
+                  marginTop: 6,
+                  marginBottom: 4
+                }}>
                   00d 12h 45m 20s
                 </div>
+                <div style={{ 
+                  fontSize: 12,
+                  color: customization.colors.textStatus 
+                }}>
+                  ● ACTIVE
+                </div>
               </div>
-              <div style={{ padding: 16, background: customization.colors.background }}>
-                <div style={{ color: customization.colors.textLabel, marginBottom: 6 }}>Minimum Bid</div>
-                <div style={{ color: customization.colors.textAmount, fontWeight: 700, fontSize: 18, marginBottom: 12 }}>$123.00</div>
-                <button style={{
-                  background: customization.colors.buttonPrimary,
-                  color: '#fff',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: 6,
-                  marginRight: 8
-                }}>Place Bid</button>
-                <button style={{
-                  background: customization.colors.success,
-                  color: '#fff',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: 6
-                }}>Buy Now</button>
+              <div style={{ 
+                padding: 16, 
+                background: customization.colors.background 
+              }}>
+                <div style={{ 
+                  fontSize: 12,
+                  color: customization.colors.textLabel, 
+                  marginBottom: 4 
+                }}>
+                  Current Bid:
+                </div>
+                <div style={{ 
+                  color: customization.colors.textAmount, 
+                  fontWeight: 700, 
+                  fontSize: 24, 
+                  marginBottom: 8 
+                }}>
+                  $123.00
+                </div>
+                <div style={{ 
+                  fontSize: 12,
+                  color: customization.colors.textCount, 
+                  marginBottom: 12 
+                }}>
+                  5 bids
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button style={{
+                    background: customization.colors.buttonPrimary,
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 500
+                  }}>Place Bid</button>
+                  <button style={{
+                    background: customization.colors.success,
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 500
+                  }}>Buy Now</button>
+                </div>
               </div>
             </div>
           </div>

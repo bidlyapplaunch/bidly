@@ -20,7 +20,7 @@ class ThemeService {
       }
 
       const backendUrl = 'https://bidly-auction-backend.onrender.com';
-      const response = await fetch(`${backendUrl}/api/customization/theme?shop=${encodeURIComponent(shopDomain)}`, {
+      const response = await fetch(`${backendUrl}/api/marketplace-customization/theme?shop=${encodeURIComponent(shopDomain)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'text/css'
@@ -68,24 +68,24 @@ class ThemeService {
   getDefaultTheme() {
     const defaultCSS = `
       :root {
-        --bidly-color-primary: #007bff;
-        --bidly-color-background: #f5f5f5;
-        --bidly-color-surface: #ffffff;
-        --bidly-color-text-primary: #222222;
-        --bidly-color-text-secondary: #666666;
-        --bidly-color-border: #dddddd;
-        --bidly-color-accent: #00b894;
-        --bidly-color-success: #00c851;
-        --bidly-color-error: #ff4444;
-        --bidly-color-hover: #0056b3;
-        --bidly-font-family: 'Inter', sans-serif;
-        --bidly-template: 'Classic';
-        --bidly-border-radius: 6px;
-        --bidly-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-        --bidly-spacing: 1.25rem;
-        --bidly-button-padding: 0.625rem 1.25rem;
-        --bidly-primary-hover: color-mix(in srgb, var(--bidly-color-primary) 80%, black);
-        --bidly-primary-light: color-mix(in srgb, var(--bidly-color-primary) 90%, white);
+        --bidly-marketplace-color-primary: #007bff;
+        --bidly-marketplace-color-background: #f5f5f5;
+        --bidly-marketplace-color-surface: #ffffff;
+        --bidly-marketplace-color-text-primary: #222222;
+        --bidly-marketplace-color-text-secondary: #666666;
+        --bidly-marketplace-color-border: #dddddd;
+        --bidly-marketplace-color-accent: #00b894;
+        --bidly-marketplace-color-success: #00c851;
+        --bidly-marketplace-color-error: #ff4444;
+        --bidly-marketplace-color-hover: #0056b3;
+        --bidly-marketplace-font-family: 'Inter', sans-serif;
+        --bidly-marketplace-template: 'Classic';
+        --bidly-marketplace-border-radius: 6px;
+        --bidly-marketplace-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+        --bidly-marketplace-spacing: 1.25rem;
+        --bidly-marketplace-button-padding: 0.625rem 1.25rem;
+        --bidly-marketplace-primary-hover: color-mix(in srgb, var(--bidly-marketplace-color-primary) 80%, black);
+        --bidly-marketplace-primary-light: color-mix(in srgb, var(--bidly-marketplace-color-primary) 90%, white);
       }
     `;
     

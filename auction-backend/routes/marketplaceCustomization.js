@@ -53,7 +53,9 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
                     accent: '#00b894',
                     success: '#00c851',
                     error: '#ff4444',
-                    hover: '#0056b3'
+                    hover: '#0056b3',
+                    gradient1: '#007bff',
+                    gradient2: '#0056b3'
                 }
             };
         }
@@ -115,7 +117,7 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
 
         // Validate colors
         if (colors) {
-            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'border', 'accent', 'success', 'error', 'hover'];
+            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'border', 'accent', 'success', 'error', 'hover', 'gradient1', 'gradient2'];
             const invalidKeys = Object.keys(colors).filter(key => !validColorKeys.includes(key));
             if (invalidKeys.length > 0) {
                 return res.status(400).json({
@@ -190,7 +192,9 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
                     accent: '#00b894',
                     success: '#00c851',
                     error: '#ff4444',
-                    hover: '#0056b3'
+                    hover: '#0056b3',
+                    gradient1: '#007bff',
+                    gradient2: '#0056b3'
                 }
             };
         }
@@ -220,6 +224,8 @@ function generateMarketplaceThemeCSS(customization) {
         --bidly-marketplace-color-success: ${colors.success};
         --bidly-marketplace-color-error: ${colors.error};
         --bidly-marketplace-color-hover: ${colors.hover};
+        --bidly-marketplace-color-gradient1: ${colors.gradient1 || '#007bff'};
+        --bidly-marketplace-color-gradient2: ${colors.gradient2 || '#0056b3'};
         --bidly-marketplace-font-family: '${font}', sans-serif;
         --bidly-marketplace-template: '${template}';
     `;
@@ -263,6 +269,7 @@ function generateMarketplaceThemeCSS(customization) {
     css += `
         --bidly-marketplace-primary-hover: color-mix(in srgb, var(--bidly-marketplace-color-primary) 80%, black);
         --bidly-marketplace-primary-light: color-mix(in srgb, var(--bidly-marketplace-color-primary) 90%, white);
+        --bidly-marketplace-gradient: linear-gradient(135deg, var(--bidly-marketplace-color-gradient1), var(--bidly-marketplace-color-gradient2));
     }
     `;
 

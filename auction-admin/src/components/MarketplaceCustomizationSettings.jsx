@@ -26,7 +26,9 @@ const MarketplaceCustomizationSettings = () => {
       accent: '#00b894',
       success: '#00c851',
       error: '#ff4444',
-      hover: '#0056b3'
+      hover: '#0056b3',
+      gradient1: '#007bff',
+      gradient2: '#0056b3'
     }
   });
   const [loading, setLoading] = useState(true);
@@ -192,34 +194,89 @@ const MarketplaceCustomizationSettings = () => {
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <ColorInput label="Hover" colorKey="hover" />
             </div>
+            
+            <Text variant="headingSm">Gradients</Text>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <ColorInput label="Gradient Start" colorKey="gradient1" />
+              <ColorInput label="Gradient End" colorKey="gradient2" />
+            </div>
+            <div style={{
+              marginTop: 8,
+              padding: 16,
+              background: `linear-gradient(135deg, ${customization.colors.gradient1 || '#007bff'}, ${customization.colors.gradient2 || '#0056b3'})`,
+              borderRadius: 8,
+              textAlign: 'center',
+              color: '#fff',
+              fontWeight: 600
+            }}>
+              Gradient Preview
+            </div>
 
             {/* Live preview */}
             <div style={{
-              marginTop: 8,
-              border: '1px solid #DFE3E8',
+              marginTop: 16,
+              border: `1px solid ${customization.colors.border}`,
               borderRadius: 8,
-              overflow: 'hidden'
+              overflow: 'hidden',
+              fontFamily: customization.font || 'Inter, sans-serif',
+              background: customization.colors.background
             }}>
               <div style={{
                 background: customization.colors.surface,
                 padding: 16,
                 borderBottom: `1px solid ${customization.colors.border}`
               }}>
-                <Text variant="headingMd" as="h3" style={{ color: customization.colors.textPrimary }}>
-                  Marketplace Preview
-                </Text>
-                <Text as="p" tone="subdued" style={{ color: customization.colors.textSecondary }}>
-                  Cards, headings, and text will reflect your selections.
-                </Text>
+                <div style={{ 
+                  fontSize: 20, 
+                  fontWeight: 600, 
+                  color: customization.colors.textPrimary,
+                  marginBottom: 8
+                }}>
+                  Auction Product Title
+                </div>
+                <div style={{ 
+                  fontSize: 14,
+                  color: customization.colors.textSecondary 
+                }}>
+                  Product ID: 123456789
+                </div>
               </div>
-              <div style={{ padding: 16, background: customization.colors.background }}>
+              <div style={{ padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: customization.colors.textSecondary, marginBottom: 4 }}>
+                      Current Bid
+                    </div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: customization.colors.accent }}>
+                      $89.00
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: customization.colors.textSecondary, marginBottom: 4 }}>
+                      Starting Bid
+                    </div>
+                    <div style={{ fontSize: 18, color: customization.colors.textSecondary }}>
+                      $50.00
+                    </div>
+                  </div>
+                </div>
+                <div style={{ 
+                  fontSize: 14,
+                  color: customization.colors.textSecondary,
+                  marginBottom: 12
+                }}>
+                  Time Remaining: 2d 5h 30m
+                </div>
                 <button style={{
                   background: customization.colors.primary,
                   color: '#fff',
                   border: 'none',
                   padding: '10px 16px',
-                  borderRadius: 6
-                }}>Primary Button</button>
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500
+                }}>Place Bid</button>
               </div>
             </div>
           </div>

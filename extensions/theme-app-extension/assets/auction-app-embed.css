@@ -376,7 +376,7 @@
 
 /* Gradient Support */
 .bidly-gradient-primary {
-    background: linear-gradient(135deg, var(--bidly-widget-color-primary, #007bff), var(--bidly-widget-color-hover, #0056b3));
+    background: var(--bidly-widget-gradient, linear-gradient(135deg, var(--bidly-widget-color-gradient1, #007bff), var(--bidly-widget-color-gradient2, #0056b3)));
 }
 
 .bidly-gradient-success {
@@ -385,4 +385,21 @@
 
 .bidly-gradient-surface {
     background: linear-gradient(135deg, var(--bidly-widget-color-surface, #f8f9fa), var(--bidly-widget-color-background, #ffffff));
+}
+
+/* Additional text element color variables */
+.bidly-widget-status {
+    color: var(--bidly-widget-color-text-status, #28a745);
+}
+
+.bidly-widget-count-text {
+    color: var(--bidly-widget-color-text-count, #6c757d);
+}
+
+.bidly-current-bid-label {
+    color: var(--bidly-widget-color-text-label, #495057);
+}
+
+.bidly-current-bid-amount {
+    color: var(--bidly-widget-color-text-amount, #007bff);
 }

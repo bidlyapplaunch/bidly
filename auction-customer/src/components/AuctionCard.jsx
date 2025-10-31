@@ -50,20 +50,20 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
       <Card 
         sectioned
         style={{
-          fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
-          borderRadius: 'var(--bidly-border-radius, 6px)',
-          boxShadow: 'var(--bidly-shadow, 0 2px 4px 0 rgba(0, 0, 0, 0.1))',
-          border: '1px solid var(--bidly-color-border, #dddddd)',
-          backgroundColor: 'var(--bidly-color-surface, #ffffff)',
-          color: 'var(--bidly-color-text-primary, #222222)'
+          fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
+          borderRadius: 'var(--bidly-marketplace-border-radius, 6px)',
+          boxShadow: 'var(--bidly-marketplace-shadow, 0 2px 4px 0 rgba(0, 0, 0, 0.1))',
+          border: '1px solid var(--bidly-marketplace-color-border, #dddddd)',
+          backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
+          color: 'var(--bidly-marketplace-color-text-primary, #222222)'
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
           <div>
-            <Text variant="headingLg" as="h2" style={{ color: 'var(--bidly-color-text-primary, #222222)' }}>
+            <Text variant="headingLg" as="h2" style={{ color: 'var(--bidly-marketplace-color-text-primary, #222222)' }}>
               {auction.productData?.title || auction.shopifyProductId || 'Unknown Product'}
             </Text>
-            <Text variant="bodyMd" style={{ color: 'var(--bidly-color-text-secondary, #666666)' }}>
+            <Text variant="bodyMd" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
               Product ID: {auction.shopifyProductId}
             </Text>
           </div>
@@ -99,15 +99,15 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           <div style={{ 
             width: '100%', 
             height: '200px', 
-            backgroundColor: 'var(--bidly-color-background, #f5f5f5)', 
+            backgroundColor: 'var(--bidly-marketplace-color-background, #f5f5f5)', 
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '1rem',
-            border: '1px solid var(--bidly-color-border, #dddddd)'
+            border: '1px solid var(--bidly-marketplace-color-border, #dddddd)'
           }}>
-            <Text variant="bodyMd" style={{ color: 'var(--bidly-color-text-secondary, #666666)' }}>
+            <Text variant="bodyMd" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
               Product Image
             </Text>
           </div>
@@ -116,12 +116,12 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         <Layout>
           <Layout.Section oneHalf>
             <div style={{ marginBottom: '1rem' }}>
-              <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-color-text-primary, #222222)' }}>Current Bid</Text>
-              <Text variant="headingLg" as="p" style={{ color: 'var(--bidly-color-accent, #00b894)' }}>
+              <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-marketplace-color-text-primary, #222222)' }}>Current Bid</Text>
+              <Text variant="headingLg" as="p" style={{ color: 'var(--bidly-marketplace-color-accent, #00b894)' }}>
                 {formatCurrency(auction.currentBid || 0)}
               </Text>
               {auction.status === 'ended' && auction.bidHistory && auction.bidHistory.length > 0 && (
-                <Text variant="bodySm" style={{ color: 'var(--bidly-color-success, #00c851)', fontWeight: 'bold' }}>
+                <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-success, #00c851)', fontWeight: 'bold' }}>
                   Winner: {auction.bidHistory[auction.bidHistory.length - 1].bidder}
                 </Text>
               )}
@@ -129,8 +129,8 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           </Layout.Section>
           <Layout.Section oneHalf>
             <div style={{ marginBottom: '1rem' }}>
-              <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-color-text-primary, #222222)' }}>Starting Bid</Text>
-              <Text variant="bodyLg" as="p" style={{ color: 'var(--bidly-color-text-secondary, #666666)' }}>
+              <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-marketplace-color-text-primary, #222222)' }}>Starting Bid</Text>
+              <Text variant="bodyLg" as="p" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
                 {formatCurrency(auction.startingBid)}
               </Text>
             </div>
@@ -139,17 +139,17 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
         {auction.buyNowPrice && (
           <div style={{ marginBottom: '1rem' }}>
-            <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-color-text-primary, #222222)' }}>Buy Now Price</Text>
-            <Text variant="bodyLg" as="p" style={{ color: 'var(--bidly-color-success, #00c851)' }}>
+              <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-marketplace-color-text-primary, #222222)' }}>Buy Now Price</Text>
+              <Text variant="bodyLg" as="p" style={{ color: 'var(--bidly-marketplace-color-success, #00c851)' }}>
               {formatCurrency(auction.buyNowPrice)}
             </Text>
           </div>
         )}
 
         <div style={{ marginBottom: '1rem' }}>
-          <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-color-text-primary, #222222)' }}>
-            {auction.status === 'pending' ? 'Starts In' : 'Time Remaining'}
-          </Text>
+              <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-marketplace-color-text-primary, #222222)' }}>
+                {auction.status === 'pending' ? 'Starts In' : 'Time Remaining'}
+              </Text>
           <CountdownTimer 
             endTime={auction.endTime}
             startTime={auction.startTime}
@@ -171,11 +171,11 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
             onClick={() => setBidModalOpen(true)}
             disabled={auction.status !== 'active'}
             style={{
-              backgroundColor: 'var(--bidly-color-primary, #007bff)',
-              borderColor: 'var(--bidly-color-primary, #007bff)',
-              padding: 'var(--bidly-button-padding, 0.625rem 1.25rem)',
-              borderRadius: 'var(--bidly-border-radius, 6px)',
-              fontFamily: 'var(--bidly-font-family, Inter, sans-serif)'
+              backgroundColor: 'var(--bidly-marketplace-color-primary, #007bff)',
+              borderColor: 'var(--bidly-marketplace-color-primary, #007bff)',
+              padding: 'var(--bidly-marketplace-button-padding, 0.625rem 1.25rem)',
+              borderRadius: 'var(--bidly-marketplace-border-radius, 6px)',
+              fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
             }}
           >
             {auction.status === 'active' ? 'Place Bid' : 
@@ -184,12 +184,12 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           <Button 
             onClick={() => setDetailsModalOpen(true)}
             style={{
-              padding: 'var(--bidly-button-padding, 0.625rem 1.25rem)',
-              borderRadius: 'var(--bidly-border-radius, 6px)',
-              fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
-              backgroundColor: 'var(--bidly-color-surface, #ffffff)',
-              borderColor: 'var(--bidly-color-border, #dddddd)',
-              color: 'var(--bidly-color-text-primary, #222222)'
+              padding: 'var(--bidly-marketplace-button-padding, 0.625rem 1.25rem)',
+              borderRadius: 'var(--bidly-marketplace-border-radius, 6px)',
+              fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
+              backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
+              borderColor: 'var(--bidly-marketplace-color-border, #dddddd)',
+              color: 'var(--bidly-marketplace-color-text-primary, #222222)'
             }}
           >
             View Details

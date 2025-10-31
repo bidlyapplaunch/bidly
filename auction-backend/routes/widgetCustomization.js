@@ -61,7 +61,9 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
                     error: '#dc3545',
                     hover: '#0056b3',
                     buttonPrimary: '#007bff',
-                    buttonSecondary: '#6c757d'
+                    buttonSecondary: '#6c757d',
+                    gradient1: '#007bff',
+                    gradient2: '#0056b3'
                 }
             };
         }
@@ -123,7 +125,7 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
 
         // Validate colors
         if (colors) {
-            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'textTitle', 'textTimer', 'textStatus', 'textCount', 'textLabel', 'textAmount', 'border', 'accent', 'success', 'error', 'hover', 'buttonPrimary', 'buttonSecondary'];
+            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'textTitle', 'textTimer', 'textStatus', 'textCount', 'textLabel', 'textAmount', 'border', 'accent', 'success', 'error', 'hover', 'buttonPrimary', 'buttonSecondary', 'gradient1', 'gradient2'];
             const invalidKeys = Object.keys(colors).filter(key => !validColorKeys.includes(key));
             if (invalidKeys.length > 0) {
                 return res.status(400).json({
@@ -206,7 +208,9 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
                     error: '#dc3545',
                     hover: '#0056b3',
                     buttonPrimary: '#007bff',
-                    buttonSecondary: '#6c757d'
+                    buttonSecondary: '#6c757d',
+                    gradient1: '#007bff',
+                    gradient2: '#0056b3'
                 }
             };
         }
@@ -244,6 +248,8 @@ function generateWidgetThemeCSS(customization) {
         --bidly-widget-color-hover: ${colors.hover};
         --bidly-widget-color-button-primary: ${colors.buttonPrimary};
         --bidly-widget-color-button-secondary: ${colors.buttonSecondary};
+        --bidly-widget-color-gradient1: ${colors.gradient1 || '#007bff'};
+        --bidly-widget-color-gradient2: ${colors.gradient2 || '#0056b3'};
         --bidly-widget-font-family: '${font}', sans-serif;
         --bidly-widget-template: '${template}';
     `;
@@ -287,6 +293,7 @@ function generateWidgetThemeCSS(customization) {
     css += `
         --bidly-widget-primary-hover: color-mix(in srgb, var(--bidly-widget-color-primary) 80%, black);
         --bidly-widget-primary-light: color-mix(in srgb, var(--bidly-widget-color-primary) 90%, white);
+        --bidly-widget-gradient: linear-gradient(135deg, var(--bidly-widget-color-gradient1), var(--bidly-widget-color-gradient2));
     }
     `;
 

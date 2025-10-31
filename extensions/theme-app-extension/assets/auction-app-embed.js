@@ -33,7 +33,7 @@
     // Theme loading functionality
     async function loadTheme() {
         try {
-            const response = await fetch(`${CONFIG.backendUrl}/api/customization/theme?shop=${encodeURIComponent(CONFIG.shopDomain)}`, {
+            const response = await fetch(`${CONFIG.backendUrl}/api/widget-customization/theme?shop=${encodeURIComponent(CONFIG.shopDomain)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'text/css'
