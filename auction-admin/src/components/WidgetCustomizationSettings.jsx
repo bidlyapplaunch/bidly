@@ -253,19 +253,20 @@ const WidgetCustomizationSettings = () => {
               background: customization.colors.background,
               boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.1)'
             }}>
-              {/* Header bar - matches actual widget */}
+              {/* Header bar - matches actual widget with gradient */}
               <div style={{
-                background: customization.colors.surface,
-                padding: '15px 20px',
-                borderBottom: `1px solid ${customization.colors.border}`,
+                background: `linear-gradient(135deg, ${customization.colors.gradient1 || '#667eea'}, ${customization.colors.gradient2 || '#764ba2'})`,
+                padding: '20px 24px',
+                borderBottom: 'none',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
                 <div style={{ 
-                  fontSize: 18, 
-                  fontWeight: 600, 
-                  color: customization.colors.textTitle
+                  fontSize: 20, 
+                  fontWeight: 700, 
+                  color: customization.colors.textTitle,
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
                 }}>
                   Live Auction
                 </div>
