@@ -15,9 +15,19 @@ const OAuthSetup = ({ onComplete }) => {
   const [error, setError] = useState(null);
   const [needsOAuth, setNeedsOAuth] = useState(false);
   const [shopDomain, setShopDomain] = useState(null);
+  const [manualShop, setManualShop] = useState('');
   const { getShopInfo } = useAppBridgeActions();
 
   useEffect(() => {
+    // Immediately try to get shop from URL on mount
+    const urlParams = new URLSearchParams(window.location.search);
+    const shopFromUrl = urlParams.get('shop');
+    if (shopFromUrl) {
+      console.log('✅ Found shop in URL on mount:', shopFromUrl);
+      setShopDomain(shopFromUrl);
+    } else {
+      console.warn('⚠️ No shop in URL on mount:', window.location.href);
+    }
     checkOAuthStatus();
   }, []);
 
@@ -163,14 +173,23 @@ const OAuthSetup = ({ onComplete }) => {
       console.log('🔍 Extracted shop from hostname:', shop);
     }
     
+    // If still no shop found, check if we have manual input
+    if (!shop && manualShop && manualShop.trim()) {
+      shop = manualShop.trim();
+      console.log('🔍 Using manually entered shop:', shop);
+    }
+    
     if (!shop) {
-      setError('Unable to get shop information. Please refresh the page or access the app through Shopify admin.');
+      setError('Unable to get shop information. Please enter your shop domain manually below.');
       console.error('❌ No shop found after trying all methods:');
       console.error('  - URL:', window.location.href);
       console.error('  - Search params:', window.location.search);
       console.error('  - Referrer:', document.referrer);
       console.error('  - Hostname:', window.location.hostname);
       console.error('  - Stored shopDomain:', shopDomain);
+      console.error('  - Manual shop:', manualShop);
+      // Don't return - show manual input instead
+      setNeedsOAuth(true);
       return;
     }
 
@@ -310,11 +329,32 @@ const OAuthSetup = ({ onComplete }) => {
                     </Text>
                   </Banner>
 
-                  <div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {error && error.includes('Unable to get shop') && (
+                      <div style={{ marginBottom: '1rem' }}>
+                        <Text variant="bodyMd" as="p" tone="subdued" style={{ marginBottom: '0.5rem' }}>
+                          Please enter your Shopify store domain:
+                        </Text>
+                        <input
+                          type="text"
+                          placeholder="store.myshopify.com"
+                          value={manualShop}
+                          onChange={(e) => setManualShop(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            border: '1px solid #c9cccf',
+                            borderRadius: '4px',
+                            fontSize: '14px'
+                          }}
+                        />
+                      </div>
+                    )}
                     <Button 
                       primary 
                       size="large"
                       onClick={handleCompleteOAuth}
+                      disabled={error && error.includes('Unable to get shop') && !manualShop.trim()}
                     >
                       Complete Setup
                     </Button>
