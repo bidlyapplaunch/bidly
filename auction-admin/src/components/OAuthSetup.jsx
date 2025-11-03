@@ -211,11 +211,28 @@ const OAuthSetup = ({ onComplete }) => {
     
     console.log('✅ OAuth Setup - Using shop for redirect:', cleanedShop);
 
+    // Validate the final shop one more time before building URL
+    if (!cleanedShop || !cleanedShop.includes('.myshopify.com')) {
+      const errorMsg = `Invalid shop domain: ${cleanedShop || 'undefined'}. Please enter a valid shop domain (e.g., store.myshopify.com).`;
+      setError(errorMsg);
+      console.error('❌ CRITICAL: Invalid shop before URL generation:', cleanedShop);
+      console.error('❌ All shop detection attempts failed');
+      setNeedsOAuth(true);
+      return;
+    }
+
     // Redirect to OAuth flow
     // Use top-level navigation to break out of iframe (Shopify OAuth cannot be in iframe)
-    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${encodeURIComponent(cleanedShop)}`;
+    const encodedShop = encodeURIComponent(cleanedShop);
+    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${encodedShop}`;
     
-    console.log('🔗 OAuth URL:', oauthUrl);
+    console.log('🔗 Generated OAuth URL:', oauthUrl);
+    console.log('🔍 Encoded shop:', encodedShop);
+    console.log('🔍 Full URL breakdown:', {
+      base: 'https://bidly-auction-backend.onrender.com/auth/shopify/install',
+      shopParam: `shop=${encodedShop}`,
+      finalUrl: oauthUrl
+    });
     
     // Check if we're in an iframe
     try {
