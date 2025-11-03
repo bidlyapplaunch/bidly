@@ -63,8 +63,17 @@ const OAuthSetup = ({ onComplete }) => {
     console.log('🔍 OAuth Setup - Completing OAuth for shop:', shopInfo.shop);
 
     // Redirect to OAuth flow
+    // Use top-level navigation to break out of iframe (Shopify OAuth cannot be in iframe)
     const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${shopInfo.shop}`;
-    window.location.href = oauthUrl;
+    
+    // Check if we're in an iframe
+    if (window.self !== window.top) {
+      // We're in an iframe - use top-level navigation
+      window.top.location.href = oauthUrl;
+    } else {
+      // We're not in an iframe - regular redirect
+      window.location.href = oauthUrl;
+    }
   };
 
   if (loading) {
