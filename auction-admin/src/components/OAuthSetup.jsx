@@ -102,44 +102,79 @@ const OAuthSetup = ({ onComplete }) => {
   };
 
   const handleCompleteOAuth = () => {
-    // Use the shop we stored earlier, or try to get it again
-    let shop = shopDomain;
+    // Try to get shop from multiple sources
+    let shop = null;
     
+    // Method 1: Use stored shop from state (if we found it earlier)
+    if (shopDomain) {
+      shop = shopDomain;
+      console.log('🔍 Using shop from state:', shop);
+    }
+    
+    // Method 2: Try current URL search params directly
+    if (!shop) {
+      const urlParams = new URLSearchParams(window.location.search);
+      shop = urlParams.get('shop');
+      if (shop) {
+        console.log('🔍 Found shop in current URL params:', shop);
+      }
+    }
+    
+    // Method 3: Try getShopInfo helper
     if (!shop) {
       const shopInfo = getShopInfo();
       shop = shopInfo?.shop;
-      
-      // Try additional methods if still not found
-      if (!shop) {
-        try {
-          if (window.self !== window.top) {
-            const parentUrl = new URL(window.top.location.href);
-            shop = parentUrl.searchParams.get('shop');
+      if (shop) {
+        console.log('🔍 Found shop from getShopInfo:', shop);
+      }
+    }
+    
+    // Method 4: Try parent window if in iframe
+    if (!shop) {
+      try {
+        if (window.self !== window.top) {
+          const parentUrl = new URL(window.top.location.href);
+          shop = parentUrl.searchParams.get('shop');
+          if (shop) {
+            console.log('🔍 Found shop in parent window:', shop);
           }
-        } catch (e) {
-          // Cross-origin, can't access
         }
+      } catch (e) {
+        console.log('🔍 Cannot access parent window (cross-origin):', e.message);
       }
-      
-      if (!shop && document.referrer) {
-        try {
-          const referrerUrl = new URL(document.referrer);
-          shop = referrerUrl.searchParams.get('shop');
-        } catch (e) {
-          // Can't parse
+    }
+    
+    // Method 5: Try document referrer
+    if (!shop && document.referrer) {
+      try {
+        const referrerUrl = new URL(document.referrer);
+        shop = referrerUrl.searchParams.get('shop');
+        if (shop) {
+          console.log('🔍 Found shop in referrer:', shop);
         }
+      } catch (e) {
+        console.log('🔍 Cannot parse referrer:', e.message);
       }
+    }
+    
+    // Method 6: Try extracting from hostname
+    if (!shop && window.location.hostname.includes('myshopify.com')) {
+      shop = window.location.hostname;
+      console.log('🔍 Extracted shop from hostname:', shop);
     }
     
     if (!shop) {
       setError('Unable to get shop information. Please refresh the page or access the app through Shopify admin.');
-      console.error('❌ No shop found. URL:', window.location.href);
-      console.error('❌ Referrer:', document.referrer);
-      console.error('❌ Hostname:', window.location.hostname);
+      console.error('❌ No shop found after trying all methods:');
+      console.error('  - URL:', window.location.href);
+      console.error('  - Search params:', window.location.search);
+      console.error('  - Referrer:', document.referrer);
+      console.error('  - Hostname:', window.location.hostname);
+      console.error('  - Stored shopDomain:', shopDomain);
       return;
     }
 
-    console.log('🔍 OAuth Setup - Completing OAuth for shop:', shop);
+    console.log('✅ OAuth Setup - Using shop for redirect:', shop);
 
     // Redirect to OAuth flow
     // Use top-level navigation to break out of iframe (Shopify OAuth cannot be in iframe)
