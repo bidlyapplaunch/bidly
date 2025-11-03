@@ -14,6 +14,7 @@ const OAuthSetup = ({ onComplete }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [needsOAuth, setNeedsOAuth] = useState(false);
+  const [shopDomain, setShopDomain] = useState(null);
   const { getShopInfo } = useAppBridgeActions();
 
   useEffect(() => {
@@ -27,14 +28,59 @@ const OAuthSetup = ({ onComplete }) => {
 
       // Get shop info from App Bridge
       const shopInfo = getShopInfo();
+      console.log('🔍 OAuth Setup - Shop Info:', shopInfo);
+      console.log('🔍 OAuth Setup - Full URL:', window.location.href);
+      console.log('🔍 OAuth Setup - Search Params:', window.location.search);
+      
       if (!shopInfo || !shopInfo.shop) {
-        throw new Error('Unable to get shop information');
+        // Try additional methods to get shop
+        let shop = null;
+        
+        // Method 1: Try parent window if in iframe (for embedded apps)
+        try {
+          if (window.self !== window.top) {
+            const parentUrl = new URL(window.top.location.href);
+            shop = parentUrl.searchParams.get('shop');
+            console.log('🔍 Tried parent window, found shop:', shop);
+          }
+        } catch (e) {
+          console.log('🔍 Cannot access parent window (cross-origin):', e.message);
+        }
+        
+        // Method 2: Try document.referrer
+        if (!shop && document.referrer) {
+          try {
+            const referrerUrl = new URL(document.referrer);
+            shop = referrerUrl.searchParams.get('shop');
+            console.log('🔍 Tried referrer, found shop:', shop);
+          } catch (e) {
+            console.log('🔍 Cannot parse referrer:', e.message);
+          }
+        }
+        
+        // Method 3: Try extracting from hostname
+        if (!shop && window.location.hostname.includes('myshopify.com')) {
+          shop = window.location.hostname;
+          console.log('🔍 Extracted shop from hostname:', shop);
+        }
+        
+        if (!shop) {
+          throw new Error('Unable to get shop information. Please ensure you are accessing the app through the Shopify admin.');
+        }
+        
+        // Store the shop we found
+        setShopDomain(shop);
+      } else {
+        // Store the shop we found
+        setShopDomain(shopInfo.shop);
       }
 
-      console.log('🔍 OAuth Setup - Shop Info:', shopInfo);
+      const shopToUse = shopInfo?.shop || shopDomain;
+      console.log('🔍 OAuth Setup - Using shop:', shopToUse);
 
       // Check if store has valid OAuth token by testing Shopify API
-      const response = await fetch(`https://bidly-auction-backend.onrender.com/api/shopify/status?shop=${shopInfo.shop}`);
+      const shopToUse = shopInfo?.shop || shopDomain;
+      const response = await fetch(`https://bidly-auction-backend.onrender.com/api/shopify/status?shop=${shopToUse}`);
       const data = await response.json();
 
       if (data.success && data.configured && data.hasAccessToken) {
@@ -53,18 +99,48 @@ const OAuthSetup = ({ onComplete }) => {
   };
 
   const handleCompleteOAuth = () => {
-    // Get shop info
-    const shopInfo = getShopInfo();
-    if (!shopInfo || !shopInfo.shop) {
-      setError('Unable to get shop information');
+    // Use the shop we stored earlier, or try to get it again
+    let shop = shopDomain;
+    
+    if (!shop) {
+      const shopInfo = getShopInfo();
+      shop = shopInfo?.shop;
+      
+      // Try additional methods if still not found
+      if (!shop) {
+        try {
+          if (window.self !== window.top) {
+            const parentUrl = new URL(window.top.location.href);
+            shop = parentUrl.searchParams.get('shop');
+          }
+        } catch (e) {
+          // Cross-origin, can't access
+        }
+      }
+      
+      if (!shop && document.referrer) {
+        try {
+          const referrerUrl = new URL(document.referrer);
+          shop = referrerUrl.searchParams.get('shop');
+        } catch (e) {
+          // Can't parse
+        }
+      }
+    }
+    
+    if (!shop) {
+      setError('Unable to get shop information. Please refresh the page or access the app through Shopify admin.');
+      console.error('❌ No shop found. URL:', window.location.href);
+      console.error('❌ Referrer:', document.referrer);
+      console.error('❌ Hostname:', window.location.hostname);
       return;
     }
 
-    console.log('🔍 OAuth Setup - Completing OAuth for shop:', shopInfo.shop);
+    console.log('🔍 OAuth Setup - Completing OAuth for shop:', shop);
 
     // Redirect to OAuth flow
     // Use top-level navigation to break out of iframe (Shopify OAuth cannot be in iframe)
-    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${shopInfo.shop}`;
+    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${shop}`;
     
     // Check if we're in an iframe
     try {
