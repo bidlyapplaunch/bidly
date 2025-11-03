@@ -67,12 +67,25 @@ const OAuthSetup = ({ onComplete }) => {
     const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${shopInfo.shop}`;
     
     // Check if we're in an iframe
-    if (window.self !== window.top) {
-      // We're in an iframe - use top-level navigation
-      window.top.location.href = oauthUrl;
-    } else {
-      // We're not in an iframe - regular redirect
-      window.location.href = oauthUrl;
+    try {
+      if (window.self !== window.top) {
+        // We're in an iframe - try to redirect top-level window
+        // This might fail due to cross-origin restrictions, so we'll use a workaround
+        try {
+          window.top.location.href = oauthUrl;
+        } catch (e) {
+          // Cross-origin error - open in new window/tab as fallback
+          console.warn('Cross-origin iframe redirect blocked, opening in new window');
+          window.open(oauthUrl, '_top');
+        }
+      } else {
+        // We're not in an iframe - regular redirect
+        window.location.href = oauthUrl;
+      }
+    } catch (error) {
+      // Fallback: open in new window
+      console.error('Redirect error, using fallback:', error);
+      window.open(oauthUrl, '_blank');
     }
   };
 
