@@ -12,7 +12,7 @@ class ShopifyOAuthService {
     this._clientId = null;
     this._clientSecret = null;
     this._redirectUri = null;
-    this.scopes = 'read_products,read_product_listings,read_orders,write_orders';
+    this.scopes = 'read_products,read_product_listings,read_orders,write_orders,read_customers,write_customers';
     this.apiVersion = '2025-10';
   }
 
