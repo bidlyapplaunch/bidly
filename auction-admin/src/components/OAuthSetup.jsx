@@ -125,13 +125,22 @@ const OAuthSetup = ({ onComplete }) => {
   };
 
   const handleCompleteOAuth = () => {
+    console.log('🚀🚀🚀 handleCompleteOAuth called 🚀🚀🚀');
+    console.log('📍 Initial state check:');
+    console.log('  - shopDomain state:', shopDomain);
+    console.log('  - manualShop state:', manualShop);
+    console.log('  - window.location.href:', window.location.href);
+    console.log('  - window.location.search:', window.location.search);
+    
     // Try to get shop from multiple sources
     let shop = null;
     
-    // Method 1: Use stored shop from state (if we found it earlier)
+    // Method 1: Use stored shop from state (if we found it earlier) - THIS SHOULD WORK
     if (shopDomain) {
       shop = shopDomain;
-      console.log('🔍 Using shop from state:', shop);
+      console.log('✅✅✅ Using shop from state (shopDomain):', shop);
+    } else {
+      console.warn('⚠️ shopDomain state is empty/null');
     }
     
     // Method 2: Try current URL search params directly (multiple ways)
@@ -328,20 +337,29 @@ const OAuthSetup = ({ onComplete }) => {
     }
     
     // Check if we're in an iframe
+    console.log('🔍 About to redirect/navigate. Final shop value:', cleanedShop);
+    console.log('🔍 Final OAuth URL:', oauthUrl);
+    console.log('🔍 Is in iframe?', window.self !== window.top);
+    
     try {
       if (window.self !== window.top) {
         // We're in an iframe - use form submission to break out
         // This works even with cross-origin restrictions
+        console.log('📤 Submitting form (iframe mode) to:', oauthUrl);
         const form = document.createElement('form');
         form.method = 'GET';
         form.action = oauthUrl;
         form.target = '_top'; // Break out of iframe
         form.style.display = 'none';
+        console.log('📤 Form action set to:', form.action);
         document.body.appendChild(form);
+        console.log('📤 Form appended to body, submitting...');
         form.submit();
+        console.log('📤 Form submitted, removing from DOM...');
         document.body.removeChild(form);
       } else {
         // We're not in an iframe - regular redirect
+        console.log('📤 Direct redirect to:', oauthUrl);
         window.location.href = oauthUrl;
       }
     } catch (error) {
