@@ -88,19 +88,32 @@ const OAuthSetup = ({ onComplete }) => {
       const shopToUse = shopInfo?.shop || shopDomain;
       console.log('🔍 OAuth Setup - Using shop:', shopToUse);
 
-      // Check if store has valid OAuth token by testing Shopify API
+      // Check if store has completed OAuth installation
       if (!shopToUse) {
         throw new Error('Shop domain is required but not found');
       }
       
-      const response = await fetch(`https://bidly-auction-backend.onrender.com/api/shopify/status?shop=${shopToUse}`);
+      // Use the OAuth status endpoint which doesn't require authentication
+      const response = await fetch(`https://bidly-auction-backend.onrender.com/auth/shopify/status?shop=${shopToUse}`);
+      
+      if (!response.ok) {
+        // If endpoint doesn't exist or returns error, assume OAuth is needed
+        console.warn('⚠️ OAuth status check failed:', response.status, response.statusText);
+        setNeedsOAuth(true);
+        return;
+      }
+      
       const data = await response.json();
+      console.log('🔍 OAuth status response:', data);
 
-      if (data.success && data.configured && data.hasAccessToken) {
+      // Check if store is installed (has completed OAuth)
+      if (data.success && data.data && data.data.isInstalled) {
         // OAuth is complete, proceed to dashboard
+        console.log('✅ Store is already installed, proceeding to dashboard');
         onComplete();
       } else {
         // OAuth is needed
+        console.log('⚠️ Store is not installed, showing OAuth setup');
         setNeedsOAuth(true);
       }
     } catch (error) {
