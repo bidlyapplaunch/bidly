@@ -174,11 +174,29 @@ const OAuthSetup = ({ onComplete }) => {
       return;
     }
 
-    console.log('✅ OAuth Setup - Using shop for redirect:', shop);
+    // Validate and encode shop parameter
+    if (!shop || typeof shop !== 'string' || shop.trim() === '') {
+      setError('Invalid shop parameter. Please refresh the page or access the app through Shopify admin.');
+      console.error('❌ Invalid shop value:', shop);
+      return;
+    }
+    
+    // Clean and validate shop domain format
+    const cleanedShop = shop.trim();
+    const shopDomainRegex = /^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com$/;
+    if (!shopDomainRegex.test(cleanedShop)) {
+      setError(`Invalid shop domain format: ${cleanedShop}. Expected format: store.myshopify.com`);
+      console.error('❌ Invalid shop format:', cleanedShop);
+      return;
+    }
+    
+    console.log('✅ OAuth Setup - Using shop for redirect:', cleanedShop);
 
     // Redirect to OAuth flow
     // Use top-level navigation to break out of iframe (Shopify OAuth cannot be in iframe)
-    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${shop}`;
+    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${encodeURIComponent(cleanedShop)}`;
+    
+    console.log('🔗 OAuth URL:', oauthUrl);
     
     // Check if we're in an iframe
     try {
