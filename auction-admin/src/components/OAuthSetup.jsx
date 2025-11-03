@@ -121,12 +121,35 @@ const OAuthSetup = ({ onComplete }) => {
       console.log('🔍 Using shop from state:', shop);
     }
     
-    // Method 2: Try current URL search params directly
+    // Method 2: Try current URL search params directly (multiple ways)
     if (!shop) {
-      const urlParams = new URLSearchParams(window.location.search);
-      shop = urlParams.get('shop');
-      if (shop) {
-        console.log('🔍 Found shop in current URL params:', shop);
+      // Try URLSearchParams
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        shop = urlParams.get('shop');
+        if (shop) {
+          console.log('✅ Found shop via URLSearchParams:', shop);
+        }
+      } catch (e) {
+        console.error('Error with URLSearchParams:', e);
+      }
+      
+      // Also try manual regex parsing as fallback
+      if (!shop && window.location.search) {
+        const match = window.location.search.match(/[?&]shop=([^&]+)/);
+        if (match && match[1]) {
+          shop = decodeURIComponent(match[1]);
+          console.log('✅ Found shop via regex:', shop);
+        }
+      }
+      
+      // Try hash if it exists
+      if (!shop && window.location.hash) {
+        const hashMatch = window.location.hash.match(/[?&]shop=([^&]+)/);
+        if (hashMatch && hashMatch[1]) {
+          shop = decodeURIComponent(hashMatch[1]);
+          console.log('✅ Found shop in hash:', shop);
+        }
       }
     }
     
@@ -180,17 +203,27 @@ const OAuthSetup = ({ onComplete }) => {
     }
     
     if (!shop) {
-      setError('Unable to get shop information. Please enter your shop domain manually below.');
-      console.error('❌ No shop found after trying all methods:');
-      console.error('  - URL:', window.location.href);
+      const errorMsg = 'Unable to get shop information. Please enter your shop domain manually below.';
+      setError(errorMsg);
+      console.error('❌❌❌ CRITICAL: No shop found after trying all methods ❌❌❌');
+      console.error('  - Full URL:', window.location.href);
       console.error('  - Search params:', window.location.search);
+      console.error('  - Hash:', window.location.hash);
       console.error('  - Referrer:', document.referrer);
       console.error('  - Hostname:', window.location.hostname);
       console.error('  - Stored shopDomain:', shopDomain);
       console.error('  - Manual shop:', manualShop);
-      // Don't return - show manual input instead
+      console.error('  - All window.location properties:', {
+        href: window.location.href,
+        search: window.location.search,
+        hash: window.location.hash,
+        hostname: window.location.hostname,
+        pathname: window.location.pathname,
+        origin: window.location.origin
+      });
+      // Show manual input field - don't try to redirect
       setNeedsOAuth(true);
-      return;
+      return; // STOP - don't proceed with OAuth URL generation
     }
 
     // Validate and encode shop parameter
@@ -211,12 +244,43 @@ const OAuthSetup = ({ onComplete }) => {
     
     console.log('✅ OAuth Setup - Using shop for redirect:', cleanedShop);
 
-    // Validate the final shop one more time before building URL
-    if (!cleanedShop || !cleanedShop.includes('.myshopify.com')) {
+    // CRITICAL: Validate the final shop one more time before building URL
+    if (!cleanedShop || cleanedShop.trim() === '' || !cleanedShop.includes('.myshopify.com')) {
       const errorMsg = `Invalid shop domain: ${cleanedShop || 'undefined'}. Please enter a valid shop domain (e.g., store.myshopify.com).`;
       setError(errorMsg);
-      console.error('❌ CRITICAL: Invalid shop before URL generation:', cleanedShop);
-      console.error('❌ All shop detection attempts failed');
+      console.error('❌❌❌ CRITICAL VALIDATION FAILED ❌❌❌');
+      console.error('  - cleanedShop value:', cleanedShop);
+      console.error('  - cleanedShop type:', typeof cleanedShop);
+      console.error('  - cleanedShop length:', cleanedShop?.length);
+      console.error('  - Contains .myshopify.com:', cleanedShop?.includes('.myshopify.com'));
+      console.error('  - This shop value CANNOT be used for OAuth');
+      setNeedsOAuth(true);
+      return; // STOP - absolutely do not generate URL without valid shop
+    }
+    
+    // Final safety check - ensure shop is actually a string and not undefined/null
+    if (typeof cleanedShop !== 'string' || cleanedShop.length < 10) {
+      const errorMsg = `Shop domain validation failed. Received: ${JSON.stringify(cleanedShop)}`;
+      setError(errorMsg);
+      console.error('❌ Type/length validation failed:', {
+        type: typeof cleanedShop,
+        value: cleanedShop,
+        length: cleanedShop?.length
+      });
+      setNeedsOAuth(true);
+      return;
+    }
+
+    // FINAL VALIDATION: One last check before URL generation
+    console.log('🔍 FINAL CHECK before generating OAuth URL:');
+    console.log('  - cleanedShop:', cleanedShop);
+    console.log('  - Is string?', typeof cleanedShop === 'string');
+    console.log('  - Length:', cleanedShop.length);
+    console.log('  - Contains .myshopify.com?', cleanedShop.includes('.myshopify.com'));
+    
+    if (!cleanedShop || typeof cleanedShop !== 'string' || !cleanedShop.includes('.myshopify.com')) {
+      console.error('❌❌❌ FINAL VALIDATION FAILED - ABORTING URL GENERATION ❌❌❌');
+      setError('Shop validation failed. Please enter your shop domain manually.');
       setNeedsOAuth(true);
       return;
     }
@@ -224,15 +288,31 @@ const OAuthSetup = ({ onComplete }) => {
     // Redirect to OAuth flow
     // Use top-level navigation to break out of iframe (Shopify OAuth cannot be in iframe)
     const encodedShop = encodeURIComponent(cleanedShop);
-    const oauthUrl = `https://bidly-auction-backend.onrender.com/auth/shopify/install?shop=${encodedShop}`;
+    const baseUrl = 'https://bidly-auction-backend.onrender.com/auth/shopify/install';
+    const oauthUrl = `${baseUrl}?shop=${encodedShop}`;
     
-    console.log('🔗 Generated OAuth URL:', oauthUrl);
-    console.log('🔍 Encoded shop:', encodedShop);
-    console.log('🔍 Full URL breakdown:', {
-      base: 'https://bidly-auction-backend.onrender.com/auth/shopify/install',
-      shopParam: `shop=${encodedShop}`,
-      finalUrl: oauthUrl
-    });
+    console.log('✅✅✅ GENERATING OAUTH URL ✅✅✅');
+    console.log('  - Base URL:', baseUrl);
+    console.log('  - Shop (raw):', cleanedShop);
+    console.log('  - Shop (encoded):', encodedShop);
+    console.log('  - Final OAuth URL:', oauthUrl);
+    console.log('  - URL includes shop?', oauthUrl.includes('shop='));
+    console.log('  - URL shop param value:', new URL(oauthUrl).searchParams.get('shop'));
+    
+    // ONE MORE CHECK: Verify the URL was constructed correctly
+    try {
+      const testUrl = new URL(oauthUrl);
+      const testShop = testUrl.searchParams.get('shop');
+      if (!testShop || testShop !== cleanedShop) {
+        throw new Error(`URL construction failed! Expected shop="${cleanedShop}", got shop="${testShop}"`);
+      }
+      console.log('✅ URL construction verified successfully');
+    } catch (e) {
+      console.error('❌ URL construction verification failed:', e);
+      setError('Error constructing OAuth URL. Please try again.');
+      setNeedsOAuth(true);
+      return;
+    }
     
     // Check if we're in an iframe
     try {
