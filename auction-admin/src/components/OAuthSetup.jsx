@@ -79,7 +79,6 @@ const OAuthSetup = ({ onComplete }) => {
       console.log('🔍 OAuth Setup - Using shop:', shopToUse);
 
       // Check if store has valid OAuth token by testing Shopify API
-      const shopToUse = shopInfo?.shop || shopDomain;
       const response = await fetch(`https://bidly-auction-backend.onrender.com/api/shopify/status?shop=${shopToUse}`);
       const data = await response.json();
 
