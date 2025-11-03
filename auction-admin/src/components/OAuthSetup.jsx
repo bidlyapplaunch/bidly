@@ -69,23 +69,35 @@ const OAuthSetup = ({ onComplete }) => {
     // Check if we're in an iframe
     try {
       if (window.self !== window.top) {
-        // We're in an iframe - try to redirect top-level window
-        // This might fail due to cross-origin restrictions, so we'll use a workaround
-        try {
-          window.top.location.href = oauthUrl;
-        } catch (e) {
-          // Cross-origin error - open in new window/tab as fallback
-          console.warn('Cross-origin iframe redirect blocked, opening in new window');
-          window.open(oauthUrl, '_top');
-        }
+        // We're in an iframe - use form submission to break out
+        // This works even with cross-origin restrictions
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = oauthUrl;
+        form.target = '_top'; // Break out of iframe
+        form.style.display = 'none';
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
       } else {
         // We're not in an iframe - regular redirect
         window.location.href = oauthUrl;
       }
     } catch (error) {
-      // Fallback: open in new window
+      // Fallback: try direct redirect
       console.error('Redirect error, using fallback:', error);
-      window.open(oauthUrl, '_blank');
+      try {
+        window.location.href = oauthUrl;
+      } catch (e) {
+        // Last resort: create clickable link
+        const link = document.createElement('a');
+        link.href = oauthUrl;
+        link.target = '_top';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     }
   };
 
