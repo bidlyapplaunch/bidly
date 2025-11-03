@@ -345,18 +345,43 @@ const OAuthSetup = ({ onComplete }) => {
       if (window.self !== window.top) {
         // We're in an iframe - use form submission to break out
         // This works even with cross-origin restrictions
-        console.log('📤 Submitting form (iframe mode) to:', oauthUrl);
+        // IMPORTANT: Use base URL and add shop as hidden input to ensure it's included
+        const baseUrl = 'https://bidly-auction-backend.onrender.com/auth/shopify/install';
+        console.log('📤 Creating form (iframe mode)');
+        console.log('  - Base URL:', baseUrl);
+        console.log('  - Shop parameter:', cleanedShop);
+        
         const form = document.createElement('form');
         form.method = 'GET';
-        form.action = oauthUrl;
+        form.action = baseUrl; // Base URL only
         form.target = '_top'; // Break out of iframe
         form.style.display = 'none';
-        console.log('📤 Form action set to:', form.action);
+        
+        // Add shop as hidden input field to ensure it's included in the request
+        const shopInput = document.createElement('input');
+        shopInput.type = 'hidden';
+        shopInput.name = 'shop';
+        shopInput.value = cleanedShop;
+        form.appendChild(shopInput);
+        
+        console.log('📤 Form created with action:', form.action);
+        console.log('📤 Form has shop input:', shopInput.name, '=', shopInput.value);
+        
         document.body.appendChild(form);
         console.log('📤 Form appended to body, submitting...');
+        
+        // Verify form structure before submitting
+        const formData = new FormData(form);
+        console.log('📤 FormData contents:', Array.from(formData.entries()));
+        
         form.submit();
-        console.log('📤 Form submitted, removing from DOM...');
-        document.body.removeChild(form);
+        console.log('📤 Form submitted');
+        // Don't remove immediately to ensure submission completes
+        setTimeout(() => {
+          if (document.body.contains(form)) {
+            document.body.removeChild(form);
+          }
+        }, 100);
       } else {
         // We're not in an iframe - regular redirect
         console.log('📤 Direct redirect to:', oauthUrl);
