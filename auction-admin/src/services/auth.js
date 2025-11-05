@@ -51,7 +51,7 @@ class AuthService {
       console.log('🔐 Register using backend:', apiBaseUrl, 'for shop:', shopDomain);
       
       const response = await axios.post(`${apiBaseUrl}/auth/register`, {
-        username,
+        name: username, // Backend expects 'name' not 'username'
         email,
         password,
         role
@@ -63,6 +63,7 @@ class AuthService {
       }
     } catch (error) {
       console.error('Registration error:', error);
+      console.error('Registration error response:', error.response?.data);
       throw error;
     }
   }

@@ -32,7 +32,12 @@ const Login = ({ onLogin }) => {
       
       onLogin(response.data.user);
     } catch (error) {
-      setError(error.response?.data?.message || 'Authentication failed');
+      console.error('Auth error:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.errors?.map(e => e.message || e.msg).join(', ') ||
+                          error.message || 
+                          'Authentication failed';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
