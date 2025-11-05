@@ -44,18 +44,39 @@ class AuthService {
 
   async register(username, email, password, role = 'admin') {
     try {
+      // Validate inputs
+      if (!username || !username.trim()) {
+        throw new Error('Username is required');
+      }
+      if (!email || !email.trim()) {
+        throw new Error('Email is required');
+      }
+      if (!password || password.length < 6) {
+        throw new Error('Password must be at least 6 characters');
+      }
+
       // Get shop domain and determine backend URL dynamically
       const shopDomain = getShopFromURL();
       const apiBaseUrl = getApiBaseUrl(shopDomain);
       
       console.log('🔐 Register using backend:', apiBaseUrl, 'for shop:', shopDomain);
-      
-      const response = await axios.post(`${apiBaseUrl}/auth/register`, {
-        name: username, // Backend expects 'name' not 'username'
+      console.log('🔐 Registration data:', {
+        name: username,
         email,
+        role,
+        passwordLength: password?.length
+      });
+      
+      const requestData = {
+        name: username.trim(), // Backend expects 'name' not 'username'
+        email: email.trim(),
         password,
         role
-      });
+      };
+      
+      console.log('🔐 Sending registration request:', requestData);
+      
+      const response = await axios.post(`${apiBaseUrl}/auth/register`, requestData);
 
       if (response.data.success) {
         // Auto-login after registration
