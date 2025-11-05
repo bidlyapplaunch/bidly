@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -114,8 +115,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint for Render - responds immediately
-app.get('/', (req, res) => {
+// Render health check endpoint (for Render's health checks)
+app.get('/render-health', (req, res) => {
   res.json({
     success: true,
     message: 'Bidly Auction API Server',
@@ -332,18 +333,20 @@ app.get('/', (req, res) => {
   // Serve the admin frontend index.html with all parameters preserved
   const indexPath = path.join(frontendDistPath, 'index.html');
   console.log('📄 Serving ADMIN index.html from:', indexPath);
-  res.sendFile(indexPath);
+  
+  // Check if file exists before sending
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    console.error('❌ Admin frontend index.html not found at:', indexPath);
+    res.status(503).json({
+      success: false,
+      message: 'Admin frontend not built. Please check build logs.',
+      path: indexPath
+    });
+  }
 });
 
-// Render health check endpoint (after Shopify embedded app route)
-app.get('/render-health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Bidly Auction API Server',
-    status: 'running',
-    timestamp: new Date().toISOString()
-  });
-});
 
 // 404 handler
 app.use(notFound);
