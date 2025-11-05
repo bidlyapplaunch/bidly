@@ -127,9 +127,11 @@ export const initiateOAuth = async (req, res, next) => {
 
     // Dynamically set redirect URI based on the current backend URL
     // This ensures each backend uses its own callback URL
-    const protocol = req.protocol || 'https';
-    const host = req.get('host') || req.hostname || 'bidly-auction-backend.onrender.com';
-    const dynamicRedirectUri = `${protocol}://${host}/auth/shopify/callback`;
+    // Always use https in production (Render uses proxies, so req.protocol might be http)
+    const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+    const finalProtocol = protocol === 'http' && process.env.NODE_ENV === 'production' ? 'https' : protocol;
+    const host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-auction-backend.onrender.com';
+    const dynamicRedirectUri = `${finalProtocol}://${host}/auth/shopify/callback`;
     
     console.log('🔗 Setting dynamic redirect URI:', dynamicRedirectUri);
     shopifyOAuthService.setRedirectUri(dynamicRedirectUri);
