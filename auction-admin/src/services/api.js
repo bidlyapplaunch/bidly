@@ -2,9 +2,60 @@ import axios from 'axios';
 import { getApiBaseUrl } from '../config/backendConfig.js';
 
 // Helper function to get shop from URL parameters
+// Try multiple sources: URL params, hash, App Bridge, or hostname
 const getShopFromURL = () => {
+  // Method 1: URL search params
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('shop') || 'ezza-auction.myshopify.com';
+  let shop = urlParams.get('shop');
+  
+  if (shop) {
+    console.log('🔍 Found shop in URL params:', shop);
+    return shop;
+  }
+  
+  // Method 2: Try URL hash (for embedded apps)
+  if (window.location.hash) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    shop = hashParams.get('shop');
+    if (shop) {
+      console.log('🔍 Found shop in URL hash:', shop);
+      return shop;
+    }
+  }
+  
+  // Method 3: Try App Bridge if available
+  if (window.shopify && window.shopify.config) {
+    const shopDomain = window.shopify.config.shop?.split('//')[1]?.split('/')[0];
+    if (shopDomain) {
+      console.log('🔍 Found shop in App Bridge config:', shopDomain);
+      return shopDomain;
+    }
+  }
+  
+  // Method 4: Extract from hostname (for embedded apps)
+  const hostname = window.location.hostname;
+  if (hostname.includes('.myshopify.com')) {
+    console.log('🔍 Found shop from hostname:', hostname);
+    return hostname;
+  }
+  
+  // Method 5: Try to get from parent window (if in iframe)
+  try {
+    if (window.parent && window.parent !== window) {
+      const parentUrl = new URL(window.parent.location.href);
+      shop = parentUrl.searchParams.get('shop');
+      if (shop) {
+        console.log('🔍 Found shop in parent window:', shop);
+        return shop;
+      }
+    }
+  } catch (e) {
+    // Cross-origin, can't access parent
+  }
+  
+  // Fallback: return null (will use default backend)
+  console.warn('⚠️ Could not detect shop domain, using default backend');
+  return null;
 };
 
 // Create axios instance with dynamic baseURL

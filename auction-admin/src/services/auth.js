@@ -1,7 +1,11 @@
 import axios from 'axios';
+import { getApiBaseUrl } from '../config/backendConfig.js';
 
-// Updated to use Render backend URL
-const API_BASE_URL = 'https://bidly-auction-backend.onrender.com/api';
+// Helper function to get shop from URL parameters
+const getShopFromURL = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('shop');
+};
 
 class AuthService {
   constructor() {
@@ -11,7 +15,13 @@ class AuthService {
 
   async login(email, password) {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+      // Get shop domain and determine backend URL dynamically
+      const shopDomain = getShopFromURL();
+      const apiBaseUrl = getApiBaseUrl(shopDomain);
+      
+      console.log('🔐 Login using backend:', apiBaseUrl, 'for shop:', shopDomain);
+      
+      const response = await axios.post(`${apiBaseUrl}/auth/login`, {
         email,
         password
       });
@@ -34,7 +44,13 @@ class AuthService {
 
   async register(username, email, password, role = 'admin') {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+      // Get shop domain and determine backend URL dynamically
+      const shopDomain = getShopFromURL();
+      const apiBaseUrl = getApiBaseUrl(shopDomain);
+      
+      console.log('🔐 Register using backend:', apiBaseUrl, 'for shop:', shopDomain);
+      
+      const response = await axios.post(`${apiBaseUrl}/auth/register`, {
         username,
         email,
         password,
