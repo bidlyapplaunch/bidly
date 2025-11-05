@@ -23,8 +23,28 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
+      // Validate registration fields
+      if (isRegistering) {
+        if (!username || !username.trim()) {
+          setError('Username is required');
+          setLoading(false);
+          return;
+        }
+        if (!email || !email.trim()) {
+          setError('Email is required');
+          setLoading(false);
+          return;
+        }
+        if (!password || password.length < 6) {
+          setError('Password must be at least 6 characters');
+          setLoading(false);
+          return;
+        }
+      }
+
       let response;
       if (isRegistering) {
+        console.log('📝 Registering with:', { username, email, passwordLength: password.length });
         response = await authService.register(username, email, password);
       } else {
         response = await authService.login(email, password);
