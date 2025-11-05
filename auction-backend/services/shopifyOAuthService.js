@@ -35,11 +35,22 @@ class ShopifyOAuthService {
 
          get redirectUri() {
            if (this._redirectUri === null) {
-             // Use Render URL for production, fallback to environment variable
-             this._redirectUri = process.env.SHOPIFY_REDIRECT_URI || 
-                                'https://bidly-auction-backend.onrender.com/auth/shopify/callback';
+             // Use environment variable if set
+             if (process.env.SHOPIFY_REDIRECT_URI) {
+               this._redirectUri = process.env.SHOPIFY_REDIRECT_URI;
+             } else {
+               // Fallback: construct from APP_URL or default
+               const appUrl = process.env.APP_URL || 'https://bidly-auction-backend.onrender.com';
+               this._redirectUri = `${appUrl}/auth/shopify/callback`;
+               console.log('⚠️ SHOPIFY_REDIRECT_URI not set, using constructed URL:', this._redirectUri);
+             }
            }
            return this._redirectUri;
+         }
+         
+         // Allow setting redirect URI dynamically (for multi-backend support)
+         setRedirectUri(uri) {
+           this._redirectUri = uri;
          }
 
   /**

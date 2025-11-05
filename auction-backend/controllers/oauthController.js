@@ -125,6 +125,15 @@ export const initiateOAuth = async (req, res, next) => {
       return res.redirect(`${adminUrl}?shop=${shop}&installed=true`);
     }
 
+    // Dynamically set redirect URI based on the current backend URL
+    // This ensures each backend uses its own callback URL
+    const protocol = req.protocol || 'https';
+    const host = req.get('host') || req.hostname || 'bidly-auction-backend.onrender.com';
+    const dynamicRedirectUri = `${protocol}://${host}/auth/shopify/callback`;
+    
+    console.log('🔗 Setting dynamic redirect URI:', dynamicRedirectUri);
+    shopifyOAuthService.setRedirectUri(dynamicRedirectUri);
+
     // Generate a random state parameter for security
     const state = shopifyOAuthService.generateState();
     
@@ -133,6 +142,7 @@ export const initiateOAuth = async (req, res, next) => {
     const authUrl = shopifyOAuthService.generateAuthUrl(shop, state);
     
     console.log('🔗 Redirecting to Shopify OAuth:', authUrl);
+    console.log('🔗 Using redirect URI:', shopifyOAuthService.redirectUri);
     
     // Redirect the store owner to Shopify's OAuth page
     res.redirect(authUrl);
