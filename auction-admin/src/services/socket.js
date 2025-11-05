@@ -1,19 +1,46 @@
 import { io } from 'socket.io-client';
+import { getBackendUrl } from '../config/backendConfig.js';
+
+// Helper function to get shop from URL parameters
+const getShopFromURL = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('shop');
+};
 
 class SocketService {
   constructor() {
     this.socket = null;
     this.isConnected = false;
+    this.currentBackendUrl = null;
   }
 
   connect() {
+    // Get shop domain and determine backend URL
+    const shopDomain = getShopFromURL();
+    const backendUrl = getBackendUrl(shopDomain);
+    
+    // If already connected to the same backend, return existing socket
+    if (this.socket && this.currentBackendUrl === backendUrl && this.isConnected) {
+      return this.socket;
+    }
+    
+    // If connected to a different backend, disconnect first
+    if (this.socket && this.currentBackendUrl !== backendUrl) {
+      console.log('🔄 Shop changed, reconnecting Socket.io to new backend...');
+      this.disconnect();
+    }
+    
+    // Create new connection if needed
     if (!this.socket) {
-      this.socket = io('https://bidly-auction-backend.onrender.com', {
+      console.log('🔌 Connecting Socket.io to:', backendUrl, 'for shop:', shopDomain);
+      this.currentBackendUrl = backendUrl;
+      
+      this.socket = io(backendUrl, {
         transports: ['websocket', 'polling']
       });
 
       this.socket.on('connect', () => {
-        console.log('🔌 Admin WebSocket connected');
+        console.log('🔌 Admin WebSocket connected to:', backendUrl);
         this.isConnected = true;
       });
 
@@ -35,6 +62,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.currentBackendUrl = null;
     }
   }
 

@@ -63,6 +63,7 @@
 </script>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="{{ 'backendConfig.js' | asset_url }}?v=191"></script>
 <script src="{{ 'bidly-hybrid-login.js' | asset_url }}?v=191"></script>
 <script src="{{ 'auction-widget-simple.js' | asset_url }}?v=191" defer></script>
 <script src="{{ 'auction-app-embed.js' | asset_url }}?v=191" defer></script>
@@ -158,8 +159,13 @@ window.BidlyAuctionEmbed = {
             
             // Call the API endpoint
             try {
+                // Use backend config if available
+                const backendUrl = window.BidlyBackendConfig 
+                    ? window.BidlyBackendConfig.getBackendUrl('{{ shop.domain }}')
+                    : 'https://bidly-auction-backend.onrender.com';
+                
                 const CONFIG = window.BidlyConfig || {
-                    backendUrl: 'https://bidly-auction-backend.onrender.com',
+                    backendUrl: backendUrl,
                     shopDomain: '{{ shop.domain }}'
                 };
                 

@@ -13,7 +13,16 @@
 
     // Configuration
     const CONFIG = {
-        backendUrl: 'https://bidly-auction-backend.onrender.com',
+        backendUrl: (function() {
+            // Use backend config if available, otherwise default
+            if (window.BidlyBackendConfig) {
+                const shopDomain = window.Shopify?.shop?.permanent_domain || window.location.hostname;
+                return window.BidlyBackendConfig.getBackendUrl(shopDomain);
+            }
+            // Fallback to default if backend config not loaded
+            console.warn('⚠️ Bidly: Backend config not loaded, using default backend');
+            return 'https://bidly-auction-backend.onrender.com';
+        })(),
         shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname,
         widgetClass: 'bidly-auction-app-embed',
         pricingSelectors: [

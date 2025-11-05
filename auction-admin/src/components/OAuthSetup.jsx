@@ -93,8 +93,12 @@ const OAuthSetup = ({ onComplete }) => {
         throw new Error('Shop domain is required but not found');
       }
       
+      // Get backend URL for this shop
+      const { getBackendUrl } = await import('../config/backendConfig.js');
+      const backendUrl = getBackendUrl(shopToUse);
+      
       // Use the OAuth status endpoint which doesn't require authentication
-      const response = await fetch(`https://bidly-auction-backend.onrender.com/auth/shopify/status?shop=${shopToUse}`);
+      const response = await fetch(`${backendUrl}/auth/shopify/status?shop=${shopToUse}`);
       
       if (!response.ok) {
         // If endpoint doesn't exist or returns error, assume OAuth is needed
@@ -124,7 +128,7 @@ const OAuthSetup = ({ onComplete }) => {
     }
   };
 
-  const handleCompleteOAuth = () => {
+  const handleCompleteOAuth = async () => {
     console.log('🚀🚀🚀 handleCompleteOAuth called 🚀🚀🚀');
     console.log('📍 Initial state check:');
     console.log('  - shopDomain state:', shopDomain);
@@ -307,11 +311,17 @@ const OAuthSetup = ({ onComplete }) => {
       return;
     }
 
+    // Get backend URL for this shop
+    const { getBackendUrl } = await import('../config/backendConfig.js');
+    const backendUrl = getBackendUrl(cleanedShop);
+    const baseUrl = `${backendUrl}/auth/shopify/install`;
+    
     // Redirect to OAuth flow
     // Use top-level navigation to break out of iframe (Shopify OAuth cannot be in iframe)
     const encodedShop = encodeURIComponent(cleanedShop);
-    const baseUrl = 'https://bidly-auction-backend.onrender.com/auth/shopify/install';
     const oauthUrl = `${baseUrl}?shop=${encodedShop}`;
+    
+    console.log('🔗 Using backend URL:', backendUrl, 'for shop:', cleanedShop);
     
     console.log('✅✅✅ GENERATING OAUTH URL ✅✅✅');
     console.log('  - Base URL:', baseUrl);
@@ -346,7 +356,7 @@ const OAuthSetup = ({ onComplete }) => {
         // We're in an iframe - use form submission to break out
         // This works even with cross-origin restrictions
         // IMPORTANT: Use base URL and add shop as hidden input to ensure it's included
-        const baseUrl = 'https://bidly-auction-backend.onrender.com/auth/shopify/install';
+        // Note: baseUrl is already set above using dynamic backend URL
         console.log('📤 Creating form (iframe mode)');
         console.log('  - Base URL:', baseUrl);
         console.log('  - Shop parameter:', cleanedShop);
