@@ -6,7 +6,29 @@ import emailService from '../services/emailService.js';
 // Register new user
 export const register = async (req, res, next) => {
   try {
+    console.log('📝 Registration request received:', {
+      email: req.body.email,
+      name: req.body.name,
+      role: req.body.role,
+      hasPassword: !!req.body.password,
+      passwordLength: req.body.password?.length
+    });
+
     const { email, password, name, role = 'customer' } = req.body;
+
+    // Validate required fields
+    if (!email) {
+      throw new AppError('Email is required', 400);
+    }
+    if (!password) {
+      throw new AppError('Password is required', 400);
+    }
+    if (password.length < 6) {
+      throw new AppError('Password must be at least 6 characters', 400);
+    }
+    if (!name || !name.trim()) {
+      throw new AppError('Name is required', 400);
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });

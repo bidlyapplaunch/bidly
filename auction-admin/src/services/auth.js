@@ -64,7 +64,22 @@ class AuthService {
     } catch (error) {
       console.error('Registration error:', error);
       console.error('Registration error response:', error.response?.data);
-      throw error;
+      console.error('Registration error status:', error.response?.status);
+      console.error('Registration error headers:', error.response?.headers);
+      console.error('Registration request config:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.config?.data
+      });
+      
+      // Re-throw with more context
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.errors?.map(e => `${e.field || e.path}: ${e.message || e.msg}`).join(', ') ||
+                          error.message || 
+                          'Registration failed';
+      const enhancedError = new Error(errorMessage);
+      enhancedError.response = error.response;
+      throw enhancedError;
     }
   }
 
