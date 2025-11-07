@@ -14,7 +14,8 @@ import {
   Badge,
   ButtonGroup,
   Tabs,
-  BlockStack
+  BlockStack,
+  InlineStack
 } from '@shopify/polaris';
 import { PlusMinor, AnalyticsMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
