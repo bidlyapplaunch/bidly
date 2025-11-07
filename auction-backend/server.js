@@ -46,6 +46,7 @@ const io = new Server(server, {
   }
 });
 const PORT = process.env.PORT || 5000;
+const previewAssetsPath = path.join(__dirname, '../extensions/theme-app-extension/assets');
 
 // Security middleware - Configured for Shopify embedded apps
 app.use(helmet({
@@ -239,6 +240,92 @@ try {
     }
   });
 })();
+
+app.get('/preview/widget-assets/:asset', (req, res) => {
+  try {
+    const assetName = req.params.asset || '';
+    if (assetName.includes('..')) {
+      return res.status(400).send('Invalid asset name');
+    }
+
+    const assetPath = path.join(previewAssetsPath, assetName);
+    if (!fs.existsSync(assetPath)) {
+      return res.status(404).send('Asset not found');
+    }
+
+    res.setHeader('Cache-Control', 'no-store');
+    return res.sendFile(assetPath);
+  } catch (error) {
+    console.error('❌ Failed to serve preview asset:', error);
+    return res.status(500).send('Failed to load preview asset');
+  }
+});
+
+app.get('/preview/widget', (req, res) => {
+  const shop = (req.query.shop || '').toString();
+  const stateParam = (req.query.state || '').toString();
+  const allowedStates = ['pending', 'active', 'ended'];
+  const state = allowedStates.includes(stateParam) ? stateParam : 'active';
+  const version = Date.now().toString();
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bidly Widget Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="/preview/widget-assets/auction-app-embed.css?v=${version}" />
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #f4f6f8;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+    </style>
+    <script>
+      window.__BIDLY_PREVIEW__ = {
+        preview: true,
+        shopDomain: ${JSON.stringify(shop || null)},
+        state: ${JSON.stringify(state)}
+      };
+      (function() {
+        const data = window.__BIDLY_PREVIEW__;
+        if (!window.Shopify) {
+          window.Shopify = { shop: { permanent_domain: data.shopDomain || 'preview-shop.myshopify.com' } };
+        }
+        if (!window.Shopify.shop) {
+          window.Shopify.shop = { permanent_domain: data.shopDomain || 'preview-shop.myshopify.com' };
+        }
+        if (!window.BidlyHybridLogin) {
+          window.BidlyHybridLogin = {
+            getCurrentCustomer: () => ({ fullName: 'Preview User', isTemp: false }),
+            isUserLoggedIn: () => true,
+            openGuestLogin: () => {},
+            logout: () => {}
+          };
+        }
+        if (!window.location.pathname.includes('/products/')) {
+          const newPath = '/products/bidly-preview';
+          const query = window.location.search || '';
+          history.replaceState({}, '', newPath + query);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="bidly-auction-app-embed" data-preview="1"></div>
+    <script src="/preview/widget-assets/backendConfig.js?v=${version}"></script>
+    <script src="/preview/widget-assets/auction-app-embed.js?v=${version}" defer></script>
+  </body>
+</html>`;
+
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', 'text/html');
+  return res.send(html);
+});
 
 // Add diagnostic endpoint to check route loading status
 app.get('/api/debug/routes', (req, res) => {

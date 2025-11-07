@@ -30,6 +30,7 @@ export function useCustomizationSettings(type) {
   const [previewState, setPreviewState] = useState('active');
   const [previewData, setPreviewData] = useState(null);
   const [toast, setToast] = useState(null);
+  const [shopDomain, setShopDomain] = useState(null);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -40,6 +41,9 @@ export function useCustomizationSettings(type) {
         setSettings(response.settings);
         setOriginalSettings(response.settings);
         setMeta(response.meta);
+        if (response.shop) {
+          setShopDomain(response.shop);
+        }
       } else {
         setError(response.message || 'Failed to load customization settings');
       }
@@ -215,7 +219,8 @@ export function useCustomizationSettings(type) {
     resetToOriginal,
     save,
     reload: loadSettings,
-    loadPreview
+    loadPreview,
+    shopDomain
   };
 }
 

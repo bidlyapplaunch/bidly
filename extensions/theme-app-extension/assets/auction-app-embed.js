@@ -6,8 +6,11 @@
 (function() {
     'use strict';
 
-    // Only run on product pages
-    if (!window.location.pathname.includes('/products/')) {
+    const PREVIEW_DATA = window.__BIDLY_PREVIEW__ || {};
+    const PREVIEW_MODE = Boolean(PREVIEW_DATA.preview) || window.location.search.includes('preview=true') || window.location.search.includes('bidly_preview=1');
+
+    // Only run on product pages unless in preview mode
+    if (!PREVIEW_MODE && !window.location.pathname.includes('/products/')) {
         return;
     }
 
@@ -16,14 +19,14 @@
         backendUrl: (function() {
             // Use backend config if available, otherwise default
             if (window.BidlyBackendConfig) {
-                const shopDomain = window.Shopify?.shop?.permanent_domain || window.location.hostname;
+                const shopDomain = PREVIEW_DATA.shopDomain || window.Shopify?.shop?.permanent_domain || window.location.hostname;
                 return window.BidlyBackendConfig.getBackendUrl(shopDomain);
             }
             // Fallback to default if backend config not loaded
             console.warn('⚠️ Bidly: Backend config not loaded, using default backend');
             return 'https://bidly-auction-backend.onrender.com';
         })(),
-        shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname,
+        shopDomain: PREVIEW_DATA.shopDomain || window.Shopify?.shop?.permanent_domain || window.location.hostname,
         widgetClass: 'bidly-auction-app-embed',
         pricingSelectors: [
             '.product-form__price',
@@ -37,6 +40,12 @@
             '.price-wrapper',
             '.product-price-wrapper'
         ]
+    };
+
+    const PREVIEW_WIDGET_SETTINGS = {
+        show_timer: true,
+        show_bid_history: true,
+        widget_position: 'preview'
     };
 
     const THEME_BOX_SHADOWS = {
@@ -103,13 +112,16 @@
 }`;
     }
 
-    async function fetchWidgetThemeSettings() {
-        if (widgetThemeSettingsCache) {
+    async function fetchWidgetThemeSettings(force = false) {
+        if (widgetThemeSettingsCache && !force && !PREVIEW_MODE) {
             return widgetThemeSettingsCache;
         }
 
         try {
-            const response = await fetch(`${CONFIG.backendUrl}/api/customization/widget?shop=${CONFIG.shopDomain}`);
+            const previewSuffix = PREVIEW_MODE ? `&preview=true&_=${Date.now()}` : '';
+            const response = await fetch(`${CONFIG.backendUrl}/api/customization/widget?shop=${CONFIG.shopDomain}${previewSuffix}`, {
+                headers: PREVIEW_MODE ? { 'Cache-Control': 'no-store' } : undefined
+            });
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.settings) {
@@ -154,6 +166,74 @@
 
         styleElement.textContent = buildWidgetThemeStyle(theme);
     }
+
+    function buildPreviewAuctionData(override = {}) {
+        const now = new Date();
+        const state = override.status || PREVIEW_DATA.state || 'active';
+        const baseBid = override.currentBid ?? 185;
+        const minimumBid = override.minimumBid ?? override.startingBid ?? 150;
+        return {
+            hasAuction: true,
+            auctionId: override.auctionId || 'preview-auction',
+            status: state,
+            currentBid: Number(baseBid),
+            startingBid: Number(override.startingBid ?? minimumBid),
+            minimumBid: Number(minimumBid),
+            reservePrice: Number(override.reservePrice ?? (state === 'active' ? minimumBid : 0)),
+            endTime: override.endTime || new Date(now.getTime() + 3600000).toISOString(),
+            startTime: override.startTime || new Date(now.getTime() - 3600000).toISOString(),
+            bidCount: Number(override.bidCount ?? 8),
+            buyNowPrice: Number(override.buyNowPrice ?? 0)
+        };
+    }
+
+    function renderPreviewWidget(themeOverride, auctionOverride) {
+        const container = document.querySelector('[data-preview="1"]') || document.querySelector('.' + CONFIG.widgetClass);
+        if (!container) {
+            console.warn('Bidly: Preview container not found');
+            return null;
+        }
+
+        const theme = themeOverride ? normalizeWidgetTheme(themeOverride) : (widgetThemeSettingsCache || normalizeWidgetTheme(DEFAULT_WIDGET_THEME));
+        widgetThemeSettingsCache = theme;
+
+        const auctionData = buildPreviewAuctionData(auctionOverride || PREVIEW_DATA.auctionData || {});
+        const html = createWidgetHTML(auctionData, PREVIEW_WIDGET_SETTINGS);
+        container.innerHTML = html;
+
+        const widgetElement = container.querySelector('.' + CONFIG.widgetClass) || container;
+        applyWidgetTheme(widgetElement, theme);
+
+        if (auctionData.status === 'active' && auctionData.endTime) {
+            initializeCountdown(auctionData.auctionId, auctionData.endTime);
+        }
+
+        window.currentAuctionCheck = auctionData;
+        return { container, auctionData, theme };
+    }
+
+    window.addEventListener('message', (event) => {
+        if (!event?.data || event.data.type !== 'BIDLY_PREVIEW_THEME_UPDATE') {
+            return;
+        }
+
+        if (!PREVIEW_MODE) {
+            return;
+        }
+
+        const payload = event.data.payload || {};
+        if (payload.state) {
+            PREVIEW_DATA.state = payload.state;
+        }
+        if (payload.theme) {
+            PREVIEW_DATA.theme = payload.theme;
+        }
+        if (payload.auctionData) {
+            PREVIEW_DATA.auctionData = payload.auctionData;
+        }
+        renderPreviewWidget(payload.theme || null, payload.auctionData || {});
+        console.log('Bidly: Preview theme update applied from admin message');
+    });
 
     // Theme loading functionality - DISABLED (reverted to original design)
     // Theme customization is temporarily disabled
@@ -2121,8 +2201,13 @@
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
         
-        await fetchWidgetThemeSettings();
-        
+        const initialTheme = await fetchWidgetThemeSettings(PREVIEW_MODE);
+
+        if (PREVIEW_MODE) {
+            renderPreviewWidget(initialTheme, PREVIEW_DATA.auctionData || { status: PREVIEW_DATA.state || 'active' });
+            return;
+        }
+
         // Check if widget already exists to prevent reloading
         const existingWidget = document.querySelector('.bidly-auction-app-embed');
         if (existingWidget) {
