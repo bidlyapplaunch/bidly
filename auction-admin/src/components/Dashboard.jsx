@@ -7,16 +7,10 @@ import {
   Button,
   Banner,
   Frame,
-  Toast,
-  ResourceList,
-  ResourceItem,
-  Avatar,
-  Badge,
-  ButtonGroup,
   Tabs,
-  BlockStack
+  Navigation
 } from '@shopify/polaris';
-import { PlusMinor, AnalyticsMinor } from '@shopify/polaris-icons';
+import { PlusMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
@@ -47,18 +41,9 @@ const Dashboard = ({ onLogout }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
   const [planInfo, setPlanInfo] = useState({ plan: 'none', pendingPlan: null });
-  const [planLoading, setPlanLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const search = location.search || '';
-
-  const goToMarketplaceCustomization = () => {
-    navigate(`/customization/marketplace${search}`);
-  };
-
-  const goToWidgetCustomization = () => {
-    navigate(`/customization/widget${search}`);
-  };
 
   useEffect(() => {
     fetchStats();
@@ -126,7 +111,6 @@ const Dashboard = ({ onLogout }) => {
 
   const fetchPlan = async () => {
     try {
-      setPlanLoading(true);
       const response = await billingAPI.getCurrentPlan();
       if (response.success) {
         setPlanInfo({
@@ -137,10 +121,58 @@ const Dashboard = ({ onLogout }) => {
       }
     } catch (err) {
       console.error('Failed to load plan info', err);
-    } finally {
-      setPlanLoading(false);
     }
   };
+
+  const buildLocation = (pathname) => `${pathname}${search || ''}`;
+
+  const handleNavigate = (pathname) => {
+    navigate(`${pathname}${search || ''}`);
+  };
+
+  const navigationMarkup = (
+    <Navigation location={location.pathname}>
+      <Navigation.Section
+        title={shopInfo.storeName || 'Bidly Auctions'}
+        items={[
+          {
+            url: buildLocation('/'),
+            label: 'Dashboard',
+            selected: location.pathname === '/',
+            onClick: () => handleNavigate('/')
+          }
+        ]}
+      />
+      <Navigation.Section
+        title="Customization"
+        items={[
+          {
+            url: buildLocation('/customization/widget'),
+            label: 'Widget styles',
+            selected: location.pathname === '/customization/widget',
+            onClick: () => handleNavigate('/customization/widget')
+          },
+          {
+            url: buildLocation('/customization/marketplace'),
+            label: 'Marketplace styles',
+            disabled: true,
+            badge: 'Coming soon'
+          }
+        ]}
+      />
+      <Navigation.Section
+        title="Billing"
+        items={[
+          {
+            url: buildLocation('/plans'),
+            label: 'Plans',
+            selected: location.pathname === '/plans',
+            onClick: () => handleNavigate('/plans')
+          }
+        ]}
+      />
+    </Navigation>
+  );
 
   const handleCreateAuction = () => {
     setSelectedAuction(null);
@@ -237,7 +269,7 @@ const Dashboard = ({ onLogout }) => {
 
   if (error) {
     return (
-      <Frame>
+      <Frame navigation={navigationMarkup}>
         <Page>
           <Banner status="critical">
             <Text variant="bodyMd">{error}</Text>
@@ -248,7 +280,7 @@ const Dashboard = ({ onLogout }) => {
   }
 
   return (
-    <Frame>
+    <Frame navigation={navigationMarkup}>
       <Page
         title={`Auction Dashboard${shopInfo.shop ? ` - ${shopInfo.shop}` : ''}`}
         subtitle={shopInfo.storeName ? `Store: ${shopInfo.storeName}` : 'Manage your auctions and monitor performance'}
@@ -296,57 +328,6 @@ const Dashboard = ({ onLogout }) => {
               </div>
             </Card>
           </Layout.Section>
-
-          {/* Customization shortcuts */}
-          <Layout.Section>
-            <Card sectioned>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                <div>
-                  <Text variant="headingMd">Visual customization</Text>
-                  <Text variant="bodySm" color="subdued">
-                    Update the storefront widget or marketplace appearance from dedicated customization studios.
-                  </Text>
-                </div>
-                <ButtonGroup>
-                  <Button disabled>Marketplace styles (coming soon)</Button>
-                  <Button onClick={goToWidgetCustomization}>Widget styles</Button>
-                  <Button onClick={() => navigate(`/plans${search}`)}>Manage plan</Button>
-                </ButtonGroup>
-              </div>
-            </Card>
-          </Layout.Section>
-
-          <Layout.Section>
-            <Card sectioned>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '16px',
-                    flexWrap: 'wrap'
-                  }}
-                >
-                  <BlockStack gap="tight">
-                    <Text variant="headingMd">Subscription</Text>
-                    {planLoading ? (
-                      <Text tone="subdued">Loading plan…</Text>
-                    ) : (
-                      <Text tone="subdued">
-                        Current plan: {planInfo.plan || 'none'}
-                        {planInfo.pendingPlan && planInfo.pendingPlan !== planInfo.plan
-                          ? ` · Pending: ${planInfo.pendingPlan}`
-                          : ''}
-                      </Text>
-                    )}
-                  </BlockStack>
-                  <Button primary onClick={() => navigate(`/plans${search}`)}>
-                    View plans
-                  </Button>
-                </div>
-            </Card>
-          </Layout.Section>
-
           {/* Total Bids */}
           <Layout.Section>
             <Card sectioned>
