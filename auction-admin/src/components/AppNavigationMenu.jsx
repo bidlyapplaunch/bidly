@@ -2,13 +2,13 @@ import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationMenu } from '@shopify/app-bridge/actions';
 
-const ensureNavigationMenu = (app) => {
+const ensureNavigationMenu = (app, items) => {
   if (!app) {
     return null;
   }
 
   if (!window.__APP_BRIDGE_NAV_MENU__) {
-    window.__APP_BRIDGE_NAV_MENU__ = NavigationMenu.create(app);
+    window.__APP_BRIDGE_NAV_MENU__ = NavigationMenu.create(app, { items });
   }
 
   return window.__APP_BRIDGE_NAV_MENU__;
@@ -36,12 +36,12 @@ const AppNavigationMenu = () => {
       { label: 'Plans', destination: resolveDestination('/plans', searchParams) }
     ];
 
-    const navigationMenu = ensureNavigationMenu(app);
+    const navigationMenu = ensureNavigationMenu(app, items);
     if (!navigationMenu) {
       return;
     }
 
-    navigationMenu.set({ items });
+    navigationMenu.dispatch(NavigationMenu.Action.UPDATE, { items });
 
     const activeItem = items.find((item) => {
       try {
@@ -54,7 +54,7 @@ const AppNavigationMenu = () => {
     });
 
     if (activeItem) {
-      navigationMenu.set({ active: activeItem });
+      navigationMenu.dispatch(NavigationMenu.Action.UPDATE, { active: activeItem });
     }
   }, [location, searchParams]);
 
