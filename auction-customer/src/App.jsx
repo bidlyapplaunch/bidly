@@ -26,6 +26,10 @@ function App() {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [marketplaceTheme, setMarketplaceTheme] = useState({
+    template: 'A',
+    gradientEnabled: false
+  });
   
   // Customer authentication state
   const [customer, setCustomer] = useState(null);
@@ -46,7 +50,18 @@ function App() {
   const { shop, shopName } = getShopInfo();
 
   useEffect(() => {
-    themeService.loadTheme(shop);
+    let isMounted = true;
+
+    themeService.loadTheme(shop).then((theme) => {
+      if (!isMounted || !theme) {
+        return;
+      }
+
+      setMarketplaceTheme({
+        template: (theme.template || 'A').toUpperCase(),
+        gradientEnabled: !!theme.gradientEnabled
+      });
+    });
 
     // Initialize customer authentication
     if (customerAuthService.isAuthenticated()) {
@@ -179,6 +194,7 @@ function App() {
       socketService.offStatusUpdate(handleStatusUpdate);
       socketService.disconnect();
       clearInterval(refreshInterval);
+      isMounted = false;
     };
   }, []);
 
@@ -363,7 +379,11 @@ function App() {
 
   if (loading) {
     return (
-      <div className="bidly-marketplace-root">
+      <div
+        className="bidly-marketplace-root"
+        data-bidly-marketplace-template={marketplaceTheme.template}
+        data-bidly-marketplace-gradient={marketplaceTheme.gradientEnabled ? '1' : '0'}
+      >
         <AppProvider>
           <Frame>
             <Page title="Live Auctions">
@@ -378,7 +398,11 @@ function App() {
   }
 
   return (
-    <div className="bidly-marketplace-root">
+    <div
+      className="bidly-marketplace-root"
+      data-bidly-marketplace-template={marketplaceTheme.template}
+      data-bidly-marketplace-gradient={marketplaceTheme.gradientEnabled ? '1' : '0'}
+    >
       <AppProvider>
         <Frame>
         <Page 

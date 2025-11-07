@@ -25,6 +25,13 @@ const DEFAULT_THEME = {
 
 const DEFAULT_ERROR_COLOR = '#ef4444';
 
+const FONT_IMPORTS = {
+  Inter: 'Inter:wght@400;500;600;700',
+  Poppins: 'Poppins:wght@400;500;600;700',
+  Roboto: 'Roboto:wght@400;500;700',
+  Lato: 'Lato:wght@400;500;700'
+};
+
 const getShopFromURL = () => {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get('shop') || 'ezza-auction.myshopify.com';
@@ -53,7 +60,7 @@ const withAlpha = (hexColor, alpha) => {
 
 const normalizeTheme = (theme = {}) => {
   const normalized = {
-    template: theme.template || DEFAULT_THEME.template,
+    template: (theme.template || DEFAULT_THEME.template || 'A').toUpperCase(),
     font: theme.font || DEFAULT_THEME.font,
     borderRadius: theme.borderRadius || DEFAULT_THEME.borderRadius,
     boxShadow: theme.boxShadow || DEFAULT_THEME.boxShadow,
@@ -71,9 +78,13 @@ const buildMarketplaceCSS = (theme) => {
   const textSecondary = withAlpha(colors.text, 0.65);
   const boxShadow = BOX_SHADOWS[theme.boxShadow] || BOX_SHADOWS[DEFAULT_THEME.boxShadow];
   const font = (theme.font || DEFAULT_THEME.font).replace(/'/g, "\\'");
+  const googleFont = FONT_IMPORTS[theme.font] || FONT_IMPORTS[DEFAULT_THEME.font];
+  const fontImport = googleFont ? `@import url('https://fonts.googleapis.com/css2?family=${googleFont}&display=swap');` : '';
 
   return `
-:root {
+${fontImport}
+
+.bidly-marketplace-root {
   --bidly-color-text-primary: ${colors.text};
   --bidly-color-text-secondary: ${textSecondary};
   --bidly-color-surface: ${colors.bg_solid};
@@ -85,7 +96,7 @@ const buildMarketplaceCSS = (theme) => {
   --bidly-color-button-bg: ${colors.button_bg};
   --bidly-color-button-hover: ${colors.button_hover};
   --bidly-color-button-text: ${colors.button_text};
-  --bidly-marketplace-font-family: '${font}', sans-serif;
+  --bidly-marketplace-font-family: '${font}', Poppins, Inter, Roboto, Lato, -apple-system, BlinkMacSystemFont, sans-serif;
   --bidly-marketplace-shadow: ${boxShadow};
   --bidly-marketplace-radius: ${theme.borderRadius}px;
   --bidly-marketplace-gradient-start: ${colors.bg_gradient_start};
@@ -101,16 +112,36 @@ const buildMarketplaceCSS = (theme) => {
   --p-color-text-on-primary: var(--bidly-color-button-text);
 }
 
+.bidly-marketplace-root,
+.bidly-marketplace-root * {
+  font-family: var(--bidly-marketplace-font-family);
+}
+
 .bidly-marketplace-root {
   background: var(--bidly-color-background);
   color: var(--bidly-color-text-primary);
   min-height: 100vh;
   padding-bottom: 40px;
-  font-family: var(--bidly-marketplace-font-family);
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.bidly-marketplace-root[data-bidly-marketplace-gradient="1"] {
+  background: linear-gradient(140deg, var(--bidly-marketplace-gradient-start), var(--bidly-marketplace-gradient-end));
+  background-attachment: fixed;
+}
+
+.bidly-marketplace-root .Polaris-Frame {
+  background: transparent;
 }
 
 .bidly-marketplace-root .Polaris-Page {
   background: transparent;
+}
+
+.bidly-marketplace-root .Polaris-Page__Content,
+.bidly-marketplace-root .Polaris-Page__Header {
+  max-width: 1120px;
+  margin-inline: auto;
 }
 
 .bidly-marketplace-root .Polaris-Card {
@@ -118,10 +149,17 @@ const buildMarketplaceCSS = (theme) => {
   border-radius: var(--bidly-marketplace-radius);
   border: 1px solid var(--bidly-color-border);
   box-shadow: var(--bidly-marketplace-shadow);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+.bidly-marketplace-root .Polaris-Card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
 }
 
 .bidly-marketplace-root .Polaris-Text--subdued,
-.bidly-marketplace-root .Polaris-Labelled__HelpText {
+.bidly-marketplace-root .Polaris-Labelled__HelpText,
+.bidly-marketplace-root .Polaris-Text--toneSubdued {
   color: var(--bidly-color-text-secondary);
 }
 
@@ -138,24 +176,110 @@ const buildMarketplaceCSS = (theme) => {
   color: var(--bidly-color-button-text);
 }
 
-.bidly-marketplace-root .Polaris-Badge--statusSuccess {
-  background: var(--bidly-color-success);
-  color: #ffffff;
+.bidly-marketplace-root .Polaris-Button {
+  border-radius: calc(var(--bidly-marketplace-radius) - 4px);
 }
 
-.bidly-marketplace-root .Polaris-Badge--statusInfo {
+.bidly-marketplace-root .Polaris-Badge--statusSuccess,
+.bidly-marketplace-root .Polaris-Badge--statusInfo,
+.bidly-marketplace-root .Polaris-Badge--statusAttention {
   background: var(--bidly-color-accent);
   color: #ffffff;
+  border: none;
+  box-shadow: none;
 }
 
-.bidly-marketplace-root[data-bidly-marketplace-gradient="1"] .bidly-marketplace-hero {
-  background: linear-gradient(135deg, var(--bidly-marketplace-gradient-start), var(--bidly-marketplace-gradient-end));
-  color: var(--bidly-color-button-text);
+.bidly-marketplace-root .Polaris-Badge--statusCritical {
+  background: var(--bidly-color-error);
+  color: #ffffff;
+  border: none;
 }
 
-.bidly-marketplace-root[data-bidly-marketplace-gradient="0"] .bidly-marketplace-hero {
-  background: var(--bidly-color-surface);
+.bidly-marketplace-root .Polaris-Layout {
+  gap: 24px;
+}
+
+.bidly-marketplace-root .Polaris-Layout__Section {
+  min-width: 0;
+}
+
+.bidly-marketplace-root .Polaris-Text--headingLg,
+.bidly-marketplace-root .Polaris-Text--headingMd,
+.bidly-marketplace-root .Polaris-Text--headingSm {
   color: var(--bidly-color-text-primary);
+}
+
+.bidly-marketplace-root .Polaris-Text--bodyMd,
+.bidly-marketplace-root .Polaris-Text--bodySm,
+.bidly-marketplace-root .Polaris-Text--bodyLg {
+  color: var(--bidly-color-text-secondary);
+}
+
+.bidly-marketplace-root .Polaris-Button:disabled {
+  opacity: 0.5;
+}
+
+/* Template adjustments */
+.bidly-marketplace-root[data-bidly-marketplace-template="A"] .Polaris-Card {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.bidly-marketplace-root[data-bidly-marketplace-template="B"] {
+  --bidly-marketplace-shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
+}
+
+.bidly-marketplace-root[data-bidly-marketplace-template="B"] .Polaris-Card {
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.bidly-marketplace-root[data-bidly-marketplace-template="C"] .Polaris-Card {
+  border-radius: calc(var(--bidly-marketplace-radius) + 6px);
+  border: none;
+}
+
+.bidly-marketplace-root[data-bidly-marketplace-template="D"] .Polaris-Card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.12);
+}
+
+.bidly-marketplace-root[data-bidly-marketplace-template="D"] .Polaris-Button--primary {
+  border-radius: 999px;
+}
+
+/* Auth modal + bid forms */
+.bidly-marketplace-root .Polaris-Modal-Dialog__Modal.Polaris-Modal-Dialog__Modal--sizeLarge {
+  border-radius: calc(var(--bidly-marketplace-radius) + 4px);
+}
+
+.bidly-marketplace-root .Polaris-Modal-Section {
+  background: var(--bidly-color-surface);
+}
+
+.bidly-marketplace-root .Polaris-TextField {
+  border-color: var(--bidly-color-border);
+}
+
+.bidly-marketplace-root .Polaris-ResourceItem {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.bidly-marketplace-root .Polaris-Toast {
+  border-radius: calc(var(--bidly-marketplace-radius) - 6px);
+}
+
+.bidly-marketplace-root .Polaris-Spinner {
+  --pc-spinner-color: var(--bidly-color-accent);
+}
+
+@media (max-width: 768px) {
+  .bidly-marketplace-root .Polaris-Page__Header {
+    padding-inline: 16px;
+  }
+
+  .bidly-marketplace-root .Polaris-Card {
+    border-radius: calc(var(--bidly-marketplace-radius) - 4px);
+  }
 }
 `;
 };
@@ -184,12 +308,14 @@ class ThemeService {
       }
 
       console.warn('ThemeService: Falling back to default marketplace theme');
-      this.applyTheme(normalizeTheme(DEFAULT_THEME));
-      return DEFAULT_THEME;
+      const fallbackTheme = normalizeTheme(DEFAULT_THEME);
+      this.applyTheme(fallbackTheme);
+      return fallbackTheme;
     } catch (error) {
       console.error('ThemeService: Failed to load marketplace theme', error);
-      this.applyTheme(normalizeTheme(DEFAULT_THEME));
-      return DEFAULT_THEME;
+      const fallbackTheme = normalizeTheme(DEFAULT_THEME);
+      this.applyTheme(fallbackTheme);
+      return fallbackTheme;
     }
   }
 
