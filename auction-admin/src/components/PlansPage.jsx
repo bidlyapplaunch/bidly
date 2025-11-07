@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   Frame,
-  InlineStack,
   Layout,
   Page,
   Spinner,
@@ -225,14 +224,22 @@ const PlansPage = () => {
           <Layout.Section>
             <Card>
               <Card.Section>
-                <InlineStack align="space-between" blockAlign="center">
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 16,
+                    flexWrap: 'wrap'
+                  }}
+                >
                   <BlockStack gap="tight">
                     <Text variant="headingMd">Current plan</Text>
                     {loading ? (
-                      <InlineStack gap="tight" blockAlign="center">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Spinner accessibilityLabel="Loading plan" size="small" />
                         <Text tone="subdued">Loading…</Text>
-                      </InlineStack>
+                      </div>
                     ) : (
                       <BlockStack gap="none">
                         <Text tone="subdued">Active: {planData.plan || 'none'}</Text>
@@ -243,7 +250,7 @@ const PlansPage = () => {
                       </BlockStack>
                     )}
                   </BlockStack>
-                </InlineStack>
+                </div>
               </Card.Section>
             </Card>
           </Layout.Section>
