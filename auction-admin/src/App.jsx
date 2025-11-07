@@ -94,6 +94,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        <AppNavigationMenu />
       </AppBridgeProvider>
     </AppProvider>
   );
