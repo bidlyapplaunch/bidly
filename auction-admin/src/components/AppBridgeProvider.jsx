@@ -1,156 +1,153 @@
 import React, { useEffect, useState } from 'react';
-import { Banner, Spinner, Text } from '@shopify/polaris';
 import createApp from '@shopify/app-bridge';
 
-/**
- * App Bridge Provider Component
- * Wraps the app with Shopify App Bridge functionality
- * Handles authentication and iframe communication
- */
-const AppBridgeWrapper = ({ children }) => {
-  const [appBridgeConfig, setAppBridgeConfig] = useState(null);
+const AppBridgeProvider = ({ children }) => {
+  const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [appInstance, setAppInstance] = useState(null);
+  const [error, setError] = useState('');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    initializeAppBridge();
-  }, []);
-
-  const initializeAppBridge = async () => {
     try {
-      // Get parameters from URL
       const urlParams = new URLSearchParams(window.location.search);
       const shop = urlParams.get('shop');
-      const embedded = urlParams.get('embedded');
-      const hmac = urlParams.get('hmac');
       const host = urlParams.get('host');
-      const idToken = urlParams.get('id_token');
-      const session = urlParams.get('session');
-      
+
       console.log('🔍 App Bridge initialization:', {
         shop,
-        embedded,
-        hasHmac: !!hmac,
-        hasHost: !!host,
-        hasIdToken: !!idToken,
-        hasSession: !!session,
+        host,
         url: window.location.href,
         isInIframe: window !== window.top
       });
-      
-      if (!shop) {
-        // For development, allow running without shop parameter
-               const isDevelopment = window.location.hostname === 'localhost' || 
-                                  window.location.hostname === '127.0.0.1' ||
-                                  window.location.hostname.includes('onrender.com') ||
-                                  window.location.hostname.includes('trycloudflare');
-        
-        if (isDevelopment) {
-          console.log('🔧 Development mode: No shop parameter, using default config');
-          const devConfig = {
-            apiKey: '1f94308027df312cd5f038e7fb75cc16',
-            host,
-            shopOrigin: 'https://ezza-auction.myshopify.com',
-            forceRedirect: false
-          };
-          setAppBridgeConfig(devConfig);
-          if (host) {
-            const app = createApp({
-              apiKey: devConfig.apiKey,
-              host,
-              forceRedirect: devConfig.forceRedirect
-            });
-            window.__APP_BRIDGE_APP__ = app;
-            setAppInstance(app);
-          }
-          setLoading(false);
-          return;
-        }
+
+      const isDevelopment =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('onrender.com') ||
+        window.location.hostname.includes('trycloudflare');
+
+      if (!shop && !isDevelopment) {
         setError('No shop parameter found in URL');
         setLoading(false);
         return;
       }
 
-      // Always use hardcoded configuration (bypass backend completely)
-      console.log('🔧 Using hardcoded App Bridge config for shop:', shop);
-      const config = {
+      if (!shop && isDevelopment) {
+        const devConfig = {
+          apiKey: '1f94308027df312cd5f038e7fb75cc16',
+          host,
+          shopOrigin: 'https://ezza-auction.myshopify.com',
+          forceRedirect: false
+        };
+        window.__APP_BRIDGE_CONFIG__ = devConfig;
+        setConfig(devConfig);
+        setLoading(false);
+        return;
+      }
+
+      const resolvedConfig = {
         apiKey: '4d6fd182c13268701d61dc45f76c735e',
         host,
         shopOrigin: `https://${shop}`,
-        forceRedirect: host ? true : false
+        forceRedirect: !!host
       };
-      window.__APP_BRIDGE_CONFIG__ = config;
-      setAppBridgeConfig(config);
 
-      if (host) {
-        try {
-          const app = createApp({
-            apiKey: config.apiKey,
-            host,
-            forceRedirect: true
-          });
-          if (app) {
-            window.__APP_BRIDGE_APP__ = app;
-            setAppInstance(app);
-            console.log('✅ App Bridge app instance stored globally');
-          }
-        } catch (createError) {
-          console.warn('App Bridge create failed, will rely on lazy init in nav menu', createError);
-        }
-      } else {
-        console.warn('Shopify host parameter missing; running in standalone mode');
-      }
-
-      console.log('✅ App Bridge initialized for shop:', shop);
+      window.__APP_BRIDGE_CONFIG__ = resolvedConfig;
+      setConfig(resolvedConfig);
       setLoading(false);
     } catch (err) {
       console.error('❌ App Bridge initialization error:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to initialize Shopify App Bridge');
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!config || typeof window === 'undefined') {
+      return;
+    }
+
+    if (ready) {
+      return;
+    }
+
+    try {
+      // If Shopify already injected an app bridge instance, reuse it
+      if (window.shopify && typeof window.shopify.dispatch === 'function') {
+        setReady(true);
+        return;
+      }
+
+      if (!config.host && config.forceRedirect) {
+        console.warn('⚠️ App Bridge host parameter missing; skipping initialization');
+        setReady(true);
+        return;
+      }
+
+      const app = createApp(config);
+      // Expose the app instance for libraries like @shopify/app-bridge-react
+      window.shopify = app;
+      setReady(true);
+    } catch (err) {
+      console.error('❌ Failed to create App Bridge app instance:', err);
+      setError(err.message || 'Unable to bootstrap Shopify App Bridge');
+    }
+  }, [config, ready]);
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100vh',
-        flexDirection: 'column',
-        gap: '16px'
+        fontFamily: 'Inter, sans-serif',
+        color: '#1f2937'
       }}>
-        <Spinner size="large" />
-        <Text variant="bodyMd">Initializing Shopify App Bridge...</Text>
+        Initializing Shopify App Bridge…
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: '20px' }}>
-        <Banner status="critical" title="App Initialization Error">
-          <p>{error}</p>
-          <p>Please ensure you're accessing this app through the Shopify admin panel.</p>
-        </Banner>
+      <div style={{
+        padding: '24px',
+        maxWidth: '600px',
+        margin: '80px auto',
+        border: '1px solid #fca5a5',
+        borderRadius: '12px',
+        background: '#fef2f2',
+        color: '#991b1b',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <h2 style={{ marginTop: 0 }}>App Initialization Error</h2>
+        <p>{error}</p>
+        <p>Please open this app from the Shopify admin.</p>
       </div>
     );
   }
 
-  if (!appBridgeConfig) {
+  if (!config) {
+    return null;
+  }
+
+  if (!ready) {
     return (
-      <div style={{ padding: '20px' }}>
-        <Banner status="warning" title="Configuration Error">
-          <p>Unable to load app configuration. Please try refreshing the page.</p>
-        </Banner>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontFamily: 'Inter, sans-serif',
+        color: '#1f2937'
+      }}>
+        Connecting to Shopify…
       </div>
     );
   }
 
-  // For now, just render children directly since Provider is not available
-  // App Bridge will be initialized in individual components as needed
   return <>{children}</>;
 };
 
-export default AppBridgeWrapper;
+export default AppBridgeProvider;

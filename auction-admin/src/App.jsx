@@ -43,58 +43,50 @@ function App() {
     setOauthComplete(true);
   };
 
+  let content = null;
+
   if (loading) {
-    return (
-      <AppProvider>
-        <AppBridgeProvider>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100vh' 
-          }}>
-            <div>Loading...</div>
-          </div>
-        </AppBridgeProvider>
-      </AppProvider>
+    content = (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          fontFamily: 'Inter, sans-serif',
+          color: '#1f2937'
+        }}
+      >
+        Loading Bidly…
+      </div>
+    );
+  } else if (!user) {
+    content = <Login onLogin={handleLogin} />;
+  } else if (!oauthComplete) {
+    content = <OAuthSetup onComplete={handleOAuthComplete} />;
+  } else {
+    content = (
+      <Routes>
+        <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
+        <Route path="/customization/marketplace" element={<MarketplaceCustomizationSettings />} />
+        <Route path="/customization/widget" element={<WidgetCustomizationSettings />} />
+        <Route path="/plans" element={<PlansPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     );
   }
 
-  if (!user) {
-    return (
-      <AppProvider>
-        <AppBridgeProvider>
-          <Login onLogin={handleLogin} />
-        </AppBridgeProvider>
-      </AppProvider>
-    );
-  }
-
-  // Check OAuth completion after user is authenticated
-  if (!oauthComplete) {
-    return (
-      <AppProvider>
-        <AppBridgeProvider>
-          <OAuthSetup onComplete={handleOAuthComplete} />
-        </AppBridgeProvider>
-      </AppProvider>
-    );
-  }
+  const showNavigation = !loading && !!user && oauthComplete;
 
   return (
-    <AppProvider>
-      <AppBridgeProvider>
+    <AppBridgeProvider>
+      <AppProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
-            <Route path="/customization/marketplace" element={<MarketplaceCustomizationSettings />} />
-            <Route path="/customization/widget" element={<WidgetCustomizationSettings />} />
-            <Route path="/plans" element={<PlansPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          {showNavigation && <AppNavigationMenu />}
+          {content}
         </BrowserRouter>
-      </AppBridgeProvider>
-    </AppProvider>
+      </AppProvider>
+    </AppBridgeProvider>
   );
 }
 
