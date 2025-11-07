@@ -5,19 +5,19 @@ const EMPTY_SETTINGS = {
   template: 'A',
   font: 'Inter',
   colors: {
-    accent: '#2563eb',
-    text: '#0f172a',
-    bg_solid: '#ffffff',
-    bg_gradient_start: '#ffffff',
-    bg_gradient_end: '#ffffff',
-    button_bg: '#2563eb',
-    button_hover: '#1d4ed8',
-    button_text: '#ffffff',
-    border: '#e5e7eb'
+    accent: '#38BDF8',
+    text: '#EDEEF3',
+    bg_solid: '#36526D',
+    bg_gradient_start: '#B7BDD2',
+    bg_gradient_end: '#283E3B',
+    button_bg: '#212736',
+    button_hover: '#7FD2C1',
+    button_text: '#FFFFFF',
+    border: '#FF1E05'
   },
-  borderRadius: 8,
-  boxShadow: 'subtle',
-  gradientEnabled: false
+  borderRadius: 16,
+  boxShadow: 'medium',
+  gradientEnabled: true
 };
 
 export function useCustomizationSettings(type) {

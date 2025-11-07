@@ -19,15 +19,15 @@ const WIDGET_TEMPLATES = {
     boxShadow: 'medium',
     gradientEnabled: true,
     colors: {
-      accent: '#22d3ee',
-      text: '#0f172a',
-      bg_solid: '#0f172a',
-      bg_gradient_start: '#1e40af',
-      bg_gradient_end: '#1d4ed8',
-      button_bg: '#22d3ee',
-      button_hover: '#0ea5e9',
-      button_text: '#020617',
-      border: '#1d4ed8'
+      accent: '#38BDF8',
+      text: '#EDEEF3',
+      bg_solid: '#36526D',
+      bg_gradient_start: '#B7BDD2',
+      bg_gradient_end: '#283E3B',
+      button_bg: '#212736',
+      button_hover: '#7FD2C1',
+      button_text: '#FFFFFF',
+      border: '#FF1E05'
     },
     layout: 'airy'
   },
