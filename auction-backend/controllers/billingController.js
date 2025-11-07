@@ -41,6 +41,17 @@ export const subscribeToPlan = async (req, res, next) => {
     });
   } catch (error) {
     console.error('❌ Billing subscribe error:', error.message);
+
+    const message = error?.message || '';
+    if (message.includes('migrated to the Shopify partners area')) {
+      const friendly = new AppError(
+        'Shopify billing isn\'t available for this app yet. Move the app into a Shopify Partners organization (or request access) before enabling paid plans.',
+        403
+      );
+      friendly.code = 'BILLING_PARTNER_REQUIRED';
+      return next(friendly);
+    }
+
     next(error);
   }
 };
