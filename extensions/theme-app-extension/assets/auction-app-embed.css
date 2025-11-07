@@ -79,7 +79,7 @@
 /* Widget Container - Seamless gradient design */
 .bidly-widget-container {
     position: relative;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--bidly-bg-color, #ffffff);
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
@@ -1278,8 +1278,7 @@
     border-color: transparent !important;
 }
 
-.bidly-widget-root .bidly-amount,
-.bidly-widget-root .bidly-widget-status span.bidly-status-active {
+.bidly-widget-root .bidly-amount {
     color: var(--bidly-accent-color) !important;
 }
 
