@@ -16,10 +16,7 @@ const ensureNavigationMenu = (app) => {
   return window.__APP_BRIDGE_NAV_MENU__;
 };
 
-const resolveDestination = (path, searchParams) => {
-  const params = new URLSearchParams(searchParams.toString());
-  return params.toString() ? `${path}?${params.toString()}` : path;
-};
+const resolveDestination = (path) => path;
 
 const AppNavigationMenu = () => {
   const location = useLocation();
@@ -49,10 +46,10 @@ const AppNavigationMenu = () => {
     }
 
     const items = [
-      { label: 'Dashboard', destination: resolveDestination('/', searchParams) },
-      { label: 'Widget styles', destination: resolveDestination('/customization/widget', searchParams) },
-      { label: 'Marketplace styles', destination: resolveDestination('/customization/marketplace', searchParams) },
-      { label: 'Plans', destination: resolveDestination('/plans', searchParams) }
+      { label: 'Dashboard', destination: resolveDestination('/') },
+      { label: 'Widget styles', destination: resolveDestination('/customization/widget') },
+      { label: 'Marketplace styles', destination: resolveDestination('/customization/marketplace') },
+      { label: 'Plans', destination: resolveDestination('/plans') }
     ];
 
     const navigationMenu = ensureNavigationMenu(app);
