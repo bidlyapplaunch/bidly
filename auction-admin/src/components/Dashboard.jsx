@@ -14,8 +14,7 @@ import {
   Badge,
   ButtonGroup,
   Tabs,
-  BlockStack,
-  InlineStack
+  BlockStack
 } from '@shopify/polaris';
 import { PlusMinor, AnalyticsMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
@@ -319,24 +318,32 @@ const Dashboard = ({ onLogout }) => {
 
           <Layout.Section>
             <Card sectioned>
-              <InlineStack align="space-between" blockAlign="center">
-                <BlockStack gap="tight">
-                  <Text variant="headingMd">Subscription</Text>
-                  {planLoading ? (
-                    <Text tone="subdued">Loading plan…</Text>
-                  ) : (
-                    <Text tone="subdued">
-                      Current plan: {planInfo.plan || 'none'}
-                      {planInfo.pendingPlan && planInfo.pendingPlan !== planInfo.plan
-                        ? ` · Pending: ${planInfo.pendingPlan}`
-                        : ''}
-                    </Text>
-                  )}
-                </BlockStack>
-                <Button primary onClick={() => navigate(`/plans${search}`)}>
-                  View plans
-                </Button>
-              </InlineStack>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px',
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  <BlockStack gap="tight">
+                    <Text variant="headingMd">Subscription</Text>
+                    {planLoading ? (
+                      <Text tone="subdued">Loading plan…</Text>
+                    ) : (
+                      <Text tone="subdued">
+                        Current plan: {planInfo.plan || 'none'}
+                        {planInfo.pendingPlan && planInfo.pendingPlan !== planInfo.plan
+                          ? ` · Pending: ${planInfo.pendingPlan}`
+                          : ''}
+                      </Text>
+                    )}
+                  </BlockStack>
+                  <Button primary onClick={() => navigate(`/plans${search}`)}>
+                    View plans
+                  </Button>
+                </div>
             </Card>
           </Layout.Section>
 

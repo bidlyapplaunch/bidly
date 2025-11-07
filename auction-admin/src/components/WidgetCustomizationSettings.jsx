@@ -7,7 +7,6 @@ import {
   Text,
   Button,
   InlineGrid,
-  InlineStack,
   BlockStack,
   Banner,
   Spinner,
@@ -48,7 +47,7 @@ function ColorSwatchInput({ label, description, value, onChange }) {
       <Text as="p" tone="subdued" variant="bodySm">
         {description}
       </Text>
-      <InlineStack gap="tight" blockAlign="center">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <input
           type="color"
           value={value}
@@ -75,7 +74,7 @@ function ColorSwatchInput({ label, description, value, onChange }) {
             fontSize: 13
           }}
         />
-      </InlineStack>
+      </div>
     </BlockStack>
   );
 }
@@ -96,7 +95,7 @@ function TemplateCard({ template, selected, onSelect }) {
       }}
     >
       <BlockStack gap="tight">
-        <InlineStack gap="tight" blockAlign="center">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div
             style={{
               width: 12,
@@ -108,7 +107,7 @@ function TemplateCard({ template, selected, onSelect }) {
           <Text variant="bodyMd" fontWeight="semibold">
             Template {template.id} · {template.name}
           </Text>
-        </InlineStack>
+        </div>
         <Text as="p" tone="subdued" variant="bodySm">
           {template.description}
         </Text>
@@ -136,7 +135,7 @@ function PaletteCard({ palette, onSelect }) {
       <Text variant="bodyMd" fontWeight="medium">
         {palette.name}
       </Text>
-      <InlineStack gap="extraTight">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {Object.values(palette.colors).map((color, index) => (
           <div
             key={`${palette.id}-${index}`}
@@ -149,7 +148,7 @@ function PaletteCard({ palette, onSelect }) {
             }}
           />
         ))}
-      </InlineStack>
+      </div>
     </button>
   );
 }
@@ -428,7 +427,7 @@ const WidgetCustomizationSettings = () => {
               <div>
                 <Text variant="headingMd">Typography & layout</Text>
               </div>
-              <InlineStack gap="loose">
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <Select
                   label="Font family"
                   labelHidden
@@ -453,7 +452,7 @@ const WidgetCustomizationSettings = () => {
                   value={settings.boxShadow}
                   onChange={(value) => updateField('boxShadow', value)}
                 />
-              </InlineStack>
+              </div>
             </BlockStack>
           </Card>
         </Layout.Section>
@@ -462,12 +461,12 @@ const WidgetCustomizationSettings = () => {
           <Card>
             <BlockStack gap="loose">
               <div>
-                <InlineStack gap="tight" blockAlign="center">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <Text variant="headingMd">Gradient & background</Text>
                   <Button size="slim" onClick={toggleGradient}>
                     {settings.gradientEnabled ? 'Disable gradient' : 'Enable gradient'}
                   </Button>
-                </InlineStack>
+                </div>
                 <Text tone="subdued">
                   Choose the gradient colors for the widget header or switch to a flat background.
                 </Text>
@@ -514,7 +513,7 @@ const WidgetCustomizationSettings = () => {
         <Layout.Section>
           <Card>
             <BlockStack gap="loose">
-              <InlineStack gap="tight" blockAlign="center">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <Text variant="headingMd">Live widget preview</Text>
                 <Select
                   label="Preview state"
@@ -523,7 +522,7 @@ const WidgetCustomizationSettings = () => {
                   value={previewState}
                   onChange={(value) => loadPreview(value)}
                 />
-              </InlineStack>
+              </div>
               <Text tone="subdued">
                 Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.
               </Text>
