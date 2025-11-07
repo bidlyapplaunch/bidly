@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Banner,
   Button,
-  Card,
   Frame,
   Layout,
+  LegacyCard,
   Page,
   Spinner,
   Text
@@ -60,15 +60,15 @@ function PlanCard({ plan, currentPlan, pendingPlan, onSubscribe, loadingPlan }) 
   }, [isCurrent, isPending, plan.title]);
 
   return (
-    <Card>
-      <Card.Section>
+    <LegacyCard>
+      <LegacyCard.Section>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <Text variant="headingMd">{plan.title}</Text>
           <Text tone="subdued">{plan.price}</Text>
           <Text tone="subdued">{plan.description}</Text>
         </div>
-      </Card.Section>
-      <Card.Section>
+      </LegacyCard.Section>
+      <LegacyCard.Section>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {plan.highlights.map((item) => (
             <Text as="p" key={item} tone="subdued">
@@ -76,8 +76,8 @@ function PlanCard({ plan, currentPlan, pendingPlan, onSubscribe, loadingPlan }) 
             </Text>
           ))}
         </div>
-      </Card.Section>
-      <Card.Section>
+      </LegacyCard.Section>
+      <LegacyCard.Section>
         <Button
           primary={!isCurrent && !isPending}
           disabled={isCurrent || isPending}
@@ -86,8 +86,8 @@ function PlanCard({ plan, currentPlan, pendingPlan, onSubscribe, loadingPlan }) 
         >
           {actionLabel}
         </Button>
-      </Card.Section>
-    </Card>
+      </LegacyCard.Section>
+    </LegacyCard>
   );
 }
 
@@ -221,8 +221,8 @@ const PlansPage = () => {
           </Layout.Section>
 
           <Layout.Section>
-            <Card>
-              <Card.Section>
+            <LegacyCard>
+              <LegacyCard.Section>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <Text variant="headingMd">Current plan</Text>
@@ -242,8 +242,8 @@ const PlansPage = () => {
                     )}
                   </div>
                 </div>
-              </Card.Section>
-            </Card>
+              </LegacyCard.Section>
+            </LegacyCard>
           </Layout.Section>
 
           <Layout.Section>
