@@ -65,13 +65,61 @@ class WinnerProcessingService {
             // 4. Get original product details
             const originalProduct = await this.getOriginalProduct(store, auction.shopifyProductId);
             
-            // 5. Create private product for winner (duplicated product)
-            const privateProduct = await this.createPrivateProductForWinner(
-                store, 
-                originalProduct, 
-                winner, 
-                auction.currentBid
-            );
+            // 5. Create (or reuse) private product for winner (duplicated product)
+            let privateProduct = null;
+
+            if (auction.privateProduct?.productId) {
+                console.log(`ℹ️ Existing private product found for auction ${auctionId}, reusing to avoid duplicate creation.`);
+                privateProduct = {
+                    productId: auction.privateProduct.productId,
+                    productHandle: auction.privateProduct.productHandle,
+                    productTitle: auction.privateProduct.productTitle,
+                    productUrl: auction.privateProduct.productUrl
+                };
+            }
+
+            if (!privateProduct) {
+                privateProduct = await this.createPrivateProductForWinner(
+                    store,
+                    originalProduct,
+                    winner,
+                    auction.currentBid
+                );
+
+                const duplicatedProductId = privateProduct.productId.includes('gid://')
+                    ? privateProduct.productId.split('/').pop()
+                    : privateProduct.productId;
+
+                // Persist the private product info immediately so retries reuse it
+                await Auction.findByIdAndUpdate(auctionId, {
+                    $set: {
+                        privateProduct: {
+                            productId: privateProduct.productId,
+                            productHandle: privateProduct.productHandle,
+                            productTitle: privateProduct.productTitle,
+                            productUrl: privateProduct.productUrl,
+                            createdAt: new Date()
+                        },
+                        duplicatedProductId,
+                        updatedAt: new Date()
+                    }
+                });
+
+                // Reflect the persisted data on the in-memory auction document
+                auction.privateProduct = {
+                    productId: privateProduct.productId,
+                    productHandle: privateProduct.productHandle,
+                    productTitle: privateProduct.productTitle,
+                    productUrl: privateProduct.productUrl,
+                    createdAt: new Date()
+                };
+                auction.duplicatedProductId = duplicatedProductId;
+            } else if (!auction.duplicatedProductId) {
+                // Ensure duplicatedProductId is populated for downstream logic
+                auction.duplicatedProductId = privateProduct.productId.includes('gid://')
+                    ? privateProduct.productId.split('/').pop()
+                    : privateProduct.productId;
+            }
             
             // 6. Find or create Shopify customer
             const shopifyService = getShopifyService();
@@ -83,9 +131,11 @@ class WinnerProcessingService {
             );
             
             // 7. Extract numeric product ID from GraphQL ID (gid://shopify/Product/123 -> 123)
-            const duplicatedProductId = privateProduct.productId.includes('gid://')
-                ? privateProduct.productId.split('/').pop()
-                : privateProduct.productId;
+            const duplicatedProductId = auction.duplicatedProductId || (
+                privateProduct.productId.includes('gid://')
+                    ? privateProduct.productId.split('/').pop()
+                    : privateProduct.productId
+            );
             
             // 8. Create draft order with duplicated product
             const draftOrder = await shopifyService.createDraftOrder(
