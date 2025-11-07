@@ -253,6 +253,22 @@ const Dashboard = ({ onLogout }) => {
         ]}
       >
         <Layout>
+          <Layout.Section>
+            <Card sectioned>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                <Button onClick={() => navigate(`/customization/widget${location.search || ''}`)}>
+                  Widget styles
+                </Button>
+                <Button onClick={() => navigate(`/customization/marketplace${location.search || ''}`)}>
+                  Marketplace styles
+                </Button>
+                <Button onClick={() => navigate(`/plans${location.search || ''}`)}>
+                  Plans
+                </Button>
+              </div>
+            </Card>
+          </Layout.Section>
+
           
           {/* Statistics Cards */}
           <Layout.Section>
