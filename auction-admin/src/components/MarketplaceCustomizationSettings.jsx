@@ -11,7 +11,8 @@ import {
   BlockStack,
   Spinner,
   Banner,
-  Toast
+  Toast,
+  Frame
 } from '@shopify/polaris';
 import { useCustomizationSettings } from '../hooks/useCustomizationSettings';
 
@@ -135,9 +136,9 @@ function PaletteCard({ palette, onSelect }) {
         {palette.name}
       </Text>
       <InlineStack gap="extraTight">
-        {Object.values(palette.colors).map((color) => (
+        {Object.values(palette.colors).map((color, index) => (
           <div
-            key={color}
+            key={`${palette.id}-${index}`}
             style={{
               width: 24,
               height: 24,
@@ -277,37 +278,18 @@ const MarketplaceCustomizationSettings = () => {
 
   if (loading || !meta) {
     return (
-      <Page title="Marketplace customization">
-        <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
-          <Spinner size="large" />
-        </div>
-      </Page>
+      <Frame>
+        <Page title="Marketplace customization">
+          <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
+            <Spinner size="large" />
+          </div>
+        </Page>
+      </Frame>
     );
   }
 
   return (
-    <Page
-      title="Marketplace customization"
-      subtitle="Control the marketplace landing experience without editing code."
-      primaryAction={{
-        content: 'Save changes',
-        onAction: save,
-        loading: saving,
-        disabled: saving || !dirty
-      }}
-      secondaryActions={[
-        {
-          content: 'Reset to saved',
-          onAction: resetToOriginal,
-          disabled: saving || !dirty
-        },
-        {
-          content: 'Reset to defaults',
-          onAction: resetToDefaults,
-          disabled: saving
-        }
-      ]}
-    >
+    <Frame>
       {toast && (
         <Toast
           content={toast.message}
@@ -315,15 +297,37 @@ const MarketplaceCustomizationSettings = () => {
           onDismiss={() => setToast(null)}
         />
       )}
-      {error && (
-        <Layout.Section>
-          <Banner title="We couldn’t save the marketplace settings" tone="critical">
-            <p>{error}</p>
-          </Banner>
-        </Layout.Section>
-      )}
+      <Page
+        title="Marketplace customization"
+        subtitle="Control the marketplace landing experience without editing code."
+        primaryAction={{
+          content: 'Save changes',
+          onAction: save,
+          loading: saving,
+          disabled: saving || !dirty
+        }}
+        secondaryActions={[
+          {
+            content: 'Reset to saved',
+            onAction: resetToOriginal,
+            disabled: saving || !dirty
+          },
+          {
+            content: 'Reset to defaults',
+            onAction: resetToDefaults,
+            disabled: saving
+          }
+        ]}
+      >
+        {error && (
+          <Layout.Section>
+            <Banner title="We couldn’t save the marketplace settings" tone="critical">
+              <p>{error}</p>
+            </Banner>
+          </Layout.Section>
+        )}
 
-      <Layout>
+        <Layout>
         <Layout.Section>
           <Card>
             <BlockStack gap="loose">
@@ -453,8 +457,9 @@ const MarketplaceCustomizationSettings = () => {
             </BlockStack>
           </Card>
         </Layout.Section>
-      </Layout>
-    </Page>
+        </Layout>
+      </Page>
+    </Frame>
   );
 };
 

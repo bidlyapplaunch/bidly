@@ -11,7 +11,8 @@ import {
   Banner,
   Spinner,
   Select,
-  Toast
+  Toast,
+  Frame
 } from '@shopify/polaris';
 import { useCustomizationSettings } from '../hooks/useCustomizationSettings';
 
@@ -135,9 +136,9 @@ function PaletteCard({ palette, onSelect }) {
         {palette.name}
       </Text>
       <InlineStack gap="extraTight">
-        {Object.values(palette.colors).map((color) => (
+        {Object.values(palette.colors).map((color, index) => (
           <div
-            key={color}
+            key={`${palette.id}-${index}`}
             style={{
               width: 24,
               height: 24,
@@ -423,11 +424,13 @@ const WidgetCustomizationSettings = () => {
 
   if (loading || !meta) {
     return (
-      <Page title="Widget customization">
-        <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
-          <Spinner accessibilityLabel="Loading customization settings" size="large" />
-        </div>
-      </Page>
+      <Frame>
+        <Page title="Widget customization">
+          <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
+            <Spinner accessibilityLabel="Loading customization settings" size="large" />
+          </div>
+        </Page>
+      </Frame>
     );
   }
 
@@ -438,29 +441,7 @@ const WidgetCustomizationSettings = () => {
   ];
 
   return (
-    <Page
-      title="Widget customization"
-      subtitle="Control how the Bidly widget appears on your product pages without touching code."
-      primaryAction={{
-        content: 'Save changes',
-        onAction: save,
-        loading: saving,
-        disabled: saving || !dirty
-      }}
-      secondaryActions={[
-        {
-          content: 'Reset to saved',
-          onAction: resetToOriginal,
-          disabled: saving || !dirty
-        },
-        {
-          content: 'Reset to defaults',
-          onAction: resetToDefaults,
-          destructive: false,
-          disabled: saving
-        }
-      ]}
-    >
+    <Frame>
       {toast && (
         <Toast
           content={toast.message}
@@ -468,15 +449,38 @@ const WidgetCustomizationSettings = () => {
           onDismiss={() => setToast(null)}
         />
       )}
-      {error && (
-        <Layout.Section>
-          <Banner title="We couldn’t save the widget settings" tone="critical">
-            <p>{error}</p>
-          </Banner>
-        </Layout.Section>
-      )}
+      <Page
+        title="Widget customization"
+        subtitle="Control how the Bidly widget appears on your product pages without touching code."
+        primaryAction={{
+          content: 'Save changes',
+          onAction: save,
+          loading: saving,
+          disabled: saving || !dirty
+        }}
+        secondaryActions={[
+          {
+            content: 'Reset to saved',
+            onAction: resetToOriginal,
+            disabled: saving || !dirty
+          },
+          {
+            content: 'Reset to defaults',
+            onAction: resetToDefaults,
+            destructive: false,
+            disabled: saving
+          }
+        ]}
+      >
+        {error && (
+          <Layout.Section>
+            <Banner title="We couldn’t save the widget settings" tone="critical">
+              <p>{error}</p>
+            </Banner>
+          </Layout.Section>
+        )}
 
-      <Layout>
+        <Layout>
         <Layout.Section>
           <Card>
             <BlockStack gap="loose">
@@ -627,8 +631,9 @@ const WidgetCustomizationSettings = () => {
             </BlockStack>
           </Card>
         </Layout.Section>
-      </Layout>
-    </Page>
+        </Layout>
+      </Page>
+    </Frame>
   );
 };
 
