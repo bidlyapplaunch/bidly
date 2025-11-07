@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavigationMenu } from '@shopify/app-bridge/actions';
 
@@ -22,11 +22,15 @@ const resolveDestination = (path, searchParams) => {
 const AppNavigationMenu = () => {
   const location = useLocation();
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), [location.search]);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const app = window.__APP_BRIDGE_APP__;
     if (!app) {
-      return;
+      const timeout = setTimeout(() => {
+        setRetryCount((prev) => prev + 1);
+      }, 200);
+      return () => clearTimeout(timeout);
     }
 
     const items = [
@@ -56,7 +60,7 @@ const AppNavigationMenu = () => {
     if (activeItem) {
       navigationMenu.set({ active: activeItem.destination });
     }
-  }, [location, searchParams]);
+  }, [location, searchParams, retryCount]);
 
   return null;
 };
