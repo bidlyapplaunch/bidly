@@ -10,15 +10,25 @@ const AppNavigationMenu = () => {
   useEffect(() => {
     if (!app) return;
     const navigationMenu = NavigationMenu.create(app);
+
+    const query = window.location.search || '';
+    const withQuery = (path) => `${path}${query}`;
+
+    const items = [
+      { label: 'Dashboard', destination: withQuery('/') },
+      { label: 'Widget styles', destination: withQuery('/customization/widget') },
+      { label: 'Marketplace styles', destination: withQuery('/customization/marketplace') },
+      { label: 'Plans', destination: withQuery('/plans') }
+    ];
+
+    const activeDestination = `${location.pathname}${query}`;
+
     navigationMenu.dispatch(NavigationMenu.Action.SET, {
-      items: [
-        { label: 'Dashboard', destination: '/'},
-        { label: 'Widget styles', destination: '/customization/widget'},
-        { label: 'Marketplace styles', destination: '/customization/marketplace'},
-        { label: 'Plans', destination: '/plans'}
-      ],
-      active: location.pathname
+      items,
+      active: activeDestination
     });
+
+    console.log('🧭 Navigation menu dispatched', { items, active: activeDestination });
   }, [app, location]);
 
   return null;
