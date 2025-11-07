@@ -85,7 +85,6 @@ function App() {
     <AppProvider>
       <AppBridgeProvider>
         <BrowserRouter>
-          <AppNavigationMenu />
           <Routes>
             <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
             <Route path="/customization/marketplace" element={<MarketplaceCustomizationSettings />} />
@@ -94,7 +93,6 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-        <AppNavigationMenu />
       </AppBridgeProvider>
     </AppProvider>
   );
