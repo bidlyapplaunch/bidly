@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Banner, Spinner, Text } from '@shopify/polaris';
+import createApp from '@shopify/app-bridge';
 
 /**
  * App Bridge Provider Component
@@ -10,6 +11,7 @@ const AppBridgeWrapper = ({ children }) => {
   const [appBridgeConfig, setAppBridgeConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [appInstance, setAppInstance] = useState(null);
 
   useEffect(() => {
     initializeAppBridge();
@@ -46,11 +48,22 @@ const AppBridgeWrapper = ({ children }) => {
         
         if (isDevelopment) {
           console.log('🔧 Development mode: No shop parameter, using default config');
-          setAppBridgeConfig({
-            apiKey: '1f94308027df312cd5f038e7fb75cc16', // Your API key
-            shopOrigin: 'ezza-auction.myshopify.com',
-            forceRedirect: false // Don't force redirect in development
-          });
+          const devConfig = {
+            apiKey: '1f94308027df312cd5f038e7fb75cc16',
+            host,
+            shopOrigin: 'https://ezza-auction.myshopify.com',
+            forceRedirect: false
+          };
+          setAppBridgeConfig(devConfig);
+          if (host) {
+            const app = createApp({
+              apiKey: devConfig.apiKey,
+              host,
+              forceRedirect: devConfig.forceRedirect
+            });
+            window.__APP_BRIDGE_APP__ = app;
+            setAppInstance(app);
+          }
           setLoading(false);
           return;
         }
@@ -61,11 +74,25 @@ const AppBridgeWrapper = ({ children }) => {
 
       // Always use hardcoded configuration (bypass backend completely)
       console.log('🔧 Using hardcoded App Bridge config for shop:', shop);
-      setAppBridgeConfig({
-        apiKey: '4d6fd182c13268701d61dc45f76c735e', // New client ID
+      const config = {
+        apiKey: '4d6fd182c13268701d61dc45f76c735e',
+        host,
         shopOrigin: `https://${shop}`,
         forceRedirect: true
-      });
+      };
+      setAppBridgeConfig(config);
+
+      if (host) {
+        const app = createApp({
+          apiKey: config.apiKey,
+          host,
+          forceRedirect: true
+        });
+        window.__APP_BRIDGE_APP__ = app;
+        setAppInstance(app);
+      } else {
+        console.warn('Shopify host parameter missing. App Bridge navigation will not initialize.');
+      }
 
       console.log('✅ App Bridge initialized for shop:', shop);
       setLoading(false);

@@ -10,6 +10,7 @@ import authService from './services/auth';
 import MarketplaceCustomizationSettings from './components/MarketplaceCustomizationSettings';
 import WidgetCustomizationSettings from './components/WidgetCustomizationSettings';
 import PlansPage from './components/PlansPage';
+import AppNavigationMenu from './components/AppNavigationMenu';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -84,6 +85,7 @@ function App() {
     <AppProvider>
       <AppBridgeProvider>
         <BrowserRouter>
+          <AppNavigationMenu />
           <Routes>
             <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
             <Route path="/customization/marketplace" element={<MarketplaceCustomizationSettings />} />

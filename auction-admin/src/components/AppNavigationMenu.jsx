@@ -1,0 +1,65 @@
+import { useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { NavigationMenu } from '@shopify/app-bridge/actions';
+
+const ensureNavigationMenu = (app) => {
+  if (!app) {
+    return null;
+  }
+
+  if (!window.__APP_BRIDGE_NAV_MENU__) {
+    window.__APP_BRIDGE_NAV_MENU__ = NavigationMenu.create(app);
+  }
+
+  return window.__APP_BRIDGE_NAV_MENU__;
+};
+
+const resolveDestination = (path, searchParams) => {
+  const params = new URLSearchParams(searchParams.toString());
+  return params.toString() ? `${path}?${params.toString()}` : path;
+};
+
+const AppNavigationMenu = () => {
+  const location = useLocation();
+  const searchParams = useMemo(() => new URLSearchParams(window.location.search), [location.search]);
+
+  useEffect(() => {
+    const app = window.__APP_BRIDGE_APP__;
+    if (!app) {
+      return;
+    }
+
+    const items = [
+      { label: 'Dashboard', destination: resolveDestination('/', searchParams) },
+      { label: 'Widget styles', destination: resolveDestination('/customization/widget', searchParams) },
+      { label: 'Marketplace styles', destination: resolveDestination('/customization/marketplace', searchParams) },
+      { label: 'Plans', destination: resolveDestination('/plans', searchParams) }
+    ];
+
+    const navigationMenu = ensureNavigationMenu(app);
+    if (!navigationMenu) {
+      return;
+    }
+
+    navigationMenu.set({ items });
+
+    const activeItem = items.find((item) => {
+      try {
+        const destinationUrl = new URL(item.destination, window.location.origin);
+        return destinationUrl.pathname === location.pathname;
+      } catch (error) {
+        console.warn('Failed to parse navigation destination', item.destination, error);
+        return false;
+      }
+    });
+
+    if (activeItem) {
+      navigationMenu.set({ active: activeItem });
+    }
+  }, [location, searchParams]);
+
+  return null;
+};
+
+export default AppNavigationMenu;
+

@@ -7,8 +7,7 @@ import {
   Button,
   Banner,
   Frame,
-  Tabs,
-  Navigation
+  Tabs
 } from '@shopify/polaris';
 import { PlusMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
@@ -43,7 +42,6 @@ const Dashboard = ({ onLogout }) => {
   const [planInfo, setPlanInfo] = useState({ plan: 'none', pendingPlan: null });
   const navigate = useNavigate();
   const location = useLocation();
-  const search = location.search || '';
 
   useEffect(() => {
     fetchStats();
@@ -123,56 +121,6 @@ const Dashboard = ({ onLogout }) => {
       console.error('Failed to load plan info', err);
     }
   };
-
-  const buildLocation = (pathname) => `${pathname}${search || ''}`;
-
-  const handleNavigate = (pathname) => {
-    navigate(`${pathname}${search || ''}`);
-  };
-
-  const navigationMarkup = (
-    <Navigation location={location.pathname}>
-      <Navigation.Section
-        title={shopInfo.storeName || 'Bidly Auctions'}
-        items={[
-          {
-            url: buildLocation('/'),
-            label: 'Dashboard',
-            selected: location.pathname === '/',
-            onClick: () => handleNavigate('/')
-          }
-        ]}
-      />
-      <Navigation.Section
-        title="Customization"
-        items={[
-          {
-            url: buildLocation('/customization/widget'),
-            label: 'Widget styles',
-            selected: location.pathname === '/customization/widget',
-            onClick: () => handleNavigate('/customization/widget')
-          },
-          {
-            url: buildLocation('/customization/marketplace'),
-            label: 'Marketplace styles',
-            disabled: true,
-            badge: 'Coming soon'
-          }
-        ]}
-      />
-      <Navigation.Section
-        title="Billing"
-        items={[
-          {
-            url: buildLocation('/plans'),
-            label: 'Plans',
-            selected: location.pathname === '/plans',
-            onClick: () => handleNavigate('/plans')
-          }
-        ]}
-      />
-    </Navigation>
-  );
 
   const handleCreateAuction = () => {
     setSelectedAuction(null);
@@ -269,7 +217,7 @@ const Dashboard = ({ onLogout }) => {
 
   if (error) {
     return (
-      <Frame navigation={navigationMarkup}>
+      <Frame>
         <Page>
           <Banner status="critical">
             <Text variant="bodyMd">{error}</Text>
@@ -280,7 +228,7 @@ const Dashboard = ({ onLogout }) => {
   }
 
   return (
-    <Frame navigation={navigationMarkup}>
+    <Frame>
       <Page
         title={`Auction Dashboard${shopInfo.shop ? ` - ${shopInfo.shop}` : ''}`}
         subtitle={shopInfo.storeName ? `Store: ${shopInfo.storeName}` : 'Manage your auctions and monitor performance'}
