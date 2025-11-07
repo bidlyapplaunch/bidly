@@ -14,19 +14,80 @@
         return;
     }
 
+    function cleanDomain(value) {
+        if (!value) {
+            return '';
+        }
+        if (typeof value === 'object') {
+            if (value.permanent_domain) {
+                value = value.permanent_domain;
+            } else if (typeof value.toString === 'function') {
+                value = value.toString();
+            }
+        }
+        if (typeof value !== 'string') {
+            return '';
+        }
+        return value.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase().trim();
+    }
+
+    function detectShopDomain() {
+        const candidates = [
+            PREVIEW_DATA.shopDomain,
+            window.Shopify?.shop?.permanent_domain,
+            window.Shopify?.shop,
+            window.Shopify?.config?.shop,
+            window.Shopify?.Analytics?.meta?.shopDomain,
+            window.Shopify?.Analytics?.meta?.myshopifyDomain,
+            window.__st?.domain,
+            window.__st?.shop,
+            window.location.hostname
+        ];
+
+        let firstValid = '';
+        for (const candidate of candidates) {
+            const cleaned = cleanDomain(candidate);
+            if (!cleaned) {
+                continue;
+            }
+            if (!firstValid) {
+                firstValid = cleaned;
+            }
+            if (cleaned.endsWith('.myshopify.com')) {
+                return cleaned;
+            }
+        }
+
+        // Fallback: if no myshopify domain in primary list, look specifically for one
+        for (const candidate of candidates) {
+            const cleaned = cleanDomain(candidate);
+            if (cleaned && cleaned.endsWith('.myshopify.com')) {
+                return cleaned;
+            }
+        }
+
+        return firstValid || cleanDomain(window.location.hostname);
+    }
+
+    const SHOP_DOMAIN = detectShopDomain();
+    if (SHOP_DOMAIN) {
+        console.log(`🔍 Bidly: Detected shop domain ${SHOP_DOMAIN}`);
+    } else {
+        console.warn('⚠️ Bidly: Unable to detect shop domain, defaulting to hostname');
+    }
+
     // Configuration
     const CONFIG = {
         backendUrl: (function() {
             // Use backend config if available, otherwise default
             if (window.BidlyBackendConfig) {
-                const shopDomain = PREVIEW_DATA.shopDomain || window.Shopify?.shop?.permanent_domain || window.location.hostname;
-                return window.BidlyBackendConfig.getBackendUrl(shopDomain);
+                return window.BidlyBackendConfig.getBackendUrl(SHOP_DOMAIN);
             }
             // Fallback to default if backend config not loaded
             console.warn('⚠️ Bidly: Backend config not loaded, using default backend');
             return 'https://bidly-auction-backend.onrender.com';
         })(),
-        shopDomain: PREVIEW_DATA.shopDomain || window.Shopify?.shop?.permanent_domain || window.location.hostname,
+        shopDomain: SHOP_DOMAIN,
         widgetClass: 'bidly-auction-app-embed',
         pricingSelectors: [
             '.product-form__price',
