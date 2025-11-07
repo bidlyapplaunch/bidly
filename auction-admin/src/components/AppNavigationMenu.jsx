@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import createApp from '@shopify/app-bridge';
 import { useLocation } from 'react-router-dom';
 import { NavigationMenu } from '@shopify/app-bridge/actions';
 
@@ -27,6 +28,19 @@ const AppNavigationMenu = () => {
   useEffect(() => {
     const app = window.__APP_BRIDGE_APP__;
     if (!app) {
+      const config = window.__APP_BRIDGE_CONFIG__;
+      if (config) {
+        try {
+          const newApp = createApp(config);
+          window.__APP_BRIDGE_APP__ = newApp;
+          console.log('ℹ️ App Bridge app lazily created for navigation');
+          setRetryCount((prev) => prev + 1);
+          return;
+        } catch (error) {
+          console.warn('Failed to lazily create App Bridge app', error);
+        }
+      }
+
       const timeout = setTimeout(() => {
         setRetryCount((prev) => prev + 1);
       }, 200);
