@@ -71,7 +71,7 @@ const AppNavigationMenu = () => {
       }
     });
 
-    navigationMenu.dispatch(NavigationMenu.Action.UPDATE, {
+    navigationMenu.dispatch(NavigationMenu.Action.SET, {
       items,
       active: activeItem ? activeItem.destination : undefined
     });
