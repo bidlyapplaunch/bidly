@@ -1217,3 +1217,132 @@
         bottom: 70px;
     }
 }
+
+/* ==========================================================================
+   Dynamic Theme Overrides (powered by customization settings)
+   These rules apply CSS variables delivered by the storefront widget script.
+   ========================================================================== */
+.bidly-widget-root {
+    --bidly-font-family: 'Inter', sans-serif;
+    --bidly-text-color: #1f2937;
+    --bidly-accent-color: #6366f1;
+    --bidly-bg-color: #ffffff;
+    --bidly-bg-gradient-start: #667eea;
+    --bidly-bg-gradient-end: #764ba2;
+    --bidly-bg-gradient-enable: 1;
+    --bidly-button-bg: #6366f1;
+    --bidly-button-hover-bg: #4f46e5;
+    --bidly-button-text: #ffffff;
+    --bidly-border-color: #e5e7eb;
+    --bidly-border-radius: 16px;
+    --bidly-box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.bidly-widget-root,
+.bidly-widget-root * {
+    font-family: var(--bidly-font-family), sans-serif !important;
+}
+
+.bidly-widget-root .bidly-widget-container,
+.bidly-widget-root .bidly-login-required {
+    background: var(--bidly-bg-color) !important;
+    color: var(--bidly-text-color) !important;
+    border-radius: var(--bidly-border-radius) !important;
+    box-shadow: var(--bidly-box-shadow) !important;
+    border: 1px solid var(--bidly-border-color) !important;
+}
+
+.bidly-widget-root[data-bidly-gradient="1"] .bidly-widget-header,
+.bidly-widget-root[data-bidly-gradient="1"] .bidly-widget-container::before {
+    background: linear-gradient(135deg, var(--bidly-bg-gradient-start), var(--bidly-bg-gradient-end)) !important;
+}
+
+.bidly-widget-root[data-bidly-gradient="0"] .bidly-widget-header,
+.bidly-widget-root[data-bidly-gradient="0"] .bidly-widget-container::before {
+    background: var(--bidly-bg-color) !important;
+}
+
+.bidly-widget-root .bidly-widget-title,
+.bidly-widget-root .bidly-widget-status span,
+.bidly-widget-root .bidly-customer-info,
+.bidly-widget-root .bidly-widget-close,
+.bidly-widget-root .bidly-customer-name {
+    color: var(--bidly-button-text) !important;
+}
+
+.bidly-widget-root .bidly-status-active,
+.bidly-widget-root .bidly-status-pending,
+.bidly-widget-root .bidly-status-ended {
+    background: var(--bidly-accent-color) !important;
+    color: var(--bidly-button-text) !important;
+    border-color: transparent !important;
+}
+
+.bidly-widget-root .bidly-amount,
+.bidly-widget-root .bidly-widget-status span.bidly-status-active {
+    color: var(--bidly-accent-color) !important;
+}
+
+.bidly-widget-root .bidly-btn,
+.bidly-widget-root .bidly-widget-primary-button,
+.bidly-widget-root .bidly-login-options .bidly-btn-primary,
+.bidly-widget-root .bidly-widget-actions .bidly-submit-bid {
+    background: var(--bidly-button-bg) !important;
+    color: var(--bidly-button-text) !important;
+    border-color: var(--bidly-button-bg) !important;
+}
+
+.bidly-widget-root .bidly-btn:hover,
+.bidly-widget-root .bidly-widget-primary-button:hover,
+.bidly-widget-root .bidly-login-options .bidly-btn-primary:hover,
+.bidly-widget-root .bidly-widget-actions .bidly-submit-bid:hover {
+    background: var(--bidly-button-hover-bg) !important;
+    border-color: var(--bidly-button-hover-bg) !important;
+}
+
+.bidly-widget-root .bidly-login-options .bidly-btn-secondary {
+    background: rgba(148, 163, 184, 0.2) !important;
+    color: var(--bidly-text-color) !important;
+}
+
+.bidly-widget-root .bidly-label,
+.bidly-widget-root .bidly-widget-pricing .bidly-label,
+.bidly-widget-root .bidly-widget-timer .bidly-timer-label,
+.bidly-widget-root .bidly-widget-footer {
+    color: rgba(15, 23, 42, 0.55) !important;
+}
+
+.bidly-widget-root .bidly-widget-pricing,
+.bidly-widget-root .bidly-minimum-bid,
+.bidly-widget-root .bidly-bid-input-container {
+    background: rgba(15, 23, 42, 0.03) !important;
+    border-radius: calc(var(--bidly-border-radius) - 6px) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+.bidly-widget-root .bidly-bid-input {
+    border: 1px solid var(--bidly-border-color) !important;
+    color: var(--bidly-text-color) !important;
+}
+
+.bidly-widget-root .bidly-widget-footer-link {
+    color: var(--bidly-accent-color) !important;
+}
+
+.bidly-widget-root.bidly-template-B .bidly-widget-container {
+    background: rgba(17, 24, 39, 0.85) !important;
+    color: #e2e8f0 !important;
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(148, 163, 184, 0.24) !important;
+}
+
+.bidly-widget-root.bidly-template-C .bidly-widget-container {
+    background: linear-gradient(135deg, rgba(253, 242, 248, 0.95), rgba(254, 243, 199, 0.95)) !important;
+    color: #1f2937 !important;
+}
+
+.bidly-widget-root.bidly-template-D .bidly-widget-container {
+    background: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.28) !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+}

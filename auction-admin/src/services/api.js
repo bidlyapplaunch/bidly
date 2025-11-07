@@ -325,64 +325,30 @@ export const analyticsAPI = {
   }
 };
 
-// Customization API endpoints (legacy - for backward compatibility)
-export const customizationAPI = {
-  // Get customization settings
-  getCustomization: async (shopDomain = null) => {
-    const shop = shopDomain || getShopFromURL();
-    const response = await api.get('/customization', {
-      params: { shop }
-    });
+export const customizationSettingsAPI = {
+  async getSettings(type, options = {}) {
+    const params = { ...options };
+    if (options.includeMeta) {
+      params.includeMeta = '1';
+    }
+    const response = await api.get(`/customization/${type}`, { params });
     return response.data;
   },
 
-  // Save customization settings
-  saveCustomization: async (shopDomain, customizationData) => {
-    const shop = shopDomain || getShopFromURL();
-    const response = await api.post('/customization', customizationData, {
-      params: { shop }
-    });
+  async saveSettings(type, settings, options = {}) {
+    const params = { ...options };
+    const response = await api.put(`/customization/${type}`, settings, { params });
     return response.data;
   },
 
-  // Get theme CSS
-  getThemeCSS: async (shopDomain = null) => {
-    const shop = shopDomain || getShopFromURL();
-    const response = await api.get('/customization/theme', {
-      params: { shop }
-    });
+  async getPreview(type, state = 'active', options = {}) {
+    const params = { state, ...options };
+    const response = await api.get(`/customization/${type}/preview`, { params });
     return response.data;
-  }
-};
+  },
 
-// Marketplace Customization API
-export const marketplaceCustomizationAPI = {
-  getCustomization: async () => {
-    const response = await api.get('/marketplace-customization');
-    return response.data;
-  },
-  saveCustomization: async (data) => {
-    const response = await api.post('/marketplace-customization', data);
-    return response.data;
-  },
-  getThemeCSS: async () => {
-    const response = await api.get('/marketplace-customization/theme');
-    return response.data;
-  }
-};
-
-// Widget Customization API
-export const widgetCustomizationAPI = {
-  getCustomization: async () => {
-    const response = await api.get('/widget-customization');
-    return response.data;
-  },
-  saveCustomization: async (data) => {
-    const response = await api.post('/widget-customization', data);
-    return response.data;
-  },
-  getThemeCSS: async () => {
-    const response = await api.get('/widget-customization/theme');
+  async getMeta(type) {
+    const response = await api.get(`/customization/${type}/meta`);
     return response.data;
   }
 };

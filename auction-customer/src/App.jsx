@@ -16,6 +16,7 @@ import socketService from './services/socket';
 import customerAuthService from './services/customerAuth';
 import AuctionCard from './components/AuctionCard';
 import CustomerAuth from './components/CustomerAuth';
+import themeService from './services/themeService';
 
 function App() {
   const [auctions, setAuctions] = useState([]);
@@ -45,7 +46,7 @@ function App() {
   const { shop, shopName } = getShopInfo();
 
   useEffect(() => {
-    // Theme loading disabled (reverted to original design)
+    themeService.loadTheme(shop);
 
     // Initialize customer authentication
     if (customerAuthService.isAuthenticated()) {
@@ -362,21 +363,24 @@ function App() {
 
   if (loading) {
     return (
-      <AppProvider>
-        <Frame>
-          <Page title="Live Auctions">
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-              <Spinner size="large" />
-            </div>
-          </Page>
-        </Frame>
-      </AppProvider>
+      <div className="bidly-marketplace-root">
+        <AppProvider>
+          <Frame>
+            <Page title="Live Auctions">
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+                <Spinner size="large" />
+              </div>
+            </Page>
+          </Frame>
+        </AppProvider>
+      </div>
     );
   }
 
   return (
-    <AppProvider>
-      <Frame>
+    <div className="bidly-marketplace-root">
+      <AppProvider>
+        <Frame>
         <Page 
           title={`Auction Marketplace${shopName ? ` - ${shopName}` : ''}`}
           subtitle={shopName ? `Browse auctions from ${shopName}` : "Browse pending, active, and ended auctions"}
@@ -462,7 +466,6 @@ function App() {
             />
           )}
         </Page>
-        
         {/* Customer Authentication Modal */}
         {showAuthModal && (
           <CustomerAuth
@@ -472,6 +475,7 @@ function App() {
         )}
       </Frame>
     </AppProvider>
+  </div>
   );
 }
 

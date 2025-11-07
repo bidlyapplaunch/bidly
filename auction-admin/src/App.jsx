@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { AppProvider } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import OAuthSetup from './components/OAuthSetup';
 import AppBridgeProvider from './components/AppBridgeProvider';
 import authService from './services/auth';
+import MarketplaceCustomizationSettings from './components/MarketplaceCustomizationSettings';
+import WidgetCustomizationSettings from './components/WidgetCustomizationSettings';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -79,7 +82,14 @@ function App() {
   return (
     <AppProvider>
       <AppBridgeProvider>
-        <Dashboard onLogout={handleLogout} />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
+            <Route path="/customization/marketplace" element={<MarketplaceCustomizationSettings />} />
+            <Route path="/customization/widget" element={<WidgetCustomizationSettings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
       </AppBridgeProvider>
     </AppProvider>
   );

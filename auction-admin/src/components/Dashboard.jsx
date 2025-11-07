@@ -20,12 +20,11 @@ import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
-import MarketplaceCustomizationSettings from './MarketplaceCustomizationSettings';
-import WidgetCustomizationSettings from './WidgetCustomizationSettings';
 import AppBridgeToast from './AppBridgeToast';
 import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
 import socketService from '../services/socket';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Dashboard = ({ onLogout }) => {
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -46,6 +45,17 @@ const Dashboard = ({ onLogout }) => {
   const [shopifyProducts, setShopifyProducts] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const search = location.search || '';
+
+  const goToMarketplaceCustomization = () => {
+    navigate(`/customization/marketplace${search}`);
+  };
+
+  const goToWidgetCustomization = () => {
+    navigate(`/customization/widget${search}`);
+  };
 
   useEffect(() => {
     fetchStats();
@@ -265,6 +275,24 @@ const Dashboard = ({ onLogout }) => {
             </Card>
           </Layout.Section>
 
+          {/* Customization shortcuts */}
+          <Layout.Section>
+            <Card sectioned>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div>
+                  <Text variant="headingMd">Visual customization</Text>
+                  <Text variant="bodySm" color="subdued">
+                    Update the storefront widget or marketplace appearance from dedicated customization studios.
+                  </Text>
+                </div>
+                <ButtonGroup>
+                  <Button onClick={goToMarketplaceCustomization}>Marketplace styles</Button>
+                  <Button onClick={goToWidgetCustomization}>Widget styles</Button>
+                </ButtonGroup>
+              </div>
+            </Card>
+          </Layout.Section>
+
           {/* Total Bids */}
           <Layout.Section>
             <Card sectioned>
@@ -292,18 +320,6 @@ const Dashboard = ({ onLogout }) => {
                     id: 'analytics',
                     content: '📊 Analytics',
                     panelID: 'analytics-panel'
-                  },
-                  {
-                    id: 'marketplace-customization',
-                    content: '🎨 Marketplace Style (Disabled)',
-                    panelID: 'marketplace-customization-panel',
-                    disabled: true
-                  },
-                  {
-                    id: 'widget-customization',
-                    content: '🧩 Widget Style (Disabled)',
-                    panelID: 'widget-customization-panel',
-                    disabled: true
                   }
                 ]}
                 selected={selectedTab}
@@ -322,16 +338,6 @@ const Dashboard = ({ onLogout }) => {
                 {selectedTab === 1 && (
                   <div style={{ padding: '16px' }}>
                     <Analytics />
-                  </div>
-                )}
-                {selectedTab === 2 && (
-                  <div style={{ padding: '16px' }}>
-                    <MarketplaceCustomizationSettings />
-                  </div>
-                )}
-                {selectedTab === 3 && (
-                  <div style={{ padding: '16px' }}>
-                    <WidgetCustomizationSettings />
                   </div>
                 )}
               </Tabs>

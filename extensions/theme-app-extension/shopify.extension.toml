@@ -7,6 +7,10 @@ api_version = "2023-10"
 # Remove this line if deploying to a new app to let Shopify generate a new UID
 # uid = "a2274091-89f7-01b4-1067-13d60045030b40d0fae7"
 
+
+uid = "a2274091-89f7-01b4-1067-13d60045030b40d0fae7"
+
+
 type = "theme_app_extension"
 name = "Bidly Auction Widget"
 handle = "bidly-auction-widget"

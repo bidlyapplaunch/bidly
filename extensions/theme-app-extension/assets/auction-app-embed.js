@@ -39,6 +39,122 @@
         ]
     };
 
+    const THEME_BOX_SHADOWS = {
+        none: 'none',
+        subtle: '0 6px 18px rgba(15, 23, 42, 0.08)',
+        medium: '0 18px 45px rgba(15, 23, 42, 0.14)'
+    };
+
+    const DEFAULT_WIDGET_THEME = {
+        template: 'A',
+        font: 'Inter',
+        colors: {
+            accent: '#6366f1',
+            text: '#1f2937',
+            bg_solid: '#ffffff',
+            bg_gradient_start: '#667eea',
+            bg_gradient_end: '#764ba2',
+            button_bg: '#6366f1',
+            button_hover: '#4f46e5',
+            button_text: '#ffffff',
+            border: '#e5e7eb'
+        },
+        borderRadius: 16,
+        boxShadow: 'medium',
+        gradientEnabled: true
+    };
+
+    let widgetThemeSettingsCache = null;
+
+    function normalizeWidgetTheme(settings = {}) {
+        const normalized = {
+            template: settings.template || DEFAULT_WIDGET_THEME.template,
+            font: settings.font || DEFAULT_WIDGET_THEME.font,
+            borderRadius: settings.borderRadius || DEFAULT_WIDGET_THEME.borderRadius,
+            boxShadow: settings.boxShadow || DEFAULT_WIDGET_THEME.boxShadow,
+            gradientEnabled: typeof settings.gradientEnabled === 'boolean'
+                ? settings.gradientEnabled
+                : DEFAULT_WIDGET_THEME.gradientEnabled
+        };
+
+        normalized.colors = Object.assign({}, DEFAULT_WIDGET_THEME.colors, settings.colors || {});
+        return normalized;
+    }
+
+    function buildWidgetThemeStyle(theme) {
+        const boxShadow = THEME_BOX_SHADOWS[theme.boxShadow] || THEME_BOX_SHADOWS[DEFAULT_WIDGET_THEME.boxShadow];
+        const font = (theme.font || DEFAULT_WIDGET_THEME.font).replace(/'/g, "\\'");
+        const colors = theme.colors || DEFAULT_WIDGET_THEME.colors;
+        return `
+.bidly-widget-root {
+    --bidly-font-family: '${font}', sans-serif;
+    --bidly-text-color: ${colors.text};
+    --bidly-accent-color: ${colors.accent};
+    --bidly-bg-color: ${colors.bg_solid};
+    --bidly-bg-gradient-start: ${colors.bg_gradient_start};
+    --bidly-bg-gradient-end: ${colors.bg_gradient_end};
+    --bidly-bg-gradient-enable: ${theme.gradientEnabled ? 1 : 0};
+    --bidly-button-bg: ${colors.button_bg};
+    --bidly-button-hover-bg: ${colors.button_hover};
+    --bidly-button-text: ${colors.button_text};
+    --bidly-border-color: ${colors.border};
+    --bidly-border-radius: ${theme.borderRadius}px;
+    --bidly-box-shadow: ${boxShadow};
+}`;
+    }
+
+    async function fetchWidgetThemeSettings() {
+        if (widgetThemeSettingsCache) {
+            return widgetThemeSettingsCache;
+        }
+
+        try {
+            const response = await fetch(`${CONFIG.backendUrl}/api/customization/widget?shop=${CONFIG.shopDomain}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.settings) {
+                    widgetThemeSettingsCache = normalizeWidgetTheme(data.settings);
+                    return widgetThemeSettingsCache;
+                }
+            } else {
+                console.warn('Bidly: Failed to fetch widget customization settings, status:', response.status);
+            }
+        } catch (error) {
+            console.warn('Bidly: Error fetching widget customization settings:', error);
+        }
+
+        widgetThemeSettingsCache = normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
+        return widgetThemeSettingsCache;
+    }
+
+    function applyWidgetTheme(widgetContainer, theme) {
+        if (!widgetContainer) {
+            return;
+        }
+
+        const host = widgetContainer.querySelector('.bidly-widget-container');
+        if (!host) {
+            return;
+        }
+
+        host.classList.add('bidly-widget-root');
+        const templateClassNames = ['bidly-template-A', 'bidly-template-B', 'bidly-template-C', 'bidly-template-D'];
+        templateClassNames.forEach(className => host.classList.remove(className));
+        const templateKey = theme.template || DEFAULT_WIDGET_THEME.template;
+        host.classList.add(`bidly-template-${templateKey}`);
+        host.setAttribute('data-bidly-template', templateKey);
+        host.setAttribute('data-bidly-gradient', theme.gradientEnabled ? '1' : '0');
+
+        let styleElement = host.querySelector('#bidly-widget-theme');
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            styleElement.id = 'bidly-widget-theme';
+            host.prepend(styleElement);
+        }
+
+        styleElement.textContent = buildWidgetThemeStyle(theme);
+    }
+
     // Theme loading functionality - DISABLED (reverted to original design)
     // Theme customization is temporarily disabled
 
@@ -690,6 +806,8 @@
             return;
         }
 
+        const themeSettings = await fetchWidgetThemeSettings();
+
         // Fallback: if pending but no startTime, fetch from backend
         try {
             if (auctionData.status === 'pending' && !auctionData.startTime && auctionData.auctionId) {
@@ -742,6 +860,7 @@
         
         // Create the actual auction widget content
         widgetContainer.innerHTML = createWidgetHTML(auctionData, settings);
+        applyWidgetTheme(widgetContainer, themeSettings);
         
         // Set initial positioning properties (will be overridden by dynamic positioning)
         widgetContainer.style.position = 'absolute';
@@ -1988,13 +2107,21 @@
         initializeRealTimeUpdates(auctionCheck.auctionId);
         
         console.log('Bidly: Widget content refreshed successfully');
+
+        fetchWidgetThemeSettings()
+            .then(theme => {
+                applyWidgetTheme(widgetElement, theme);
+            })
+            .catch(error => {
+                console.warn('Bidly: Failed to reapply widget theme:', error);
+            });
     }
 
     // Main initialization function
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
         
-        // Theme loading disabled (reverted to original design)
+        await fetchWidgetThemeSettings();
         
         // Check if widget already exists to prevent reloading
         const existingWidget = document.querySelector('.bidly-auction-app-embed');

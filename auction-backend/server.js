@@ -146,39 +146,15 @@ try {
   });
 }
 
-// Load customization routes synchronously (essential for admin)
+// Load customization settings routes synchronously
 try {
-  const { default: customizationRoutes } = await import('./routes/customization.js');
+  const { default: customizationRoutes } = await import('./routes/customizationSettings.js');
   app.use('/api/customization', customizationRoutes);
-  console.log('✅ Customization routes loaded synchronously');
+  console.log('✅ Customization settings routes loaded synchronously');
 } catch (error) {
-  console.error('❌ Failed to load customization routes:', error.message);
+  console.error('❌ Failed to load customization settings routes:', error.message);
   app.use('/api/customization', (req, res) => {
     res.status(500).json({ success: false, message: 'Customization routes not available', error: error.message });
-  });
-}
-
-// Load marketplace customization routes synchronously
-try {
-  const { default: marketplaceCustomizationRoutes } = await import('./routes/marketplaceCustomization.js');
-  app.use('/api/marketplace-customization', marketplaceCustomizationRoutes);
-  console.log('✅ Marketplace customization routes loaded synchronously');
-} catch (error) {
-  console.error('❌ Failed to load marketplace customization routes:', error.message);
-  app.use('/api/marketplace-customization', (req, res) => {
-    res.status(500).json({ success: false, message: 'Marketplace customization routes not available', error: error.message });
-  });
-}
-
-// Load widget customization routes synchronously
-try {
-  const { default: widgetCustomizationRoutes } = await import('./routes/widgetCustomization.js');
-  app.use('/api/widget-customization', widgetCustomizationRoutes);
-  console.log('✅ Widget customization routes loaded synchronously');
-} catch (error) {
-  console.error('❌ Failed to load widget customization routes:', error.message);
-  app.use('/api/widget-customization', (req, res) => {
-    res.status(500).json({ success: false, message: 'Widget customization routes not available', error: error.message });
   });
 }
 
