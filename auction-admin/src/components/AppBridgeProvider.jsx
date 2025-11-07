@@ -78,24 +78,28 @@ const AppBridgeWrapper = ({ children }) => {
         apiKey: '4d6fd182c13268701d61dc45f76c735e',
         host,
         shopOrigin: `https://${shop}`,
-        forceRedirect: true
+        forceRedirect: host ? true : false
       };
       window.__APP_BRIDGE_CONFIG__ = config;
       setAppBridgeConfig(config);
 
-      try {
-        const app = createApp({
-          apiKey: config.apiKey,
-          host,
-          forceRedirect: true
-        });
-        if (app) {
-          window.__APP_BRIDGE_APP__ = app;
-          setAppInstance(app);
-          console.log('✅ App Bridge app instance stored globally');
+      if (host) {
+        try {
+          const app = createApp({
+            apiKey: config.apiKey,
+            host,
+            forceRedirect: true
+          });
+          if (app) {
+            window.__APP_BRIDGE_APP__ = app;
+            setAppInstance(app);
+            console.log('✅ App Bridge app instance stored globally');
+          }
+        } catch (createError) {
+          console.warn('App Bridge create failed, will rely on lazy init in nav menu', createError);
         }
-      } catch (createError) {
-        console.warn('App Bridge create failed, will rely on lazy init in nav menu', createError);
+      } else {
+        console.warn('Shopify host parameter missing; running in standalone mode');
       }
 
       console.log('✅ App Bridge initialized for shop:', shop);
