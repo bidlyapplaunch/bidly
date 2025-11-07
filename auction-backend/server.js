@@ -83,7 +83,9 @@ app.use(cors({
     'https://admin.shopify.com',
     'https://*.myshopify.com',
     'https://bidly-2.myshopify.com',
-    'https://6sb15z-k1.myshopify.com'
+    'https://6sb15z-k1.myshopify.com',
+    'https://true-nordic.com',
+    'https://www.true-nordic.com'
   ],
   credentials: true,
   // Development headers for iframe compatibility
