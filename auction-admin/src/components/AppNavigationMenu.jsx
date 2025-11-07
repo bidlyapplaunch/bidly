@@ -10,6 +10,7 @@ const ensureNavigationMenu = (app) => {
 
   if (!window.__APP_BRIDGE_NAV_MENU__) {
     window.__APP_BRIDGE_NAV_MENU__ = NavigationMenu.create(app);
+    console.log('🧭 Created App Bridge navigation menu');
   }
 
   return window.__APP_BRIDGE_NAV_MENU__;
@@ -56,10 +57,9 @@ const AppNavigationMenu = () => {
 
     const navigationMenu = ensureNavigationMenu(app);
     if (!navigationMenu) {
+      console.warn('Navigation menu not available even after ensureNavigationMenu');
       return;
     }
-
-    navigationMenu.set({ items });
 
     const activeItem = items.find((item) => {
       try {
@@ -71,9 +71,16 @@ const AppNavigationMenu = () => {
       }
     });
 
-    if (activeItem) {
-      navigationMenu.set({ active: activeItem.destination });
-    }
+    navigationMenu.dispatch(NavigationMenu.Action.UPDATE, {
+      items,
+      active: activeItem ? activeItem.destination : undefined
+    });
+    console.log('🧭 Navigation menu updated', {
+      items,
+      active: activeItem ? activeItem.destination : undefined
+    });
+
+    window.__APP_BRIDGE_NAV_MENU__ = navigationMenu;
   }, [location, searchParams, retryCount]);
 
   return null;
