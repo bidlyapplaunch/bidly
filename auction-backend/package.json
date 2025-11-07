@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "prestart": "npm run build-admin",
+    "prestart": "node ./scripts/conditionalAdminBuild.js",
     "build-admin": "cd ../auction-admin && npm install && npm run build",
     "start": "node server.js",
     "dev": "nodemon server.js",
