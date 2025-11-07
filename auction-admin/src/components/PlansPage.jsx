@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Banner,
-  BlockStack,
   Button,
   Card,
   Frame,
@@ -63,20 +62,20 @@ function PlanCard({ plan, currentPlan, pendingPlan, onSubscribe, loadingPlan }) 
   return (
     <Card>
       <Card.Section>
-        <BlockStack gap="tight">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <Text variant="headingMd">{plan.title}</Text>
           <Text tone="subdued">{plan.price}</Text>
           <Text tone="subdued">{plan.description}</Text>
-        </BlockStack>
+        </div>
       </Card.Section>
       <Card.Section>
-        <BlockStack gap="tight">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {plan.highlights.map((item) => (
             <Text as="p" key={item} tone="subdued">
               • {item}
             </Text>
           ))}
-        </BlockStack>
+        </div>
       </Card.Section>
       <Card.Section>
         <Button
@@ -224,16 +223,8 @@ const PlansPage = () => {
           <Layout.Section>
             <Card>
               <Card.Section>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 16,
-                    flexWrap: 'wrap'
-                  }}
-                >
-                  <BlockStack gap="tight">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <Text variant="headingMd">Current plan</Text>
                     {loading ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -241,15 +232,15 @@ const PlansPage = () => {
                         <Text tone="subdued">Loading…</Text>
                       </div>
                     ) : (
-                      <BlockStack gap="none">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <Text tone="subdued">Active: {planData.plan || 'none'}</Text>
                         {planData.pendingPlan && planData.pendingPlan !== planData.plan && (
                           <Text tone="subdued">Pending: {planData.pendingPlan}</Text>
                         )}
                         <Text tone="subdued">{getTrialCopy}</Text>
-                      </BlockStack>
+                      </div>
                     )}
-                  </BlockStack>
+                  </div>
                 </div>
               </Card.Section>
             </Card>
