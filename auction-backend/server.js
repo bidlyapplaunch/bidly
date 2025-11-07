@@ -384,7 +384,7 @@ app.use((req, res, next) => {
 });
 
 // Shopify embedded app entry point - serve the frontend
-app.get('/', (req, res) => {
+const serveAdminIndex = (req, res) => {
   const { shop, embedded, hmac, host, id_token, session } = req.query;
   
   console.log('🏪 Shopify embedded app access:', {
@@ -414,6 +414,24 @@ app.get('/', (req, res) => {
       path: indexPath
     });
   }
+};
+
+app.get('/', serveAdminIndex);
+app.get('/plans', serveAdminIndex);
+app.get('/customization/widget', serveAdminIndex);
+app.get('/customization/marketplace', serveAdminIndex);
+app.get('/analytics', serveAdminIndex);
+app.get('/auctions', serveAdminIndex);
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/auth/') || req.path.startsWith('/app-bridge/') || req.path.startsWith('/apps/')) {
+    return next();
+  }
+
+  if (req.method === 'GET' && req.accepts('html')) {
+    return serveAdminIndex(req, res);
+  }
+
+  return next();
 });
 
 
