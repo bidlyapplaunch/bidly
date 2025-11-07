@@ -39,7 +39,20 @@
             '.product__pricing',
             '.price-wrapper',
             '.product-price-wrapper'
-        ]
+        ],
+        plan: 'none',
+        capabilities: {
+            key: 'none',
+            features: {
+                removeBranding: false,
+                customization: false,
+                popcorn: false,
+                chat: false
+            },
+            limits: {
+                auctions: 0
+            }
+        }
     };
 
     const PREVIEW_WIDGET_SETTINGS = {
@@ -125,6 +138,12 @@
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.settings) {
+                    if (data.capabilities) {
+                        CONFIG.capabilities = data.capabilities;
+                    }
+                    if (data.plan) {
+                        CONFIG.plan = data.plan;
+                    }
                     widgetThemeSettingsCache = normalizeWidgetTheme(data.settings);
                     return widgetThemeSettingsCache;
                 }
@@ -2345,6 +2364,10 @@
      * Initialize chat for the current product (only for Shopify customers)
      */
     function initializeChat() {
+        if (!CONFIG.capabilities?.features?.chat) {
+            console.log('Bidly: Live chat is disabled for the current plan');
+            return;
+        }
         // Only show chat for Shopify customers
         if (!isShopifyCustomer()) {
             console.log('Bidly: Chat only available for Shopify customers');
@@ -2435,6 +2458,9 @@
      * Create chat UI HTML
      */
     function createChatUI() {
+        if (!CONFIG.capabilities?.features?.chat) {
+            return;
+        }
         // Remove existing chat if any
         const existingChat = document.querySelector('.bidly-chat-container');
         if (existingChat) {
@@ -2619,7 +2645,7 @@
         await originalInit();
         // Initialize chat after init completes and widget is injected
         setTimeout(() => {
-            if (document.querySelector('.bidly-auction-app-embed')) {
+            if (CONFIG.capabilities?.features?.chat && document.querySelector('.bidly-auction-app-embed')) {
                 initializeChat();
             }
         }, 1500);
@@ -2628,7 +2654,7 @@
     // Also initialize chat when login status changes
     window.addEventListener('bidly-login-success', () => {
         setTimeout(() => {
-            if (isShopifyCustomer()) {
+            if (CONFIG.capabilities?.features?.chat && isShopifyCustomer()) {
                 initializeChat();
             }
         }, 500);

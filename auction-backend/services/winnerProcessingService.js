@@ -170,7 +170,7 @@ class WinnerProcessingService {
             await this.updateCustomerStats(winner, auction);
             
             // 12. Send winner notification email (only notification, no product link)
-            await this.sendWinnerNotification(winner, auction, privateProduct);
+            await this.sendWinnerNotification(winner, auction, privateProduct, store);
             
             console.log(`✅ Winner processing completed for auction ${auctionId}`);
             
@@ -404,7 +404,7 @@ class WinnerProcessingService {
     /**
      * Send winner notification email (notification only, invoice sent via Shopify)
      */
-    async sendWinnerNotification(winner, auction, privateProduct) {
+    async sendWinnerNotification(winner, auction, privateProduct, store) {
         try {
             const emailData = {
                 to: winner.bidderEmail,
@@ -420,7 +420,10 @@ class WinnerProcessingService {
                 }
             };
 
-            await emailService.sendWinnerNotification(emailData);
+            await emailService.sendWinnerNotification(emailData, {
+                plan: store?.plan,
+                storeName: store?.storeName
+            });
             console.log(`📧 Winner notification sent to ${winner.bidderEmail}`);
             
         } catch (error) {

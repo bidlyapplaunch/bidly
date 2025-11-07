@@ -55,6 +55,27 @@ const storeSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+
+  // App subscription plan tracking
+  plan: {
+    type: String,
+    enum: ['none', 'basic', 'pro', 'enterprise'],
+    default: 'none'
+  },
+
+  pendingPlan: {
+    type: String,
+    enum: ['basic', 'pro', 'enterprise', null],
+    default: null
+  },
+
+  planActiveAt: {
+    type: Date
+  },
+
+  trialEndsAt: {
+    type: Date
+  },
   
   // OAuth and authentication
   accessToken: {

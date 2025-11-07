@@ -23,6 +23,7 @@ import {
   validateId
 } from '../middleware/validation.js';
 import { identifyStore } from '../middleware/storeMiddleware.js';
+import { checkPlan, enforceAuctionLimit } from '../middleware/planGuard.js';
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.use(identifyStore);
 router.get('/page/:id', validateId, getAuctionDetailsPage);
 
 // Auction CRUD routes
-router.post('/', validateCreateAuction, createAuction);
+router.post('/', checkPlan('basic'), enforceAuctionLimit, validateCreateAuction, createAuction);
 router.get('/', getAllAuctions);
 router.get('/stats', getAuctionStats);
 router.get('/with-product-data', getAuctionsWithProductData);
@@ -95,7 +96,7 @@ router.get('/by-product/:productId', identifyStore, async (req, res, next) => {
 });
 
 router.get('/:id', validateId, getAuctionById);
-router.put('/:id', validateUpdateAuction, updateAuction);
+router.put('/:id', checkPlan('basic'), validateUpdateAuction, updateAuction);
 router.delete('/:id', validateId, deleteAuction);
 
 // Bid placement route
@@ -105,7 +106,7 @@ router.post('/:id/bid', validatePlaceBid, placeBid);
 router.post('/:id/buy-now', validateBuyNow, buyNow);
 
 // Relist auction route
-router.put('/:id/relist', validateCreateAuction, relistAuction);
+router.put('/:id/relist', checkPlan('basic'), enforceAuctionLimit, validateCreateAuction, relistAuction);
 
 // Shopify product data routes
 router.put('/:id/refresh-product', validateId, refreshProductData);

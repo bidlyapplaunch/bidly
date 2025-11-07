@@ -4,6 +4,7 @@ import getShopifyService from '../services/shopifyService.js';
 import emailService from '../services/emailService.js';
 import ProductDuplicationService from '../services/productDuplicationService.js';
 import AuctionEndService from '../services/auctionEndService.js';
+import { getHigherPlans, planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
 
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
@@ -118,6 +119,18 @@ export const createAuction = async (req, res, next) => {
     
     if (!shopDomain) {
       throw new AppError('Store domain is required', 400);
+    }
+
+    const currentPlan = sanitizePlan(req.store?.plan || 'none');
+    if (req.body.popcornEnabled && !planMeetsRequirement(currentPlan, 'pro')) {
+      return res.status(403).json({
+        success: false,
+        code: 'PLAN_UPGRADE_REQUIRED',
+        message: 'Popcorn bidding is available on the Pro plan or higher.',
+        plan: currentPlan,
+        requiredPlan: 'pro',
+        upgradeOptions: getHigherPlans('pro')
+      });
     }
     
     // Check for existing active/pending auction with same product (ignore soft-deleted auctions)
@@ -328,6 +341,18 @@ export const updateAuction = async (req, res, next) => {
     
     if (!shopDomain) {
       throw new AppError('Store domain is required', 400);
+    }
+
+    const currentPlan = sanitizePlan(req.store?.plan || 'none');
+    if (req.body.popcornEnabled === true && !planMeetsRequirement(currentPlan, 'pro')) {
+      return res.status(403).json({
+        success: false,
+        code: 'PLAN_UPGRADE_REQUIRED',
+        message: 'Popcorn bidding is available on the Pro plan or higher.',
+        plan: currentPlan,
+        requiredPlan: 'pro',
+        upgradeOptions: getHigherPlans('pro')
+      });
     }
     
     const auction = await Auction.findOne({ 
@@ -638,12 +663,17 @@ export const placeBid = async (req, res, next) => {
     
     // Send email notifications
     try {
+      const brandOptions = {
+        plan: req.store?.plan,
+        storeName: req.store?.storeName
+      };
       // Send bid confirmation to the bidder
       await emailService.sendBidConfirmation(
         sanitizedEmail, // Use actual customer email
         sanitizedBidder,
         updatedAuction,
-        amount
+        amount,
+        brandOptions
       );
 
       // Send outbid notification to previous highest bidder
@@ -654,7 +684,8 @@ export const placeBid = async (req, res, next) => {
             previousBid.customerEmail, // Use actual customer email
             previousBid.bidder,
             updatedAuction,
-            amount
+            amount,
+            brandOptions
           );
         }
       }
@@ -665,7 +696,8 @@ export const placeBid = async (req, res, next) => {
           sanitizedEmail, // Use actual customer email
           sanitizedBidder,
           updatedAuction,
-          amount
+          amount,
+          brandOptions
         );
 
         // Send admin notification
@@ -803,12 +835,17 @@ export const buyNow = async (req, res, next) => {
     
     // Send email notifications
     try {
+      const brandOptions = {
+        plan: req.store?.plan,
+        storeName: req.store?.storeName
+      };
       // Send auction won notification to the buyer
       await emailService.sendAuctionWonNotification(
         customerEmail || `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Use customer email or demo email
         bidder.trim(),
         auction,
-        auction.buyNowPrice
+        auction.buyNowPrice,
+        brandOptions
       );
 
       // Send outbid notification to previous highest bidder (if any)
@@ -819,7 +856,8 @@ export const buyNow = async (req, res, next) => {
             previousBid.customerEmail, // Use actual customer email
             previousBid.bidder,
             auction,
-            auction.buyNowPrice
+            auction.buyNowPrice,
+            brandOptions
           );
         }
       }

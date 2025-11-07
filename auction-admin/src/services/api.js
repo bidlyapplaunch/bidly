@@ -353,4 +353,26 @@ export const customizationSettingsAPI = {
   }
 };
 
+export const billingAPI = {
+  async getCurrentPlan() {
+    const response = await api.get('/billing/current');
+    return response.data;
+  },
+
+  async subscribe(plan) {
+    const response = await api.post('/billing/subscribe', { plan });
+    return response.data;
+  },
+
+  async syncPlan() {
+    const response = await api.post('/billing/sync');
+    return response.data;
+  },
+
+  async getCapabilities() {
+    const response = await api.get('/billing/capabilities');
+    return response.data;
+  }
+};
+
 export default api;

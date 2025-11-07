@@ -1,15 +1,37 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { requireAuth } from '../middleware/auth.js';
+import { optionalAuth, requireAuth } from '../middleware/auth.js';
 import {
   getCustomization,
   saveCustomization,
   getCustomizationMeta,
   getPreviewData,
-  customizationServiceConstants
+  customizationServiceConstants,
+  getDefaultSettings
 } from '../services/customizationService.js';
+import { identifyStore } from '../middleware/storeMiddleware.js';
+import { attachPlanContext, getStorePlan } from '../middleware/planGuard.js';
+import { getHigherPlans, getPlanCapabilities, planMeetsRequirement } from '../config/billingPlans.js';
 
 const ALLOWED_TYPES = ['widget', 'marketplace'];
+const DISABLED_TYPES = new Set(['marketplace']);
+const PLAN_REQUIREMENTS = {
+  widget: 'pro',
+  marketplace: 'enterprise'
+};
+
+function isDisabled(type) {
+  return DISABLED_TYPES.has(type);
+}
+
+function respondDisabled(res, type) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Retry-After', '3600');
+  return res.status(503).json({
+    success: false,
+    message: `The ${type} customization studio is temporarily unavailable while we roll out updates.`
+  });
+}
 const router = express.Router();
 
 function resolveShopDomain(req) {
@@ -42,6 +64,10 @@ function buildValidationChain() {
   ];
 }
 
+router.use(optionalAuth);
+router.use(identifyStore);
+router.use(attachPlanContext);
+
 router.get('/:type', async (req, res) => {
   try {
     const { type } = req.params;
@@ -52,7 +78,11 @@ router.get('/:type', async (req, res) => {
       });
     }
 
-    const shopDomain = resolveShopDomain(req);
+    if (isDisabled(type)) {
+      return respondDisabled(res, type);
+    }
+
+    const shopDomain = req.shopDomain || resolveShopDomain(req);
     if (!shopDomain) {
       return res.status(400).json({
         success: false,
@@ -60,13 +90,46 @@ router.get('/:type', async (req, res) => {
       });
     }
 
+    const requiredPlan = PLAN_REQUIREMENTS[type] || 'basic';
+    const currentPlan = getStorePlan(req);
+    const includeMeta = !!req.user || req.query.includeMeta === '1';
+    const hasAccess = planMeetsRequirement(currentPlan, requiredPlan);
+
+    if (!hasAccess) {
+      if (includeMeta) {
+        return res.status(403).json({
+          success: false,
+          code: 'PLAN_UPGRADE_REQUIRED',
+          message: `The ${type} customization requires the ${requiredPlan} plan.`,
+          plan: currentPlan,
+          requiredPlan,
+          upgradeOptions: getHigherPlans(requiredPlan),
+          capabilities: getPlanCapabilities(currentPlan)
+        });
+      }
+
+      const defaults = getDefaultSettings(type);
+      return res.json({
+        success: true,
+        shop: shopDomain,
+        type,
+        settings: defaults,
+        enforcedDefault: true,
+        plan: currentPlan,
+        requiredPlan,
+        capabilities: getPlanCapabilities(currentPlan)
+      });
+    }
+
     const customization = await getCustomization(shopDomain, type);
     const response = {
       success: true,
+        plan: currentPlan,
+        requiredPlan,
+        capabilities: getPlanCapabilities(currentPlan),
       ...customization
     };
 
-    const includeMeta = !!req.user || req.query.includeMeta === '1';
     if (includeMeta) {
       response.meta = getCustomizationMeta(type);
     }
@@ -92,6 +155,24 @@ router.put(
         return res.status(400).json({
           success: false,
           message: `Invalid customization type "${type}". Supported types: ${ALLOWED_TYPES.join(', ')}`
+        });
+      }
+
+      if (isDisabled(type)) {
+        return respondDisabled(res, type);
+      }
+
+      const requiredPlan = PLAN_REQUIREMENTS[type] || 'pro';
+      const currentPlan = getStorePlan(req);
+      if (!planMeetsRequirement(currentPlan, requiredPlan)) {
+        return res.status(403).json({
+          success: false,
+          code: 'PLAN_UPGRADE_REQUIRED',
+          message: `The ${type} customization requires the ${requiredPlan} plan.`,
+          plan: currentPlan,
+          requiredPlan,
+          upgradeOptions: getHigherPlans(requiredPlan),
+          capabilities: getPlanCapabilities(currentPlan)
         });
       }
 
@@ -143,6 +224,24 @@ router.get('/:type/preview', requireAuth, async (req, res) => {
       });
     }
 
+    if (isDisabled(type)) {
+      return respondDisabled(res, type);
+    }
+
+    const requiredPlan = PLAN_REQUIREMENTS[type] || 'pro';
+    const currentPlan = getStorePlan(req);
+    if (!planMeetsRequirement(currentPlan, requiredPlan)) {
+      return res.status(403).json({
+        success: false,
+        code: 'PLAN_UPGRADE_REQUIRED',
+        message: `The ${type} customization requires the ${requiredPlan} plan.`,
+        plan: currentPlan,
+        requiredPlan,
+        upgradeOptions: getHigherPlans(requiredPlan),
+        capabilities: getPlanCapabilities(currentPlan)
+      });
+    }
+
     if (!['pending', 'active', 'ended'].includes(state)) {
       return res.status(400).json({
         success: false,
@@ -173,6 +272,24 @@ router.get('/:type/meta', requireAuth, (req, res) => {
     return res.status(400).json({
       success: false,
       message: `Invalid customization type "${type}". Supported types: ${ALLOWED_TYPES.join(', ')}`
+    });
+  }
+
+  if (isDisabled(type)) {
+    return respondDisabled(res, type);
+  }
+
+  const requiredPlan = PLAN_REQUIREMENTS[type] || 'pro';
+  const currentPlan = getStorePlan(req);
+  if (!planMeetsRequirement(currentPlan, requiredPlan)) {
+    return res.status(403).json({
+      success: false,
+      code: 'PLAN_UPGRADE_REQUIRED',
+      message: `The ${type} customization requires the ${requiredPlan} plan.`,
+      plan: currentPlan,
+      requiredPlan,
+      upgradeOptions: getHigherPlans(requiredPlan),
+      capabilities: getPlanCapabilities(currentPlan)
     });
   }
 

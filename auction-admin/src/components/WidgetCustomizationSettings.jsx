@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Page,
   Layout,
@@ -280,8 +281,46 @@ const WidgetCustomizationSettings = () => {
     resetToOriginal,
     save,
     loadPreview,
-    shopDomain
+    shopDomain,
+    planGate
   } = useCustomizationSettings('widget');
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const search = location.search || '';
+  const goToPlans = () => navigate(`/plans${search}`);
+
+  if (planGate) {
+    return (
+      <Frame>
+        <Page
+          title="Widget customization"
+          subtitle="Upgrade your Bidly plan to unlock widget styling controls."
+        >
+          <Layout>
+            <Layout.Section>
+              <Banner
+                tone="info"
+                title="Upgrade required to customize the widget"
+                action={{
+                  content: 'View plans',
+                  onAction: goToPlans
+                }}
+              >
+                <p>
+                  {planGate.message ||
+                    `Widget theming is available on the ${
+                      (planGate.requiredPlan || 'pro').charAt(0).toUpperCase() +
+                      (planGate.requiredPlan || 'pro').slice(1)
+                    } plan and above. Upgrade to continue customizing your storefront experience.`}
+                </p>
+              </Banner>
+            </Layout.Section>
+          </Layout>
+        </Page>
+      </Frame>
+    );
+  }
 
   if (loading || !meta) {
     return (

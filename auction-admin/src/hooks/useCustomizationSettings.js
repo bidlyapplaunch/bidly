@@ -31,6 +31,7 @@ export function useCustomizationSettings(type) {
   const [previewData, setPreviewData] = useState(null);
   const [toast, setToast] = useState(null);
   const [shopDomain, setShopDomain] = useState(null);
+  const [planGate, setPlanGate] = useState(null);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -44,12 +45,21 @@ export function useCustomizationSettings(type) {
         if (response.shop) {
           setShopDomain(response.shop);
         }
+        setPlanGate(null);
       } else {
         setError(response.message || 'Failed to load customization settings');
       }
     } catch (err) {
       console.error(`Error loading ${type} customization`, err);
-      setError(err.message || `Failed to load ${type} customization`);
+      if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_UPGRADE_REQUIRED') {
+        setPlanGate(err.response.data);
+        setMeta(null);
+        setSettings(EMPTY_SETTINGS);
+        setOriginalSettings(EMPTY_SETTINGS);
+        setError('');
+      } else {
+        setError(err.message || `Failed to load ${type} customization`);
+      }
     } finally {
       setLoading(false);
     }
@@ -75,10 +85,10 @@ export function useCustomizationSettings(type) {
   }, [loadSettings]);
 
   useEffect(() => {
-    if (meta) {
+    if (meta && !planGate) {
       loadPreview('active');
     }
-  }, [meta, loadPreview]);
+  }, [meta, loadPreview, planGate]);
 
   const updateSettings = useCallback((updater) => {
     setSettings((prev) => {
@@ -171,6 +181,11 @@ export function useCustomizationSettings(type) {
   }, [originalSettings]);
 
   const save = useCallback(async () => {
+    if (planGate) {
+      setToast({ status: 'error', message: planGate.message || 'Upgrade required to save changes' });
+      return;
+    }
+
     try {
       setSaving(true);
       setError('');
@@ -191,7 +206,7 @@ export function useCustomizationSettings(type) {
     } finally {
       setSaving(false);
     }
-  }, [settings, type]);
+  }, [settings, type, planGate]);
 
   const dirty = useMemo(() => {
     return JSON.stringify(settings) !== JSON.stringify(originalSettings);
@@ -220,7 +235,8 @@ export function useCustomizationSettings(type) {
     save,
     reload: loadSettings,
     loadPreview,
-    shopDomain
+    shopDomain,
+    planGate
   };
 }
 

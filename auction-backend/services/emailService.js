@@ -1,4 +1,22 @@
 import nodemailer from 'nodemailer';
+import { planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
+
+function getBrandSignature(options = {}) {
+  const plan = sanitizePlan(options.plan || 'none');
+  const storeName = options.storeName?.trim();
+
+  if (planMeetsRequirement(plan, 'pro') && storeName) {
+    return {
+      brand: storeName,
+      closing: `The ${storeName} Team`
+    };
+  }
+
+  return {
+    brand: 'Bidly',
+    closing: 'The Bidly Team'
+  };
+}
 
 class EmailService {
   constructor() {
@@ -59,8 +77,9 @@ class EmailService {
   }
 
   // Send bid confirmation email
-  async sendBidConfirmation(bidderEmail, bidderName, auctionData, bidAmount) {
+  async sendBidConfirmation(bidderEmail, bidderName, auctionData, bidAmount, options = {}) {
     const subject = `Bid Confirmation - ${auctionData.productData?.title || 'Auction Item'}`;
+    const brand = getBrandSignature(options);
     
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -82,7 +101,7 @@ class EmailService {
         
         <p style="color: #7f8c8d; font-size: 14px;">
           Best regards,<br>
-          The Bidly Team
+          ${brand.closing}
         </p>
       </div>
     `;
@@ -91,8 +110,9 @@ class EmailService {
   }
 
   // Send auction won notification
-  async sendAuctionWonNotification(bidderEmail, bidderName, auctionData, winningBid) {
+  async sendAuctionWonNotification(bidderEmail, bidderName, auctionData, winningBid, options = {}) {
     const subject = `🎉 You Won! - ${auctionData.productData?.title || 'Auction Item'}`;
+    const brand = getBrandSignature(options);
     
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -116,7 +136,7 @@ class EmailService {
         
         <p style="color: #7f8c8d; font-size: 14px;">
           Best regards,<br>
-          The Bidly Team
+          ${brand.closing}
         </p>
       </div>
     `;
@@ -125,8 +145,9 @@ class EmailService {
   }
 
   // Send winner notification (with or without product link based on template)
-  async sendWinnerNotification(emailData) {
+  async sendWinnerNotification(emailData, options = {}) {
     const { to, subject, template, data } = emailData;
+    const brand = getBrandSignature(emailData.brandOptions || options);
     
     // If template is 'auction-winner-notification-only', send notification without product link
     // The invoice with product link will be sent via Shopify's draft order invoice system
@@ -160,7 +181,7 @@ class EmailService {
           
           <p style="color: #7f8c8d; font-size: 14px;">
             Best regards,<br>
-            The Bidly Auction Team
+            ${brand.closing}
           </p>
         </div>
       `;
@@ -219,7 +240,7 @@ class EmailService {
         
         <p style="color: #7f8c8d; font-size: 14px;">
           Best regards,<br>
-          The Bidly Auction Team
+          ${brand.closing}
         </p>
       </div>
     `;
@@ -228,8 +249,9 @@ class EmailService {
   }
 
   // Send outbid notification
-  async sendOutbidNotification(bidderEmail, bidderName, auctionData, newHighestBid) {
+  async sendOutbidNotification(bidderEmail, bidderName, auctionData, newHighestBid, options = {}) {
     const subject = `⚠️ You've Been Outbid - ${auctionData.productData?.title || 'Auction Item'}`;
+    const brand = getBrandSignature(options);
     
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -255,7 +277,7 @@ class EmailService {
         
         <p style="color: #7f8c8d; font-size: 14px;">
           Best regards,<br>
-          The Bidly Team
+          ${brand.closing}
         </p>
       </div>
     `;
@@ -264,8 +286,9 @@ class EmailService {
   }
 
   // Send auction ending soon notification
-  async sendAuctionEndingSoon(bidderEmail, bidderName, auctionData, timeRemaining) {
+  async sendAuctionEndingSoon(bidderEmail, bidderName, auctionData, timeRemaining, options = {}) {
     const subject = `⏰ Auction Ending Soon - ${auctionData.productData?.title || 'Auction Item'}`;
+    const brand = getBrandSignature(options);
     
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -291,7 +314,7 @@ class EmailService {
         
         <p style="color: #7f8c8d; font-size: 14px;">
           Best regards,<br>
-          The Bidly Team
+          ${brand.closing}
         </p>
       </div>
     `;

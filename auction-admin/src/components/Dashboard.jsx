@@ -13,7 +13,8 @@ import {
   Avatar,
   Badge,
   ButtonGroup,
-  Tabs
+  Tabs,
+  BlockStack
 } from '@shopify/polaris';
 import { PlusMinor, AnalyticsMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
@@ -21,7 +22,7 @@ import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
 import AppBridgeToast from './AppBridgeToast';
-import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
+import { auctionAPI, shopifyAPI, analyticsAPI, billingAPI } from '../services/api';
 import socketService from '../services/socket';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -45,6 +46,8 @@ const Dashboard = ({ onLogout }) => {
   const [shopifyProducts, setShopifyProducts] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [planInfo, setPlanInfo] = useState({ plan: 'none', pendingPlan: null });
+  const [planLoading, setPlanLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const search = location.search || '';
@@ -60,6 +63,7 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     fetchStats();
     fetchShopifyProducts();
+    fetchPlan();
     
     // Set up WebSocket connection for real-time updates
     const socket = socketService.connect();
@@ -117,6 +121,24 @@ const Dashboard = ({ onLogout }) => {
       console.error('Failed to fetch Shopify products:', error);
       // Fallback to empty array if Shopify API fails
       setShopifyProducts([]);
+    }
+  };
+
+  const fetchPlan = async () => {
+    try {
+      setPlanLoading(true);
+      const response = await billingAPI.getCurrentPlan();
+      if (response.success) {
+        setPlanInfo({
+          plan: response.plan,
+          pendingPlan: response.pendingPlan,
+          planDetails: response.planDetails
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load plan info', err);
+    } finally {
+      setPlanLoading(false);
     }
   };
 
@@ -286,10 +308,34 @@ const Dashboard = ({ onLogout }) => {
                   </Text>
                 </div>
                 <ButtonGroup>
-                  <Button onClick={goToMarketplaceCustomization}>Marketplace styles</Button>
+                  <Button disabled>Marketplace styles (coming soon)</Button>
                   <Button onClick={goToWidgetCustomization}>Widget styles</Button>
+                  <Button onClick={() => navigate(`/plans${search}`)}>Manage plan</Button>
                 </ButtonGroup>
               </div>
+            </Card>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Card sectioned>
+              <InlineStack align="space-between" blockAlign="center">
+                <BlockStack gap="tight">
+                  <Text variant="headingMd">Subscription</Text>
+                  {planLoading ? (
+                    <Text tone="subdued">Loading plan…</Text>
+                  ) : (
+                    <Text tone="subdued">
+                      Current plan: {planInfo.plan || 'none'}
+                      {planInfo.pendingPlan && planInfo.pendingPlan !== planInfo.plan
+                        ? ` · Pending: ${planInfo.pendingPlan}`
+                        : ''}
+                    </Text>
+                  )}
+                </BlockStack>
+                <Button primary onClick={() => navigate(`/plans${search}`)}>
+                  View plans
+                </Button>
+              </InlineStack>
             </Card>
           </Layout.Section>
 
@@ -351,6 +397,7 @@ const Dashboard = ({ onLogout }) => {
           onClose={() => setFormModalOpen(false)}
           auction={selectedAuction}
           onSave={handleFormSave}
+          planInfo={planInfo}
         />
 
         <AuctionDetails

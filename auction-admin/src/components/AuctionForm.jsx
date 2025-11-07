@@ -47,7 +47,7 @@ const getMockProducts = (query) => {
   );
 };
 
-const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
+const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   // Helper function to create a safe date
   const createSafeDate = (dateInput = null) => {
     if (dateInput && dateInput instanceof Date && !isNaN(dateInput.getTime())) {
@@ -76,6 +76,18 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const [searching, setSearching] = useState(false);
   const [shopifyConfigured, setShopifyConfigured] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const planKey = (planInfo?.plan || 'none').toLowerCase();
+  const allowPopcorn = planKey === 'pro' || planKey === 'enterprise';
+
+  useEffect(() => {
+    if (!allowPopcorn && formData.popcornEnabled) {
+      setFormData((prev) => ({
+        ...prev,
+        popcornEnabled: false
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowPopcorn]);
 
   useEffect(() => {
     if (auction) {
@@ -398,7 +410,10 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
                 label="Enable Popcorn Bidding"
                 checked={formData.popcornEnabled}
                 onChange={(checked) => handleChange(checked, 'popcornEnabled')}
-                helpText="Automatically extend auction time when bids are placed near the end"
+                disabled={!allowPopcorn}
+                helpText={`Automatically extend auction time when bids are placed near the end${
+                  allowPopcorn ? '' : ' · Available on the Pro plan.'
+                }`}
               />
             </div>
 

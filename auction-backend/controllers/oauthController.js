@@ -219,6 +219,9 @@ export const handleOAuthCallback = async (req, res, next) => {
       store.currency = shopInfo.currency;
       store.timezone = shopInfo.timezone;
       store.planName = shopInfo.planName;
+      if (!store.plan) {
+        store.plan = 'none';
+      }
       
       await store.save();
     } else {
@@ -232,6 +235,7 @@ export const handleOAuthCallback = async (req, res, next) => {
         currency: shopInfo.currency,
         timezone: shopInfo.timezone,
         planName: shopInfo.planName,
+        plan: 'none',
         accessToken: tokenData.accessToken,
         scope: tokenData.scope,
         isInstalled: true,

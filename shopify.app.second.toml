@@ -1,6 +1,6 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "bidly-app-second"
+name = "Bidly"
 client_id = "de32970476f2ecf20d98f9d9b6994c89"
 application_url = "https://bidly-auction-backend-2.onrender.com"
 embedded = true

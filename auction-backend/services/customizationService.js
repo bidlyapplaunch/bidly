@@ -293,11 +293,11 @@ function mergeSettings(type, baseSettings, overrideSettings = {}) {
   return result;
 }
 
-function getDefaultSettings(type, templateKey = 'A') {
+export function getDefaultSettings(type, templateKey = 'A') {
   return getTemplateDefault(type, templateKey);
 }
 
-function getSettingsWithDefaults(type, settings) {
+export function getSettingsWithDefaults(type, settings) {
   if (!settings) {
     return getDefaultSettings(type);
   }

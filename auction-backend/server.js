@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import connectDB from './config/database.js';
 import Auction from './models/Auction.js';
+import Store from './models/Store.js';
 import auctionRoutes from './routes/auctionRoutes.js';
 import shopifyRoutes from './routes/shopifyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -22,6 +23,7 @@ import oauthRoutes from './routes/oauthRoutes.js';
 import appBridgeRoutes from './routes/appBridgeRoutes.js';
 import appProxyRoutes from './routes/appProxyRoutes.js';
 import debugRoutes from './routes/debugRoutes.js';
+import billingRoutes from './routes/billingRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
 
@@ -134,6 +136,7 @@ app.use('/api/auctions', auctionRoutes);
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Load customer routes synchronously to ensure availability for widget login
 try {
@@ -604,6 +607,11 @@ const checkAuctionStatusChanges = async () => {
           try {
             // Get the winning bid (highest bid)
             const winningBid = auction.bidHistory[auction.bidHistory.length - 1];
+                const store = await Store.findByDomain(auction.shopDomain);
+                const brandOptions = {
+                  plan: store?.plan,
+                  storeName: store?.storeName
+                };
             
             // Send auction won notification to the winner
             if (winningBid.customerEmail) {
@@ -611,7 +619,8 @@ const checkAuctionStatusChanges = async () => {
                 winningBid.customerEmail,
                 winningBid.bidder,
                 auction,
-                winningBid.amount
+                    winningBid.amount,
+                    brandOptions
               );
             }
 
@@ -623,7 +632,8 @@ const checkAuctionStatusChanges = async () => {
                   bid.customerEmail,
                   bid.bidder,
                   auction,
-                  winningBid.amount
+                      winningBid.amount,
+                      brandOptions
                 );
               }
             }
