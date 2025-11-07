@@ -133,6 +133,24 @@ const PlansPage = () => {
     }
   };
 
+  const getTrialCopy = useMemo(() => {
+    if (!planData.trialEndsAt) {
+      return trialCopy;
+    }
+
+    try {
+      const formatted = new Date(planData.trialEndsAt).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      return `${trialCopy} Trial ends on ${formatted}.`;
+    } catch (err) {
+      console.warn('Plan trial date formatting failed:', err);
+      return trialCopy;
+    }
+  }, [planData.trialEndsAt]);
+
   useEffect(() => {
     loadPlan();
   }, []);
@@ -221,7 +239,7 @@ const PlansPage = () => {
                         {planData.pendingPlan && planData.pendingPlan !== planData.plan && (
                           <Text tone="subdued">Pending: {planData.pendingPlan}</Text>
                         )}
-                        <Text tone="subdued">{trialCopy}</Text>
+                        <Text tone="subdued">{getTrialCopy}</Text>
                       </BlockStack>
                     )}
                   </BlockStack>
