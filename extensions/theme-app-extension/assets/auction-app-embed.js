@@ -252,11 +252,7 @@
             return;
         }
 
-        const host = widgetContainer.querySelector('.bidly-widget-container');
-        if (!host) {
-            return;
-        }
-
+        const host = widgetContainer;
         host.classList.add('bidly-widget-root');
         const templateClassNames = ['bidly-template-A', 'bidly-template-B', 'bidly-template-C', 'bidly-template-D'];
         templateClassNames.forEach(className => host.classList.remove(className));
