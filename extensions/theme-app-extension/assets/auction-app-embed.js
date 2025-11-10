@@ -2493,11 +2493,13 @@
             return;
         }
 
+        const clientMessageId = `bidly-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const payload = {
             productId: currentProductId,
             username: chatUsername,
             message,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            clientMessageId
         };
 
         chatInput.disabled = true;
@@ -2507,6 +2509,7 @@
         const pendingElement = addChatMessage({ ...payload, __local: true });
         if (pendingElement) {
             pendingLocalChatMessages.push({
+                clientMessageId,
                 username: payload.username,
                 message: payload.message,
                 timestamp: Date.now(),
@@ -2538,12 +2541,23 @@
         }
 
         const now = Date.now();
-        if (!messageData.__local && messageData.username === chatUsername) {
-            let matchedEntryIndex = pendingLocalChatMessages.findIndex(
-                (entry) =>
-                    entry.username === messageData.username &&
-                    entry.message === messageData.message
-            );
+        if (!messageData.__local) {
+            let matchedEntryIndex = -1;
+
+            if (messageData.clientMessageId) {
+                matchedEntryIndex = pendingLocalChatMessages.findIndex(
+                    (entry) => entry.clientMessageId === messageData.clientMessageId
+                );
+            }
+
+            if (matchedEntryIndex === -1 && messageData.username === chatUsername) {
+                matchedEntryIndex = pendingLocalChatMessages.findIndex(
+                    (entry) =>
+                        entry.username === messageData.username &&
+                        entry.message === messageData.message &&
+                        now - entry.timestamp < 15000
+                );
+            }
 
             if (matchedEntryIndex === -1) {
                 matchedEntryIndex = pendingLocalChatMessages.findIndex(
