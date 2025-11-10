@@ -132,28 +132,6 @@
         return null;
     }
 
-    function deriveChatRoomId(rawValue) {
-        if (rawValue === null || rawValue === undefined) {
-            return null;
-        }
-
-        const value = rawValue.toString().trim();
-        if (!value) {
-            return null;
-        }
-
-        const productMatch = value.match(/Product\/(\d+)/i);
-        if (productMatch && productMatch[1]) {
-            return productMatch[1];
-        }
-
-        if (/^\d+$/.test(value)) {
-            return value;
-        }
-
-        return value;
-    }
-
     const PRODUCT_INFO_SELECTORS = [
         'product-info',
         '.product__info-wrapper',
@@ -865,7 +843,6 @@
             resolvedProductIdCache = productId;
             try {
                 window.__BidlyResolvedProductId = productId;
-                window.__BidlyResolvedChatRoomId = deriveChatRoomId(productId) || productId;
             } catch (e) {
                 // Ignore if window is not writable (sandboxed iframe, etc.)
             }
@@ -2322,19 +2299,13 @@
     // ===== CHAT FUNCTIONALITY =====
     let chatSocket = null;
     let currentProductId = null;
-    let currentProductIdRaw = null;
     let chatUsername = null;
     let chatInitialized = false;
-    const pendingLocalChatMessages = [];
 
     /**
      * Initialize chat for the current product (only for Shopify customers)
      */
     function initializeChat() {
-        if (!CONFIG.capabilities?.features?.chat) {
-            console.log('Bidly: Live chat is disabled for the current plan');
-            return;
-        }
         // Only show chat for Shopify customers
         if (!isShopifyCustomer()) {
             console.log('Bidly: Chat only available for Shopify customers');
@@ -2353,34 +2324,11 @@
             return;
         }
 
-        let productIdSource =
-            resolvedProductIdCache ||
-            window.__BidlyResolvedProductId ||
-            resolveProductId() ||
-            window.Shopify?.analytics?.meta?.page?.resourceId ||
-            document.querySelector('[data-product-id]')?.getAttribute('data-product-id');
+        const productId = window.Shopify?.analytics?.meta?.page?.resourceId ||
+                         document.querySelector('[data-product-id]')?.getAttribute('data-product-id') ||
+                         productHandle; // Fallback to handle
 
-        if (!productIdSource && window.Shopify?.analytics?.meta?.product?.id) {
-            productIdSource = window.Shopify.analytics.meta.product.id;
-        }
-
-        if (!productIdSource) {
-            productIdSource = productHandle;
-        }
-
-        currentProductIdRaw = productIdSource ? productIdSource.toString() : null;
-        currentProductId = deriveChatRoomId(currentProductIdRaw) || currentProductIdRaw;
-
-        if (!currentProductId) {
-            console.warn('Bidly: Chat initialization aborted — product ID unavailable');
-            return;
-        }
-
-        try {
-            window.__BidlyResolvedChatRoomId = currentProductId;
-        } catch (e) {
-            // Non-fatal if we can't assign to window
-        }
+        currentProductId = productId;
 
         // Get username from customer data
         const customer = getCurrentCustomer();
@@ -2418,14 +2366,8 @@
         // Set up chat event listeners
         if (chatSocket) {
             // Listen for chat history
-            chatSocket.on('chat-history', ({ productId, productIdRaw, messages }) => {
-                const historyRoomId =
-                    deriveChatRoomId(productId) ||
-                    deriveChatRoomId(productIdRaw) ||
-                    (productIdRaw ? productIdRaw.toString() : null) ||
-                    (productId ? productId.toString() : null);
-
-                if (historyRoomId === currentProductId) {
+            chatSocket.on('chat-history', ({ productId, messages }) => {
+                if (productId === currentProductId) {
                     displayChatMessages(messages);
                 }
             });
@@ -2453,13 +2395,10 @@
      * Create chat UI HTML
      */
     function createChatUI() {
-        if (!CONFIG.capabilities?.features?.chat) {
-            return;
-        }
-
+        // Remove existing chat if any
         const existingChat = document.querySelector('.bidly-chat-container');
         if (existingChat) {
-            return existingChat;
+            existingChat.remove();
         }
 
         const chatContainer = document.createElement('div');
@@ -2536,35 +2475,18 @@
             return;
         }
 
-        const clientMessageId = `bidly-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        const payload = {
-            productId: currentProductId,
-            productIdRaw: currentProductIdRaw,
-            username: chatUsername,
-            message,
-            timestamp: new Date().toISOString(),
-            clientMessageId
-        };
-
+        // Disable input while sending
         chatInput.disabled = true;
         sendBtn.disabled = true;
 
-        chatSocket.emit('new-chat-message', payload);
-        const pendingElement = addChatMessage({ ...payload, __local: true });
-        if (pendingElement) {
-            pendingLocalChatMessages.push({
-                clientMessageId,
-                username: payload.username,
-                message: payload.message,
-                timestamp: Date.now(),
-                element: pendingElement
-            });
-            // Keep the list from growing indefinitely
-            if (pendingLocalChatMessages.length > 20) {
-                pendingLocalChatMessages.shift();
-            }
-        }
+        // Emit message
+        chatSocket.emit('new-chat-message', {
+            productId: currentProductId,
+            username: chatUsername,
+            message: message
+        });
 
+        // Clear input
         chatInput.value = '';
         chatInput.disabled = false;
         sendBtn.disabled = false;
@@ -2584,54 +2506,10 @@
             emptyState.remove();
         }
 
-        const now = Date.now();
-        if (!messageData.__local) {
-            let matchedEntryIndex = -1;
-
-            if (messageData.clientMessageId) {
-                matchedEntryIndex = pendingLocalChatMessages.findIndex(
-                    (entry) => entry.clientMessageId === messageData.clientMessageId
-                );
-            }
-
-            if (matchedEntryIndex === -1 && messageData.username === chatUsername) {
-                matchedEntryIndex = pendingLocalChatMessages.findIndex(
-                    (entry) =>
-                        entry.username === messageData.username &&
-                        entry.message === messageData.message &&
-                        now - entry.timestamp < 15000
-                );
-            }
-
-            if (matchedEntryIndex === -1) {
-                matchedEntryIndex = pendingLocalChatMessages.findIndex(
-                    (entry) => entry.username === messageData.username && now - entry.timestamp < 15000
-                );
-            }
-
-            if (matchedEntryIndex !== -1) {
-                const matchedEntry = pendingLocalChatMessages.splice(matchedEntryIndex, 1)[0];
-                if (matchedEntry?.element) {
-                    const timestampEl = matchedEntry.element.querySelector('.timestamp');
-                    if (timestampEl) {
-                        timestampEl.textContent = new Date(messageData.timestamp || now).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                    }
-                    matchedEntry.element.dataset.pending = '0';
-                    return matchedEntry.element;
-                }
-            }
-        }
-
         const messageDiv = document.createElement('div');
         messageDiv.className = 'bidly-chat-message';
-        if (messageData.__local) {
-            messageDiv.dataset.pending = '1';
-        }
 
-        const timestamp = new Date(messageData.timestamp || Date.now()).toLocaleTimeString([], {
+        const timestamp = new Date(messageData.timestamp).toLocaleTimeString([], { 
             hour: '2-digit', 
             minute: '2-digit' 
         });
@@ -2698,7 +2576,7 @@
         await originalInit();
         // Initialize chat after init completes and widget is injected
         setTimeout(() => {
-            if (CONFIG.capabilities?.features?.chat && document.querySelector('.bidly-auction-app-embed')) {
+            if (document.querySelector('.bidly-auction-app-embed')) {
                 initializeChat();
             }
         }, 1500);
@@ -2707,7 +2585,7 @@
     // Also initialize chat when login status changes
     window.addEventListener('bidly-login-success', () => {
         setTimeout(() => {
-            if (CONFIG.capabilities?.features?.chat && isShopifyCustomer()) {
+            if (isShopifyCustomer()) {
                 initializeChat();
             }
         }, 500);
