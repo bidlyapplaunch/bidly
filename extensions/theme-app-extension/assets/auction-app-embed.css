@@ -1335,7 +1335,6 @@
 
 .bidly-widget-root .bidly-widget-container,
 .bidly-widget-root .bidly-login-required {
-    background: var(--bidly-bg-color) !important;
     color: var(--bidly-text-color) !important;
     border-radius: var(--bidly-border-radius) !important;
     box-shadow: var(--bidly-box-shadow) !important;
@@ -1343,11 +1342,15 @@
 }
 
 .bidly-widget-root[data-bidly-gradient="1"] .bidly-widget-header,
+.bidly-widget-root[data-bidly-gradient="1"] .bidly-widget-container,
+.bidly-widget-root[data-bidly-gradient="1"] .bidly-login-required,
 .bidly-widget-root[data-bidly-gradient="1"] .bidly-widget-container::before {
     background: linear-gradient(135deg, var(--bidly-bg-gradient-start), var(--bidly-bg-gradient-end)) !important;
 }
 
 .bidly-widget-root[data-bidly-gradient="0"] .bidly-widget-header,
+.bidly-widget-root[data-bidly-gradient="0"] .bidly-widget-container,
+.bidly-widget-root[data-bidly-gradient="0"] .bidly-login-required,
 .bidly-widget-root[data-bidly-gradient="0"] .bidly-widget-container::before {
     background: var(--bidly-bg-color) !important;
 }
@@ -1357,19 +1360,11 @@
 .bidly-widget-root .bidly-customer-info,
 .bidly-widget-root .bidly-widget-close,
 .bidly-widget-root .bidly-customer-name {
-    color: var(--bidly-button-text) !important;
-}
-
-.bidly-widget-root .bidly-status-active,
-.bidly-widget-root .bidly-status-pending,
-.bidly-widget-root .bidly-status-ended {
-    background: var(--bidly-accent-color) !important;
-    color: var(--bidly-button-text) !important;
-    border-color: transparent !important;
+    color: var(--bidly-text-color) !important;
 }
 
 .bidly-widget-root .bidly-amount {
-    color: var(--bidly-accent-color) !important;
+    color: var(--bidly-text-color) !important;
 }
 
 .bidly-widget-root .bidly-btn,
