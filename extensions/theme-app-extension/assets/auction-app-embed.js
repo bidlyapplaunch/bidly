@@ -2302,6 +2302,7 @@
     let chatUsername = null;
     let chatInitialized = false;
     const sentChatMessageIds = new Set();
+    const pendingLocalChatMessages = [];
 
     /**
      * Initialize chat for the current product (only for Shopify customers)
@@ -2506,7 +2507,20 @@
 
         sentChatMessageIds.add(payload.clientMessageId);
         chatSocket.emit('new-chat-message', payload);
-        addChatMessage({ ...payload, __local: true });
+        const pendingElement = addChatMessage({ ...payload, __local: true });
+        if (pendingElement) {
+            pendingLocalChatMessages.push({
+                clientMessageId: payload.clientMessageId,
+                username: payload.username,
+                message: payload.message,
+                timestamp: Date.now(),
+                element: pendingElement
+            });
+            // Keep the list from growing indefinitely
+            if (pendingLocalChatMessages.length > 20) {
+                pendingLocalChatMessages.shift();
+            }
+        }
 
         chatInput.value = '';
         chatInput.disabled = false;
@@ -2527,13 +2541,49 @@
             emptyState.remove();
         }
 
+        const now = Date.now();
+        if (!messageData.__local) {
+            let matchedEntryIndex = -1;
+
+            if (messageData.clientMessageId && sentChatMessageIds.has(messageData.clientMessageId)) {
+                sentChatMessageIds.delete(messageData.clientMessageId);
+                matchedEntryIndex = pendingLocalChatMessages.findIndex(
+                    (entry) => entry.clientMessageId === messageData.clientMessageId
+                );
+            }
+
+            if (matchedEntryIndex === -1) {
+                matchedEntryIndex = pendingLocalChatMessages.findIndex(
+                    (entry) =>
+                        entry.username === messageData.username &&
+                        entry.message === messageData.message &&
+                        now - entry.timestamp < 8000
+                );
+            }
+
+            if (matchedEntryIndex !== -1) {
+                const matchedEntry = pendingLocalChatMessages.splice(matchedEntryIndex, 1)[0];
+                if (matchedEntry?.element) {
+                    const timestampEl = matchedEntry.element.querySelector('.timestamp');
+                    if (timestampEl) {
+                        timestampEl.textContent = new Date(messageData.timestamp || now).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                    matchedEntry.element.dataset.pending = '0';
+                }
+                return matchedEntry?.element || null;
+            }
+        }
+
         const messageDiv = document.createElement('div');
         messageDiv.className = 'bidly-chat-message';
-
-        if (messageData.clientMessageId && sentChatMessageIds.has(messageData.clientMessageId) && !messageData.__local) {
-            // Already displayed as local echo; skip duplicate from server
-            sentChatMessageIds.delete(messageData.clientMessageId);
-            return;
+        if (messageData.clientMessageId) {
+            messageDiv.dataset.clientMessageId = messageData.clientMessageId;
+        }
+        if (messageData.__local) {
+            messageDiv.dataset.pending = '1';
         }
 
         const timestamp = new Date(messageData.timestamp || Date.now()).toLocaleTimeString([], {
@@ -2551,6 +2601,7 @@
 
         messagesContainer.appendChild(messageDiv);
         scrollChatToBottom();
+        return messageDiv;
     }
 
     /**
