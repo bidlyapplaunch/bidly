@@ -2329,13 +2329,20 @@
             return;
         }
 
-        const productIdSource =
+        let productIdSource =
             resolvedProductIdCache ||
             window.__BidlyResolvedProductId ||
             resolveProductId() ||
             window.Shopify?.analytics?.meta?.page?.resourceId ||
-            document.querySelector('[data-product-id]')?.getAttribute('data-product-id') ||
-            productHandle; // Final fallback (handle)
+            document.querySelector('[data-product-id]')?.getAttribute('data-product-id');
+
+        if (!productIdSource && window.Shopify?.analytics?.meta?.product?.id) {
+            productIdSource = window.Shopify.analytics.meta.product.id;
+        }
+
+        if (!productIdSource) {
+            productIdSource = productHandle;
+        }
 
         const productId = productIdSource ? productIdSource.toString() : null;
         currentProductId = productId;
