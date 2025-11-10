@@ -2293,6 +2293,9 @@
     let currentProductId = null;
     let chatUsername = null;
     let chatInitialized = false;
+    const chatUIState = {
+        expanded: false
+    };
 
     /**
      * Initialize chat for the current product (only for Shopify customers)
@@ -2469,9 +2472,9 @@
             </div>
         `;
 
-        const existingInlineChat = footer.querySelector('.bidly-chat-container');
-        if (existingInlineChat) {
-            existingInlineChat.remove();
+        const previousContainer = footer.querySelector('.bidly-chat-container');
+        if (previousContainer) {
+            footer.removeChild(previousContainer);
         }
 
         footer.appendChild(chatContainer);
@@ -2497,6 +2500,7 @@
                 chatToggle.setAttribute('aria-expanded', 'false');
                 chatToggle.classList.remove('is-active');
             }
+            chatUIState.expanded = expanded;
         };
 
         chatToggle.addEventListener('click', () => {
@@ -2523,6 +2527,8 @@
                 }
             });
         }
+
+        setExpanded(chatUIState.expanded);
     }
 
     /**
