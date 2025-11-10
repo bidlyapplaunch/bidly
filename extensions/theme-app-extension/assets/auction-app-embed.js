@@ -750,6 +750,7 @@
                                     <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
                                         <div class="bidly-bid-input-group">
                                             <input type="number" 
+                                                   class="bidly-bid-input"
                                                    id="bidly-bid-amount-${auctionId}" 
                                                    name="amount" 
                                                    step="0.01" 

@@ -281,6 +281,7 @@
 
 .bidly-bid-input-group {
     display: flex;
+    flex-direction: column;
     gap: 12px;
     align-items: stretch;
     margin-bottom: 0;
@@ -332,6 +333,11 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     white-space: nowrap;
     backdrop-filter: blur(10px);
+}
+
+.bidly-bid-input-group .bidly-submit-bid,
+.bidly-bid-input-group .bidly-bid-button {
+    width: 100%;
 }
 
 .bidly-bid-button:hover,
