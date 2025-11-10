@@ -608,15 +608,23 @@
     border-top: none;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     gap: 12px;
+    text-align: center;
+    width: 100%;
 }
 
 .bidly-footer-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    gap: 16px;
     flex-wrap: wrap;
+    width: 100%;
+}
+
+.bidly-footer-actions > * {
+    flex: 0 0 auto;
 }
 
 .bidly-footer-actions > * {

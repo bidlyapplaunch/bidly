@@ -2454,7 +2454,7 @@
                     <div class="bidly-chat-empty">No messages yet. Start the conversation!</div>
                 </div>
                 <div class="bidly-chat-input-container">
-                    <form class="bidly-chat-input-form" id="bidly-chat-form">
+                    <div class="bidly-chat-input-form" id="bidly-chat-controls">
                         <input 
                             type="text" 
                             class="bidly-chat-input" 
@@ -2463,8 +2463,8 @@
                             maxlength="500"
                             autocomplete="off"
                         />
-                        <button type="submit" class="bidly-chat-send-btn" id="bidly-chat-send">Send</button>
-                    </form>
+                        <button type="button" class="bidly-chat-send-btn" id="bidly-chat-send">Send</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -2477,9 +2477,9 @@
         footer.appendChild(chatContainer);
 
         const chatBox = chatContainer.querySelector('#bidly-chat-box');
-        const chatForm = chatContainer.querySelector('#bidly-chat-form');
         const chatInput = chatContainer.querySelector('#bidly-chat-input');
         const closeBtn = chatContainer.querySelector('#bidly-chat-close');
+        const sendBtn = chatContainer.querySelector('#bidly-chat-send');
 
         const setExpanded = (expanded) => {
             if (!chatBox) {
@@ -2508,10 +2508,19 @@
             closeBtn.addEventListener('click', () => setExpanded(false));
         }
 
-        if (chatForm) {
-            chatForm.addEventListener('submit', (e) => {
+        if (sendBtn) {
+            sendBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 sendChatMessage();
+            });
+        }
+
+        if (chatInput) {
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
             });
         }
     }
