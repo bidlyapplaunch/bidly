@@ -511,10 +511,6 @@
             return;
         }
 
-        if (!PREVIEW_MODE) {
-            return;
-        }
-
         const payload = event.data.payload || {};
         if (payload.state) {
             PREVIEW_DATA.state = payload.state;
@@ -525,7 +521,22 @@
         if (payload.auctionData) {
             PREVIEW_DATA.auctionData = payload.auctionData;
         }
-        renderPreviewWidget(payload.theme || null, payload.auctionData || {});
+
+        if (PREVIEW_MODE) {
+            renderPreviewWidget(payload.theme || null, payload.auctionData || {});
+        } else {
+            if (payload.theme) {
+                applyPreviewThemeVariables(payload.theme);
+                const previewContainer = document.querySelector('[data-preview="1"]') || document.querySelector('.' + CONFIG.widgetClass);
+                if (previewContainer) {
+                    const widgetElement = previewContainer.querySelector('.' + CONFIG.widgetClass) || previewContainer;
+                    if (widgetElement) {
+                        applyWidgetTheme(widgetElement, normalizeWidgetTheme(payload.theme));
+                    }
+                }
+            }
+        }
+
         console.log('Bidly: Preview theme update applied from admin message');
     });
 
