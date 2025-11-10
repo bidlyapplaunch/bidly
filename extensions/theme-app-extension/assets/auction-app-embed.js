@@ -132,6 +132,28 @@
         return null;
     }
 
+    function deriveChatRoomId(rawValue) {
+        if (rawValue === null || rawValue === undefined) {
+            return null;
+        }
+
+        const value = rawValue.toString().trim();
+        if (!value) {
+            return null;
+        }
+
+        const productMatch = value.match(/Product\/(\d+)/i);
+        if (productMatch && productMatch[1]) {
+            return productMatch[1];
+        }
+
+        if (/^\d+$/.test(value)) {
+            return value;
+        }
+
+        return value;
+    }
+
     const PRODUCT_INFO_SELECTORS = [
         'product-info',
         '.product__info-wrapper',
@@ -843,6 +865,7 @@
             resolvedProductIdCache = productId;
             try {
                 window.__BidlyResolvedProductId = productId;
+                window.__BidlyResolvedChatRoomId = deriveChatRoomId(productId) || productId;
             } catch (e) {
                 // Ignore if window is not writable (sandboxed iframe, etc.)
             }
@@ -2299,6 +2322,7 @@
     // ===== CHAT FUNCTIONALITY =====
     let chatSocket = null;
     let currentProductId = null;
+    let currentProductIdRaw = null;
     let chatUsername = null;
     let chatInitialized = false;
     const pendingLocalChatMessages = [];
@@ -2344,12 +2368,18 @@
             productIdSource = productHandle;
         }
 
-        const productId = productIdSource ? productIdSource.toString() : null;
-        currentProductId = productId;
+        currentProductIdRaw = productIdSource ? productIdSource.toString() : null;
+        currentProductId = deriveChatRoomId(currentProductIdRaw) || currentProductIdRaw;
 
         if (!currentProductId) {
             console.warn('Bidly: Chat initialization aborted — product ID unavailable');
             return;
+        }
+
+        try {
+            window.__BidlyResolvedChatRoomId = currentProductId;
+        } catch (e) {
+            // Non-fatal if we can't assign to window
         }
 
         // Get username from customer data
@@ -2388,8 +2418,14 @@
         // Set up chat event listeners
         if (chatSocket) {
             // Listen for chat history
-            chatSocket.on('chat-history', ({ productId, messages }) => {
-                if (productId === currentProductId) {
+            chatSocket.on('chat-history', ({ productId, productIdRaw, messages }) => {
+                const historyRoomId =
+                    deriveChatRoomId(productId) ||
+                    deriveChatRoomId(productIdRaw) ||
+                    (productIdRaw ? productIdRaw.toString() : null) ||
+                    (productId ? productId.toString() : null);
+
+                if (historyRoomId === currentProductId) {
                     displayChatMessages(messages);
                 }
             });
@@ -2503,6 +2539,7 @@
         const clientMessageId = `bidly-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const payload = {
             productId: currentProductId,
+            productIdRaw: currentProductIdRaw,
             username: chatUsername,
             message,
             timestamp: new Date().toISOString(),
