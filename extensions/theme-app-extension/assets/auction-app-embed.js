@@ -257,19 +257,19 @@
             return;
         }
 
-        host.classList.add('bidly-widget-root');
+        widgetContainer.classList.add('bidly-widget-root');
         const templateClassNames = ['bidly-template-A', 'bidly-template-B', 'bidly-template-C', 'bidly-template-D'];
-        templateClassNames.forEach(className => host.classList.remove(className));
+        templateClassNames.forEach(className => widgetContainer.classList.remove(className));
         const templateKey = theme.template || DEFAULT_WIDGET_THEME.template;
-        host.classList.add(`bidly-template-${templateKey}`);
-        host.setAttribute('data-bidly-template', templateKey);
-        host.setAttribute('data-bidly-gradient', theme.gradientEnabled ? '1' : '0');
+        widgetContainer.classList.add(`bidly-template-${templateKey}`);
+        widgetContainer.setAttribute('data-bidly-template', templateKey);
+        widgetContainer.setAttribute('data-bidly-gradient', theme.gradientEnabled ? '1' : '0');
 
-        let styleElement = host.querySelector('#bidly-widget-theme');
+        let styleElement = widgetContainer.querySelector('#bidly-widget-theme');
         if (!styleElement) {
             styleElement = document.createElement('style');
             styleElement.id = 'bidly-widget-theme';
-            host.prepend(styleElement);
+            widgetContainer.prepend(styleElement);
         }
 
         styleElement.textContent = buildWidgetThemeStyle(theme);
@@ -895,6 +895,22 @@
         const productForm = document.querySelector('form[action^="/cart/add"]');
         if (productForm && productForm.parentElement) {
             productForm.insertAdjacentElement('afterend', widgetRoot);
+
+            if (!productForm.dataset.bidlyOriginalDisplay) {
+                productForm.dataset.bidlyOriginalDisplay = window.getComputedStyle(productForm).display || 'block';
+            }
+            productForm.style.display = 'none';
+
+            const dynamicCheckout = productForm.querySelector('.shopify-payment-button');
+            if (dynamicCheckout) {
+                dynamicCheckout.style.display = 'none';
+            }
+
+            const quantityWrapper =
+                productForm.querySelector('.product-form__input--quantity, .product-form__quantity, .quantity-selector');
+            if (quantityWrapper) {
+                quantityWrapper.style.display = 'none';
+            }
         } else if (insertionTarget) {
             const titleElement =
                 insertionTarget.querySelector('h1, .product__title, .product-title') ||
