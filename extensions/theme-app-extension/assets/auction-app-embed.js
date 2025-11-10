@@ -284,6 +284,40 @@
         host.style.setProperty('--bidly-border-color', colors.border);
         host.style.setProperty('--bidly-border-radius', `${theme.borderRadius || DEFAULT_WIDGET_THEME.borderRadius}px`);
         host.style.setProperty('--bidly-box-shadow', THEME_BOX_SHADOWS[theme.boxShadow] || THEME_BOX_SHADOWS[DEFAULT_WIDGET_THEME.boxShadow]);
+
+        const widgetContainerEl = host.querySelector('.bidly-widget-container');
+        if (widgetContainerEl) {
+            if (theme.gradientEnabled) {
+                widgetContainerEl.style.background = '';
+                widgetContainerEl.style.setProperty('--bidly-bg-color', colors.bg_solid);
+            } else {
+                widgetContainerEl.style.background = colors.bg_solid;
+            }
+            widgetContainerEl.style.borderRadius = `${theme.borderRadius || DEFAULT_WIDGET_THEME.borderRadius}px`;
+            widgetContainerEl.style.boxShadow = THEME_BOX_SHADOWS[theme.boxShadow] || THEME_BOX_SHADOWS[DEFAULT_WIDGET_THEME.boxShadow];
+        }
+
+        const headerEl = host.querySelector('.bidly-widget-header');
+        if (headerEl) {
+            headerEl.style.background = theme.gradientEnabled
+                ? `linear-gradient(135deg, ${colors.bg_gradient_start}, ${colors.bg_gradient_end})`
+                : colors.bg_solid;
+            headerEl.style.color = colors.button_text;
+        }
+
+        const statusBadges = host.querySelectorAll('.bidly-widget-status span');
+        statusBadges.forEach((badge) => {
+            badge.style.background = colors.accent;
+            badge.style.color = colors.button_text;
+            badge.style.borderColor = 'transparent';
+        });
+
+        const primaryButtons = host.querySelectorAll('.bidly-btn-primary, .bidly-widget-primary-button, .bidly-login-options .bidly-btn-primary, .bidly-widget-actions .bidly-submit-bid');
+        primaryButtons.forEach((button) => {
+            button.style.background = colors.button_bg;
+            button.style.color = colors.button_text;
+            button.style.borderColor = colors.button_bg;
+        });
     }
 
     function buildPreviewAuctionData(override = {}) {
