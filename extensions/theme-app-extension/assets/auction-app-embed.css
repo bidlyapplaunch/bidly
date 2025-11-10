@@ -1404,9 +1404,9 @@
 .bidly-widget-root .bidly-widget-pricing,
 .bidly-widget-root .bidly-minimum-bid,
 .bidly-widget-root .bidly-bid-input-container {
-    background: rgba(15, 23, 42, 0.03) !important;
+    background: rgba(0, 0, 0, 0) !important;
     border-radius: calc(var(--bidly-border-radius) - 6px) !important;
-    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+    border: 0px solid rgba(148, 163, 184, 0.18) !important;
 }
 
 .bidly-widget-root .bidly-bid-input {
