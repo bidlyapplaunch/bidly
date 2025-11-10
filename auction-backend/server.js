@@ -321,7 +321,7 @@ app.get('/preview/widget', (req, res) => {
     </script>
   </head>
   <body>
-    <div class="bidly-auction-app-embed" data-preview="1"></div>
+    <div class="bidly-product-widget bidly-auction-app-embed" data-bidly-widget-root data-preview="1"></div>
     <script src="/preview/widget-assets/backendConfig.js?v=${version}"></script>
     <script src="/preview/widget-assets/auction-app-embed.js?v=${version}" defer></script>
   </body>

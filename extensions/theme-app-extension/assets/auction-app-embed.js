@@ -116,6 +116,18 @@
         }
     };
 
+    const PRODUCT_INFO_SELECTORS = [
+        'product-info',
+        '.product__info-wrapper',
+        '.product__info-container',
+        '.product__info',
+        '.product-form',
+        '.product-single__form',
+        '.product-single__info',
+        '#ProductInfo-template',
+        '#ProductInfo-product-template'
+    ];
+
     const PREVIEW_WIDGET_SETTINGS = {
         show_timer: true,
         show_bid_history: true,
@@ -240,7 +252,7 @@
         let styleElement = host.querySelector('#bidly-widget-theme');
         if (!styleElement) {
             styleElement = document.createElement('style');
-            styleElement.id = 'bidly-widget-theme';
+            style.id = 'bidly-widget-theme';
             host.prepend(styleElement);
         }
 
@@ -562,6 +574,12 @@
         console.log('Bidly: window.Shopify?.analytics?.meta:', window.Shopify?.analytics?.meta);
         console.log('Bidly: window.Shopify?.analytics?.meta?.product:', window.Shopify?.analytics?.meta?.product);
 
+        const productMeta = document.querySelector('#bidly-product-id');
+        if (productMeta?.dataset?.productId) {
+            console.log('Bidly: Found product ID via meta tag dataset:', productMeta.dataset.productId);
+            return productMeta.dataset.productId;
+        }
+
         // Try to get from Shopify global objects first (most reliable)
         if (window.Shopify?.analytics?.meta?.product?.id) {
             console.log('Bidly: Found product ID from analytics:', window.Shopify.analytics.meta.product.id);
@@ -721,151 +739,6 @@
         }
     }
 
-    // Find pricing section to overlay widget - specifically the MAIN product price
-    // VERSION: FIXED - Original styling restored, only smart pricing detection
-    function findPricingSection() {
-        console.log('Bidly: VERSION FIXED - Looking for MAIN product pricing section...');
-        
-        // Strategy 1: Look for the ENTIRE pricing section container (price + quantity + buttons)
-        const pricingSectionSelectors = [
-            '.product-form',
-            '.product-form__price',
-            '.product__form',
-            '.product-single__form',
-            '.product-form__buttons',
-            '.product-form__actions',
-            '.product-actions',
-            '.product-buy',
-            '.product-purchase',
-            '.product-details',
-            '.product-info',
-            '.product-main',
-            '.product-single',
-            '.product-page'
-        ];
-        
-        for (const selector of pricingSectionSelectors) {
-            const elements = document.querySelectorAll(selector);
-            console.log(`Bidly: Checking pricing section selector "${selector}": Found ${elements.length} elements`);
-            
-            for (const element of elements) {
-                // Skip elements that are in "You may also like" or similar sections
-                const isInRecommendationSection = element.closest('[class*="recommend"], [class*="related"], [class*="similar"], [class*="also"], [class*="suggest"], [class*="like"]');
-                if (isInRecommendationSection) {
-                    console.log(`Bidly: Skipping element in recommendation section: ${selector}`);
-                    continue;
-                }
-                
-                const rect = element.getBoundingClientRect();
-                const computedStyle = window.getComputedStyle(element);
-                
-                // Skip hidden elements
-                if (computedStyle.display === 'none' || 
-                    computedStyle.visibility === 'hidden' || 
-                    computedStyle.opacity === '0' ||
-                    element.style.display === 'none') {
-                    continue;
-                }
-                
-                // Look for elements that contain price, quantity, and buttons (the ENTIRE pricing section)
-                const hasPrice = element.querySelector('.price, [class*="price"], [class*="cost"], [class*="amount"]');
-                const hasQuantity = element.querySelector('input[type="number"], .quantity, [class*="quantity"]');
-                const hasButtons = element.querySelector('button, .btn, [class*="button"], [class*="add-to-cart"], [class*="buy"]');
-                
-                if (hasPrice && (hasQuantity || hasButtons) && rect.width > 200 && rect.height > 50) {
-                    console.log('Bidly: Found ENTIRE pricing section container:', element, rect);
-                    return element;
-                }
-            }
-        }
-        
-        // Strategy 2: Look for product form containers (but exclude "You may also like" sections)
-        const productFormSelectors = [
-            '.product-form',
-            '.product-form__price',
-            '.product__form',
-            '.product-single__form',
-            '.product-form__buttons',
-            '.product-form__actions',
-            '.product-actions',
-            '.product-buy',
-            '.product-purchase'
-        ];
-        
-        for (const selector of productFormSelectors) {
-            const elements = document.querySelectorAll(selector);
-            console.log(`Bidly: Checking product form selector "${selector}":`, elements);
-            
-            for (const element of elements) {
-                // Skip elements that are in "You may also like" or similar sections
-                const isInRecommendationSection = element.closest('[class*="recommend"], [class*="related"], [class*="similar"], [class*="also"], [class*="suggest"], [class*="like"]');
-                if (isInRecommendationSection) {
-                    console.log(`Bidly: Skipping element in recommendation section: ${selector}`);
-                    continue;
-                }
-                
-                const text = element.textContent || element.innerText || '';
-                const rect = element.getBoundingClientRect();
-                const computedStyle = window.getComputedStyle(element);
-                
-                // Skip hidden elements
-                if (computedStyle.display === 'none' || 
-                    computedStyle.visibility === 'hidden' || 
-                    computedStyle.opacity === '0' ||
-                    element.style.display === 'none') {
-                    continue;
-                }
-                
-                // Look for elements with actual price values and visible dimensions
-                if (text.includes('$') && !text.includes('$0.00') && rect.width > 0 && rect.height > 0 && rect.top > 0 && rect.left >= 0) {
-                    console.log('Bidly: Found valid main product pricing element:', element);
-                    return element;
-                }
-            }
-        }
-        
-        // Strategy 3: Look for price elements but exclude those in bottom sections
-        console.log('Bidly: Looking for price elements, excluding bottom sections...');
-        const allPriceElements = document.querySelectorAll('.price, [class*="price"], [class*="cost"], [class*="amount"]');
-        
-        for (const element of allPriceElements) {
-            const text = element.textContent || element.innerText || '';
-            const rect = element.getBoundingClientRect();
-            const computedStyle = window.getComputedStyle(element);
-            
-            // Skip hidden elements
-            if (computedStyle.display === 'none' || 
-                computedStyle.visibility === 'hidden' || 
-                computedStyle.opacity === '0' ||
-                element.style.display === 'none') {
-                continue;
-            }
-            
-            // Skip elements in recommendation/related sections
-            const isInRecommendationSection = element.closest('[class*="recommend"], [class*="related"], [class*="similar"], [class*="also"], [class*="suggest"], [class*="like"]');
-            if (isInRecommendationSection) {
-                console.log(`Bidly: Skipping price in recommendation section: "${text}"`);
-                continue;
-            }
-            
-            // Skip elements that are too far down the page (likely in "You may also like")
-            const viewportHeight = window.innerHeight;
-            if (rect.top > viewportHeight * 0.7) { // Skip if in bottom 30% of viewport
-                console.log(`Bidly: Skipping price too far down: "${text}" at ${rect.top}px`);
-                continue;
-            }
-            
-            // Look for elements with actual price values and visible dimensions
-            if (text.includes('$') && !text.includes('$0.00') && rect.width > 0 && rect.height > 0 && rect.top > 0 && rect.left >= 0) {
-                console.log('Bidly: Found main product price element:', element, rect);
-                return element;
-            }
-        }
-        
-        console.warn('Bidly: No main product pricing section found');
-        return null;
-    }
-
     // Initialize countdown timer for pending auctions
     function initializeCountdownTimer(auctionId, startTime) {
         const countdownElement = document.getElementById(`bidly-countdown-${auctionId}`);
@@ -958,9 +831,8 @@
         console.log('Bidly: Countdown timer initialized for auction:', auctionId);
     }
 
-    // Inject widget into pricing section
+    // Inject widget into inline mount point
     async function injectWidget(auctionData, settings) {
-        // Check if we have valid auction data
         if (!auctionData || !auctionData.hasAuction) {
             console.log('Bidly: No auction data available, not injecting widget');
             return;
@@ -968,7 +840,6 @@
 
         const themeSettings = await fetchWidgetThemeSettings();
 
-        // Fallback: if pending but no startTime, fetch from backend
         try {
             if (auctionData.status === 'pending' && !auctionData.startTime && auctionData.auctionId) {
                 console.log('Bidly: startTime missing; attempting backend fetch for auction', auctionData.auctionId);
@@ -979,250 +850,55 @@
                     if (start) {
                         auctionData.startTime = start;
                         console.log('Bidly: Fallback startTime retrieved from backend:', start);
-                    } else {
-                        console.log('Bidly: Backend did not return startTime');
                     }
-                } else {
-                    console.log('Bidly: Backend fetch failed with status', res.status);
                 }
             }
         } catch (e) {
             console.warn('Bidly: Error during fallback startTime fetch', e);
         }
-        
-        const pricingSection = findPricingSection();
-        
-        // Remove existing widget if any
+
+        const tempWrapper = document.createElement('div');
+        tempWrapper.innerHTML = createWidgetHTML(auctionData, settings).trim();
+        const widgetRoot = tempWrapper.firstElementChild;
+        if (!widgetRoot) {
+            console.warn('Bidly: Failed to build widget root element.');
+            return;
+        }
+
+        applyWidgetTheme(widgetRoot, themeSettings);
+
         const existingWidget = document.querySelector(`.${CONFIG.widgetClass}`);
-        if (existingWidget) {
+        if (existingWidget && existingWidget !== widgetRoot) {
             existingWidget.remove();
         }
 
-        // Create widget container
-        const widgetContainer = document.createElement('div');
-        widgetContainer.className = CONFIG.widgetClass;
-        widgetContainer.innerHTML = createWidgetHTML(auctionData, settings);
-        
-        // Add transparent overlay styling - no white background
-        widgetContainer.style.cssText = `
-            background: transparent !important;
-            border: none !important;
-            border-radius: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-            z-index: 99999 !important;
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        `;
-        
-        // Create the actual auction widget content
-        widgetContainer.innerHTML = createWidgetHTML(auctionData, settings);
-        applyWidgetTheme(widgetContainer, themeSettings);
-        
-        // Set initial positioning properties (will be overridden by dynamic positioning)
-        widgetContainer.style.position = 'absolute';
-        widgetContainer.style.width = 'auto';
-        widgetContainer.style.height = 'auto';
-        widgetContainer.style.minHeight = 'auto';
-        
-        console.log('Bidly: Widget container created and styled:', widgetContainer);
+        let insertionTarget = null;
+        for (const selector of PRODUCT_INFO_SELECTORS) {
+            const candidate = document.querySelector(selector);
+            if (candidate) {
+                insertionTarget = candidate;
+                break;
+            }
+        }
 
-        // Position widget to overlay on the pricing section
-        console.log('Bidly: Positioning widget to overlay on pricing section');
-        console.log('Bidly: Pricing section found:', pricingSection);
-        
-        if (pricingSection) {
-            // Calculate position relative to pricing section for overlay
-            const pricingRect = pricingSection.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            
-            console.log('Bidly: Pricing section rect:', pricingRect);
-            console.log('Bidly: Scroll position:', { scrollTop, scrollLeft });
-            
-            // Log detailed rect information
-            console.log('Bidly: Detailed rect info:', {
-                top: pricingRect.top,
-                left: pricingRect.left,
-                right: pricingRect.right,
-                bottom: pricingRect.bottom,
-                width: pricingRect.width,
-                height: pricingRect.height,
-                x: pricingRect.x,
-                y: pricingRect.y
-            });
-            
-            // Check if the pricing element has valid coordinates
-            let finalTop, finalLeft, finalWidth, finalHeight;
-            
-            if (pricingRect.top === 0 && pricingRect.left === 0 && pricingRect.width === 0) {
-                console.log('Bidly: Pricing element has zero coordinates, trying parent container...');
-                
-                // Try to find the parent container that has valid coordinates
-                let parentElement = pricingSection.parentElement;
-                let attempts = 0;
-                const maxAttempts = 5;
-                
-                while (parentElement && attempts < maxAttempts) {
-                    const parentRect = parentElement.getBoundingClientRect();
-                    console.log(`Bidly: Parent ${attempts + 1} rect:`, parentRect);
-                    
-                    if (parentRect.width > 0 && parentRect.height > 0 && (parentRect.top > 0 || parentRect.left > 0)) {
-                        console.log(`Bidly: Found valid parent container at attempt ${attempts + 1}`);
-                        finalTop = parentRect.top + scrollTop;
-                        finalLeft = parentRect.left + scrollLeft;
-                        finalWidth = parentRect.width;
-                        finalHeight = parentRect.height;
-                        break;
-                    }
-                    
-                    parentElement = parentElement.parentElement;
-                    attempts++;
-                }
-                
-                // If no valid parent found, use fallback positioning
-                if (attempts >= maxAttempts || !parentElement) {
-                    console.log('Bidly: No valid parent found, using fallback positioning');
-                    finalTop = 200 + scrollTop; // Position below header, accounting for scroll
-                    finalLeft = 20 + scrollLeft; // Position from left edge, accounting for scroll
-                    finalWidth = 400; // Reasonable fallback width
-                    finalHeight = 200; // Reasonable fallback height
-                }
-            } else {
-                // Use the pricing element's coordinates - EXACT replacement
-                finalTop = pricingRect.top + scrollTop;
-                finalLeft = pricingRect.left + scrollLeft;
-                finalWidth = pricingRect.width;
-                finalHeight = pricingRect.height;
-            }
-            
-            console.log('Bidly: Calculated positions:', {
-                finalTop,
-                finalLeft,
-                finalWidth,
-                pricingRectTop: pricingRect.top,
-                pricingRectLeft: pricingRect.left,
-                scrollTop,
-                scrollLeft
-            });
-            
-        // Position widget to replace the pricing section (STABLE POSITIONING)
-        // Add some offset to move widget down and avoid covering the title
-        const titleOffset = 40; // Add 40px offset to move widget below title
-        
-        console.log('Bidly: Using STABLE positioning - widget will stay in place');
-        
-        // Use absolute positioning relative to the document to prevent scrolling issues
-        widgetContainer.style.position = 'absolute';
-        widgetContainer.style.top = (pricingRect.top + scrollTop + titleOffset) + 'px';
-        widgetContainer.style.left = (pricingRect.left + scrollLeft) + 'px';
-        widgetContainer.style.width = Math.max(400, pricingRect.width) + 'px'; // Minimum 400px width
-        widgetContainer.style.height = Math.max(300, pricingRect.height) + 'px'; // Minimum 300px height
-        widgetContainer.style.minHeight = 'auto';
-        widgetContainer.style.zIndex = '9999';
-            
-            // Hide only specific pricing elements, not the entire container
-            // This prevents hiding the product title
-            const elementsToHide = pricingSection.querySelectorAll(
-                '.price, .product-price, .money, button, .btn, [class*="button"], [class*="add-to-cart"], [class*="buy"], [class*="quantity"], [class*="price-current"], [class*="price-regular"]'
-            );
-            
-            elementsToHide.forEach(element => {
-                element.style.display = 'none';
-            });
-            
-            // Only hide the pricing section if it's ONLY a price element (not a container)
-            // Check if it's a direct price element, not a container with other content
-            const isDirectPriceElement = pricingSection.classList.contains('price') && 
-                                       !pricingSection.querySelector('h1, h2, h3, h4, h5, h6, .product-title, .product-name, [class*="title"], [class*="name"]');
-            
-            if (isDirectPriceElement) {
-                pricingSection.style.display = 'none';
-            }
-            
-            console.log('Bidly: Original pricing section and related elements hidden');
-            
-            console.log('Bidly: Widget positioned to overlay on pricing section');
-            console.log('Bidly: Applied styles:', {
-                position: widgetContainer.style.position,
-                top: widgetContainer.style.top,
-                left: widgetContainer.style.left,
-                width: widgetContainer.style.width
-            });
+        if (insertionTarget && insertionTarget.parentElement) {
+            insertionTarget.parentElement.insertBefore(widgetRoot, insertionTarget);
         } else {
-            // Fallback positioning if pricing section not found
-            widgetContainer.style.position = 'fixed';
-            widgetContainer.style.top = '200px'; // Position below header
-            widgetContainer.style.left = '50%';
-            widgetContainer.style.transform = 'translateX(-50%)'; // Center horizontally
-            widgetContainer.style.width = '400px'; // Reasonable fallback width
-            widgetContainer.style.height = '300px'; // Reasonable fallback height
-            widgetContainer.style.minHeight = 'auto'; // Remove minHeight
-            widgetContainer.style.zIndex = '9999';
-            console.log('Bidly: Pricing section not found, using centered fallback positioning');
+            console.warn('Bidly: Product info container not found; appending widget near main content.');
+            const fallbackContainer = document.querySelector('#MainContent') || document.body;
+            fallbackContainer.appendChild(widgetRoot);
         }
-        
-        // Ensure body has relative positioning for absolute children
-        if (document.body.style.position !== 'relative') {
-            document.body.style.position = 'relative';
-        }
-        
-        document.body.appendChild(widgetContainer);
-        console.log('Bidly: Widget appended to document.body');
-        
-        // Initialize countdown timer if auction is pending
+
         if (auctionData.status === 'pending' && auctionData.startTime) {
-            console.log('Bidly: Initializing countdown timer for pending auction:', auctionData.auctionId, 'Start time:', auctionData.startTime);
             initializeCountdownTimer(auctionData.auctionId, auctionData.startTime);
-        } else {
-            console.log('Bidly: Not initializing countdown timer. Status:', auctionData.status, 'Start time:', auctionData.startTime);
         }
-        
-        console.log('Bidly: Widget injection complete. Widget element:', widgetContainer);
-        
-        // More detailed visibility checks
-        const widgetElement = document.querySelector(`.${CONFIG.widgetClass}`);
-        if (widgetElement) {
-            const computedStyle = window.getComputedStyle(widgetElement);
-            console.log('Bidly: Widget computed style - display:', computedStyle.display);
-            console.log('Bidly: Widget computed style - visibility:', computedStyle.visibility);
-            console.log('Bidly: Widget computed style - opacity:', computedStyle.opacity);
-            console.log('Bidly: Widget computed style - width:', computedStyle.width);
-            console.log('Bidly: Widget computed style - height:', computedStyle.height);
-            console.log('Bidly: Widget offsetParent:', widgetElement.offsetParent);
-            console.log('Bidly: Widget offsetWidth:', widgetElement.offsetWidth);
-            console.log('Bidly: Widget offsetHeight:', widgetElement.offsetHeight);
 
-            let parent = widgetElement.parentElement;
-            let depth = 0;
-            while (parent && depth < 5) { // Check up to 5 parent levels
-                const parentComputedStyle = window.getComputedStyle(parent);
-                console.log(`Bidly: Parent ${depth} (${parent.tagName}) computed style - display:`, parentComputedStyle.display);
-                console.log(`Bidly: Parent ${depth} (${parent.tagName}) computed style - visibility:`, parentComputedStyle.visibility);
-                console.log(`Bidly: Parent ${depth} (${parent.tagName}) computed style - opacity:`, parentComputedStyle.opacity);
-                if (parentComputedStyle.display === 'none' || parentComputedStyle.visibility === 'hidden' || parentComputedStyle.opacity === '0') {
-                    console.warn(`Bidly: Parent ${depth} (${parent.tagName}) is hiding the widget!`);
-                    break;
-                }
-                parent = parent.parentElement;
-                depth++;
-            }
-        }
-        
-        console.log('Bidly: Widget is visible:', widgetContainer.offsetParent !== null);
-
-        // Initialize countdown timer if active
         if (auctionData.status === 'active' && auctionData.endTime && settings.show_timer) {
             initializeCountdown(auctionData.auctionId, auctionData.endTime);
         }
 
-        // Initialize real-time updates
         initializeRealTimeUpdates(auctionData.auctionId);
     }
-
     // Initialize countdown timer
     function initializeCountdown(auctionId, endTime) {
         const countdownElement = document.querySelector(`#bidly-auction-widget-${auctionId} .bidly-countdown`);
@@ -2183,35 +1859,26 @@
         updateWidgetData: updateWidgetData
     };
 
-    // Wait for pricing section to become visible
-    async function waitForPricingSection() {
-        console.log('Bidly: Waiting for pricing section to become visible...');
-        
+    // Wait for a product info container to become available
+    async function waitForProductInfoContainer() {
+        console.log('Bidly: Waiting for product info container to become available...');
+
         let attempts = 0;
-        const maxAttempts = 20; // Try for up to 10 seconds
-        
+        const maxAttempts = 20;
+
         while (attempts < maxAttempts) {
-            const pricingSection = findPricingSection();
-            if (pricingSection) {
-                const rect = pricingSection.getBoundingClientRect();
-                const computedStyle = window.getComputedStyle(pricingSection);
-                
-                // Check if element is visible and has dimensions
-                if (rect.width > 0 && rect.height > 0 && 
-                    computedStyle.display !== 'none' && 
-                    computedStyle.visibility !== 'hidden' && 
-                    computedStyle.opacity !== '0') {
-                    console.log('Bidly: Pricing section is now visible!', pricingSection, rect);
-                    return pricingSection;
+            for (const selector of PRODUCT_INFO_SELECTORS) {
+                const candidate = document.querySelector(selector);
+                if (candidate) {
+                    return candidate;
                 }
             }
-            
+
             attempts++;
-            console.log(`Bidly: Pricing section not visible yet, attempt ${attempts}/${maxAttempts}`);
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 500));
         }
-        
-        console.warn('Bidly: Pricing section did not become visible after waiting');
+
+        console.warn('Bidly: Product info container not found after waiting');
         return null;
     }
 
@@ -2313,9 +1980,10 @@
             console.log('Bidly: Shared login system not available after waiting');
         }
 
-    // Wait for pricing section to become visible
-    console.log('Bidly: Waiting for pricing section to become visible...');
-    await waitForPricingSection();
+        const productInfoContainer = await waitForProductInfoContainer();
+        if (!productInfoContainer) {
+            console.warn('Bidly: Product info container did not appear; widget will use fallback placement.');
+        }
         
         // Get settings from block
         const settings = {

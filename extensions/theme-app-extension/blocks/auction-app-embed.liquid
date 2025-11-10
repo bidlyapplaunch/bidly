@@ -51,6 +51,8 @@
 
 <link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}?v=191">
 
+<meta id="bidly-product-id" data-product-id="{{ product.id }}">
+
 <!-- Inject Shopify customer data -->
 <script>
   window.customerData = {
@@ -204,6 +206,11 @@ window.BidlyAuctionEmbed = {
     
     getProductIdForApi: async function() {
         // Try to get product ID from various sources
+        const metaProduct = document.querySelector('#bidly-product-id');
+        if (metaProduct && metaProduct.dataset.productId) {
+            return metaProduct.dataset.productId;
+        }
+        
         if (window.Shopify?.analytics?.meta?.product?.id) {
             return window.Shopify.analytics.meta.product.id.toString();
         }
