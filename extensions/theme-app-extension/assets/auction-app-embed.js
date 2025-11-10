@@ -116,6 +116,28 @@
         }
     };
 
+    function hideProductPrice() {
+        try {
+            for (const selector of CONFIG.pricingSelectors) {
+                const elements = document.querySelectorAll(selector);
+                if (!elements.length) {
+                    continue;
+                }
+                elements.forEach((element) => {
+                    if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
+                        return;
+                    }
+                    if (!element.dataset.bidlyOriginalDisplay) {
+                        element.dataset.bidlyOriginalDisplay = element.style.display || '';
+                    }
+                    element.style.display = 'none';
+                });
+            }
+        } catch (error) {
+            console.warn('Bidly: Failed to hide product price elements', error);
+        }
+    }
+
     function resolveProductId() {
         const analyticsProductId = window?.ShopifyAnalytics?.meta?.product?.id;
         if (analyticsProductId) {
@@ -1135,6 +1157,8 @@
             const fallbackContainer = document.querySelector('#MainContent') || document.body;
             fallbackContainer.appendChild(widgetRoot);
         }
+
+        hideProductPrice();
 
         if (auctionData.status === 'pending' && auctionData.startTime) {
             initializeCountdownTimer(auctionData.auctionId, auctionData.startTime);
