@@ -257,19 +257,19 @@
             return;
         }
 
-        widgetContainer.classList.add('bidly-widget-root');
+        host.classList.add('bidly-widget-root');
         const templateClassNames = ['bidly-template-A', 'bidly-template-B', 'bidly-template-C', 'bidly-template-D'];
-        templateClassNames.forEach(className => widgetContainer.classList.remove(className));
+        templateClassNames.forEach(className => host.classList.remove(className));
         const templateKey = theme.template || DEFAULT_WIDGET_THEME.template;
-        widgetContainer.classList.add(`bidly-template-${templateKey}`);
-        widgetContainer.setAttribute('data-bidly-template', templateKey);
-        widgetContainer.setAttribute('data-bidly-gradient', theme.gradientEnabled ? '1' : '0');
+        host.classList.add(`bidly-template-${templateKey}`);
+        host.setAttribute('data-bidly-template', templateKey);
+        host.setAttribute('data-bidly-gradient', theme.gradientEnabled ? '1' : '0');
 
-        let styleElement = widgetContainer.querySelector('#bidly-widget-theme');
+        let styleElement = host.querySelector('#bidly-widget-theme');
         if (!styleElement) {
             styleElement = document.createElement('style');
             styleElement.id = 'bidly-widget-theme';
-            widgetContainer.prepend(styleElement);
+            host.prepend(styleElement);
         }
 
         styleElement.textContent = buildWidgetThemeStyle(theme);
