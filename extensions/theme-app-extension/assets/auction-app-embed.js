@@ -116,6 +116,22 @@
         }
     };
 
+    function resolveProductId() {
+        const analyticsProductId = window?.ShopifyAnalytics?.meta?.product?.id;
+        if (analyticsProductId) {
+            console.log('Bidly: Found product ID via ShopifyAnalytics:', analyticsProductId);
+            return analyticsProductId.toString();
+        }
+
+        const metaElement = document.querySelector('#bidly-product-id');
+        if (metaElement?.dataset?.productId) {
+            console.log('Bidly: Found product ID via meta dataset:', metaElement.dataset.productId);
+            return metaElement.dataset.productId.toString();
+        }
+
+        return null;
+    }
+
     const PRODUCT_INFO_SELECTORS = [
         'product-info',
         '.product__info-wrapper',
@@ -569,15 +585,10 @@
     // Get product ID from page
     async function getProductIdFromPage() {
         console.log('Bidly: Debugging product ID detection...');
-        console.log('Bidly: window.Shopify:', window.Shopify);
-        console.log('Bidly: window.Shopify?.analytics:', window.Shopify?.analytics);
-        console.log('Bidly: window.Shopify?.analytics?.meta:', window.Shopify?.analytics?.meta);
-        console.log('Bidly: window.Shopify?.analytics?.meta?.product:', window.Shopify?.analytics?.meta?.product);
 
-        const productMeta = document.querySelector('#bidly-product-id');
-        if (productMeta?.dataset?.productId) {
-            console.log('Bidly: Found product ID via meta tag dataset:', productMeta.dataset.productId);
-            return productMeta.dataset.productId;
+        const resolved = resolveProductId();
+        if (resolved) {
+            return resolved;
         }
 
         // Try to get from Shopify global objects first (most reliable)
@@ -881,8 +892,19 @@
             }
         }
 
-        if (insertionTarget && insertionTarget.parentElement) {
-            insertionTarget.parentElement.insertBefore(widgetRoot, insertionTarget);
+        const productForm = document.querySelector('form[action^="/cart/add"]');
+        if (productForm && productForm.parentElement) {
+            productForm.insertAdjacentElement('afterend', widgetRoot);
+        } else if (insertionTarget) {
+            const titleElement =
+                insertionTarget.querySelector('h1, .product__title, .product-title') ||
+                insertionTarget.querySelector('h1');
+
+            if (titleElement && titleElement.parentElement) {
+                titleElement.parentElement.insertBefore(widgetRoot, titleElement.nextSibling);
+            } else {
+                insertionTarget.appendChild(widgetRoot);
+            }
         } else {
             console.warn('Bidly: Product info container not found; appending widget near main content.');
             const fallbackContainer = document.querySelector('#MainContent') || document.body;
@@ -1985,6 +2007,42 @@
             console.warn('Bidly: Product info container did not appear; widget will use fallback placement.');
         }
         
+        const productId = resolveProductId();
+        if (!productId) {
+            console.log('Bidly: No product ID detected; aborting widget injection.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`);
+            if (!response.ok) {
+                console.warn('Bidly: Product auction check returned non-OK status:', response.status);
+                return;
+            }
+
+            const data = await response.json();
+            if (!data?.success || !data.auction) {
+                console.log('Bidly: No active auction for product', productId);
+                return;
+            }
+
+            window.currentAuctionCheck = {
+                hasAuction: true,
+                auctionId: data.auction._id,
+                status: data.auction.status || 'pending',
+                currentBid: Number(data.auction.currentBid) || 0,
+                startingBid: Number(data.auction.startingBid) || 0,
+                reservePrice: Number(data.auction.reservePrice) || 0,
+                endTime: data.auction.endTime,
+                startTime: data.auction.startTime,
+                bidCount: data.auction.bidHistory?.length || 0,
+                buyNowPrice: Number(data.auction.buyNowPrice) || 0
+            };
+        } catch (error) {
+            console.warn('Bidly: Failed to check auction for product', productId, error);
+            return;
+        }
+
         // Get settings from block
         const settings = {
             show_timer: true, // Default values since we can't access block settings in external JS
@@ -1992,16 +2050,12 @@
             widget_position: 'below_price'
         };
         
-        // Check if product has auction data
-        const auctionCheck = await checkProductForAuction();
-        
-        if (auctionCheck.hasAuction) {
-            console.log('Bidly: Product has auction data, injecting widget...', auctionCheck);
-            // Store auction check data globally for refresh
-            window.currentAuctionCheck = auctionCheck;
-            injectWidget(auctionCheck, settings);
-        } else {
-            console.log('Bidly: No auction data found for this product');
+        injectWidget(window.currentAuctionCheck, settings);
+        const productForm = document.querySelector('form[action^="/cart/add"]');
+        if (productForm) {
+            productForm.addEventListener('submit', () => {
+                console.log('Bidly: Product form submitted. Widget will refresh shortly.');
+            });
         }
     }
 
