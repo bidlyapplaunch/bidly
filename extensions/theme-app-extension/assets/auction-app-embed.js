@@ -2522,26 +2522,35 @@
         setupChatToggleControls();
 
         // Connect to Socket.io for chat
-        if (window.io && socket) {
-            chatSocket = socket; // Reuse existing socket connection
-        } else if (window.io) {
-            chatSocket = io(CONFIG.backendUrl, {
+        if (!window.io) {
+            console.warn('Bidly: Socket.io client not available, chat disabled.');
+            return;
+        }
+
+        if (!window.__bidlySocket) {
+            window.__bidlySocket = io(CONFIG.backendUrl, {
                 transports: ['websocket', 'polling'],
                 timeout: 20000
             });
-
-            chatSocket.on('connect', () => {
-                console.log('Bidly: Chat WebSocket connected');
-                // Join product chat room
-                if (currentProductId) {
-                    chatSocket.emit('join-chat-room', currentProductId);
-                }
-            });
-
-            chatSocket.on('disconnect', () => {
-                console.log('Bidly: Chat WebSocket disconnected');
-            });
         }
+
+        chatSocket = window.__bidlySocket;
+
+        const handleChatConnect = () => {
+            console.log('Bidly: Chat WebSocket connected (shared socket)');
+            if (currentProductId) {
+                chatSocket.emit('join-chat-room', currentProductId);
+            }
+        };
+
+        const handleChatDisconnect = () => {
+            console.log('Bidly: Chat WebSocket disconnected');
+        };
+
+        chatSocket.off('connect', handleChatConnect);
+        chatSocket.off('disconnect', handleChatDisconnect);
+        chatSocket.on('connect', handleChatConnect);
+        chatSocket.on('disconnect', handleChatDisconnect);
 
         // Set up chat event listeners
         if (chatSocket) {
@@ -2795,15 +2804,18 @@
 
     // Initialize chat when widget is successfully injected
     // This will be called after injectWidget completes
+    function tryInitChat() {
+        if (document.querySelector('.bidly-auction-app-embed')) {
+            initializeChat();
+        } else {
+            setTimeout(tryInitChat, 300);
+        }
+    }
+
     const originalInit = init;
     init = async function() {
         await originalInit();
-        // Initialize chat after init completes and widget is injected
-        setTimeout(() => {
-            if (document.querySelector('.bidly-auction-app-embed')) {
-                initializeChat();
-            }
-        }, 1500);
+        tryInitChat();
     };
 
     // Also initialize chat when login status changes
