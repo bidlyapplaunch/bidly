@@ -2301,6 +2301,7 @@
     let currentProductId = null;
     let chatUsername = null;
     let chatInitialized = false;
+    const sentChatMessageIds = new Set();
 
     /**
      * Initialize chat for the current product (only for Shopify customers)
@@ -2492,14 +2493,20 @@
             return;
         }
 
+        const payload = {
+            productId: currentProductId,
+            username: chatUsername,
+            message,
+            timestamp: new Date().toISOString(),
+            clientMessageId: `bidly-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        };
+
         chatInput.disabled = true;
         sendBtn.disabled = true;
 
-        chatSocket.emit('new-chat-message', {
-            productId: currentProductId,
-            username: chatUsername,
-            message: message
-        });
+        sentChatMessageIds.add(payload.clientMessageId);
+        chatSocket.emit('new-chat-message', payload);
+        addChatMessage({ ...payload, __local: true });
 
         chatInput.value = '';
         chatInput.disabled = false;
@@ -2523,7 +2530,13 @@
         const messageDiv = document.createElement('div');
         messageDiv.className = 'bidly-chat-message';
 
-        const timestamp = new Date(messageData.timestamp).toLocaleTimeString([], { 
+        if (messageData.clientMessageId && sentChatMessageIds.has(messageData.clientMessageId) && !messageData.__local) {
+            // Already displayed as local echo; skip duplicate from server
+            sentChatMessageIds.delete(messageData.clientMessageId);
+            return;
+        }
+
+        const timestamp = new Date(messageData.timestamp || Date.now()).toLocaleTimeString([], {
             hour: '2-digit', 
             minute: '2-digit' 
         });
