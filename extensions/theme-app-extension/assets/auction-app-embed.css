@@ -723,8 +723,8 @@
     padding: 12px 18px;
     border-radius: calc(var(--bidly-border-radius, 16px) - 6px);
     border: 1px solid var(--bidly-chat-toggle-color, #6366f1);
-    background: var(--bidly-chat-toggle-bg, rgba(99, 102, 241, 0.12));
-    color: var(--bidly-chat-toggle-color, #6366f1);
+    background: var(--bidly-history-bg, rgba(255, 255, 255, 0.12));
+    color: var(--bidly-button-text, #ffffff);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -733,7 +733,7 @@
 
 .bidly-chat-toggle-inline:hover,
 .bidly-chat-toggle-inline:focus {
-    background: var(--bidly-chat-toggle-hover-bg, rgba(99, 102, 241, 0.2));
+    background: var(--bidly-history-hover-bg, rgba(255, 255, 255, 0.18));
     outline: none;
 }
 
