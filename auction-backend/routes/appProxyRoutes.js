@@ -251,13 +251,16 @@ router.get('/', async (req, res) => {
 
     let htmlOutput = marketplaceTemplate;
 
-    if (htmlOutput.includes('src="/assets/')) {
-      htmlOutput = htmlOutput.replace(/src="\/assets\//g, 'src="/apps/bidly/assets/');
-    }
+    const assetRewrites = [
+      { pattern: /src="\/assets\//g, replacement: `src="${baseProxyPath}/assets/` },
+      { pattern: /href="\/assets\//g, replacement: `href="${baseProxyPath}/assets/` },
+      { pattern: /src="\.\/*assets\//g, replacement: `src="${baseProxyPath}/assets/` },
+      { pattern: /href="\.\/*assets\//g, replacement: `href="${baseProxyPath}/assets/` }
+    ];
 
-    if (htmlOutput.includes('href="/assets/')) {
-      htmlOutput = htmlOutput.replace(/href="\/assets\//g, 'href="/apps/bidly/assets/');
-    }
+    assetRewrites.forEach(({ pattern, replacement }) => {
+      htmlOutput = htmlOutput.replace(pattern, replacement);
+    });
 
     const finalHtml = htmlOutput.replace('</body>', `${inlineScript}\n</body>`);
 
