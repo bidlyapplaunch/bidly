@@ -2293,9 +2293,6 @@
     let currentProductId = null;
     let chatUsername = null;
     let chatInitialized = false;
-    const chatUIState = {
-        expanded: false
-    };
 
     /**
      * Initialize chat for the current product (only for Shopify customers)
@@ -2399,65 +2396,30 @@
             return;
         }
 
-        document.querySelectorAll('.bidly-chat-container').forEach(container => {
-            if (!container.closest('.bidly-widget-root')) {
-                container.remove();
-            }
-        });
-
-        const widgetRoot = document.querySelector('.bidly-widget-root');
-        if (!widgetRoot) {
-            console.warn('Bidly: Unable to find widget root for chat placement');
-            return;
+        const existingChat = document.querySelector('.bidly-chat-container');
+        if (existingChat) {
+            existingChat.remove();
         }
-
-        let footer = widgetRoot.querySelector('.bidly-widget-footer');
-        if (!footer) {
-            footer = document.createElement('div');
-            footer.className = 'bidly-widget-footer';
-            widgetRoot.appendChild(footer);
-        }
-
-        let footerActions = footer.querySelector('.bidly-footer-actions');
-        if (!footerActions) {
-            footerActions = document.createElement('div');
-            footerActions.className = 'bidly-footer-actions';
-            while (footer.firstChild) {
-                footerActions.appendChild(footer.firstChild);
-            }
-            footer.appendChild(footerActions);
-        }
-
-        footerActions.querySelectorAll('.bidly-chat-toggle').forEach(toggle => toggle.remove());
-
-        const chatToggle = document.createElement('button');
-        chatToggle.type = 'button';
-        chatToggle.id = 'bidly-chat-toggle';
-        chatToggle.classList.add('bidly-chat-toggle', 'bidly-history-link');
-        chatToggle.textContent = 'Chat Box';
-        chatToggle.setAttribute('aria-expanded', 'false');
-        chatToggle.setAttribute('aria-controls', 'bidly-chat-box');
-        footerActions.appendChild(chatToggle);
 
         const chatContainer = document.createElement('div');
         chatContainer.className = 'bidly-chat-container';
-        chatContainer.setAttribute('data-placement', 'inline');
         chatContainer.innerHTML = `
+            <button class="bidly-chat-toggle" id="bidly-chat-toggle" aria-label="Toggle chat">
+                <span class="chat-icon">💬</span>
+                <span class="close-icon">✕</span>
+            </button>
             <div class="bidly-chat-box hidden" id="bidly-chat-box">
                 <div class="bidly-chat-header">
-                    <h3 class="bidly-chat-title">
+                    <h3>
                         <span class="online-indicator"></span>
-                        Chat Box
+                        Live Chat
                     </h3>
-                    <button type="button" class="bidly-chat-close" id="bidly-chat-close" aria-label="Close chat">
-                        ✕
-                    </button>
                 </div>
                 <div class="bidly-chat-messages" id="bidly-chat-messages">
                     <div class="bidly-chat-empty">No messages yet. Start the conversation!</div>
                 </div>
                 <div class="bidly-chat-input-container">
-                    <div class="bidly-chat-input-form" id="bidly-chat-controls">
+                    <form class="bidly-chat-input-form" id="bidly-chat-form">
                         <input 
                             type="text" 
                             class="bidly-chat-input" 
@@ -2466,69 +2428,39 @@
                             maxlength="500"
                             autocomplete="off"
                         />
-                        <button type="button" class="bidly-chat-send-btn" id="bidly-chat-send">Send</button>
-                    </div>
+                        <button type="submit" class="bidly-chat-send-btn" id="bidly-chat-send">Send</button>
+                    </form>
                 </div>
             </div>
         `;
 
-        const previousContainer = footer.querySelector('.bidly-chat-container');
-        if (previousContainer) {
-            footer.removeChild(previousContainer);
-        }
+        document.body.appendChild(chatContainer);
 
-        footer.appendChild(chatContainer);
+        const toggleBtn = document.getElementById('bidly-chat-toggle');
+        const chatBox = document.getElementById('bidly-chat-box');
 
-        const chatBox = chatContainer.querySelector('#bidly-chat-box');
-        const chatInput = chatContainer.querySelector('#bidly-chat-input');
-        const closeBtn = chatContainer.querySelector('#bidly-chat-close');
-        const sendBtn = chatContainer.querySelector('#bidly-chat-send');
+        toggleBtn.addEventListener('click', () => {
+            chatBox.classList.toggle('hidden');
+            toggleBtn.classList.toggle('minimized');
 
-        const setExpanded = (expanded) => {
-            if (!chatBox) {
-                return;
-            }
-
-            if (expanded) {
-                chatBox.classList.remove('hidden');
-                chatToggle.setAttribute('aria-expanded', 'true');
-                chatToggle.classList.add('is-active');
+            if (!chatBox.classList.contains('hidden')) {
                 scrollChatToBottom();
-                setTimeout(() => chatInput?.focus(), 80);
-            } else {
-                chatBox.classList.add('hidden');
-                chatToggle.setAttribute('aria-expanded', 'false');
-                chatToggle.classList.remove('is-active');
             }
-            chatUIState.expanded = expanded;
-        };
-
-        chatToggle.addEventListener('click', () => {
-            const expanded = chatToggle.getAttribute('aria-expanded') === 'true';
-            setExpanded(!expanded);
         });
 
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => setExpanded(false));
-        }
+        const chatForm = document.getElementById('bidly-chat-form');
+        const chatInput = document.getElementById('bidly-chat-input');
 
-        if (sendBtn) {
-            sendBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                sendChatMessage();
-            });
-        }
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendChatMessage();
+        });
 
-        if (chatInput) {
-            chatInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    sendChatMessage();
-                }
-            });
-        }
-
-        setExpanded(chatUIState.expanded);
+        toggleBtn.addEventListener('click', () => {
+            if (!chatBox.classList.contains('hidden')) {
+                setTimeout(() => chatInput.focus(), 100);
+            }
+        });
     }
 
     /**
@@ -2539,33 +2471,22 @@
         const message = chatInput.value.trim();
         const sendBtn = document.getElementById('bidly-chat-send');
 
-        if (!message || !currentProductId || !chatUsername) {
+        if (!message || !chatSocket || !currentProductId || !chatUsername) {
             return;
         }
-        const payload = {
-            productId: currentProductId,
-            username: chatUsername,
-            message,
-            timestamp: new Date().toISOString(),
-            local: true
-        };
 
         chatInput.disabled = true;
-        if (sendBtn) {
-            sendBtn.disabled = true;
-        }
+        sendBtn.disabled = true;
 
-        if (chatSocket) {
-            chatSocket.emit('new-chat-message', payload);
-        }
-
-        addChatMessage(payload);
+        chatSocket.emit('new-chat-message', {
+            productId: currentProductId,
+            username: chatUsername,
+            message: message
+        });
 
         chatInput.value = '';
         chatInput.disabled = false;
-        if (sendBtn) {
-            sendBtn.disabled = false;
-        }
+        sendBtn.disabled = false;
         chatInput.focus();
     }
 
