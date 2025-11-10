@@ -2301,7 +2301,6 @@
     let currentProductId = null;
     let chatUsername = null;
     let chatInitialized = false;
-    const sentChatMessageIds = new Set();
     const pendingLocalChatMessages = [];
 
     /**
@@ -2498,19 +2497,16 @@
             productId: currentProductId,
             username: chatUsername,
             message,
-            timestamp: new Date().toISOString(),
-            clientMessageId: `bidly-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+            timestamp: new Date().toISOString()
         };
 
         chatInput.disabled = true;
         sendBtn.disabled = true;
 
-        sentChatMessageIds.add(payload.clientMessageId);
         chatSocket.emit('new-chat-message', payload);
         const pendingElement = addChatMessage({ ...payload, __local: true });
         if (pendingElement) {
             pendingLocalChatMessages.push({
-                clientMessageId: payload.clientMessageId,
                 username: payload.username,
                 message: payload.message,
                 timestamp: Date.now(),
@@ -2542,22 +2538,16 @@
         }
 
         const now = Date.now();
-        if (!messageData.__local) {
-            let matchedEntryIndex = -1;
-
-            if (messageData.clientMessageId && sentChatMessageIds.has(messageData.clientMessageId)) {
-                sentChatMessageIds.delete(messageData.clientMessageId);
-                matchedEntryIndex = pendingLocalChatMessages.findIndex(
-                    (entry) => entry.clientMessageId === messageData.clientMessageId
-                );
-            }
+        if (!messageData.__local && messageData.username === chatUsername) {
+            let matchedEntryIndex = pendingLocalChatMessages.findIndex(
+                (entry) =>
+                    entry.username === messageData.username &&
+                    entry.message === messageData.message
+            );
 
             if (matchedEntryIndex === -1) {
                 matchedEntryIndex = pendingLocalChatMessages.findIndex(
-                    (entry) =>
-                        entry.username === messageData.username &&
-                        entry.message === messageData.message &&
-                        now - entry.timestamp < 8000
+                    (entry) => entry.username === messageData.username && now - entry.timestamp < 15000
                 );
             }
 
@@ -2572,16 +2562,13 @@
                         });
                     }
                     matchedEntry.element.dataset.pending = '0';
+                    return matchedEntry.element;
                 }
-                return matchedEntry?.element || null;
             }
         }
 
         const messageDiv = document.createElement('div');
         messageDiv.className = 'bidly-chat-message';
-        if (messageData.clientMessageId) {
-            messageDiv.dataset.clientMessageId = messageData.clientMessageId;
-        }
         if (messageData.__local) {
             messageDiv.dataset.pending = '1';
         }
