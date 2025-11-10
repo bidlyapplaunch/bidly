@@ -250,7 +250,7 @@ function WidgetPreviewFrame({ settings, previewData, previewState, shopDomain })
       style={{
         width: '100%',
         maxWidth: 460,
-        height: 520,
+        height: 720,
         border: '1px solid var(--p-color-border-subdued)',
         borderRadius: 16,
         background: '#f4f6f8'
