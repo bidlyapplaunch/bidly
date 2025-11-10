@@ -411,6 +411,55 @@
         });
     }
 
+    function applyPreviewThemeVariables(theme) {
+        if (!theme || !document?.documentElement) {
+            return;
+        }
+
+        const normalized = normalizeWidgetTheme(theme);
+        const colors = normalized.colors || DEFAULT_WIDGET_THEME.colors;
+        const root = document.documentElement;
+
+        root.style.setProperty('--bidly-font-family', `${normalized.font || DEFAULT_WIDGET_THEME.font}`);
+        root.style.setProperty('--bidly-border-radius', `${normalized.borderRadius || DEFAULT_WIDGET_THEME.borderRadius}px`);
+        root.style.setProperty('--bidly-box-shadow', THEME_BOX_SHADOWS[normalized.boxShadow] || THEME_BOX_SHADOWS[DEFAULT_WIDGET_THEME.boxShadow]);
+        root.style.setProperty('--bidly-bg-gradient-enable', normalized.gradientEnabled ? '1' : '0');
+
+        const COLOR_VARIABLE_MAP = {
+            text: '--bidly-text-color',
+            accent: '--bidly-accent-color',
+            bg_solid: '--bidly-bg-color',
+            bg_gradient_start: '--bidly-bg-gradient-start',
+            bg_gradient_end: '--bidly-bg-gradient-end',
+            button_bg: '--bidly-button-bg',
+            button_hover: '--bidly-button-hover-bg',
+            button_text: '--bidly-button-text',
+            border: '--bidly-border-color'
+        };
+
+        Object.entries(COLOR_VARIABLE_MAP).forEach(([key, variableName]) => {
+            if (colors[key] !== undefined) {
+                root.style.setProperty(variableName, colors[key]);
+            }
+        });
+
+        if (normalized.gradientEnabled) {
+            root.style.setProperty(
+                '--bidly-header-bg',
+                `linear-gradient(135deg, ${colors.bg_gradient_start}, ${colors.bg_gradient_end})`
+            );
+        } else {
+            root.style.setProperty('--bidly-header-bg', colors.bg_solid);
+        }
+
+        if (document.body) {
+            document.body.classList.add('bidly-preview-refresh');
+            setTimeout(() => {
+                document.body.classList.remove('bidly-preview-refresh');
+            }, 50);
+        }
+    }
+
     function buildPreviewAuctionData(override = {}) {
         const now = new Date();
         const state = override.status || PREVIEW_DATA.state || 'active';
@@ -447,6 +496,7 @@
 
         const widgetElement = container.querySelector('.' + CONFIG.widgetClass) || container;
         applyWidgetTheme(widgetElement, theme);
+        applyPreviewThemeVariables(theme);
 
         if (auctionData.status === 'active' && auctionData.endTime) {
             initializeCountdown(auctionData.auctionId, auctionData.endTime);
