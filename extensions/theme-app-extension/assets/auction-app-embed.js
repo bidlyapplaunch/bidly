@@ -2433,7 +2433,7 @@
     }
 
     function deriveChatRoomId(rawValue) {
-        if (rawValue === null || rawValue === undefined) {
+        if (!rawValue) {
             return null;
         }
 
@@ -2492,7 +2492,11 @@
         }
 
         currentProductIdRaw = productIdSource ? productIdSource.toString() : null;
-        currentProductId = deriveChatRoomId(currentProductIdRaw) || currentProductIdRaw;
+        currentProductId = deriveChatRoomId(currentProductIdRaw);
+        if (!currentProductId || isNaN(Number(currentProductId))) {
+            console.warn('Bidly Chat: Failed to normalize product ID, chat disabled.');
+            return;
+        }
 
         if (!currentProductId) {
             console.warn('Bidly: Chat initialization aborted — product ID unavailable');

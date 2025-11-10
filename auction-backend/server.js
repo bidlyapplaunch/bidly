@@ -498,8 +498,31 @@ io.on('connection', (socket) => {
   });
   
   // ===== CHAT FUNCTIONALITY =====
+  const normalizeProductId = (value) => {
+    if (!value) return null;
+    const stringValue = value.toString().trim();
+    if (!stringValue) return null;
+
+    const match = stringValue.match(/Product\/(\d+)/i);
+    if (match && match[1]) {
+      return match[1];
+    }
+
+    if (/^\d+$/.test(stringValue)) {
+      return stringValue;
+    }
+
+    return null;
+  };
+
   // Join product chat room
-  socket.on('join-chat-room', (productId) => {
+  socket.on('join-chat-room', (_id) => {
+    const productId = normalizeProductId(_id);
+    if (!productId) {
+      socket.emit('chat-error', { message: 'Invalid product ID for chat room' });
+      return;
+    }
+
     socket.join(`chat-${productId}`);
     console.log(`💬 Client ${socket.id} joined chat room for product ${productId}`);
     
@@ -515,7 +538,8 @@ io.on('connection', (socket) => {
   });
   
   // Handle new chat message
-  socket.on('new-chat-message', ({ productId, username, message }) => {
+  socket.on('new-chat-message', ({ productId: incomingId, username, message }) => {
+    const productId = normalizeProductId(incomingId);
     if (!productId || !username || !message) {
       socket.emit('chat-error', { message: 'Missing required fields' });
       return;
