@@ -23,6 +23,25 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || '2025-10';
+const BACKEND_BASE_URL = process.env.APP_URL || 'https://bidly-auction-backend.onrender.com';
+
+const marketplaceDistPath = path.join(__dirname, '../../auction-customer/dist');
+const marketplaceAssetsPath = path.join(marketplaceDistPath, 'assets');
+const marketplaceIndexPath = path.join(marketplaceDistPath, 'index.html');
+
+let marketplaceTemplate = null;
+try {
+  if (fs.existsSync(marketplaceIndexPath)) {
+    marketplaceTemplate = fs.readFileSync(marketplaceIndexPath, 'utf8');
+    console.log('✅ Marketplace template loaded for app proxy');
+  } else {
+    console.warn('⚠️ Marketplace index.html not found at', marketplaceIndexPath);
+  }
+} catch (error) {
+  console.error('❌ Failed to load marketplace template:', error);
+}
+
 /**
  * App Proxy Routes for Shopify Theme Integration
  * These routes are accessible via /apps/bidly/* from the storefront
@@ -60,6 +79,18 @@ router.get('/assets/bidly-widget.js', (req, res) => {
   }
 });
 
+if (fs.existsSync(marketplaceAssetsPath)) {
+  router.use(
+    '/assets',
+    express.static(marketplaceAssetsPath, {
+      maxAge: '1d',
+      immutable: true
+    })
+  );
+} else {
+  console.warn('⚠️ Marketplace assets directory not found:', marketplaceAssetsPath);
+}
+
 // Health check endpoint (NO AUTHENTICATION REQUIRED)
 // GET /apps/bidly/health
 router.get('/health', (req, res) => {
@@ -72,6 +103,174 @@ router.get('/health', (req, res) => {
 
 // All other app proxy routes require store identification
 router.use(identifyStore);
+
+router.get('/', async (req, res) => {
+  try {
+    if (!marketplaceTemplate) {
+      return res
+        .status(503)
+        .send('Marketplace is currently unavailable. Please contact the storefront administrator.');
+    }
+
+    const shopDomain = req.shopDomain;
+    const baseProxyPath = req.baseUrl || '/apps/bidly';
+    const returnPath = `${baseProxyPath}?shop=${encodeURIComponent(shopDomain)}`;
+    const loginUrl = `/account/login?return_to=${encodeURIComponent(returnPath)}`;
+    const logoutUrl = `/account/logout?return_to=${encodeURIComponent(returnPath)}`;
+
+    const customerPayload = {
+      logged_in: false
+    };
+
+    const rawCustomerId = req.query.logged_in_customer_id || req.query.customer_id;
+
+    if (rawCustomerId && req.store) {
+      const normalizedCustomerId = rawCustomerId.toString().split('/').pop();
+      const accessToken =
+        typeof req.store.getAccessToken === 'function'
+          ? req.store.getAccessToken()
+          : req.store.accessToken;
+
+      if (accessToken) {
+        try {
+          const response = await fetch(
+            `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/customers/${normalizedCustomerId}.json`,
+            {
+              headers: {
+                'X-Shopify-Access-Token': accessToken,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            const customer = data?.customer;
+
+            if (customer) {
+              const displayName = [
+                customer.first_name || '',
+                customer.last_name || ''
+              ]
+                .join(' ')
+                .trim();
+
+              customerPayload.logged_in = true;
+              customerPayload.id = customer.id;
+              customerPayload.email = customer.email;
+              customerPayload.firstName = customer.first_name || '';
+              customerPayload.lastName = customer.last_name || '';
+              customerPayload.name = displayName || customer.email || 'Shopify Customer';
+            }
+          } else {
+            console.warn(
+              '⚠️ Failed to fetch customer details from Shopify:',
+              response.status,
+              await response.text()
+            );
+          }
+        } catch (error) {
+          console.error('❌ Error fetching Shopify customer details:', error);
+        }
+      }
+    }
+
+    const marketplaceConfig = {
+      shopDomain,
+      appProxyBasePath: baseProxyPath,
+      backendBaseUrl: BACKEND_BASE_URL,
+      enforceShopifyLogin: true,
+      loginUrl,
+      logoutUrl,
+      customer: customerPayload
+    };
+
+    const inlineScript = `
+    <script>
+      window.BidlyMarketplaceConfig = ${JSON.stringify(marketplaceConfig)};
+      (function(config){
+        const DEFAULT_BACKEND = config.backendBaseUrl;
+        const STORE_BACKEND_MAP = {};
+        if (config.shopDomain) {
+          STORE_BACKEND_MAP[config.shopDomain] = DEFAULT_BACKEND;
+        }
+
+        function cleanShop(shop) {
+          if (!shop) { return ''; }
+          return shop.replace(/^https?:\\/\\//, '').replace(/\\/$/, '').toLowerCase().trim();
+        }
+
+        window.BidlyBackendConfig = {
+          STORE_BACKEND_MAP: STORE_BACKEND_MAP,
+          DEFAULT_BACKEND: DEFAULT_BACKEND,
+          getBackendUrl: function(shopDomain) {
+            if (!shopDomain) {
+              return DEFAULT_BACKEND;
+            }
+            const clean = cleanShop(shopDomain);
+            return STORE_BACKEND_MAP[clean] || DEFAULT_BACKEND;
+          }
+        };
+
+        window.BidlyHybridLogin = {
+          getCurrentCustomer: function() {
+            if (!config.customer || !config.customer.logged_in) {
+              return null;
+            }
+            return {
+              id: config.customer.id,
+              email: config.customer.email,
+              fullName: config.customer.name,
+              firstName: config.customer.firstName,
+              lastName: config.customer.lastName,
+              isTemp: false
+            };
+          },
+          isUserLoggedIn: function() {
+            return !!(config.customer && config.customer.logged_in);
+          },
+          guestLogin: function() {
+            if (config.loginUrl) {
+              window.location.href = config.loginUrl;
+            }
+            return Promise.resolve(false);
+          },
+          openGuestLogin: function() {
+            if (config.loginUrl) {
+              window.location.href = config.loginUrl;
+            }
+          },
+          logout: function() {
+            if (config.logoutUrl) {
+              window.location.href = config.logoutUrl;
+            }
+          }
+        };
+      })(window.BidlyMarketplaceConfig || {});
+    </script>`;
+
+    let htmlOutput = marketplaceTemplate;
+
+    if (htmlOutput.includes('src="/assets/')) {
+      htmlOutput = htmlOutput.replace(/src="\/assets\//g, 'src="/apps/bidly/assets/');
+    }
+
+    if (htmlOutput.includes('href="/assets/')) {
+      htmlOutput = htmlOutput.replace(/href="\/assets\//g, 'href="/apps/bidly/assets/');
+    }
+
+    const finalHtml = htmlOutput.replace('</body>', `${inlineScript}\n</body>`);
+
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(finalHtml);
+  } catch (error) {
+    console.error('❌ Failed to render marketplace page:', error);
+    return res
+      .status(500)
+      .send('Failed to load the marketplace. Please try again or contact the store owner.');
+  }
+});
 
 // Get auction listing page (all auctions) - MUST be first to avoid conflicts
 // GET /apps/bidly/api/auctions/list?shop=store.myshopify.com

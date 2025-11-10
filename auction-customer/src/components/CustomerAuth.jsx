@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import './CustomerAuth.css';
+
+const marketplaceConfig = typeof window !== 'undefined' ? (window.BidlyMarketplaceConfig || {}) : {};
 
 const CustomerAuth = ({ onLogin, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +11,13 @@ const CustomerAuth = ({ onLogin, onClose }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const enforceShopifyLogin = !!marketplaceConfig.enforceShopifyLogin;
+  const shopifyLoginUrl = marketplaceConfig.loginUrl;
+  const shopName = useMemo(() => {
+    if (!marketplaceConfig.shopDomain) return null;
+    return marketplaceConfig.shopDomain.replace('.myshopify.com', '');
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,7 +46,7 @@ const CustomerAuth = ({ onLogin, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -46,24 +55,16 @@ const CustomerAuth = ({ onLogin, onClose }) => {
     setError('');
 
     try {
-      // For MVP, we'll just store the credentials locally
-      // In a real app, this would make an API call to register/login
       const customerData = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-        id: Date.now().toString(), // Simple ID for MVP
+        id: Date.now().toString(),
         loginTime: new Date().toISOString()
       };
 
-      // Store in sessionStorage (clears when browser closes)
       sessionStorage.setItem('customerAuth', JSON.stringify(customerData));
-      
-      // Call the parent component's onLogin function
       onLogin(customerData);
-      
-      // Close the modal
       onClose();
-      
     } catch (err) {
       setError('Something went wrong. Please try again.');
       console.error('Auth error:', err);
@@ -77,6 +78,42 @@ const CustomerAuth = ({ onLogin, onClose }) => {
     setError('');
     setFormData({ name: '', email: '' });
   };
+
+  if (enforceShopifyLogin) {
+    return (
+      <div className="customer-auth-overlay">
+        <div className="customer-auth-modal">
+          <div className="customer-auth-header">
+            <h2>Sign in to Bid</h2>
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+
+          <div className="customer-auth-body">
+            <p className="auth-description">
+              {shopName
+                ? `Please sign in with your ${shopName} store account to place bids.`
+                : 'Please sign in with your store account to place bids.'}
+            </p>
+
+            <div className="shopify-login-card">
+              <p>You'll be redirected to your Shopify login page. Once you return, you can continue bidding.</p>
+              <button
+                type="button"
+                className="auth-submit-btn"
+                onClick={() => {
+                  if (shopifyLoginUrl) {
+                    window.location.href = shopifyLoginUrl;
+                  }
+                }}
+              >
+                Continue to Shopify Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="customer-auth-overlay">

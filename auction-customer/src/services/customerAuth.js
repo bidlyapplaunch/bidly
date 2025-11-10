@@ -1,8 +1,27 @@
 /**
  * Customer Authentication Service
- * Handles temporary customer authentication for MVP purposes
- * Stores credentials in sessionStorage (clears when browser closes)
+ * Handles customer authentication for the auction marketplace.
+ * When running inside a Shopify Storefront (via app proxy) we rely on Shopify customer sessions.
+ * Otherwise we fall back to local sessionStorage for non-Shopify environments.
  */
+
+const getMarketplaceConfig = () => {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+  return window.BidlyMarketplaceConfig || {};
+};
+
+const buildCustomerFromConfig = (configCustomer = {}) => ({
+  id: configCustomer.id,
+  email: configCustomer.email,
+  name: configCustomer.name || configCustomer.email || 'Shopify Customer',
+  fullName: configCustomer.name || configCustomer.email || 'Shopify Customer',
+  firstName: configCustomer.firstName || '',
+  lastName: configCustomer.lastName || '',
+  isTemp: false,
+  source: 'shopify'
+});
 
 class CustomerAuthService {
   constructor() {
@@ -11,23 +30,34 @@ class CustomerAuthService {
   }
 
   /**
-   * Load customer data from sessionStorage or shared login system
+   * Load customer data from Shopify session, shared login system, or sessionStorage
    */
   loadFromStorage() {
     try {
-      // First try shared login system
+      // Attempt Shopify marketplace config first
+      const marketplaceConfig = getMarketplaceConfig();
+      if (marketplaceConfig.customer?.logged_in) {
+        this.customer = buildCustomerFromConfig(marketplaceConfig.customer);
+        console.log('👤 Customer loaded from Shopify marketplace session:', this.customer.name);
+        return;
+      }
+
+      // Try shared login system used by the widget
       if (window.BidlyHybridLogin) {
         const sharedCustomer = window.BidlyHybridLogin.getCurrentCustomer();
         const isLoggedIn = window.BidlyHybridLogin.isUserLoggedIn();
-        
+
         if (isLoggedIn && sharedCustomer) {
           this.customer = sharedCustomer;
-          console.log('👤 Customer loaded from shared login system:', this.customer.fullName || this.customer.name);
+          console.log(
+            '👤 Customer loaded from shared login system:',
+            this.customer.fullName || this.customer.name
+          );
           return;
         }
       }
-      
-      // Fallback to sessionStorage
+
+      // Fall back to sessionStorage (standalone mode)
       const stored = sessionStorage.getItem('customerAuth');
       if (stored) {
         this.customer = JSON.parse(stored);
@@ -75,23 +105,43 @@ class CustomerAuthService {
    */
   async login(customerData) {
     try {
+      const marketplaceConfig = getMarketplaceConfig();
+
+      if (marketplaceConfig.customer?.logged_in) {
+        this.customer = buildCustomerFromConfig(marketplaceConfig.customer);
+        return true;
+      }
+
+      if (marketplaceConfig.enforceShopifyLogin) {
+        if (marketplaceConfig.loginUrl) {
+          window.location.href = marketplaceConfig.loginUrl;
+        }
+        return false;
+      }
+
       // Try shared login system first
       if (window.BidlyHybridLogin) {
-        const success = await window.BidlyHybridLogin.guestLogin(customerData.name, customerData.email);
+        const success = await window.BidlyHybridLogin.guestLogin(
+          customerData.name,
+          customerData.email
+        );
         if (success) {
           const sharedCustomer = window.BidlyHybridLogin.getCurrentCustomer();
           if (sharedCustomer) {
             this.customer = sharedCustomer;
-            console.log('✅ Customer authenticated via shared login system:', sharedCustomer.fullName || sharedCustomer.name);
+            console.log(
+              '✅ Customer authenticated via shared login system:',
+              sharedCustomer.fullName || sharedCustomer.name
+            );
             return true;
           }
         }
       }
-      
-      // Fallback to sessionStorage
+
+      // Fallback to sessionStorage for non-Shopify environments
       sessionStorage.setItem('customerAuth', JSON.stringify(customerData));
       this.customer = customerData;
-      
+
       console.log('✅ Customer authenticated (fallback):', customerData.name);
       return true;
     } catch (error) {
@@ -109,10 +159,17 @@ class CustomerAuthService {
       if (window.BidlyHybridLogin) {
         window.BidlyHybridLogin.logout();
       }
-      
-      // Clear local storage
+
+      // Clear local storage/session
       sessionStorage.removeItem('customerAuth');
       this.customer = null;
+
+      const marketplaceConfig = getMarketplaceConfig();
+      if (marketplaceConfig.enforceShopifyLogin && marketplaceConfig.logoutUrl) {
+        window.location.href = marketplaceConfig.logoutUrl;
+        return true;
+      }
+
       console.log('👋 Customer logged out');
       return true;
     } catch (error) {

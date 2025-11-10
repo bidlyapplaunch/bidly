@@ -19,6 +19,9 @@ import CustomerAuth from './components/CustomerAuth';
 import themeService from './services/themeService';
 
 function App() {
+  const marketplaceConfig = typeof window !== 'undefined' ? (window.BidlyMarketplaceConfig || {}) : {};
+  const enforceShopifyLogin = !!marketplaceConfig.enforceShopifyLogin;
+  const shopifyLoginUrl = marketplaceConfig.loginUrl;
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -364,14 +367,29 @@ function App() {
   const handleCustomerLogout = () => {
     customerAuthService.logout();
     setCustomer(null);
-    setToastMessage('You have been logged out.');
-    setShowToast(true);
+    if (!enforceShopifyLogin) {
+      setToastMessage('You have been logged out.');
+      setShowToast(true);
+    }
+  };
+
+  const handleLoginAction = () => {
+    if (enforceShopifyLogin && shopifyLoginUrl) {
+      window.location.href = shopifyLoginUrl;
+      return;
+    }
+    setAuthRequired(true);
+    setShowAuthModal(true);
   };
 
   const requireAuth = () => {
     if (!customer) {
-      setAuthRequired(true);
-      setShowAuthModal(true);
+      if (enforceShopifyLogin && shopifyLoginUrl) {
+        window.location.href = shopifyLoginUrl;
+      } else {
+        setAuthRequired(true);
+        setShowAuthModal(true);
+      }
       return false;
     }
     return true;
@@ -415,7 +433,7 @@ function App() {
           secondaryActions={[
             {
               content: customer ? `👤 ${customer.name}` : 'Login to Bid',
-              onAction: customer ? handleCustomerLogout : () => setShowAuthModal(true)
+              onAction: customer ? handleCustomerLogout : handleLoginAction
             }
           ]}
         >

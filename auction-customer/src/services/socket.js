@@ -1,5 +1,18 @@
 import { io } from 'socket.io-client';
 
+const getShopFromURL = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('shop') || 'ezza-auction.myshopify.com';
+};
+
+const getBackendUrl = () => {
+  const shopDomain = getShopFromURL();
+  if (window.BidlyBackendConfig && typeof window.BidlyBackendConfig.getBackendUrl === 'function') {
+    return window.BidlyBackendConfig.getBackendUrl(shopDomain);
+  }
+  return 'https://bidly-auction-backend.onrender.com';
+};
+
 class SocketService {
   constructor() {
     this.socket = null;
@@ -8,7 +21,8 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('https://bidly-auction-backend.onrender.com', {
+      const backendUrl = getBackendUrl();
+      this.socket = io(backendUrl, {
         transports: ['websocket', 'polling']
       });
 

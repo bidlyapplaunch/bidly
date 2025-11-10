@@ -82,6 +82,23 @@
   line-height: 1.5;
 }
 
+.shopify-login-card {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shopify-login-card p {
+  margin: 0;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -245,6 +262,15 @@
 .bidly-marketplace-root .auth-description,
 .bidly-marketplace-root .auth-switch p {
   color: var(--bidly-color-text-secondary, rgba(17, 24, 39, 0.65));
+}
+
+.bidly-marketplace-root .shopify-login-card {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.bidly-marketplace-root .shopify-login-card p {
+  color: var(--bidly-color-text-primary, #111827);
 }
 
 .bidly-marketplace-root .form-group input {
