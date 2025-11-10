@@ -2299,8 +2299,32 @@
     // ===== CHAT FUNCTIONALITY =====
     let chatSocket = null;
     let currentProductId = null;
+    let currentProductIdRaw = null;
     let chatUsername = null;
     let chatInitialized = false;
+    const pendingLocalChatMessages = [];
+
+    function deriveChatRoomId(rawValue) {
+        if (rawValue === null || rawValue === undefined) {
+            return null;
+        }
+
+        const value = rawValue.toString().trim();
+        if (!value) {
+            return null;
+        }
+
+        const gidMatch = value.match(/Product\/(\d+)/i);
+        if (gidMatch && gidMatch[1]) {
+            return gidMatch[1];
+        }
+
+        if (/^\d+$/.test(value)) {
+            return value;
+        }
+
+        return value;
+    }
 
     /**
      * Initialize chat for the current product (only for Shopify customers)
@@ -2324,11 +2348,34 @@
             return;
         }
 
-        const productId = window.Shopify?.analytics?.meta?.page?.resourceId ||
-                         document.querySelector('[data-product-id]')?.getAttribute('data-product-id') ||
-                         productHandle; // Fallback to handle
+        let productIdSource =
+            resolvedProductIdCache ||
+            window.__BidlyResolvedProductId ||
+            resolveProductId() ||
+            window.Shopify?.analytics?.meta?.page?.resourceId ||
+            document.querySelector('[data-product-id]')?.getAttribute('data-product-id');
 
-        currentProductId = productId;
+        if (!productIdSource && window.Shopify?.analytics?.meta?.product?.id) {
+            productIdSource = window.Shopify.analytics.meta.product.id;
+        }
+
+        if (!productIdSource) {
+            productIdSource = productHandle;
+        }
+
+        currentProductIdRaw = productIdSource ? productIdSource.toString() : null;
+        currentProductId = deriveChatRoomId(currentProductIdRaw) || currentProductIdRaw;
+
+        if (!currentProductId) {
+            console.warn('Bidly: Chat initialization aborted — product ID unavailable');
+            return;
+        }
+
+        try {
+            window.__BidlyResolvedChatRoomId = currentProductId;
+        } catch (e) {
+            // Ignore assignment errors
+        }
 
         // Get username from customer data
         const customer = getCurrentCustomer();
@@ -2338,7 +2385,7 @@
             chatUsername = `Guest${Math.floor(Math.random() * 1000)}`;
         }
 
-        // Create chat UI
+        // Create chat UI (only once)
         createChatUI();
 
         // Connect to Socket.io for chat
@@ -2365,9 +2412,14 @@
 
         // Set up chat event listeners
         if (chatSocket) {
-            // Listen for chat history
-            chatSocket.on('chat-history', ({ productId, messages }) => {
-                if (productId === currentProductId) {
+            chatSocket.on('chat-history', ({ productId, productIdRaw, messages }) => {
+                const historyRoomId =
+                    deriveChatRoomId(productId) ||
+                    deriveChatRoomId(productIdRaw) ||
+                    (productIdRaw ? productIdRaw.toString() : null) ||
+                    (productId ? productId.toString() : null);
+
+                if (historyRoomId === currentProductId) {
                     displayChatMessages(messages);
                 }
             });
@@ -2398,7 +2450,7 @@
         // Remove existing chat if any
         const existingChat = document.querySelector('.bidly-chat-container');
         if (existingChat) {
-            existingChat.remove();
+            return existingChat;
         }
 
         const chatContainer = document.createElement('div');
@@ -2436,8 +2488,10 @@
 
         document.body.appendChild(chatContainer);
 
-        const toggleBtn = document.getElementById('bidly-chat-toggle');
-        const chatBox = document.getElementById('bidly-chat-box');
+        const toggleBtn = chatContainer.querySelector('#bidly-chat-toggle');
+        const chatBox = chatContainer.querySelector('#bidly-chat-box');
+        const chatForm = chatContainer.querySelector('#bidly-chat-form');
+        const chatInput = chatContainer.querySelector('#bidly-chat-input');
 
         toggleBtn.addEventListener('click', () => {
             chatBox.classList.toggle('hidden');
@@ -2448,19 +2502,20 @@
             }
         });
 
-        const chatForm = document.getElementById('bidly-chat-form');
-        const chatInput = document.getElementById('bidly-chat-input');
-
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            sendChatMessage();
-        });
+        if (chatForm) {
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendChatMessage();
+            });
+        }
 
         toggleBtn.addEventListener('click', () => {
             if (!chatBox.classList.contains('hidden')) {
-                setTimeout(() => chatInput.focus(), 100);
+                setTimeout(() => chatInput?.focus(), 100);
             }
         });
+
+        return chatContainer;
     }
 
     /**
@@ -2475,18 +2530,34 @@
             return;
         }
 
-        // Disable input while sending
+        const clientMessageId = `bidly-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const payload = {
+            productId: currentProductId,
+            productIdRaw: currentProductIdRaw,
+            username: chatUsername,
+            message,
+            timestamp: new Date().toISOString(),
+            clientMessageId
+        };
+
         chatInput.disabled = true;
         sendBtn.disabled = true;
 
-        // Emit message
-        chatSocket.emit('new-chat-message', {
-            productId: currentProductId,
-            username: chatUsername,
-            message: message
-        });
+        chatSocket.emit('new-chat-message', payload);
+        const pendingElement = addChatMessage({ ...payload, __local: true });
+        if (pendingElement) {
+            pendingLocalChatMessages.push({
+                clientMessageId,
+                username: payload.username,
+                message: payload.message,
+                element: pendingElement,
+                timestamp: Date.now()
+            });
+            if (pendingLocalChatMessages.length > 50) {
+                pendingLocalChatMessages.shift();
+            }
+        }
 
-        // Clear input
         chatInput.value = '';
         chatInput.disabled = false;
         sendBtn.disabled = false;
@@ -2506,12 +2577,50 @@
             emptyState.remove();
         }
 
+        const now = Date.now();
+        if (!messageData.__local) {
+            let matchedIndex = -1;
+
+            if (messageData.clientMessageId) {
+                matchedIndex = pendingLocalChatMessages.findIndex(
+                    (entry) => entry.clientMessageId === messageData.clientMessageId
+                );
+            }
+
+            if (matchedIndex === -1 && messageData.username === chatUsername) {
+                matchedIndex = pendingLocalChatMessages.findIndex(
+                    (entry) =>
+                        entry.username === messageData.username &&
+                        entry.message === messageData.message &&
+                        now - entry.timestamp < 15000
+                );
+            }
+
+            if (matchedIndex !== -1) {
+                const matchedEntry = pendingLocalChatMessages.splice(matchedIndex, 1)[0];
+                if (matchedEntry?.element) {
+                    matchedEntry.element.dataset.pending = '0';
+                    const timestampEl = matchedEntry.element.querySelector('.timestamp');
+                    if (timestampEl) {
+                        timestampEl.textContent = new Date(messageData.timestamp || now).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                    return matchedEntry.element;
+                }
+            }
+        }
+
         const messageDiv = document.createElement('div');
         messageDiv.className = 'bidly-chat-message';
+        if (messageData.__local) {
+            messageDiv.dataset.pending = '1';
+        }
 
-        const timestamp = new Date(messageData.timestamp).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        const timestamp = new Date(messageData.timestamp || Date.now()).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
         });
 
         messageDiv.innerHTML = `
@@ -2535,6 +2644,7 @@
         if (!messagesContainer) return;
 
         // Clear existing messages
+        pendingLocalChatMessages.length = 0;
         messagesContainer.innerHTML = '';
 
         if (messages.length === 0) {
