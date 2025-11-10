@@ -214,6 +214,82 @@
 }`;
     }
 
+    function hexToRgba(color, alpha) {
+        if (!color) {
+            return `rgba(0, 0, 0, ${alpha})`;
+        }
+        if (typeof color !== 'string') {
+            return `rgba(0, 0, 0, ${alpha})`;
+        }
+
+        const trimmed = color.trim();
+        if (trimmed.startsWith('rgba')) {
+            return trimmed.replace(/rgba\(([^)]+)\)/, (match, components) => {
+                const parts = components.split(',').map(part => part.trim());
+                if (parts.length < 3) {
+                    return match;
+                }
+                return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+            });
+        }
+
+        if (
+            trimmed.startsWith('rgb') ||
+            trimmed.startsWith('var(') ||
+            trimmed.startsWith('linear-gradient')
+        ) {
+            return trimmed;
+        }
+
+        let hex = trimmed.replace('#', '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(char => char + char).join('');
+        }
+        if (hex.length !== 6) {
+            return trimmed;
+        }
+
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function applyChatTheme(host, theme) {
+        if (!host || !theme) {
+            return;
+        }
+
+        const normalized = theme.colors || DEFAULT_WIDGET_THEME.colors;
+        const gradientEnabled = Boolean(theme.gradientEnabled);
+
+        const chatSurface = gradientEnabled
+            ? `linear-gradient(135deg, ${normalized.bg_gradient_start}, ${normalized.bg_gradient_end})`
+            : normalized.bg_solid || '#111827';
+
+        host.style.setProperty('--bidly-chat-header-bg', normalized.accent || '#6366f1');
+        host.style.setProperty('--bidly-chat-header-text', normalized.button_text || '#ffffff');
+        host.style.setProperty('--bidly-chat-surface', chatSurface);
+        host.style.setProperty('--bidly-chat-surface-inner', hexToRgba(normalized.bg_solid || '#111827', gradientEnabled ? 0.9 : 0.95));
+        host.style.setProperty('--bidly-chat-bubble-bg', hexToRgba(normalized.accent || '#6366f1', 0.18));
+        host.style.setProperty('--bidly-chat-bubble-text', normalized.text || '#e2e8f0');
+        host.style.setProperty('--bidly-chat-muted', hexToRgba(normalized.text || '#94a3b8', 0.6));
+        host.style.setProperty('--bidly-chat-border', hexToRgba(normalized.border || normalized.accent || '#6366f1', 0.28));
+        host.style.setProperty('--bidly-chat-input-bg', hexToRgba(normalized.bg_solid || '#111827', 0.85));
+        host.style.setProperty('--bidly-chat-input-border', hexToRgba(normalized.border || normalized.text || '#475569', 0.45));
+        host.style.setProperty('--bidly-chat-toggle-bg', hexToRgba(normalized.accent || '#6366f1', 0.12));
+        host.style.setProperty('--bidly-chat-toggle-color', normalized.accent || '#6366f1');
+        host.style.setProperty('--bidly-chat-toggle-hover-bg', hexToRgba(normalized.accent || '#6366f1', 0.2));
+        host.style.setProperty('--bidly-chat-toggle-active-bg', normalized.accent || '#6366f1');
+        host.style.setProperty('--bidly-chat-toggle-active-color', normalized.button_text || '#ffffff');
+        host.style.setProperty('--bidly-chat-send-shadow', hexToRgba(normalized.accent || '#6366f1', 0.35));
+        host.style.setProperty('--bidly-history-bg', hexToRgba(normalized.text || '#ffffff', 0.12));
+        host.style.setProperty('--bidly-history-border', hexToRgba(normalized.border || normalized.accent || '#ffffff', 0.2));
+        host.style.setProperty('--bidly-history-color', normalized.button_text || '#ffffff');
+        host.style.setProperty('--bidly-history-hover-bg', hexToRgba(normalized.text || '#ffffff', 0.2));
+        host.style.setProperty('--bidly-history-hover-color', normalized.button_text || '#ffffff');
+    }
+
     async function fetchWidgetThemeSettings(force = false) {
         if (widgetThemeSettingsCache && !force && !PREVIEW_MODE) {
             return widgetThemeSettingsCache;
@@ -253,6 +329,7 @@
         }
 
         const host = widgetContainer;
+        host.__bidlyThemeSettings = theme;
         host.classList.add('bidly-widget-root');
         const templateClassNames = ['bidly-template-A', 'bidly-template-B', 'bidly-template-C', 'bidly-template-D'];
         templateClassNames.forEach(className => host.classList.remove(className));
@@ -289,6 +366,7 @@
         };
 
         ensureVariables(host);
+        applyChatTheme(host, theme);
 
         if (PREVIEW_MODE) {
             const previewRoot = document.querySelector('[data-preview="1"]');
@@ -993,6 +1071,7 @@
         }
 
         initializeRealTimeUpdates(auctionData.auctionId);
+        createChatUI();
     }
     // Initialize countdown timer
     function initializeCountdown(auctionId, endTime) {
@@ -2030,13 +2109,12 @@
         
         console.log('Bidly: Widget content refreshed successfully');
 
-        fetchWidgetThemeSettings()
-            .then(theme => {
-                applyWidgetTheme(widgetElement, theme);
-            })
-            .catch(error => {
-                console.warn('Bidly: Failed to reapply widget theme:', error);
-            });
+        const refreshedTheme =
+            widgetElement.__bidlyThemeSettings ||
+            widgetThemeSettingsCache ||
+            normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
+        applyWidgetTheme(widgetElement, refreshedTheme);
+        createChatUI();
     }
 
     // Main initialization function
@@ -2318,15 +2396,16 @@
             return;
         }
 
+        document.querySelectorAll('.bidly-chat-container').forEach(container => {
+            if (!container.closest('.bidly-widget-root')) {
+                container.remove();
+            }
+        });
+
         const widgetRoot = document.querySelector('.bidly-widget-root');
         if (!widgetRoot) {
             console.warn('Bidly: Unable to find widget root for chat placement');
             return;
-        }
-
-        const legacyChatContainer = document.querySelector('.bidly-chat-container');
-        if (legacyChatContainer) {
-            legacyChatContainer.remove();
         }
 
         let footer = widgetRoot.querySelector('.bidly-widget-footer');
@@ -2336,44 +2415,40 @@
             widgetRoot.appendChild(footer);
         }
 
-        const existingChat = footer.querySelector('.bidly-chat-container');
-        if (existingChat) {
-            existingChat.remove();
-        }
-
         let footerActions = footer.querySelector('.bidly-footer-actions');
         if (!footerActions) {
-            const existingChildren = Array.from(footer.children);
-            footer.innerHTML = '';
             footerActions = document.createElement('div');
             footerActions.className = 'bidly-footer-actions';
+            while (footer.firstChild) {
+                footerActions.appendChild(footer.firstChild);
+            }
             footer.appendChild(footerActions);
-            existingChildren.forEach((child) => footerActions.appendChild(child));
         }
 
-        const existingToggle = footerActions.querySelector('#bidly-chat-toggle');
-        if (existingToggle) {
-            existingToggle.remove();
-        }
+        footerActions.querySelectorAll('.bidly-chat-toggle').forEach(toggle => toggle.remove());
 
         const chatToggle = document.createElement('button');
         chatToggle.type = 'button';
-        chatToggle.className = 'bidly-chat-toggle';
         chatToggle.id = 'bidly-chat-toggle';
+        chatToggle.classList.add('bidly-chat-toggle', 'bidly-history-link');
         chatToggle.textContent = 'Chat Box';
         chatToggle.setAttribute('aria-expanded', 'false');
+        chatToggle.setAttribute('aria-controls', 'bidly-chat-box');
         footerActions.appendChild(chatToggle);
 
         const chatContainer = document.createElement('div');
         chatContainer.className = 'bidly-chat-container';
+        chatContainer.setAttribute('data-placement', 'inline');
         chatContainer.innerHTML = `
             <div class="bidly-chat-box hidden" id="bidly-chat-box">
                 <div class="bidly-chat-header">
-                    <h3>
+                    <h3 class="bidly-chat-title">
                         <span class="online-indicator"></span>
                         Chat Box
                     </h3>
-                    <button type="button" class="bidly-chat-close" id="bidly-chat-close" aria-label="Close chat">✕</button>
+                    <button type="button" class="bidly-chat-close" id="bidly-chat-close" aria-label="Close chat">
+                        ✕
+                    </button>
                 </div>
                 <div class="bidly-chat-messages" id="bidly-chat-messages">
                     <div class="bidly-chat-empty">No messages yet. Start the conversation!</div>
@@ -2394,6 +2469,11 @@
             </div>
         `;
 
+        const existingInlineChat = footer.querySelector('.bidly-chat-container');
+        if (existingInlineChat) {
+            existingInlineChat.remove();
+        }
+
         footer.appendChild(chatContainer);
 
         const chatBox = chatContainer.querySelector('#bidly-chat-box');
@@ -2401,34 +2481,39 @@
         const chatInput = chatContainer.querySelector('#bidly-chat-input');
         const closeBtn = chatContainer.querySelector('#bidly-chat-close');
 
-        const openChat = () => {
-            chatBox.classList.remove('hidden');
-            chatToggle.setAttribute('aria-expanded', 'true');
-            scrollChatToBottom();
-            setTimeout(() => chatInput?.focus(), 100);
-        };
+        const setExpanded = (expanded) => {
+            if (!chatBox) {
+                return;
+            }
 
-        const closeChat = () => {
-            chatBox.classList.add('hidden');
-            chatToggle.setAttribute('aria-expanded', 'false');
+            if (expanded) {
+                chatBox.classList.remove('hidden');
+                chatToggle.setAttribute('aria-expanded', 'true');
+                chatToggle.classList.add('is-active');
+                scrollChatToBottom();
+                setTimeout(() => chatInput?.focus(), 80);
+            } else {
+                chatBox.classList.add('hidden');
+                chatToggle.setAttribute('aria-expanded', 'false');
+                chatToggle.classList.remove('is-active');
+            }
         };
 
         chatToggle.addEventListener('click', () => {
-            if (chatBox.classList.contains('hidden')) {
-                openChat();
-            } else {
-                closeChat();
-            }
+            const expanded = chatToggle.getAttribute('aria-expanded') === 'true';
+            setExpanded(!expanded);
         });
 
         if (closeBtn) {
-            closeBtn.addEventListener('click', closeChat);
+            closeBtn.addEventListener('click', () => setExpanded(false));
         }
 
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            sendChatMessage();
-        });
+        if (chatForm) {
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendChatMessage();
+            });
+        }
     }
 
     /**
