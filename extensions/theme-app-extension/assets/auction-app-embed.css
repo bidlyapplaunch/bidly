@@ -1,9 +1,60 @@
+.bidly-chat-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    max-width: 320px;
+    z-index: 99999;
+}
+
+@media (max-width: 768px) {
+    .bidly-auction-app-embed {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 12px !important;
+        border-radius: 8px !important;
+    }
+
+    .bidly-auction-app-embed .bidly-button,
+    .bidly-auction-app-embed .bidly-history-link,
+    .bidly-auction-app-embed .bidly-bid-history-link,
+    .bidly-auction-app-embed .bidly-chat-toggle-inline {
+        width: 100% !important;
+    }
+
+    .bidly-chat-container {
+        bottom: 70px !important;
+        right: 12px !important;
+        max-width: 95% !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .bidly-chat-container {
+        bottom: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: calc(100% - 20px);
+    }
+}
+
+@media (max-width: 480px) {
+    .bidly-auction-app-embed {
+        padding: 0 8px !important;
+        border-radius: 6px !important;
+    }
+
+    .bidly-auction-app-embed h3,
+    .bidly-auction-app-embed .text {
+        font-size: 14px !important;
+    }
+}
 /* Auction App Embed Styles - Original Design (Before Customization) */
 .bidly-auction-app-embed {
     display: block;
     width: 100%;
     max-width: 420px;
     margin: 0;
+    position: relative;
     font-family: 'Inter', sans-serif;
     color: #1f2937;
 }
