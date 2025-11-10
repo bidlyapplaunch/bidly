@@ -767,13 +767,18 @@
                         </div>
                     `}
 
-                    ${show_bid_history ? `
-                        <div class="bidly-widget-footer">
-                            <a href="#" onclick="window.BidlyAuctionWidget.openBidHistory('${auctionId}')" class="bidly-history-link">
-                                View Bid History
-                            </a>
+                    <div class="bidly-widget-footer">
+                        <div class="bidly-footer-actions">
+                            <button type="button" class="bidly-chat-toggle-inline" id="bidly-chat-toggle-inline" aria-controls="bidly-chat-box">
+                                Live Chat
+                            </button>
+                            ${show_bid_history ? `
+                                <a href="#" onclick="window.BidlyAuctionWidget.openBidHistory('${auctionId}')" class="bidly-history-link">
+                                    View Bid History
+                                </a>
+                            ` : ''}
                         </div>
-                    ` : ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -2184,6 +2189,7 @@
             normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
         applyWidgetTheme(widgetElement, refreshedTheme);
         createChatUI();
+        setupChatToggleControls();
     }
 
     // Main initialization function
@@ -2364,6 +2370,67 @@
     let chatUsername = null;
     let chatInitialized = false;
     const pendingLocalChatMessages = [];
+    let inlineChatToggleButton = null;
+    let chatCloseButton = null;
+
+    function setupChatToggleControls() {
+        const chatBox = document.getElementById('bidly-chat-box');
+        if (!chatBox) {
+            return;
+        }
+
+        const inlineToggle = document.getElementById('bidly-chat-toggle-inline');
+        if (inlineChatToggleButton && inlineChatToggleButton !== inlineToggle) {
+            inlineChatToggleButton.removeEventListener('click', onInlineChatToggleClick);
+        }
+        inlineChatToggleButton = inlineToggle || null;
+        if (inlineChatToggleButton) {
+            inlineChatToggleButton.addEventListener('click', onInlineChatToggleClick);
+            inlineChatToggleButton.setAttribute('aria-expanded', chatBox.classList.contains('hidden') ? 'false' : 'true');
+            if (chatBox.classList.contains('hidden')) {
+                inlineChatToggleButton.classList.remove('active');
+            } else {
+                inlineChatToggleButton.classList.add('active');
+            }
+        }
+
+        const closeBtn = document.getElementById('bidly-chat-close');
+        if (chatCloseButton && chatCloseButton !== closeBtn) {
+            chatCloseButton.removeEventListener('click', onChatCloseButtonClick);
+        }
+        chatCloseButton = closeBtn || null;
+        if (chatCloseButton) {
+            chatCloseButton.addEventListener('click', onChatCloseButtonClick);
+        }
+    }
+
+    function onInlineChatToggleClick() {
+        toggleChatVisibility();
+    }
+
+    function onChatCloseButtonClick() {
+        toggleChatVisibility(true);
+    }
+
+    function toggleChatVisibility(forceClose = false) {
+        const chatBox = document.getElementById('bidly-chat-box');
+        if (!chatBox) {
+            return;
+        }
+
+        const shouldClose = forceClose || !chatBox.classList.contains('hidden');
+        if (shouldClose) {
+            chatBox.classList.add('hidden');
+            inlineChatToggleButton?.classList.remove('active');
+            inlineChatToggleButton?.setAttribute('aria-expanded', 'false');
+        } else {
+            chatBox.classList.remove('hidden');
+            inlineChatToggleButton?.classList.add('active');
+            inlineChatToggleButton?.setAttribute('aria-expanded', 'true');
+            setTimeout(() => document.getElementById('bidly-chat-input')?.focus(), 100);
+            scrollChatToBottom();
+        }
+    }
 
     function deriveChatRoomId(rawValue) {
         if (rawValue === null || rawValue === undefined) {
@@ -2448,6 +2515,7 @@
 
         // Create chat UI (only once)
         createChatUI();
+        setupChatToggleControls();
 
         // Connect to Socket.io for chat
         if (window.io && socket) {
@@ -2511,22 +2579,20 @@
         // Remove existing chat if any
         const existingChat = document.querySelector('.bidly-chat-container');
         if (existingChat) {
+            setupChatToggleControls();
             return existingChat;
         }
 
         const chatContainer = document.createElement('div');
         chatContainer.className = 'bidly-chat-container';
         chatContainer.innerHTML = `
-            <button class="bidly-chat-toggle" id="bidly-chat-toggle" aria-label="Toggle chat">
-                <span class="chat-icon">💬</span>
-                <span class="close-icon">✕</span>
-            </button>
             <div class="bidly-chat-box hidden" id="bidly-chat-box">
                 <div class="bidly-chat-header">
                     <h3>
                         <span class="online-indicator"></span>
                         Live Chat
                     </h3>
+                    <button class="bidly-chat-close" id="bidly-chat-close" aria-label="Close chat">✕</button>
                 </div>
                 <div class="bidly-chat-messages" id="bidly-chat-messages">
                     <div class="bidly-chat-empty">No messages yet. Start the conversation!</div>
@@ -2549,20 +2615,7 @@
 
         document.body.appendChild(chatContainer);
 
-        const toggleBtn = chatContainer.querySelector('#bidly-chat-toggle');
-        const chatBox = chatContainer.querySelector('#bidly-chat-box');
         const chatForm = chatContainer.querySelector('#bidly-chat-form');
-        const chatInput = chatContainer.querySelector('#bidly-chat-input');
-
-        toggleBtn.addEventListener('click', () => {
-            chatBox.classList.toggle('hidden');
-            toggleBtn.classList.toggle('minimized');
-
-            if (!chatBox.classList.contains('hidden')) {
-                scrollChatToBottom();
-            }
-        });
-
         if (chatForm) {
             chatForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -2570,11 +2623,7 @@
             });
         }
 
-        toggleBtn.addEventListener('click', () => {
-            if (!chatBox.classList.contains('hidden')) {
-                setTimeout(() => chatInput?.focus(), 100);
-            }
-        });
+        setupChatToggleControls();
 
         return chatContainer;
     }

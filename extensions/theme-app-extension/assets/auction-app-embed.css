@@ -658,6 +658,34 @@
     outline: none;
 }
 
+.bidly-chat-toggle-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 18px;
+    border-radius: calc(var(--bidly-border-radius, 16px) - 6px);
+    border: 1px solid var(--bidly-chat-toggle-color, #6366f1);
+    background: var(--bidly-chat-toggle-bg, rgba(99, 102, 241, 0.12));
+    color: var(--bidly-chat-toggle-color, #6366f1);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bidly-chat-toggle-inline:hover,
+.bidly-chat-toggle-inline:focus {
+    background: var(--bidly-chat-toggle-hover-bg, rgba(99, 102, 241, 0.2));
+    outline: none;
+}
+
+.bidly-chat-toggle-inline.active {
+    background: var(--bidly-chat-toggle-active-bg, #6366f1);
+    color: var(--bidly-chat-toggle-active-color, #ffffff);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.28);
+}
+
 /* ===== CHAT BOX STYLES ===== */
 .bidly-chat-container {
     position: fixed;
@@ -665,48 +693,6 @@
     right: 20px;
     z-index: 9999;
     font-family: 'Inter', sans-serif;
-}
-
-.bidly-chat-toggle {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.bidly-chat-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-.bidly-chat-toggle.minimized {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.bidly-chat-toggle .chat-icon {
-    display: block;
-}
-
-.bidly-chat-toggle .close-icon {
-    display: none;
-}
-
-.bidly-chat-toggle.minimized .chat-icon {
-    display: none;
-}
-
-.bidly-chat-toggle.minimized .close-icon {
-    display: block;
 }
 
 .bidly-chat-box {
@@ -720,7 +706,7 @@
     overflow: hidden;
     animation: slideInUp 0.3s ease-out;
     position: absolute;
-    bottom: 70px;
+    bottom: 0;
     right: 0;
 }
 
@@ -729,9 +715,9 @@
 }
 
 .bidly-chat-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--bidly-chat-header-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
     padding: 16px 20px;
-    color: white;
+    color: var(--bidly-chat-header-text, #ffffff);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -750,6 +736,25 @@
     border-radius: 50%;
     margin-right: 8px;
     display: inline-block;
+}
+
+.bidly-chat-close {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+}
+
+.bidly-chat-close:hover,
+.bidly-chat-close:focus {
+    opacity: 0.75;
+    outline: none;
 }
 
 .bidly-chat-messages {
