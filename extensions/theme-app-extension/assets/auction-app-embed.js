@@ -252,7 +252,7 @@
         let styleElement = host.querySelector('#bidly-widget-theme');
         if (!styleElement) {
             styleElement = document.createElement('style');
-            style.id = 'bidly-widget-theme';
+            styleElement.id = 'bidly-widget-theme';
             host.prepend(styleElement);
         }
 
