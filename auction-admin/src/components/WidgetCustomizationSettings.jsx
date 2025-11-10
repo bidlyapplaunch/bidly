@@ -190,6 +190,25 @@ function WidgetPreviewFrame({ settings, previewData, previewState, shopDomain })
     };
   }, [previewUrl]);
 
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (!event?.data || event.data.type !== 'BIDLY_PREVIEW_HEIGHT') {
+        return;
+      }
+
+      const nextHeight = Number(event.data.height);
+      if (!Number.isFinite(nextHeight) || !iframeRef.current) {
+        return;
+      }
+
+      const paddedHeight = Math.min(Math.max(nextHeight + 32, 520), 1200);
+      iframeRef.current.style.height = `${paddedHeight}px`;
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   const themePayload = useMemo(() => ({
     template: settings.template,
     font: settings.font,
@@ -250,7 +269,7 @@ function WidgetPreviewFrame({ settings, previewData, previewState, shopDomain })
       style={{
         width: '100%',
         maxWidth: 460,
-        height: 720,
+        height: 680,
         border: '1px solid var(--p-color-border-subdued)',
         borderRadius: 16,
         background: '#f4f6f8'

@@ -324,6 +324,38 @@ app.get('/preview/widget', (req, res) => {
     <div class="bidly-product-widget bidly-auction-app-embed" data-bidly-widget-root data-preview="1"></div>
     <script src="/preview/widget-assets/backendConfig.js?v=${version}"></script>
     <script src="/preview/widget-assets/auction-app-embed.js?v=${version}" defer></script>
+    <script>
+      (function() {
+        function reportHeight() {
+          try {
+            var height = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
+            if (window.parent && height) {
+              window.parent.postMessage({ type: 'BIDLY_PREVIEW_HEIGHT', height: height }, '*');
+            }
+          } catch (error) {
+            console.warn('Bidly preview height reporting failed:', error);
+          }
+        }
+
+        window.addEventListener('load', function() {
+          reportHeight();
+          setTimeout(reportHeight, 500);
+          setTimeout(reportHeight, 1500);
+        });
+
+        window.addEventListener('resize', reportHeight);
+
+        var observer = new MutationObserver(function() {
+          reportHeight();
+        });
+
+        observer.observe(document.body, {
+          attributes: true,
+          childList: true,
+          subtree: true
+        });
+      })();
+    </script>
   </body>
 </html>`;
 
