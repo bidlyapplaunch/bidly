@@ -176,6 +176,7 @@
     };
 
     let widgetThemeSettingsCache = null;
+    let resolvedProductIdCache = null;
 
     function normalizeWidgetTheme(settings = {}) {
         const normalized = {
@@ -831,12 +832,19 @@
                     }
                 }
             }
-            
             if (!productId) {
                 console.error('Bidly: Could not determine product ID after retries');
                 console.log('Bidly: window.Shopify:', window.Shopify);
                 console.log('Bidly: document.readyState:', document.readyState);
                 return { hasAuction: false };
+            }
+
+            productId = productId.toString();
+            resolvedProductIdCache = productId;
+            try {
+                window.__BidlyResolvedProductId = productId;
+            } catch (e) {
+                // Ignore if window is not writable (sandboxed iframe, etc.)
             }
 
             console.log('Bidly: Checking for auction data for product ID:', productId);
@@ -2320,12 +2328,21 @@
             return;
         }
 
-        // Try to get product ID from Shopify data
-        const productId = window.Shopify?.analytics?.meta?.page?.resourceId || 
-                         document.querySelector('[data-product-id]')?.getAttribute('data-product-id') ||
-                         productHandle; // Fallback to handle
+        const productIdSource =
+            resolvedProductIdCache ||
+            window.__BidlyResolvedProductId ||
+            resolveProductId() ||
+            window.Shopify?.analytics?.meta?.page?.resourceId ||
+            document.querySelector('[data-product-id]')?.getAttribute('data-product-id') ||
+            productHandle; // Final fallback (handle)
 
+        const productId = productIdSource ? productIdSource.toString() : null;
         currentProductId = productId;
+
+        if (!currentProductId) {
+            console.warn('Bidly: Chat initialization aborted — product ID unavailable');
+            return;
+        }
 
         // Get username from customer data
         const customer = getCurrentCustomer();
@@ -2398,7 +2415,7 @@
 
         const existingChat = document.querySelector('.bidly-chat-container');
         if (existingChat) {
-            existingChat.remove();
+            return existingChat;
         }
 
         const chatContainer = document.createElement('div');
