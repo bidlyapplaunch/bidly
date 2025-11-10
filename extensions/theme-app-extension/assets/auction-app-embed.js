@@ -2533,25 +2533,33 @@
         const message = chatInput.value.trim();
         const sendBtn = document.getElementById('bidly-chat-send');
 
-        if (!message || !chatSocket || !currentProductId || !chatUsername) {
+        if (!message || !currentProductId || !chatUsername) {
             return;
         }
-
-        // Disable input while sending
-        chatInput.disabled = true;
-        sendBtn.disabled = true;
-
-        // Emit message
-        chatSocket.emit('new-chat-message', {
+        const payload = {
             productId: currentProductId,
             username: chatUsername,
-            message: message
-        });
+            message,
+            timestamp: new Date().toISOString(),
+            local: true
+        };
 
-        // Clear input
+        chatInput.disabled = true;
+        if (sendBtn) {
+            sendBtn.disabled = true;
+        }
+
+        if (chatSocket) {
+            chatSocket.emit('new-chat-message', payload);
+        }
+
+        addChatMessage(payload);
+
         chatInput.value = '';
         chatInput.disabled = false;
-        sendBtn.disabled = false;
+        if (sendBtn) {
+            sendBtn.disabled = false;
+        }
         chatInput.focus();
     }
 

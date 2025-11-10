@@ -660,14 +660,14 @@
 
 .bidly-chat-toggle {
     background: var(--bidly-chat-toggle-bg, rgba(99, 102, 241, 0.12));
-    color: var(--bidly-chat-toggle-color, var(--bidly-accent-color, #6366f1));
+    color: var(--bidly-chat-toggle-color, var(--bidly-button-text, #ffffff));
     border-color: var(--bidly-chat-toggle-bg, rgba(99, 102, 241, 0.12));
 }
 
 .bidly-chat-toggle:hover,
 .bidly-chat-toggle:focus {
     background: var(--bidly-chat-toggle-hover-bg, rgba(99, 102, 241, 0.2));
-    color: var(--bidly-chat-toggle-color, var(--bidly-accent-color, #6366f1));
+    color: var(--bidly-chat-toggle-color, var(--bidly-button-text, #ffffff));
     outline: none;
 }
 
