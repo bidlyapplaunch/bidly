@@ -2317,25 +2317,63 @@
         if (!CONFIG.capabilities?.features?.chat) {
             return;
         }
-        // Remove existing chat if any
-        const existingChat = document.querySelector('.bidly-chat-container');
+
+        const widgetRoot = document.querySelector('.bidly-widget-root');
+        if (!widgetRoot) {
+            console.warn('Bidly: Unable to find widget root for chat placement');
+            return;
+        }
+
+        const legacyChatContainer = document.querySelector('.bidly-chat-container');
+        if (legacyChatContainer) {
+            legacyChatContainer.remove();
+        }
+
+        let footer = widgetRoot.querySelector('.bidly-widget-footer');
+        if (!footer) {
+            footer = document.createElement('div');
+            footer.className = 'bidly-widget-footer';
+            widgetRoot.appendChild(footer);
+        }
+
+        const existingChat = footer.querySelector('.bidly-chat-container');
         if (existingChat) {
             existingChat.remove();
         }
 
+        let footerActions = footer.querySelector('.bidly-footer-actions');
+        if (!footerActions) {
+            const existingChildren = Array.from(footer.children);
+            footer.innerHTML = '';
+            footerActions = document.createElement('div');
+            footerActions.className = 'bidly-footer-actions';
+            footer.appendChild(footerActions);
+            existingChildren.forEach((child) => footerActions.appendChild(child));
+        }
+
+        const existingToggle = footerActions.querySelector('#bidly-chat-toggle');
+        if (existingToggle) {
+            existingToggle.remove();
+        }
+
+        const chatToggle = document.createElement('button');
+        chatToggle.type = 'button';
+        chatToggle.className = 'bidly-chat-toggle';
+        chatToggle.id = 'bidly-chat-toggle';
+        chatToggle.textContent = 'Chat Box';
+        chatToggle.setAttribute('aria-expanded', 'false');
+        footerActions.appendChild(chatToggle);
+
         const chatContainer = document.createElement('div');
         chatContainer.className = 'bidly-chat-container';
         chatContainer.innerHTML = `
-            <button class="bidly-chat-toggle" id="bidly-chat-toggle" aria-label="Toggle chat">
-                <span class="chat-icon">💬</span>
-                <span class="close-icon">✕</span>
-            </button>
             <div class="bidly-chat-box hidden" id="bidly-chat-box">
                 <div class="bidly-chat-header">
                     <h3>
                         <span class="online-indicator"></span>
-                        Live Chat
+                        Chat Box
                     </h3>
+                    <button type="button" class="bidly-chat-close" id="bidly-chat-close" aria-label="Close chat">✕</button>
                 </div>
                 <div class="bidly-chat-messages" id="bidly-chat-messages">
                     <div class="bidly-chat-empty">No messages yet. Start the conversation!</div>
@@ -2356,36 +2394,40 @@
             </div>
         `;
 
-        document.body.appendChild(chatContainer);
+        footer.appendChild(chatContainer);
 
-        // Set up toggle button
-        const toggleBtn = document.getElementById('bidly-chat-toggle');
-        const chatBox = document.getElementById('bidly-chat-box');
-        
-        toggleBtn.addEventListener('click', () => {
-            chatBox.classList.toggle('hidden');
-            toggleBtn.classList.toggle('minimized');
-            
-            // Scroll to bottom when opening
-            if (!chatBox.classList.contains('hidden')) {
-                scrollChatToBottom();
+        const chatBox = chatContainer.querySelector('#bidly-chat-box');
+        const chatForm = chatContainer.querySelector('#bidly-chat-form');
+        const chatInput = chatContainer.querySelector('#bidly-chat-input');
+        const closeBtn = chatContainer.querySelector('#bidly-chat-close');
+
+        const openChat = () => {
+            chatBox.classList.remove('hidden');
+            chatToggle.setAttribute('aria-expanded', 'true');
+            scrollChatToBottom();
+            setTimeout(() => chatInput?.focus(), 100);
+        };
+
+        const closeChat = () => {
+            chatBox.classList.add('hidden');
+            chatToggle.setAttribute('aria-expanded', 'false');
+        };
+
+        chatToggle.addEventListener('click', () => {
+            if (chatBox.classList.contains('hidden')) {
+                openChat();
+            } else {
+                closeChat();
             }
         });
 
-        // Set up form submission
-        const chatForm = document.getElementById('bidly-chat-form');
-        const chatInput = document.getElementById('bidly-chat-input');
-        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeChat);
+        }
+
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             sendChatMessage();
-        });
-
-        // Focus input when chat opens
-        toggleBtn.addEventListener('click', () => {
-            if (!chatBox.classList.contains('hidden')) {
-                setTimeout(() => chatInput.focus(), 100);
-            }
         });
     }
 

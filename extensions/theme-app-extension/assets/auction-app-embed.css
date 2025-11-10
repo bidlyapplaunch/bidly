@@ -623,10 +623,70 @@
 
 /* Widget Footer - Seamless flow */
 .bidly-widget-footer {
-    padding: 12px 24px;
+    padding: 12px 24px 20px 24px;
     background: transparent;
     border-top: none;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.bidly-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.bidly-chat-toggle {
+    background: transparent;
+    border: none;
+    color: var(--bidly-accent-color, #6366f1);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.bidly-chat-toggle:hover,
+.bidly-chat-toggle:focus {
+    text-decoration: underline;
+    outline: none;
+}
+
+.bidly-chat-container {
+    width: 100%;
+}
+
+.bidly-chat-box {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.92);
+    border-radius: calc(var(--bidly-border-radius, 16px) - 4px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.18);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.bidly-chat-box.hidden {
+    display: none;
+}
+
+.bidly-chat-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+}
+
+.bidly-chat-close:hover {
+    color: #ffffff;
 }
 
 /* Pending/Ended Messages */
@@ -971,79 +1031,8 @@
 }
 
 /* ===== CHAT BOX STYLES ===== */
-.bidly-chat-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 99999; /* Higher than widget z-index (9999) to overlay on top */
-    font-family: 'Inter', sans-serif;
-}
-
-.bidly-chat-toggle {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 99999; /* Ensure toggle button is always on top */
-}
-
-.bidly-chat-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-.bidly-chat-toggle.minimized {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.bidly-chat-toggle .chat-icon {
-    display: block;
-}
-
-.bidly-chat-toggle .close-icon {
-    display: none;
-}
-
-.bidly-chat-toggle.minimized .chat-icon {
-    display: none;
-}
-
-.bidly-chat-toggle.minimized .close-icon {
-    display: block;
-}
-
-.bidly-chat-box {
-    width: 350px;
-    height: 500px;
-    background: #1f2937;
-    border-radius: 16px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: slideInUp 0.3s ease-out;
-    position: absolute;
-    bottom: 70px;
-    right: 0;
-    z-index: 99999; /* Ensure chat box overlays on top of everything */
-}
-
-.bidly-chat-box.hidden {
-    display: none;
-}
-
 .bidly-chat-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--bidly-accent-color, #6366f1) 0%, rgba(99, 102, 241, 0.75) 100%);
     padding: 16px 20px;
     color: white;
     display: flex;
@@ -1055,6 +1044,9 @@
     margin: 0;
     font-size: 16px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .bidly-chat-header .online-indicator {
@@ -1062,7 +1054,6 @@
     height: 8px;
     background: #10b981;
     border-radius: 50%;
-    margin-right: 8px;
     display: inline-block;
 }
 
@@ -1212,14 +1203,6 @@
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-@media (max-width: 480px) {
-    .bidly-chat-box {
-        width: calc(100vw - 40px);
-        right: 20px;
-        bottom: 70px;
     }
 }
 
