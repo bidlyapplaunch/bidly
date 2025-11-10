@@ -269,6 +269,21 @@
         }
 
         styleElement.textContent = buildWidgetThemeStyle(theme);
+
+        const colors = theme.colors || DEFAULT_WIDGET_THEME.colors;
+        host.style.setProperty('--bidly-font-family', `${(theme.font || DEFAULT_WIDGET_THEME.font)}`);
+        host.style.setProperty('--bidly-text-color', colors.text);
+        host.style.setProperty('--bidly-accent-color', colors.accent);
+        host.style.setProperty('--bidly-bg-color', colors.bg_solid);
+        host.style.setProperty('--bidly-bg-gradient-start', colors.bg_gradient_start);
+        host.style.setProperty('--bidly-bg-gradient-end', colors.bg_gradient_end);
+        host.style.setProperty('--bidly-bg-gradient-enable', theme.gradientEnabled ? '1' : '0');
+        host.style.setProperty('--bidly-button-bg', colors.button_bg);
+        host.style.setProperty('--bidly-button-hover-bg', colors.button_hover);
+        host.style.setProperty('--bidly-button-text', colors.button_text);
+        host.style.setProperty('--bidly-border-color', colors.border);
+        host.style.setProperty('--bidly-border-radius', `${theme.borderRadius || DEFAULT_WIDGET_THEME.borderRadius}px`);
+        host.style.setProperty('--bidly-box-shadow', THEME_BOX_SHADOWS[theme.boxShadow] || THEME_BOX_SHADOWS[DEFAULT_WIDGET_THEME.boxShadow]);
     }
 
     function buildPreviewAuctionData(override = {}) {
