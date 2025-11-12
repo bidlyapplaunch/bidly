@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../config/backendConfig.js';
+import authService from './auth.js';
 
 // Helper function to get shop from URL parameters
 // Try multiple sources: URL params, hash, App Bridge, or hostname
@@ -65,6 +66,8 @@ const api = axios.create({
   },
 });
 
+let isHandlingAuthError = false;
+
 // Request interceptor for logging, auth, and dynamic backend URL
 api.interceptors.request.use(
   (config) => {
@@ -113,6 +116,22 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const status = error.response?.status;
+    const message = error.response?.data?.message || '';
+    const lowercaseMessage = typeof message === 'string' ? message.toLowerCase() : '';
+
+    if (
+      status === 401 &&
+      !isHandlingAuthError &&
+      (lowercaseMessage.includes('token') || lowercaseMessage.includes('unauthorized'))
+    ) {
+      isHandlingAuthError = true;
+      console.warn('🔐 Detected invalid auth token. Logging out and reloading.');
+      authService.logout();
+      const { origin, pathname, search } = window.location;
+      window.location.href = `${origin}${pathname}${search}`;
+    }
+
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
