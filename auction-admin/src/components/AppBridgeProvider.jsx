@@ -78,7 +78,7 @@ const AppBridgeProvider = ({ children }) => {
         return;
       }
 
-      if (!config.host && config.forceRedirect) {
+      if (!config.host) {
         console.warn('⚠️ App Bridge host parameter missing; skipping initialization');
         setReady(true);
         return;
@@ -89,8 +89,8 @@ const AppBridgeProvider = ({ children }) => {
       window.shopify = app;
       setReady(true);
     } catch (err) {
-      console.error('❌ Failed to create App Bridge app instance:', err);
-      setError(err.message || 'Unable to bootstrap Shopify App Bridge');
+      console.warn('⚠️ Shopify App Bridge unavailable in this context:', err);
+      setReady(true);
     }
   }, [config, ready]);
 
