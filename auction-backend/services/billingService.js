@@ -1,11 +1,11 @@
 import axios from 'axios';
 import Store from '../models/Store.js';
+import Auction from '../models/Auction.js';
 import {
   BILLING_PLANS,
   DEFAULT_PLAN,
   getPlanCapabilities,
   getPlanLevel,
-  planMeetsRequirement,
   sanitizePlan
 } from '../config/billingPlans.js';
 
@@ -116,6 +116,54 @@ export async function createSubscription(store, planKey, returnUrl) {
   };
 }
 
+export async function applyPlanChangeEffects(store, previousPlanKey, nextPlanKey) {
+  if (!store || !store.shopDomain) {
+    return { closedAuctions: 0, popcornDisabled: 0 };
+  }
+
+  const previousPlan = sanitizePlan(previousPlanKey || DEFAULT_PLAN);
+  const nextPlan = sanitizePlan(nextPlanKey || DEFAULT_PLAN);
+
+  if (getPlanLevel(nextPlan) >= getPlanLevel(previousPlan)) {
+    return { closedAuctions: 0, popcornDisabled: 0 };
+  }
+
+  const targetPlanConfig = BILLING_PLANS[nextPlan] || BILLING_PLANS[DEFAULT_PLAN];
+  const closingLimit = targetPlanConfig?.limits?.auctions ?? 0;
+  let closedAuctions = 0;
+
+  if (closingLimit !== null) {
+    const activeAuctions = await Auction.find({
+      shopDomain: store.shopDomain,
+      isDeleted: { $ne: true },
+      status: { $in: ['pending', 'active'] }
+    }).sort({ createdAt: -1, _id: -1 });
+
+    if (activeAuctions.length > closingLimit) {
+      const toClose = activeAuctions.slice(closingLimit);
+      await Promise.all(
+        toClose.map(async (auction) => {
+          auction.status = 'closed';
+          auction.updatedAt = new Date();
+          await auction.save();
+        })
+      );
+      closedAuctions = toClose.length;
+    }
+  }
+
+  let popcornDisabled = 0;
+  if (!targetPlanConfig?.features?.popcorn) {
+    const result = await Auction.updateMany(
+      { shopDomain: store.shopDomain, popcornEnabled: true },
+      { popcornEnabled: false }
+    );
+    popcornDisabled = result.modifiedCount || 0;
+  }
+
+  return { closedAuctions, popcornDisabled };
+}
+
 export async function getActiveSubscriptions(store) {
   const query = `
     query ActiveSubscriptions {
@@ -140,10 +188,11 @@ export async function syncStorePlanFromShopify(store) {
   const subscriptions = await getActiveSubscriptions(store);
 
   if (!subscriptions.length) {
-    const previousPlan = store.plan;
+    const previousPlan = sanitizePlan(store.plan || DEFAULT_PLAN);
     store.plan = DEFAULT_PLAN;
     store.pendingPlan = null;
     await store.save();
+    await applyPlanChangeEffects(store, previousPlan, DEFAULT_PLAN);
     return {
       activePlan: DEFAULT_PLAN,
       changed: previousPlan !== DEFAULT_PLAN
@@ -165,17 +214,18 @@ export async function syncStorePlanFromShopify(store) {
 
   if (!selectedSubscription) {
     // No matching plan names - fall back to default
-    const previousPlan = store.plan;
+    const previousPlan = sanitizePlan(store.plan || DEFAULT_PLAN);
     store.plan = DEFAULT_PLAN;
     store.pendingPlan = null;
     await store.save();
+    await applyPlanChangeEffects(store, previousPlan, DEFAULT_PLAN);
     return {
       activePlan: DEFAULT_PLAN,
       changed: previousPlan !== DEFAULT_PLAN
     };
   }
 
-  const previousPlan = store.plan;
+  const previousPlan = sanitizePlan(store.plan || DEFAULT_PLAN);
   store.plan = highestPlan;
   store.pendingPlan = null;
   store.planActiveAt = new Date(selectedSubscription.createdAt || Date.now());
@@ -184,6 +234,7 @@ export async function syncStorePlanFromShopify(store) {
     store.trialEndsAt = new Date(createdAt.getTime() + selectedSubscription.trialDays * 24 * 60 * 60 * 1000);
   }
   await store.save();
+  await applyPlanChangeEffects(store, previousPlan, highestPlan);
 
   return {
     activePlan: highestPlan,

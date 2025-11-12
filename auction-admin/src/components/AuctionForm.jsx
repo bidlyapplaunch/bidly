@@ -80,6 +80,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const [shopifyConfigured, setShopifyConfigured] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const planKey = (planInfo?.plan || 'none').toLowerCase();
+  const allowAuctions = planKey !== 'none';
   const allowPopcorn = planKey === 'pro' || planKey === 'enterprise';
   const allowChat = planKey === 'enterprise';
 
@@ -260,6 +261,35 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     navigate(`/plans${search || ''}`);
   }, [navigate, search]);
 
+  if (!allowAuctions) {
+    return (
+      <Modal
+        open={isOpen}
+        onClose={onClose}
+        title="Choose a plan to create auctions"
+        primaryAction={{
+          content: 'View plans',
+          onAction: handleUpgradeClick
+        }}
+        secondaryActions={[{ content: 'Close', onAction: onClose }]}
+      >
+        <Modal.Section>
+          <Card sectioned>
+            <Text variant="bodyMd">
+              You’re currently in preview mode. Upgrade to a paid Bidly plan to create and manage auctions, unlock widget
+              customization, and enable live bidding features.
+            </Text>
+            <div style={{ marginTop: '16px' }}>
+              <Button primary onClick={handleUpgradeClick}>
+                Explore plans
+              </Button>
+            </div>
+          </Card>
+        </Modal.Section>
+      </Modal>
+    );
+  }
+
   return (
     <Modal
       open={isOpen}
@@ -420,7 +450,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                 onChange={(checked) => handleChange(checked, 'popcornEnabled')}
                 disabled={!allowPopcorn}
                 helpText={`Automatically extend auction time when bids are placed near the end${
-                  allowPopcorn ? '' : ' · Available on the Pro plan.'
+                  allowPopcorn ? '' : ' · Available on the Pro and Enterprise plans.'
                 }`}
               />
             </div>

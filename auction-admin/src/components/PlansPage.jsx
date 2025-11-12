@@ -1,26 +1,63 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Banner,
   Button,
   Frame,
   Layout,
   LegacyCard,
+  Modal,
   Page,
   Spinner,
-  Text
+  Text,
+  List
 } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { billingAPI } from '../services/api';
+import { auctionAPI, billingAPI } from '../services/api';
 
-const PLAN_DEFINITIONS = [
-  {
+const PLAN_LEVELS = {
+  none: 0,
+  basic: 1,
+  pro: 2,
+  enterprise: 3
+};
+
+const FEATURE_LABELS = {
+  removeBranding: 'Remove Bidly branding',
+  customization: 'Widget & marketplace customization',
+  popcorn: 'Popcorn bidding',
+  chat: 'Live bidder chatbox'
+};
+
+const PLAN_CONFIG = {
+  none: {
+    key: 'none',
+    title: 'Preview',
+    price: '$0/mo',
+    description: 'Explore the admin before choosing a plan.',
+    highlights: ['Preview dashboard access', 'No active auctions', 'Upgrade to unlock core features'],
+    limits: { auctions: 0 },
+    features: {
+      removeBranding: false,
+      customization: false,
+      popcorn: false,
+      chat: false
+    }
+  },
+  basic: {
     key: 'basic',
     title: 'Basic',
     price: '$9.99/mo',
     description: 'Start hosting auctions with the essentials.',
-    highlights: ['3 active auctions', 'Standard Bidly branding', 'Core auction workflows']
+    highlights: ['3 active auctions', 'Standard Bidly branding', 'Core auction workflows'],
+    limits: { auctions: 3 },
+    features: {
+      removeBranding: false,
+      customization: false,
+      popcorn: false,
+      chat: false
+    }
   },
-  {
+  pro: {
     key: 'pro',
     title: 'Pro',
     price: '$19.99/mo',
@@ -30,9 +67,16 @@ const PLAN_DEFINITIONS = [
       'Remove Bidly branding',
       'Widget & marketplace customization',
       'Popcorn bidding'
-    ]
+    ],
+    limits: { auctions: 20 },
+    features: {
+      removeBranding: true,
+      customization: true,
+      popcorn: true,
+      chat: false
+    }
   },
-  {
+  enterprise: {
     key: 'enterprise',
     title: 'Enterprise',
     price: '$49.99/mo',
@@ -40,24 +84,44 @@ const PLAN_DEFINITIONS = [
     highlights: [
       'Unlimited auctions',
       'Remove Bidly branding',
-      'Advanced customization controls',
+      'Widget & marketplace customization',
       'Popcorn bidding & live chatbox'
-    ]
+    ],
+    limits: { auctions: null },
+    features: {
+      removeBranding: true,
+      customization: true,
+      popcorn: true,
+      chat: true
+    }
   }
-];
+};
+
+const PLAN_DISPLAY_ORDER = ['basic', 'pro', 'enterprise'];
 
 const trialCopy = 'Includes a 7-day free trial. You can cancel anytime from your Shopify admin.';
 
-function PlanCard({ plan, currentPlan, pendingPlan, onSubscribe, loadingPlan }) {
-  const isCurrent = currentPlan === plan.key;
-  const isPending = pendingPlan === plan.key && pendingPlan !== currentPlan;
-  const isLoading = loadingPlan === plan.key;
+function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) {
+  const plan = PLAN_CONFIG[planKey];
+  const normalizedCurrent = (currentPlan || 'none').toLowerCase();
+  const isCurrent = normalizedCurrent === planKey;
+  const isPending = pendingPlan === planKey && pendingPlan !== currentPlan;
+  const isLoading = loadingPlan === planKey;
+  const isDowngrade = PLAN_LEVELS[planKey] < PLAN_LEVELS[normalizedCurrent];
+  const isUpgrade = PLAN_LEVELS[planKey] > PLAN_LEVELS[normalizedCurrent];
 
   const actionLabel = useMemo(() => {
     if (isCurrent) return 'Current plan';
     if (isPending) return 'Pending activation';
-    return `Choose ${plan.title}`;
-  }, [isCurrent, isPending, plan.title]);
+    if (isDowngrade) return `Downgrade to ${plan.title}`;
+    return `Upgrade to ${plan.title}`;
+  }, [isCurrent, isPending, isDowngrade, plan.title]);
+
+  const handleSelect = useCallback(() => {
+    if (!isCurrent && !isPending) {
+      onSelect(planKey);
+    }
+  }, [isCurrent, isPending, onSelect, planKey]);
 
   return (
     <LegacyCard>
@@ -79,10 +143,11 @@ function PlanCard({ plan, currentPlan, pendingPlan, onSubscribe, loadingPlan }) 
       </LegacyCard.Section>
       <LegacyCard.Section>
         <Button
-          primary={!isCurrent && !isPending}
+          primary={isUpgrade && !isPending}
+          tone={isDowngrade ? 'critical' : undefined}
           disabled={isCurrent || isPending}
           loading={isLoading}
-          onClick={() => onSubscribe(plan.key)}
+          onClick={handleSelect}
         >
           {actionLabel}
         </Button>
@@ -98,6 +163,8 @@ const PlansPage = () => {
   const [error, setError] = useState('');
   const [planData, setPlanData] = useState({ plan: 'none', pendingPlan: null });
   const [loadingPlan, setLoadingPlan] = useState(null);
+  const [auctionStats, setAuctionStats] = useState(null);
+  const [downgradeModal, setDowngradeModal] = useState({ open: false, targetPlan: null, info: null });
 
   const billingStatus = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -112,17 +179,31 @@ const PlansPage = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await billingAPI.getCurrentPlan();
-      if (response.success) {
+      const [planResponse, statsResponse] = await Promise.all([
+        billingAPI.getCurrentPlan(),
+        auctionAPI
+          .getAuctionStats()
+          .then((res) => (res.success ? res.data : null))
+          .catch((err) => {
+            console.error('Auction stats load error', err);
+            return null;
+          })
+      ]);
+
+      if (planResponse.success) {
         setPlanData({
-          plan: response.plan,
-          pendingPlan: response.pendingPlan,
-          planDetails: response.planDetails,
-          pendingPlanDetails: response.pendingPlanDetails,
-          trialEndsAt: response.trialEndsAt
+          plan: planResponse.plan,
+          pendingPlan: planResponse.pendingPlan,
+          planDetails: planResponse.planDetails,
+          pendingPlanDetails: planResponse.pendingPlanDetails,
+          trialEndsAt: planResponse.trialEndsAt
         });
       } else {
-        setError(response.message || 'Unable to load plan details');
+        setError(planResponse.message || 'Unable to load plan details');
+      }
+
+      if (statsResponse) {
+        setAuctionStats(statsResponse);
       }
     } catch (err) {
       console.error('Plan load error', err);
@@ -131,6 +212,16 @@ const PlansPage = () => {
       setLoading(false);
     }
   };
+
+  const formatLimit = useCallback((limit) => {
+    if (limit === null) {
+      return 'unlimited';
+    }
+    if (typeof limit === 'number') {
+      return `${limit} active auctions`;
+    }
+    return 'unlimited';
+  }, []);
 
   const getTrialCopy = useMemo(() => {
     if (!planData.trialEndsAt) {
@@ -154,7 +245,7 @@ const PlansPage = () => {
     loadPlan();
   }, []);
 
-  const handleSubscribe = async (planKey) => {
+  const startSubscription = useCallback(async (planKey) => {
     try {
       setLoadingPlan(planKey);
       const response = await billingAPI.subscribe(planKey);
@@ -169,7 +260,78 @@ const PlansPage = () => {
     } finally {
       setLoadingPlan(null);
     }
-  };
+  }, []);
+
+  const buildDowngradeInfo = useCallback(
+    (targetPlanKey) => {
+      const currentPlanKey = (planData.plan || 'none').toLowerCase();
+      const currentPlanConfig = PLAN_CONFIG[currentPlanKey] || PLAN_CONFIG.none;
+      const targetPlanConfig = PLAN_CONFIG[targetPlanKey] || PLAN_CONFIG.none;
+      const currentFeatures = planData.planDetails?.features || currentPlanConfig.features || {};
+      const targetFeatures = targetPlanConfig.features || {};
+      const lostFeatures = Object.keys(FEATURE_LABELS).filter(
+        (feature) => currentFeatures[feature] && !targetFeatures[feature]
+      );
+
+      const currentLimit =
+        planData.planDetails?.limits?.auctions !== undefined
+          ? planData.planDetails.limits.auctions
+          : currentPlanConfig.limits.auctions;
+      const targetLimit = targetPlanConfig.limits?.auctions;
+      const totalScheduledAuctions =
+        (auctionStats?.activeAuctions || 0) + (auctionStats?.pendingAuctions || 0);
+
+      let auctionsToClose = null;
+      if (typeof targetLimit === 'number') {
+        auctionsToClose = Math.max(0, totalScheduledAuctions - targetLimit);
+      }
+
+      return {
+        currentPlanKey,
+        targetPlanKey,
+        lostFeatures: lostFeatures.map((feature) => FEATURE_LABELS[feature]),
+        currentLimit,
+        targetLimit,
+        totalScheduledAuctions,
+        auctionsToClose
+      };
+    },
+    [auctionStats, planData]
+  );
+
+  const handlePlanSelection = useCallback(
+    (planKey) => {
+      const targetPlanKey = (planKey || '').toLowerCase();
+      const currentPlanKey = (planData.plan || 'none').toLowerCase();
+      if (!targetPlanKey || targetPlanKey === currentPlanKey) {
+        return;
+      }
+
+      const currentLevel = PLAN_LEVELS[currentPlanKey] ?? 0;
+      const targetLevel = PLAN_LEVELS[targetPlanKey] ?? 0;
+
+      if (targetLevel >= currentLevel) {
+        startSubscription(targetPlanKey);
+        return;
+      }
+
+      const downgradeInfo = buildDowngradeInfo(targetPlanKey);
+      setDowngradeModal({ open: true, targetPlan: targetPlanKey, info: downgradeInfo });
+    },
+    [buildDowngradeInfo, planData.plan, startSubscription]
+  );
+
+  const closeDowngradeModal = useCallback(() => {
+    setDowngradeModal({ open: false, targetPlan: null, info: null });
+  }, []);
+
+  const confirmDowngrade = useCallback(async () => {
+    const target = downgradeModal.targetPlan;
+    closeDowngradeModal();
+    if (target) {
+      await startSubscription(target);
+    }
+  }, [closeDowngradeModal, downgradeModal.targetPlan, startSubscription]);
 
   const banner = useMemo(() => {
     if (billingStatus.status === 'success') {
@@ -213,6 +375,33 @@ const PlansPage = () => {
     return null;
   }, [billingStatus, error]);
 
+  const previewModeBanner =
+    !loading && (planData.plan || 'none').toLowerCase() === 'none' ? (
+      <Banner
+        tone="warning"
+        title="Upgrade to activate Bidly"
+        action={{
+          content: 'View plans',
+          onAction: () => navigate(`/plans${location.search || ''}`)
+        }}
+      >
+        <p>
+          Preview mode lets you explore the admin, but auctions, customization, and live bidding are disabled until you
+          choose a paid plan.
+        </p>
+      </Banner>
+    ) : null;
+
+  const cancellationBanner =
+    !loading && (planData.plan || 'none').toLowerCase() !== 'none' ? (
+      <Banner tone="info" title="Cancelling your subscription">
+        <p>
+          Cancelling your Shopify subscription will revert your account to preview mode. Any active or scheduled
+          auctions beyond the preview limit will be closed automatically during that downgrade.
+        </p>
+      </Banner>
+    ) : null;
+
   return (
     <Frame>
       <Page
@@ -227,6 +416,14 @@ const PlansPage = () => {
           <Layout.Section>
             {banner}
           </Layout.Section>
+
+          {previewModeBanner && (
+            <Layout.Section>{previewModeBanner}</Layout.Section>
+          )}
+
+          {cancellationBanner && (
+            <Layout.Section>{cancellationBanner}</Layout.Section>
+          )}
 
           <Layout.Section>
             <LegacyCard>
@@ -260,13 +457,13 @@ const PlansPage = () => {
 
           <Layout.Section>
             <div style={{ display: 'grid', gap: 20, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-              {PLAN_DEFINITIONS.map((plan) => (
+              {PLAN_DISPLAY_ORDER.map((planKey) => (
                 <PlanCard
-                  key={plan.key}
-                  plan={plan}
+                  key={planKey}
+                  planKey={planKey}
                   currentPlan={planData.plan}
                   pendingPlan={planData.pendingPlan}
-                  onSubscribe={handleSubscribe}
+                  onSelect={handlePlanSelection}
                   loadingPlan={loadingPlan}
                 />
               ))}
@@ -274,6 +471,65 @@ const PlansPage = () => {
           </Layout.Section>
         </Layout>
       </Page>
+
+      {downgradeModal.open && downgradeModal.info && (
+        <Modal
+          open
+          onClose={closeDowngradeModal}
+          title={`Downgrade to ${PLAN_CONFIG[downgradeModal.targetPlan].title}`}
+          primaryAction={{
+            content: 'Confirm downgrade',
+            destructive: true,
+            onAction: confirmDowngrade,
+            loading: loadingPlan === downgradeModal.targetPlan
+          }}
+          secondaryActions={[
+            {
+              content: 'Cancel',
+              onAction: closeDowngradeModal
+            }
+          ]}
+        >
+          <Modal.Section>
+            <Text variant="bodyMd">
+              {`You are downgrading from ${
+                PLAN_CONFIG[downgradeModal.info.currentPlanKey].title
+              } to ${PLAN_CONFIG[downgradeModal.targetPlan].title}.`}
+            </Text>
+            <div style={{ marginTop: '16px' }}>
+              <List type="bullet">
+                {downgradeModal.info.lostFeatures.length > 0 &&
+                  downgradeModal.info.lostFeatures.map((feature) => (
+                    <List.Item key={feature}>{`Feature removed: ${feature}`}</List.Item>
+                  ))}
+                {downgradeModal.info.lostFeatures.length === 0 && (
+                  <List.Item key="no-features">No premium features will be removed.</List.Item>
+                )}
+                {typeof downgradeModal.info.auctionsToClose === 'number' ? (
+                  downgradeModal.info.auctionsToClose > 0 ? (
+                    <List.Item key="auctions">
+                      {`We will automatically close ${downgradeModal.info.auctionsToClose} scheduled auction${
+                        downgradeModal.info.auctionsToClose === 1 ? '' : 's'
+                      } to meet the ${formatLimit(downgradeModal.info.targetLimit)} limit.`}
+                    </List.Item>
+                  ) : (
+                    <List.Item key="auctions-fit">
+                      {`Your current auction count already fits the ${formatLimit(downgradeModal.info.targetLimit)} limit.`}
+                    </List.Item>
+                  )
+                ) : (
+                  <List.Item key="auctions-unlimited">
+                    The new plan includes an unlimited auction limit.
+                  </List.Item>
+                )}
+              </List>
+            </div>
+            <Text tone="critical" variant="bodySm">
+              Downgrading takes effect immediately and cannot be undone automatically.
+            </Text>
+          </Modal.Section>
+        </Modal>
+      )}
     </Frame>
   );
 };

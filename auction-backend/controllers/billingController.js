@@ -1,5 +1,6 @@
 import { AppError } from '../middleware/errorHandler.js';
 import {
+  applyPlanChangeEffects,
   createSubscription,
   getSubscriptionById,
   serializePlanContext,
@@ -63,7 +64,7 @@ export const getCurrentPlan = async (req, res, next) => {
     }
 
     const planKey = sanitizePlan(req.store.plan || DEFAULT_PLAN);
-    const plan = BILLING_PLANS[planKey] || BILLING_PLANS.basic;
+    const plan = BILLING_PLANS[planKey] || BILLING_PLANS.none;
     const pendingPlan = sanitizePlan(req.store.pendingPlan) || null;
 
     const response = {
@@ -122,6 +123,7 @@ export const confirmSubscription = async (req, res, next) => {
     const planFromName = sanitizePlan(subscription.name);
     const resolvedPlanKey = planFromName in BILLING_PLANS ? planFromName : plan.key;
 
+    const previousPlan = sanitizePlan(req.store.plan || DEFAULT_PLAN);
     req.store.plan = resolvedPlanKey;
     req.store.pendingPlan = null;
     req.store.planActiveAt = new Date(subscription.createdAt || Date.now());
@@ -130,6 +132,7 @@ export const confirmSubscription = async (req, res, next) => {
       req.store.trialEndsAt = new Date(createdAt.getTime() + subscription.trialDays * 24 * 60 * 60 * 1000);
     }
     await req.store.save();
+    await applyPlanChangeEffects(req.store, previousPlan, resolvedPlanKey);
 
     const redirectUrl = new URL('/plans', ADMIN_APP_URL);
     redirectUrl.searchParams.set('shop', shop);

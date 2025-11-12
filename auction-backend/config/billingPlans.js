@@ -6,6 +6,23 @@ export const PLAN_LEVELS = Object.freeze({
 });
 
 export const BILLING_PLANS = Object.freeze({
+  none: {
+    key: 'none',
+    name: 'Bidly Preview',
+    price: 0,
+    currencyCode: 'USD',
+    trialDays: 0,
+    level: PLAN_LEVELS.none,
+    limits: {
+      auctions: 0
+    },
+    features: {
+      removeBranding: false,
+      customization: false,
+      popcorn: false,
+      chat: false
+    }
+  },
   basic: {
     key: 'basic',
     name: 'Bidly Basic',
@@ -74,16 +91,16 @@ export function sanitizePlan(planKey) {
 
 export function getPlan(levelOrKey) {
   if (!levelOrKey && levelOrKey !== 0) {
-    return BILLING_PLANS.basic;
+    return BILLING_PLANS.none;
   }
 
   if (typeof levelOrKey === 'string') {
     const key = sanitizePlan(levelOrKey);
-    return BILLING_PLANS[key] || BILLING_PLANS.basic;
+    return BILLING_PLANS[key] || BILLING_PLANS.none;
   }
 
   const match = Object.values(BILLING_PLANS).find((plan) => plan.level === levelOrKey);
-  return match || BILLING_PLANS.basic;
+  return match || BILLING_PLANS.none;
 }
 
 export function getPlanLevel(planKey) {

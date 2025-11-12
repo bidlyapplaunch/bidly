@@ -215,6 +215,23 @@ const Dashboard = ({ onLogout }) => {
     }).format(amount);
   };
 
+  const currentPlanKey = (planInfo?.plan || 'none').toLowerCase();
+  const canCreateAuctions = currentPlanKey !== 'none';
+  const pageSubtitle = canCreateAuctions
+    ? (shopInfo.storeName ? `Store: ${shopInfo.storeName}` : 'Manage your auctions and monitor performance')
+    : 'Upgrade to a paid plan to start hosting auctions.';
+  const primaryAction = canCreateAuctions
+    ? {
+        content: 'Create Auction',
+        icon: PlusMinor,
+        onAction: handleCreateAuction
+      }
+    : {
+        content: 'Choose a plan to create auctions',
+        onAction: () => navigate(`/plans${location.search || ''}`),
+        primary: true
+      };
+
   if (error) {
     return (
       <Frame>
@@ -231,12 +248,8 @@ const Dashboard = ({ onLogout }) => {
     <Frame>
       <Page
         title={`Auction Dashboard${shopInfo.shop ? ` - ${shopInfo.shop}` : ''}`}
-        subtitle={shopInfo.storeName ? `Store: ${shopInfo.storeName}` : 'Manage your auctions and monitor performance'}
-        primaryAction={{
-          content: 'Create Auction',
-          icon: PlusMinor,
-          onAction: handleCreateAuction
-        }}
+        subtitle={pageSubtitle}
+        primaryAction={primaryAction}
         secondaryActions={[
           {
             content: 'View Customer Dashboard',
@@ -253,6 +266,23 @@ const Dashboard = ({ onLogout }) => {
         ]}
       >
         <Layout>
+          {!canCreateAuctions && (
+            <Layout.Section>
+              <Banner
+                tone="info"
+                title="Preview mode active"
+                action={{
+                  content: 'View plans',
+                  onAction: () => navigate(`/plans${location.search || ''}`)
+                }}
+              >
+                <p>
+                  You can explore the Bidly dashboard, but creating or managing live auctions requires an active
+                  subscription. Choose a plan to unlock hosting, customization, and live bidding features.
+                </p>
+              </Banner>
+            </Layout.Section>
+          )}
           <Layout.Section>
             <Card sectioned>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
