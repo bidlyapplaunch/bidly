@@ -53,32 +53,6 @@ const OAuthSetup = ({ onComplete }) => {
     }
   }, []);
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shopFromUrl = urlParams.get('shop');
-    const installed = urlParams.get('installed') === 'true';
-    const success = urlParams.get('success') !== 'false';
-    const host = urlParams.get('host');
-
-    if (shopFromUrl) {
-      console.log('✅ Found shop in URL on mount:', shopFromUrl);
-      setShopDomain(shopFromUrl);
-    } else {
-      console.warn('⚠️ No shop in URL on mount:', window.location.href);
-    }
-
-    if (installed && success) {
-      console.log('🔁 OAuth completed externally, redirecting back to Shopify admin.');
-      const redirected = redirectToShopifyAdmin(shopFromUrl, host);
-      if (redirected) {
-        return;
-      }
-    }
-
-    // Immediately try to get shop from URL on mount
-    checkOAuthStatus();
-  }, [checkOAuthStatus, redirectToShopifyAdmin]);
-
   const checkOAuthStatus = useCallback(async () => {
     try {
       setLoading(true);
@@ -175,6 +149,32 @@ const OAuthSetup = ({ onComplete }) => {
       setLoading(false);
     }
   }, [getShopInfo, onComplete, redirectToShopifyAdmin, shopDomain]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shopFromUrl = urlParams.get('shop');
+    const installed = urlParams.get('installed') === 'true';
+    const success = urlParams.get('success') !== 'false';
+    const host = urlParams.get('host');
+
+    if (shopFromUrl) {
+      console.log('✅ Found shop in URL on mount:', shopFromUrl);
+      setShopDomain(shopFromUrl);
+    } else {
+      console.warn('⚠️ No shop in URL on mount:', window.location.href);
+    }
+
+    if (installed && success) {
+      console.log('🔁 OAuth completed externally, redirecting back to Shopify admin.');
+      const redirected = redirectToShopifyAdmin(shopFromUrl, host);
+      if (redirected) {
+        return;
+      }
+    }
+
+    // Immediately try to get shop from URL on mount
+    checkOAuthStatus();
+  }, [checkOAuthStatus, redirectToShopifyAdmin]);
 
   const handleCompleteOAuth = async () => {
     console.log('🚀🚀🚀 handleCompleteOAuth called 🚀🚀🚀');
