@@ -13,6 +13,7 @@ const STORE_BACKEND_MAP = {
   
   // New store with second backend
   '6sb15z-k1.myshopify.com': 'https://bidly-auction-backend-2.onrender.com',
+  'true-nordic-dev.myshopify.com': 'https://bidly-auction-backend-2.onrender.com',
 };
 
 // Default backend URL (fallback for stores not in the map)
