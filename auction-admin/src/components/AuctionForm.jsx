@@ -12,6 +12,7 @@ import {
   Banner,
   Checkbox
 } from '@shopify/polaris';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { shopifyAPI } from '../services/api';
 
 // Mock products for development
@@ -48,6 +49,8 @@ const getMockProducts = (query) => {
 };
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   // Helper function to create a safe date
   const createSafeDate = (dateInput = null) => {
     if (dateInput && dateInput instanceof Date && !isNaN(dateInput.getTime())) {
@@ -78,6 +81,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const [searchError, setSearchError] = useState(null);
   const planKey = (planInfo?.plan || 'none').toLowerCase();
   const allowPopcorn = planKey === 'pro' || planKey === 'enterprise';
+  const allowChat = planKey === 'enterprise';
 
   useEffect(() => {
     if (!allowPopcorn && formData.popcornEnabled) {
@@ -251,6 +255,10 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
 
   const today = new Date();
   const { month, year } = { month: today.getMonth(), year: today.getFullYear() };
+  const { search } = location || { search: '' };
+  const handleUpgradeClick = useCallback(() => {
+    navigate(`/plans${search || ''}`);
+  }, [navigate, search]);
 
   return (
     <Modal
@@ -440,6 +448,23 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               </FormLayout.Group>
             )}
           </Card>
+
+          {!allowChat && (
+            <Card sectioned>
+              <Text variant="headingMd">💬 Live Bidder Chat (Premium Feature)</Text>
+              <Text variant="bodyMd" color="subdued">
+                Keep bidders engaged with real-time conversation during your auctions. Upgrade your plan to use this feature.
+              </Text>
+              <div style={{ marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <Text variant="bodySm" color="subdued">
+                  Available on the Enterprise plan.
+                </Text>
+                <Button onClick={handleUpgradeClick} primary>
+                  View plans
+                </Button>
+              </div>
+            </Card>
+          )}
 
           {errors.general && <Text color="critical">{errors.general}</Text>}
         </FormLayout>
