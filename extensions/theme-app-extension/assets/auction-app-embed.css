@@ -1405,7 +1405,7 @@
 
 .bidly-widget-root .bidly-bid-input {
     border: 1px solid var(--bidly-border-color) !important;
-    color: var(--bidly-text-color) !important;
+    color: #000000 !important;
 }
 
 .bidly-widget-root .bidly-widget-footer-link {

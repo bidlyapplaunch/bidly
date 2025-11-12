@@ -16,6 +16,10 @@ const MarketplaceCustomizationSettings = () => {
       <Page
         title="Marketplace customization temporarily unavailable"
         subtitle="Widget customization is still available while we upgrade the marketplace experience."
+        backAction={{
+          content: 'Back',
+          onAction: () => navigate(-1)
+        }}
       >
         <Layout>
           <Layout.Section>

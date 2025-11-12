@@ -9,7 +9,7 @@ import {
   Spinner,
   Text
 } from '@shopify/polaris';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { billingAPI } from '../services/api';
 
 const PLAN_DEFINITIONS = [
@@ -93,6 +93,7 @@ function PlanCard({ plan, currentPlan, pendingPlan, onSubscribe, loadingPlan }) 
 
 const PlansPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [planData, setPlanData] = useState({ plan: 'none', pendingPlan: null });
@@ -214,7 +215,14 @@ const PlansPage = () => {
 
   return (
     <Frame>
-      <Page title="Choose your Bidly plan" subtitle="Manage your subscription and unlock premium auction features.">
+      <Page
+        title="Choose your Bidly plan"
+        subtitle="Manage your subscription and unlock premium auction features."
+        backAction={{
+          content: 'Back',
+          onAction: () => navigate(-1)
+        }}
+      >
         <Layout>
           <Layout.Section>
             {banner}

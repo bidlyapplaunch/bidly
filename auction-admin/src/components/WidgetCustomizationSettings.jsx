@@ -314,6 +314,10 @@ const WidgetCustomizationSettings = () => {
         <Page
           title="Widget customization"
           subtitle="Upgrade your Bidly plan to unlock widget styling controls."
+          backAction={{
+            content: 'Back',
+            onAction: () => navigate(-1)
+          }}
         >
           <Layout>
             <Layout.Section>
@@ -343,7 +347,13 @@ const WidgetCustomizationSettings = () => {
   if (loading || !meta) {
     return (
       <Frame>
-        <Page title="Widget customization">
+        <Page
+          title="Widget customization"
+          backAction={{
+            content: 'Back',
+            onAction: () => navigate(-1)
+          }}
+        >
           <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
             <Spinner accessibilityLabel="Loading customization settings" size="large" />
           </div>
@@ -370,6 +380,10 @@ const WidgetCustomizationSettings = () => {
       <Page
         title="Widget customization"
         subtitle="Control how the Bidly widget appears on your product pages without touching code."
+        backAction={{
+          content: 'Back',
+          onAction: () => navigate(-1)
+        }}
         primaryAction={{
           content: 'Save changes',
           onAction: save,

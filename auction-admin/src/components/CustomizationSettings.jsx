@@ -10,10 +10,12 @@ import {
   Divider,
   TextField
 } from '@shopify/polaris';
+import { useNavigate } from 'react-router-dom';
 import { customizationAPI } from '../services/api';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
 
 const CustomizationSettings = () => {
+  const navigate = useNavigate();
   const { getShopInfo } = useAppBridgeActions();
   const shopInfo = getShopInfo();
   const shopDomain = shopInfo?.shop;
@@ -145,6 +147,9 @@ const CustomizationSettings = () => {
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div>
+          <Button onClick={() => navigate(-1)}>Back</Button>
+        </div>
         <Text variant="headingMd" as="h1">
           Customization Settings
         </Text>
