@@ -8,7 +8,6 @@ import {
   Banner,
   Spinner
 } from '@shopify/polaris';
-import { Redirect } from '@shopify/app-bridge/actions';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
 
 const OAuthSetup = ({ onComplete }) => {
@@ -45,25 +44,13 @@ const OAuthSetup = ({ onComplete }) => {
     }
 
     try {
-      if (window.shopify) {
-        const redirect = Redirect.create(window.shopify);
-        redirect.dispatch(Redirect.Action.ADMIN_PATH, '/apps/bidly');
-      } else {
-        const target = window.top ?? window;
-        target.location.href = adminUrl;
-      }
+      const target = window.top ?? window;
+      target.location.href = adminUrl;
       return true;
     } catch (error) {
-      console.warn('⚠️ App Bridge redirect failed, using fallback:', error);
-      try {
-        const target = window.top ?? window;
-        target.location.href = adminUrl;
-        return true;
-      } catch (innerError) {
-        console.error('❌ Failed to redirect to Shopify admin:', innerError);
-      }
+      console.error('❌ Failed to redirect to Shopify admin:', error);
+      return false;
     }
-    return false;
   }, []);
 
   useEffect(() => {
