@@ -44,5 +44,6 @@ router.get('/status', checkInstallationStatus);
 // POST /webhooks/shopify/uninstall
 // This handles the uninstall webhook from Shopify
 router.post('/uninstall', handleUninstall);
+router.post('/uninstalled', handleUninstall);
 
 export default router;

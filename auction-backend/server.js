@@ -384,6 +384,7 @@ app.get('/api/debug/routes', (req, res) => {
 // OAuth routes for Shopify app installation
 app.use('/auth/shopify', oauthRoutes);
 app.use('/webhooks/shopify', oauthRoutes);
+app.use('/webhooks/app', oauthRoutes);
 
 // App Bridge routes for embedded app functionality
 app.use('/app-bridge', appBridgeRoutes);
