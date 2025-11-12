@@ -375,4 +375,16 @@ export const billingAPI = {
   }
 };
 
+export const onboardingAPI = {
+  async getStatus() {
+    const response = await api.get('/onboarding/status');
+    return response.data;
+  },
+
+  async complete() {
+    const response = await api.post('/onboarding/complete');
+    return response.data;
+  }
+};
+
 export default api;

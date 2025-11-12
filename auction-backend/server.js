@@ -24,6 +24,7 @@ import appBridgeRoutes from './routes/appBridgeRoutes.js';
 import appProxyRoutes from './routes/appProxyRoutes.js';
 import debugRoutes from './routes/debugRoutes.js';
 import billingRoutes from './routes/billingRoutes.js';
+import onboardingRoutes from './routes/onboarding.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
 
@@ -139,6 +140,7 @@ app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/onboarding', onboardingRoutes);
 
 // Load customer routes synchronously to ensure availability for widget login
 try {

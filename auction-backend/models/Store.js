@@ -63,6 +63,11 @@ const storeSchema = new mongoose.Schema({
     default: 'none'
   },
 
+  onboardingComplete: {
+    type: Boolean,
+    default: false
+  },
+
   pendingPlan: {
     type: String,
     enum: ['basic', 'pro', 'enterprise', null],

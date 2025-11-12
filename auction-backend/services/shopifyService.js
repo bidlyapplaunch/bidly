@@ -819,6 +819,38 @@ class ShopifyService {
       throw new Error(`Failed to send draft order invoice: ${error.response?.data?.errors || error.message}`);
     }
   }
+
+  /**
+   * Determine if the Bidly app embed is enabled for the current theme
+   * @param {string} shopDomain - The shop's domain
+   * @param {string} handle - The app embed handle to check
+   * @returns {boolean} Whether the app embed is currently active
+   */
+  async isAppEmbedEnabled(shopDomain, handle = 'bidly-auction-widget') {
+    try {
+      const { client } = await this.getStoreClient(shopDomain);
+      const query = `
+        query ActiveAppEmbeds {
+          currentAppInstallation {
+            activeAppEmbeds {
+              handle
+              title
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', { query });
+      const embeds = response.data?.data?.currentAppInstallation?.activeAppEmbeds || [];
+
+      const isActive = embeds.some((embed) => embed.handle === handle);
+      console.log(`🔍 App embed "${handle}" active:`, isActive);
+      return isActive;
+    } catch (error) {
+      console.error('Error checking app embed status:', error.response?.data || error.message);
+      return false;
+    }
+  }
 }
 
 // Create a singleton instance with lazy initialization

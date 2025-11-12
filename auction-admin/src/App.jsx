@@ -11,11 +11,15 @@ import MarketplaceCustomizationSettings from './components/MarketplaceCustomizat
 import WidgetCustomizationSettings from './components/WidgetCustomizationSettings';
 import PlansPage from './components/PlansPage';
 import AppNavigationMenu from './components/AppNavigationMenu';
+import OnboardingPage from './components/OnboardingPage';
+import { onboardingAPI } from './services/api';
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [oauthComplete, setOauthComplete] = useState(false);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [onboardingStatus, setOnboardingStatus] = useState(null);
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -43,6 +47,37 @@ function App() {
     setOauthComplete(true);
   };
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadOnboardingStatus = async () => {
+      if (!user || !oauthComplete) {
+        return;
+      }
+      setOnboardingLoading(true);
+      try {
+        const response = await onboardingAPI.getStatus();
+        if (isMounted) {
+          setOnboardingStatus(response);
+        }
+      } catch (error) {
+        console.error('Failed to load onboarding status', error);
+        if (isMounted) {
+          setOnboardingStatus({ onboardingComplete: true });
+        }
+      } finally {
+        if (isMounted) {
+          setOnboardingLoading(false);
+        }
+      }
+    };
+
+    loadOnboardingStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, oauthComplete]);
+
   let content = null;
 
   if (loading) {
@@ -64,6 +99,33 @@ function App() {
     content = <Login onLogin={handleLogin} />;
   } else if (!oauthComplete) {
     content = <OAuthSetup onComplete={handleOAuthComplete} />;
+  } else if (onboardingLoading || !onboardingStatus) {
+    content = (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          fontFamily: 'Inter, sans-serif',
+          color: '#1f2937'
+        }}
+      >
+        Preparing your dashboard…
+      </div>
+    );
+  } else if (!onboardingStatus.onboardingComplete) {
+    content = (
+      <OnboardingPage
+        initialStatus={onboardingStatus}
+        onComplete={() => {
+          setOnboardingStatus((prev) => ({
+            ...(prev || {}),
+            onboardingComplete: true
+          }));
+        }}
+      />
+    );
   } else {
     content = (
       <Routes>
@@ -76,7 +138,8 @@ function App() {
     );
   }
 
-  const showNavigation = !loading && !!user && oauthComplete;
+  const showNavigation =
+    !loading && !!user && oauthComplete && onboardingStatus?.onboardingComplete;
 
   return (
     <AppBridgeProvider>
