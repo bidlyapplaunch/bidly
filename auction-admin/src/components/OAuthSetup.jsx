@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Page,
   Layout,
@@ -17,6 +17,7 @@ const OAuthSetup = ({ onComplete }) => {
   const [shopDomain, setShopDomain] = useState(null);
   const [manualShop, setManualShop] = useState('');
   const { getShopInfo } = useAppBridgeActions();
+  const initialCheckDone = useRef(false);
 
   const redirectToShopifyAdmin = useCallback((shop, host) => {
     const cleanShop = (shop || '').trim();
@@ -151,6 +152,11 @@ const OAuthSetup = ({ onComplete }) => {
   }, [getShopInfo, onComplete, redirectToShopifyAdmin, shopDomain]);
 
   useEffect(() => {
+    if (initialCheckDone.current) {
+      return;
+    }
+    initialCheckDone.current = true;
+
     const urlParams = new URLSearchParams(window.location.search);
     const shopFromUrl = urlParams.get('shop');
     const installed = urlParams.get('installed') === 'true';
