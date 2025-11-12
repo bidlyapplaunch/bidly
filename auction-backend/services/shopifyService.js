@@ -845,10 +845,19 @@ class ShopifyService {
 
       const isActive = embeds.some((embed) => embed.handle === handle);
       console.log(`🔍 App embed "${handle}" active:`, isActive);
-      return isActive;
+      return { active: isActive };
     } catch (error) {
+      let errorMessage = error.message;
+      if (error.response?.data?.errors) {
+        errorMessage = error.response.data.errors.map((err) => err.message).join('; ');
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
       console.error('Error checking app embed status:', error.response?.data || error.message);
-      return false;
+      return {
+        active: false,
+        error: errorMessage
+      };
     }
   }
 }

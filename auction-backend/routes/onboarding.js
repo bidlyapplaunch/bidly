@@ -20,7 +20,7 @@ router.get('/status', async (req, res, next) => {
     }
 
     const shopifyService = getShopifyService();
-    const widgetActive = await shopifyService.isAppEmbedEnabled(req.shopDomain);
+    const { active: widgetActive, error: widgetError } = await shopifyService.isAppEmbedEnabled(req.shopDomain);
 
     const shopDomain = req.shopDomain;
     const storeSlug = shopDomain.replace('.myshopify.com', '');
@@ -29,6 +29,7 @@ router.get('/status', async (req, res, next) => {
       success: true,
       onboardingComplete: !!req.store.onboardingComplete,
       widgetActive,
+      widgetError: widgetError || null,
       shopDomain,
       storeSlug,
       marketplaceUrl: `https://${shopDomain}/apps/bidly?shop=${shopDomain}`

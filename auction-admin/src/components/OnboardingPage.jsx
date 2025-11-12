@@ -6,6 +6,7 @@ import {
   Card,
   InlineStack,
   Layout,
+  Frame,
   Page,
   Spinner,
   Text,
@@ -20,6 +21,7 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
   const app = useAppBridge();
   const [status, setStatus] = useState(initialStatus || null);
   const [loading, setLoading] = useState(!initialStatus);
+  const [widgetConfirmed, setWidgetConfirmed] = useState(initialStatus?.widgetActive ?? false);
   const [stepTwoComplete, setStepTwoComplete] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [toast, setToast] = useState(null);
@@ -27,8 +29,10 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
   const marketplaceUrl = status?.marketplaceUrl || '';
   const shopSlug = status?.storeSlug || status?.shopDomain?.replace('.myshopify.com', '') || '';
 
-  const widgetEnabled = Boolean(status?.widgetActive);
-  const allStepsComplete = widgetEnabled && stepTwoComplete;
+  const widgetError = status?.widgetError;
+  const widgetDetected = Boolean(status?.widgetActive);
+  const widgetEnabled = widgetConfirmed;
+  const allStepsComplete = widgetConfirmed && stepTwoComplete;
 
   const showToast = useCallback((content, tone = 'success') => {
     setToast({ content, tone });
@@ -39,6 +43,7 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
     try {
       const response = await onboardingAPI.getStatus();
       setStatus(response);
+      setWidgetConfirmed(response.widgetActive || false);
     } catch (error) {
       console.error('Failed to load onboarding status', error);
       showToast('Failed to load onboarding status. Please try again.', 'critical');
@@ -56,6 +61,7 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
   useEffect(() => {
     if (initialStatus) {
       setStatus(initialStatus);
+      setWidgetConfirmed(initialStatus.widgetActive || false);
     }
   }, [initialStatus]);
 
@@ -68,12 +74,20 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
   );
 
   const handleOpenThemeEditor = useCallback(() => {
-    dispatchRedirect('/themes/current/editor?context=apps');
-  }, [dispatchRedirect]);
+    const path = '/themes/current/editor?context=apps';
+    dispatchRedirect(path);
+    if (status?.storeSlug) {
+      window.open(`https://admin.shopify.com/store/${status.storeSlug}${path}`, '_blank', 'noopener');
+    }
+  }, [dispatchRedirect, status?.storeSlug]);
 
   const handleOpenMenuSettings = useCallback(() => {
-    dispatchRedirect('/content/menus');
-  }, [dispatchRedirect]);
+    const path = '/content/menus';
+    dispatchRedirect(path);
+    if (status?.storeSlug) {
+      window.open(`https://admin.shopify.com/store/${status.storeSlug}${path}`, '_blank', 'noopener');
+    }
+  }, [dispatchRedirect, status?.storeSlug]);
 
   const handleCopyMarketplaceUrl = useCallback(async () => {
     try {
@@ -107,6 +121,11 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
     showToast('Remember to update your menu after copying the URL.');
   }, [showToast]);
 
+  const handleConfirmWidget = useCallback(() => {
+    setWidgetConfirmed(true);
+    showToast('Marked widget as enabled.');
+  }, [showToast]);
+
   const stepTwoDescription = useMemo(() => {
     if (!shopSlug) {
       return 'Open your Online Store navigation and add a new menu item linking to your auction marketplace.';
@@ -116,21 +135,23 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
 
   if (loading || !status) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}
-      >
-        <Spinner accessibilityLabel="Loading onboarding status" size="large" />
-      </div>
+      <Frame>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh'
+          }}
+        >
+          <Spinner accessibilityLabel="Loading onboarding status" size="large" />
+        </div>
+      </Frame>
     );
   }
 
   return (
-    <>
+    <Frame>
       {toast && (
         <Toast
           content={toast.content}
@@ -156,11 +177,25 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
                 <Text>
                   Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.
                 </Text>
+                {widgetDetected ? (
+                  <Text tone="success">We detected the widget is enabled in your theme.</Text>
+                ) : (
+                  <Text tone={widgetError ? 'critical' : 'subdued'}>
+                    {widgetError
+                      ? `We couldn’t confirm the widget automatically: ${widgetError}`
+                      : 'If you have already enabled the widget, you can mark this step as complete manually.'}
+                  </Text>
+                )}
                 <InlineStack gap="200">
                   <Button onClick={handleOpenThemeEditor} variant="primary">
                     Open theme editor
                   </Button>
                   <Button onClick={fetchStatus}>Refresh status</Button>
+                  {!widgetEnabled && (
+                    <Button onClick={handleConfirmWidget} tone="critical">
+                      Mark widget as enabled
+                    </Button>
+                  )}
                 </InlineStack>
               </BlockStack>
             </Card>
@@ -220,7 +255,7 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
           </Layout.Section>
         </Layout>
       </Page>
-    </>
+    </Frame>
   );
 };
 
