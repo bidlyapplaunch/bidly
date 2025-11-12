@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Page,
   Layout,
@@ -8,6 +8,7 @@ import {
   Banner,
   Spinner
 } from '@shopify/polaris';
+import { Redirect } from '@shopify/app-bridge/actions';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
 
 const OAuthSetup = ({ onComplete }) => {
@@ -18,20 +19,80 @@ const OAuthSetup = ({ onComplete }) => {
   const [manualShop, setManualShop] = useState('');
   const { getShopInfo } = useAppBridgeActions();
 
+  const redirectToShopifyAdmin = useCallback((shop, host) => {
+    const cleanShop = (shop || '').trim();
+    let adminUrl = null;
+
+    if (host) {
+      try {
+        const decodedHost = window.atob(host);
+        if (decodedHost && decodedHost.startsWith('admin.shopify.com')) {
+          const hasAppsPath = decodedHost.includes('/apps/');
+          adminUrl = `https://${decodedHost}${hasAppsPath ? '' : '/apps/bidly'}`;
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to decode host parameter:', error);
+      }
+    }
+
+    if (!adminUrl && cleanShop.endsWith('.myshopify.com')) {
+      const storeSlug = cleanShop.replace('.myshopify.com', '');
+      adminUrl = `https://admin.shopify.com/store/${storeSlug}/apps/bidly`;
+    }
+
+    if (!adminUrl) {
+      return false;
+    }
+
+    try {
+      if (window.shopify) {
+        const redirect = Redirect.create(window.shopify);
+        redirect.dispatch(Redirect.Action.ADMIN_PATH, '/apps/bidly');
+      } else {
+        const target = window.top ?? window;
+        target.location.href = adminUrl;
+      }
+      return true;
+    } catch (error) {
+      console.warn('⚠️ App Bridge redirect failed, using fallback:', error);
+      try {
+        const target = window.top ?? window;
+        target.location.href = adminUrl;
+        return true;
+      } catch (innerError) {
+        console.error('❌ Failed to redirect to Shopify admin:', innerError);
+      }
+    }
+    return false;
+  }, []);
+
   useEffect(() => {
-    // Immediately try to get shop from URL on mount
     const urlParams = new URLSearchParams(window.location.search);
     const shopFromUrl = urlParams.get('shop');
+    const installed = urlParams.get('installed') === 'true';
+    const success = urlParams.get('success') !== 'false';
+    const host = urlParams.get('host');
+
     if (shopFromUrl) {
       console.log('✅ Found shop in URL on mount:', shopFromUrl);
       setShopDomain(shopFromUrl);
     } else {
       console.warn('⚠️ No shop in URL on mount:', window.location.href);
     }
-    checkOAuthStatus();
-  }, []);
 
-  const checkOAuthStatus = async () => {
+    if (installed && success) {
+      console.log('🔁 OAuth completed externally, redirecting back to Shopify admin.');
+      const redirected = redirectToShopifyAdmin(shopFromUrl, host);
+      if (redirected) {
+        return;
+      }
+    }
+
+    // Immediately try to get shop from URL on mount
+    checkOAuthStatus();
+  }, [checkOAuthStatus, redirectToShopifyAdmin]);
+
+  const checkOAuthStatus = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -126,7 +187,7 @@ const OAuthSetup = ({ onComplete }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getShopInfo, onComplete, redirectToShopifyAdmin, shopDomain]);
 
   const handleCompleteOAuth = async () => {
     console.log('🚀🚀🚀 handleCompleteOAuth called 🚀🚀🚀');
