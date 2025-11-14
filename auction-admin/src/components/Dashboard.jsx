@@ -247,6 +247,7 @@ const Dashboard = ({ onLogout }) => {
   return (
     <Frame>
       <Page
+        fullWidth
         title={`Auction Dashboard${shopInfo.shop ? ` - ${shopInfo.shop}` : ''}`}
         subtitle={pageSubtitle}
         primaryAction={primaryAction}

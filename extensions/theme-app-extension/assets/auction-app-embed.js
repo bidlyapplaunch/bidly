@@ -184,6 +184,7 @@
         colors: {
             accent: '#38BDF8',
             text: '#EDEEF3',
+            timer: '#FBBF24',
             bg_solid: '#36526D',
             bg_gradient_start: '#B7BDD2',
             bg_gradient_end: '#283E3B',
@@ -223,6 +224,7 @@
 .bidly-widget-root {
     --bidly-font-family: '${font}', sans-serif;
     --bidly-text-color: ${colors.text};
+    --bidly-timer-color: ${colors.timer || colors.text};
     --bidly-accent-color: ${colors.accent};
     --bidly-bg-color: ${colors.bg_solid};
     --bidly-bg-gradient-start: ${colors.bg_gradient_start};
@@ -278,63 +280,20 @@
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
-    function applyChatTheme(host, theme) {
-        if (!theme) {
-            return;
-        }
-
-        const normalized = theme.colors || DEFAULT_WIDGET_THEME.colors;
-        const gradientEnabled = Boolean(theme.gradientEnabled);
-        const targets = [];
-
-        if (host) {
-            targets.push(host);
-        }
-
+    function applyChatTheme() {
         const chatContainer = document.querySelector('.bidly-chat-container');
-        if (chatContainer && !targets.includes(chatContainer)) {
-            targets.push(chatContainer);
-        }
-
-        if (targets.length === 0) {
+        if (!chatContainer) {
             return;
         }
 
-        const chatSurface = gradientEnabled
-            ? `linear-gradient(135deg, ${normalized.bg_gradient_start}, ${normalized.bg_gradient_end})`
-            : normalized.bg_solid || '#111827';
-        const headerBackground = gradientEnabled
-            ? `linear-gradient(135deg, ${normalized.bg_gradient_start}, ${normalized.bg_gradient_end})`
-            : normalized.bg_solid || normalized.button_bg || normalized.accent || '#6366f1';
+        const marketplaceRoot = document.querySelector('.bidly-marketplace-root') || document.body;
+        const gradientFlag =
+            marketplaceRoot?.getAttribute('data-bidly-marketplace-gradient') ||
+            marketplaceRoot?.dataset?.bidlyMarketplaceGradient;
 
-        targets.forEach((target) => {
-            target.style.setProperty('--bidly-chat-header-bg', headerBackground);
-            target.style.setProperty('--bidly-chat-header-text', normalized.button_text || '#ffffff');
-            target.style.setProperty('--bidly-chat-surface', chatSurface);
-            target.style.setProperty(
-                '--bidly-chat-surface-inner',
-                hexToRgba(normalized.bg_solid || '#111827', gradientEnabled ? 0.9 : 0.95)
-            );
-            target.style.setProperty('--bidly-chat-bubble-bg', hexToRgba(normalized.accent || '#6366f1', 0.18));
-            target.style.setProperty('--bidly-chat-bubble-text', normalized.text || '#e2e8f0');
-            target.style.setProperty('--bidly-chat-muted', hexToRgba(normalized.text || '#94a3b8', 0.6));
-            target.style.setProperty('--bidly-chat-border', hexToRgba(normalized.border || normalized.accent || '#6366f1', 0.28));
-            target.style.setProperty('--bidly-chat-input-bg', hexToRgba(normalized.bg_solid || '#111827', 0.85));
-            target.style.setProperty('--bidly-chat-input-border', hexToRgba(normalized.border || normalized.text || '#475569', 0.45));
-            target.style.setProperty('--bidly-chat-toggle-bg', hexToRgba(normalized.accent || '#6366f1', 0.12));
-            target.style.setProperty('--bidly-chat-toggle-color', normalized.accent || '#6366f1');
-            target.style.setProperty('--bidly-chat-toggle-hover-bg', hexToRgba(normalized.accent || '#6366f1', 0.2));
-            target.style.setProperty('--bidly-chat-toggle-active-bg', normalized.accent || '#6366f1');
-            target.style.setProperty('--bidly-chat-toggle-active-color', normalized.button_text || '#ffffff');
-            target.style.setProperty('--bidly-chat-send-bg', headerBackground);
-            target.style.setProperty('--bidly-chat-send-color', normalized.button_text || '#ffffff');
-            target.style.setProperty('--bidly-chat-send-shadow', hexToRgba(normalized.accent || normalized.bg_gradient_end || '#6366f1', 0.35));
-            target.style.setProperty('--bidly-history-bg', hexToRgba(normalized.text || '#ffffff', 0.12));
-            target.style.setProperty('--bidly-history-border', hexToRgba(normalized.border || normalized.accent || '#ffffff', 0.2));
-            target.style.setProperty('--bidly-history-color', normalized.button_text || '#ffffff');
-            target.style.setProperty('--bidly-history-hover-bg', hexToRgba(normalized.text || '#ffffff', 0.2));
-            target.style.setProperty('--bidly-history-hover-color', normalized.button_text || '#ffffff');
-        });
+        if (gradientFlag) {
+            chatContainer.setAttribute('data-bidly-marketplace-gradient', gradientFlag);
+        }
     }
 
     async function fetchWidgetThemeSettings(force = false) {
@@ -399,6 +358,7 @@
             if (!el) return;
             el.style.setProperty('--bidly-font-family', `${(theme.font || DEFAULT_WIDGET_THEME.font)}`);
             el.style.setProperty('--bidly-text-color', colors.text);
+            el.style.setProperty('--bidly-timer-color', colors.timer || colors.text);
             el.style.setProperty('--bidly-accent-color', colors.accent);
             el.style.setProperty('--bidly-bg-color', colors.bg_solid);
             el.style.setProperty('--bidly-bg-gradient-start', colors.bg_gradient_start);

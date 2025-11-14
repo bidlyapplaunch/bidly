@@ -7,6 +7,7 @@ const EMPTY_SETTINGS = {
   colors: {
     accent: '#38BDF8',
     text: '#EDEEF3',
+    timer: '#FBBF24',
     bg_solid: '#36526D',
     bg_gradient_start: '#B7BDD2',
     bg_gradient_end: '#283E3B',

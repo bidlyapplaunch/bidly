@@ -2,10 +2,36 @@ import Auction from '../models/Auction.js';
 import User from '../models/User.js';
 import { AppError } from '../middleware/errorHandler.js';
 
+const normalizeShopDomain = (shop = '') =>
+  shop
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
+
+const resolveShopDomain = (req) => {
+  if (req.shopDomain) {
+    return req.shopDomain;
+  }
+
+  const fallback =
+    req.query?.shop ||
+    req.headers['x-shopify-shop-domain'] ||
+    req.body?.shop;
+
+  return fallback ? normalizeShopDomain(fallback) : null;
+};
+
 // Get comprehensive analytics
 export const getAnalytics = async (req, res, next) => {
   try {
     const { period = '30d' } = req.query;
+    const shopDomain = resolveShopDomain(req);
+
+    if (!shopDomain) {
+      return next(new AppError('Shop domain is required for analytics', 400));
+    }
     
     // Calculate date range
     const now = new Date();
@@ -28,8 +54,10 @@ export const getAnalytics = async (req, res, next) => {
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
+    const baseFilter = { shopDomain, isDeleted: false };
+
     // Basic auction statistics - get all auctions and compute real-time status
-    const allAuctions = await Auction.find({});
+    const allAuctions = await Auction.find(baseFilter);
     
     // Compute real-time status for each auction
     const computeAuctionStatus = (auction) => {
@@ -59,6 +87,7 @@ export const getAnalytics = async (req, res, next) => {
 
     // Revenue analytics
     const auctionsWithBids = await Auction.find({
+      ...baseFilter,
       currentBid: { $gt: 0 },
       createdAt: { $gte: startDate }
     });
@@ -81,10 +110,11 @@ export const getAnalytics = async (req, res, next) => {
       : 0;
 
     // Time-based analytics (daily breakdown for the period)
-    const dailyStats = await getDailyStats(startDate, now);
+    const dailyStats = await getDailyStats(baseFilter, startDate, now);
     
     // Top performing auctions
     const topAuctions = await Auction.find({
+      ...baseFilter,
       status: 'ended',
       currentBid: { $gt: 0 }
     })
@@ -99,6 +129,7 @@ export const getAnalytics = async (req, res, next) => {
 
     // Auction success rate
     const auctionsWithAnyBids = await Auction.countDocuments({
+      ...baseFilter,
       'bidHistory.0': { $exists: true },
       createdAt: { $gte: startDate }
     });
@@ -116,7 +147,7 @@ export const getAnalytics = async (req, res, next) => {
     };
 
     // Recent activity
-    const recentAuctions = await Auction.find()
+    const recentAuctions = await Auction.find(baseFilter)
       .sort({ createdAt: -1 })
       .limit(5)
       .select('shopifyProductId productData status currentBid createdAt startTime endTime');
@@ -167,16 +198,26 @@ export const getAnalytics = async (req, res, next) => {
 export const getRevenueAnalytics = async (req, res, next) => {
   try {
     const { period = '30d' } = req.query;
+    const shopDomain = resolveShopDomain(req);
+
+    if (!shopDomain) {
+      return next(new AppError('Shop domain is required for analytics', 400));
+    }
     
     const now = new Date();
     const startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const baseMatch = {
+      shopDomain,
+      isDeleted: false,
+      createdAt: { $gte: startDate },
+      currentBid: { $gt: 0 }
+    };
 
     // Revenue by status
     const revenueByStatus = await Auction.aggregate([
       {
         $match: {
-          createdAt: { $gte: startDate },
-          currentBid: { $gt: 0 }
+          ...baseMatch
         }
       },
       {
@@ -193,8 +234,7 @@ export const getRevenueAnalytics = async (req, res, next) => {
     const monthlyRevenue = await Auction.aggregate([
       {
         $match: {
-          createdAt: { $gte: startDate },
-          currentBid: { $gt: 0 }
+          ...baseMatch
         }
       },
       {
@@ -277,7 +317,7 @@ export const getUserAnalytics = async (req, res, next) => {
 };
 
 // Helper function to get daily statistics
-async function getDailyStats(startDate, endDate) {
+async function getDailyStats(baseFilter, startDate, endDate) {
   const dailyStats = [];
   const currentDate = new Date(startDate);
   
@@ -287,6 +327,7 @@ async function getDailyStats(startDate, endDate) {
     dayEnd.setHours(23, 59, 59, 999);
     
     const dayAuctions = await Auction.find({
+      ...baseFilter,
       createdAt: { $gte: dayStart, $lte: dayEnd }
     });
     

@@ -21,6 +21,7 @@ const WIDGET_TEMPLATES = {
     colors: {
       accent: '#38BDF8',
       text: '#EDEEF3',
+      timer: '#FBBF24',
       bg_solid: '#36526D',
       bg_gradient_start: '#B7BDD2',
       bg_gradient_end: '#283E3B',
@@ -42,6 +43,7 @@ const WIDGET_TEMPLATES = {
     colors: {
       accent: '#a855f7',
       text: '#e0f2fe',
+      timer: '#fde68a',
       bg_solid: '#111827',
       bg_gradient_start: '#312e81',
       bg_gradient_end: '#1e1b4b',
@@ -63,6 +65,7 @@ const WIDGET_TEMPLATES = {
     colors: {
       accent: '#f97316',
       text: '#1f2937',
+      timer: '#dc2626',
       bg_solid: '#fdf2f8',
       bg_gradient_start: '#fca5a5',
       bg_gradient_end: '#f97316',
@@ -84,6 +87,7 @@ const WIDGET_TEMPLATES = {
     colors: {
       accent: '#0ea5e9',
       text: '#0f172a',
+      timer: '#ea580c',
       bg_solid: '#f8fafc',
       bg_gradient_start: '#f8fafc',
       bg_gradient_end: '#f8fafc',
@@ -187,42 +191,46 @@ const COLOR_PALETTES = [
   {
     id: 'cool-blue',
     name: 'Cool Blue',
-    colors: {
-      accent: '#3b82f6',
-      bg_solid: '#0f172a',
-      text: '#f8fafc',
-      button_bg: '#2563eb'
-    }
+      colors: {
+        accent: '#3b82f6',
+        bg_solid: '#0f172a',
+        text: '#f8fafc',
+        timer: '#fbbf24',
+        button_bg: '#2563eb'
+      }
   },
   {
     id: 'sunset',
     name: 'Sunset',
-    colors: {
-      accent: '#fb7185',
-      bg_solid: '#fff7ed',
-      text: '#1f2937',
-      button_bg: '#f97316'
-    }
+      colors: {
+        accent: '#fb7185',
+        bg_solid: '#fff7ed',
+        text: '#1f2937',
+        timer: '#ea580c',
+        button_bg: '#f97316'
+      }
   },
   {
     id: 'emerald',
     name: 'Emerald',
-    colors: {
-      accent: '#22c55e',
-      bg_solid: '#ecfdf5',
-      text: '#064e3b',
-      button_bg: '#16a34a'
-    }
+      colors: {
+        accent: '#22c55e',
+        bg_solid: '#ecfdf5',
+        text: '#064e3b',
+        timer: '#15803d',
+        button_bg: '#16a34a'
+      }
   },
   {
     id: 'slate',
     name: 'Slate',
-    colors: {
-      accent: '#38bdf8',
-      bg_solid: '#f8fafc',
-      text: '#0f172a',
-      button_bg: '#0f172a'
-    }
+      colors: {
+        accent: '#38bdf8',
+        bg_solid: '#f8fafc',
+        text: '#0f172a',
+        timer: '#ef4444',
+        button_bg: '#0f172a'
+      }
   }
 ];
 

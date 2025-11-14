@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const COLORS_SCHEMA_DEFINITION = {
   accent: { type: String, required: true },
   text: { type: String, required: true },
+  timer: { type: String, required: true, default: '#FBBF24' },
   bg_solid: { type: String, required: true },
   bg_gradient_start: { type: String, required: true },
   bg_gradient_end: { type: String, required: true },

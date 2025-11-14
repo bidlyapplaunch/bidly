@@ -19,6 +19,7 @@ import { useCustomizationSettings } from '../hooks/useCustomizationSettings';
 const COLOR_FIELDS = [
   { key: 'accent', label: 'Accent color', description: 'Applied to prices and primary highlights.' },
   { key: 'text', label: 'Primary text', description: 'Default text color for widget content.' },
+  { key: 'timer', label: 'Timer', description: 'Countdown digits and timer emphasis.' },
   { key: 'button_bg', label: 'Button background', description: 'Primary button background color.' },
   { key: 'button_hover', label: 'Button hover', description: 'Background color on hover focus.' },
   { key: 'button_text', label: 'Button text', description: 'Text color for primary buttons.' },

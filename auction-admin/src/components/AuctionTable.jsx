@@ -162,6 +162,8 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     formatCurrency(auction.currentBid),
     // Buy Now Price
     auction.buyNowPrice ? formatCurrency(auction.buyNowPrice) : '-',
+    // Reserve Price
+    auction.reservePrice ? formatCurrency(auction.reservePrice) : '-',
     // Status
     getStatusBadge(auction.status),
     // Bid Count
@@ -339,6 +341,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
               'text',
               'text',
               'text',
+              'text',
               'numeric',
               'text'
             ]}
@@ -349,6 +352,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
               'Start Bid',
               'Current Bid',
               'Buy Now',
+              'Reserve',
               'Status',
               'Bids',
               'Actions'
