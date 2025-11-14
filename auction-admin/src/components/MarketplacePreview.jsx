@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AppProvider, Frame, Page, Layout, Banner, Text } from '@shopify/polaris';
+import { AppProvider, Frame, Page, Layout, Text } from '@shopify/polaris';
 import { buildMarketplaceCSS, normalizeMarketplaceTheme } from '@shared/marketplaceTheme.js';
 import AuctionCard from '@customer/components/AuctionCard.jsx';
 
@@ -85,17 +85,6 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
                 }
               ]}
             >
-              <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.75rem' }}>
-                <Banner status="info">
-                  <Text variant="bodyMd">
-                    🏪 Viewing auctions from <strong>{resolvedShopName}</strong>
-                  </Text>
-                </Banner>
-                <Banner status="success">
-                  <Text variant="bodyMd">🟢 Connected to live updates</Text>
-                </Banner>
-              </div>
-
               <Layout>
                 {MOCK_AUCTIONS.map((auction) => (
                   <Layout.Section key={auction._id} oneHalf>

@@ -128,6 +128,7 @@ ${fontImport}
   min-height: 100vh;
   padding-bottom: calc(var(--bidly-marketplace-spacing) * 2);
   transition: background 200ms ease, color 200ms ease;
+  --pc-box-background: var(--bidly-marketplace-color-primary) !important;
 }
 
 .bidly-marketplace-root[data-bidly-marketplace-gradient="1"] {
