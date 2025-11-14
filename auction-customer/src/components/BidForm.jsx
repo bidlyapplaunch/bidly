@@ -57,15 +57,23 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
   return (
     <>
-    <div style={{ 
-      padding: '0.5rem 0',
-      fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
-      color: 'var(--bidly-color-text-primary, #222222)'
-    }}>
-      <Text variant="headingMd" as="h3" style={{ 
-        marginBottom: '1rem',
-        color: 'var(--bidly-color-text-primary, #222222)'
-      }}>Place Your Bid</Text>
+    <div
+      style={{
+        padding: '0.5rem 0',
+        fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
+        color: 'var(--bidly-marketplace-color-text-primary, #222222)'
+      }}
+    >
+      <Text
+        variant="headingMd"
+        as="h3"
+        style={{
+          marginBottom: 'var(--bidly-marketplace-spacing, 1rem)',
+          color: 'var(--bidly-marketplace-color-text-primary, #222222)'
+        }}
+      >
+        Place Your Bid
+      </Text>
       
       {error && (
         <div style={{ marginBottom: '1rem' }}>
@@ -96,17 +104,17 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
           {/* Quick bid buttons */}
           <div style={{ marginTop: '0.5rem' }}>
-            <Text variant="bodySm" style={{ color: 'var(--bidly-color-text-secondary, #666666)' }}>Quick bid:</Text>
+            <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>Quick bid:</Text>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
               <Button 
                 size="slim" 
                 onClick={() => handleQuickBid(minBid)}
                 disabled={isLoading}
                 style={{
-                  backgroundColor: 'var(--bidly-color-surface, #ffffff)',
-                  borderColor: 'var(--bidly-color-border, #dddddd)',
-                  color: 'var(--bidly-color-text-primary, #222222)',
-                  fontFamily: 'var(--bidly-font-family, Inter, sans-serif)'
+                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
+                  borderColor: 'var(--bidly-marketplace-color-border, #dddddd)',
+                  color: 'var(--bidly-marketplace-color-text-primary, #222222)',
+                  fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
                 }}
               >
                 ${minBid}
@@ -116,10 +124,10 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                 onClick={() => handleQuickBid(suggestedBid)}
                 disabled={isLoading}
                 style={{
-                  backgroundColor: 'var(--bidly-color-surface, #ffffff)',
-                  borderColor: 'var(--bidly-color-border, #dddddd)',
-                  color: 'var(--bidly-color-text-primary, #222222)',
-                  fontFamily: 'var(--bidly-font-family, Inter, sans-serif)'
+                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
+                  borderColor: 'var(--bidly-marketplace-color-border, #dddddd)',
+                  color: 'var(--bidly-marketplace-color-text-primary, #222222)',
+                  fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
                 }}
               >
                 ${suggestedBid}
@@ -167,12 +175,12 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         ]}
       >
         <Modal.Section>
-          <div style={{ fontFamily: 'var(--bidly-font-family, Inter, sans-serif)' }}>
-            <Text variant="bodyMd" style={{ color: 'var(--bidly-color-text-primary, #222222)' }}>
-              Are you sure you want to buy this item for <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-color-success, #00c851)' }}>${auction.buyNowPrice}</Text>?
+          <div style={{ fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)' }}>
+            <Text variant="bodyMd" style={{ color: 'var(--bidly-marketplace-color-text-primary, #222222)' }}>
+              Are you sure you want to buy this item for <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-marketplace-color-success, #00c851)' }}>${auction.buyNowPrice}</Text>?
             </Text>
             <div style={{ marginTop: '0.5rem' }}>
-              <Text variant="bodyMd" style={{ color: 'var(--bidly-color-text-secondary, #666666)' }}>
+              <Text variant="bodyMd" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
                 This will end the auction immediately and you will be the winner.
               </Text>
             </div>

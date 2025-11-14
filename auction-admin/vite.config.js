@@ -1,8 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const sharedPath = path.resolve(__dirname, '../shared')
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@shared': sharedPath
+    }
+  },
   server: {
     port: 3001,
     proxy: {
@@ -11,6 +22,9 @@ export default defineConfig({
         changeOrigin: true
       }
     },
+    fs: {
+      allow: [sharedPath, __dirname, path.resolve(__dirname, '..')]
+    }
   },
   build: {
     // Force cache busting

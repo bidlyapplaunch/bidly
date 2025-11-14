@@ -64,12 +64,14 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
         {/* Product Image */}
         {auction.productData?.image?.src ? (
-          <div style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            marginBottom: '1rem'
-          }}>
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: 'var(--bidly-marketplace-spacing, 1rem)'
+            }}
+          >
             <img
               src={auction.productData.image.src}
               alt={auction.productData?.title || 'Product image'}
@@ -79,9 +81,9 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                 width: 'auto',
                 height: 'auto',
                 objectFit: 'contain',
-                borderRadius: '8px',
-                border: '1px solid var(--bidly-color-border, #d4d8dd)',
-                backgroundColor: 'var(--bidly-color-surface, #ffffff)'
+                borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
+                border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
+                backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
               }}
             />
           </div>
@@ -89,13 +91,13 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           <div style={{ 
             width: '100%', 
             height: '200px', 
-            backgroundColor: 'var(--bidly-color-surface, #ffffff)', 
-            borderRadius: '8px',
+            backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)', 
+            borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '1rem',
-            border: '1px solid var(--bidly-color-border, #d4d8dd)'
+            marginBottom: 'var(--bidly-marketplace-spacing, 1rem)',
+            border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)'
           }}>
             <Text variant="bodyMd">
               Product Image
@@ -107,11 +109,11 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           <Layout.Section oneHalf>
             <div style={{ marginBottom: '1rem' }}>
               <Text variant="bodyMd" fontWeight="bold">Current Bid</Text>
-              <Text variant="headingLg" as="p" style={{ color: 'var(--bidly-color-accent, #2563eb)' }}>
+              <Text variant="headingLg" as="p" style={{ color: 'var(--bidly-marketplace-color-accent, #2563eb)' }}>
                 {formatCurrency(auction.currentBid || 0)}
               </Text>
               {auction.status === 'ended' && auction.bidHistory && auction.bidHistory.length > 0 && (
-                <Text variant="bodySm" style={{ color: 'var(--bidly-color-accent, #2563eb)', fontWeight: 'bold' }}>
+                <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-accent, #2563eb)', fontWeight: 'bold' }}>
                   Winner: {auction.bidHistory[auction.bidHistory.length - 1].bidder}
                 </Text>
               )}
@@ -128,15 +130,15 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         </Layout>
 
         {auction.buyNowPrice && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div style={{ marginBottom: 'var(--bidly-marketplace-spacing, 1rem)' }}>
             <Text variant="bodyMd" fontWeight="bold">Buy Now Price</Text>
-            <Text variant="bodyLg" as="p" style={{ color: 'var(--bidly-color-accent, #2563eb)' }}>
+            <Text variant="bodyLg" as="p" style={{ color: 'var(--bidly-marketplace-color-accent, #2563eb)' }}>
               {formatCurrency(auction.buyNowPrice)}
             </Text>
           </div>
         )}
 
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: 'var(--bidly-marketplace-spacing, 1rem)' }}>
               <Text variant="bodyMd" fontWeight="bold">
                 {auction.status === 'pending' ? 'Starts In' : 'Time Remaining'}
               </Text>
@@ -148,7 +150,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ marginBottom: 'var(--bidly-marketplace-spacing, 1rem)' }}>
           <Text variant="bodyMd" fontWeight="bold">Bid Count</Text>
           <Text variant="bodyLg" as="p">
             {auction.bidHistory?.length || 0} bids
@@ -247,12 +249,15 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                 <Text variant="headingMd">Bid History</Text>
                 <div style={{ marginTop: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
                   {auction.bidHistory.map((bid, index) => (
-                    <div key={index} style={{ 
-                      padding: '0.5rem', 
-                      borderBottom: '1px solid var(--bidly-color-border, #d4d8dd)',
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}>
+                    <div
+                      key={index}
+                      style={{
+                        padding: '0.5rem',
+                        borderBottom: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
+                        display: 'flex',
+                        justifyContent: 'space-between'
+                      }}
+                    >
                       <Text variant="bodyMd">{bid.bidder}</Text>
                       <Text variant="bodyMd" fontWeight="bold">{formatCurrency(bid.amount)}</Text>
                     </div>

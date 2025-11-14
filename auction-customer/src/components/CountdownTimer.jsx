@@ -41,29 +41,33 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
   if (isExpired) {
     if (status === 'pending') {
       return (
-        <div style={{
-          backgroundColor: 'var(--bidly-color-success, #00c851)',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: 'var(--bidly-border-radius, 4px)',
-          fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
-          fontSize: '14px',
-          fontWeight: 'bold'
-        }}>
+        <div
+          style={{
+            backgroundColor: 'var(--bidly-marketplace-color-success, #00c851)',
+            color: '#ffffff',
+            padding: '4px 8px',
+            borderRadius: 'var(--bidly-marketplace-border-radius, 4px)',
+            fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
           Auction Started
         </div>
       );
     } else {
       return (
-        <div style={{
-          backgroundColor: 'var(--bidly-color-error, #ff4444)',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: 'var(--bidly-border-radius, 4px)',
-          fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
-          fontSize: '14px',
-          fontWeight: 'bold'
-        }}>
+        <div
+          style={{
+            backgroundColor: 'var(--bidly-marketplace-color-error, #ff4444)',
+            color: '#ffffff',
+            padding: '4px 8px',
+            borderRadius: 'var(--bidly-marketplace-border-radius, 4px)',
+            fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
           Auction Ended
         </div>
       );
@@ -74,19 +78,21 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <div style={{
-        backgroundColor: 'var(--bidly-color-accent, #00b894)',
-        color: 'white',
-        padding: '4px 8px',
-        borderRadius: 'var(--bidly-border-radius, 4px)',
-        fontFamily: 'var(--bidly-font-family, Inter, sans-serif)',
-        fontSize: '14px',
-        fontWeight: 'bold'
-      }}>
+      <div
+        style={{
+          backgroundColor: 'var(--bidly-marketplace-color-accent, #00b894)',
+          color: '#ffffff',
+          padding: '4px 8px',
+          borderRadius: 'var(--bidly-marketplace-border-radius, 4px)',
+          fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
+          fontSize: '14px',
+          fontWeight: 'bold'
+        }}
+      >
         {timeLeft.days > 0 && `${timeLeft.days}d `}
         {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
       </div>
-      <Text variant="bodySm" style={{ color: 'var(--bidly-color-text-secondary, #666666)' }}>
+      <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
         {status === 'pending' ? 
           (timeLeft.days > 0 ? 'until start' : 'until start') : 
           (timeLeft.days > 0 ? 'remaining' : 'left')

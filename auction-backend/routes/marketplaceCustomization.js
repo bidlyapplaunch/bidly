@@ -1,6 +1,7 @@
 import express from 'express';
 import MarketplaceCustomization from '../models/MarketplaceCustomization.js';
 import { optionalStoreIdentification } from '../middleware/storeMiddleware.js';
+import { buildMarketplaceCSS, normalizeMarketplaceTheme } from '../../shared/marketplaceTheme.js';
 
 const router = express.Router();
 
@@ -199,7 +200,8 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
             };
         }
 
-        const css = generateMarketplaceThemeCSS(customization);
+        const normalizedTheme = normalizeMarketplaceTheme(customization);
+        const css = buildMarketplaceCSS(normalizedTheme);
 
         res.setHeader('Content-Type', 'text/css');
         res.send(css);
@@ -208,72 +210,5 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
         res.status(500).send('/* Error generating theme CSS */');
     }
 });
-
-function generateMarketplaceThemeCSS(customization) {
-    const { template, font, colors } = customization;
-
-    // Base CSS variables
-    let css = `:root {
-        --bidly-marketplace-color-primary: ${colors.primary};
-        --bidly-marketplace-color-background: ${colors.background};
-        --bidly-marketplace-color-surface: ${colors.surface};
-        --bidly-marketplace-color-text-primary: ${colors.textPrimary};
-        --bidly-marketplace-color-text-secondary: ${colors.textSecondary};
-        --bidly-marketplace-color-border: ${colors.border};
-        --bidly-marketplace-color-accent: ${colors.accent};
-        --bidly-marketplace-color-success: ${colors.success};
-        --bidly-marketplace-color-error: ${colors.error};
-        --bidly-marketplace-color-hover: ${colors.hover};
-        --bidly-marketplace-color-gradient1: ${colors.gradient1 || '#007bff'};
-        --bidly-marketplace-color-gradient2: ${colors.gradient2 || '#0056b3'};
-        --bidly-marketplace-font-family: '${font}', sans-serif;
-        --bidly-marketplace-template: '${template}';
-    `;
-
-    // Template-specific styles
-    switch (template) {
-        case 'Modern':
-            css += `
-        --bidly-marketplace-border-radius: 12px;
-        --bidly-marketplace-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        --bidly-marketplace-spacing: 1.5rem;
-        --bidly-marketplace-button-padding: 0.75rem 1.5rem;
-    `;
-            break;
-        case 'Minimal':
-            css += `
-        --bidly-marketplace-border-radius: 4px;
-        --bidly-marketplace-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        --bidly-marketplace-spacing: 1rem;
-        --bidly-marketplace-button-padding: 0.5rem 1rem;
-    `;
-            break;
-        case 'Bold':
-            css += `
-        --bidly-marketplace-border-radius: 8px;
-        --bidly-marketplace-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        --bidly-marketplace-spacing: 2rem;
-        --bidly-marketplace-button-padding: 1rem 2rem;
-    `;
-            break;
-        default: // Classic
-            css += `
-        --bidly-marketplace-border-radius: 6px;
-        --bidly-marketplace-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-        --bidly-marketplace-spacing: 1.25rem;
-        --bidly-marketplace-button-padding: 0.625rem 1.25rem;
-    `;
-    }
-
-    // Additional utility variables
-    css += `
-        --bidly-marketplace-primary-hover: color-mix(in srgb, var(--bidly-marketplace-color-primary) 80%, black);
-        --bidly-marketplace-primary-light: color-mix(in srgb, var(--bidly-marketplace-color-primary) 90%, white);
-        --bidly-marketplace-gradient: linear-gradient(135deg, var(--bidly-marketplace-color-gradient1), var(--bidly-marketplace-color-gradient2));
-    }
-    `;
-
-    return css;
-}
 
 export default router;

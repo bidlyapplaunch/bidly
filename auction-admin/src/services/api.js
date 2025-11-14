@@ -372,6 +372,18 @@ export const customizationSettingsAPI = {
   }
 };
 
+export const marketplaceCustomizationAPI = {
+  async getSettings() {
+    const response = await api.get('/marketplace-customization');
+    return response.data;
+  },
+
+  async saveSettings(settings) {
+    const response = await api.post('/marketplace-customization', settings);
+    return response.data;
+  }
+};
+
 export const billingAPI = {
   async getCurrentPlan() {
     const response = await api.get('/billing/current');

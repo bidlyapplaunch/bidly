@@ -235,33 +235,33 @@
 
 /* Dynamic theme overrides */
 .bidly-marketplace-root .customer-auth-modal {
-  background: var(--bidly-color-surface, #ffffff);
-  color: var(--bidly-color-text-primary, #111827);
-  border: 1px solid var(--bidly-color-border, #d4d8dd);
+  background: var(--bidly-marketplace-color-surface, #ffffff);
+  color: var(--bidly-marketplace-color-text-primary, #111827);
+  border: 1px solid var(--bidly-marketplace-color-border, #d4d8dd);
   box-shadow: var(--bidly-marketplace-shadow, 0 6px 18px rgba(15, 23, 42, 0.08));
 }
 
 .bidly-marketplace-root .customer-auth-header {
-  border-color: var(--bidly-color-border, #d4d8dd);
+  border-color: var(--bidly-marketplace-color-border, #d4d8dd);
 }
 
 .bidly-marketplace-root .customer-auth-header h2,
 .bidly-marketplace-root .form-group label {
-  color: var(--bidly-color-text-primary, #111827);
+  color: var(--bidly-marketplace-color-text-primary, #111827);
 }
 
 .bidly-marketplace-root .close-btn {
-  color: var(--bidly-color-text-secondary, rgba(17, 24, 39, 0.65));
+  color: var(--bidly-marketplace-color-text-secondary, rgba(17, 24, 39, 0.65));
 }
 
 .bidly-marketplace-root .close-btn:hover {
-  background-color: var(--bidly-color-surface, #ffffff);
-  color: var(--bidly-color-text-primary, #111827);
+  background-color: var(--bidly-marketplace-color-surface, #ffffff);
+  color: var(--bidly-marketplace-color-text-primary, #111827);
 }
 
 .bidly-marketplace-root .auth-description,
 .bidly-marketplace-root .auth-switch p {
-  color: var(--bidly-color-text-secondary, rgba(17, 24, 39, 0.65));
+  color: var(--bidly-marketplace-color-text-secondary, rgba(17, 24, 39, 0.65));
 }
 
 .bidly-marketplace-root .shopify-login-card {
@@ -270,52 +270,52 @@
 }
 
 .bidly-marketplace-root .shopify-login-card p {
-  color: var(--bidly-color-text-primary, #111827);
+  color: var(--bidly-marketplace-color-text-primary, #111827);
 }
 
 .bidly-marketplace-root .form-group input {
-  border-color: var(--bidly-color-border, #d4d8dd);
-  background-color: var(--bidly-color-surface, #ffffff);
-  color: var(--bidly-color-text-primary, #111827);
+  border-color: var(--bidly-marketplace-color-border, #d4d8dd);
+  background-color: var(--bidly-marketplace-color-surface, #ffffff);
+  color: var(--bidly-marketplace-color-text-primary, #111827);
 }
 
 .bidly-marketplace-root .form-group input:focus {
-  border-color: var(--bidly-color-button-bg, #2563eb);
+  border-color: var(--bidly-marketplace-color-primary, #2563eb);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .bidly-marketplace-root .form-group input:disabled {
   background-color: rgba(148, 163, 184, 0.12);
-  color: var(--bidly-color-text-secondary, rgba(17, 24, 39, 0.65));
+  color: var(--bidly-marketplace-color-text-secondary, rgba(17, 24, 39, 0.65));
 }
 
 .bidly-marketplace-root .auth-submit-btn {
-  background: var(--bidly-color-button-bg, #2563eb);
+  background: var(--bidly-marketplace-color-primary, #2563eb);
   border: none;
-  color: var(--bidly-color-button-text, #ffffff);
+  color: #ffffff;
   box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
 }
 
 .bidly-marketplace-root .auth-submit-btn:hover:not(:disabled) {
-  background: var(--bidly-color-button-hover, #1d4ed8);
+  background: var(--bidly-marketplace-color-hover, #1d4ed8);
   box-shadow: 0 10px 22px rgba(29, 78, 216, 0.3);
 }
 
 .bidly-marketplace-root .auth-submit-btn:disabled {
   background: rgba(148, 163, 184, 0.4);
-  color: var(--bidly-color-button-text, #ffffff);
+  color: #ffffff;
 }
 
 .bidly-marketplace-root .auth-switch {
-  border-color: var(--bidly-color-border, #d4d8dd);
+  border-color: var(--bidly-marketplace-color-border, #d4d8dd);
 }
 
 .bidly-marketplace-root .switch-btn {
-  color: var(--bidly-color-accent, #2563eb);
+  color: var(--bidly-marketplace-color-accent, #2563eb);
 }
 
 .bidly-marketplace-root .switch-btn:hover:not(:disabled) {
-  color: var(--bidly-color-button-hover, #1d4ed8);
+  color: var(--bidly-marketplace-color-hover, #1d4ed8);
 }
 
 .bidly-marketplace-root .switch-btn:disabled {
@@ -325,5 +325,5 @@
 .bidly-marketplace-root .error-message {
   background-color: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.2);
-  color: var(--bidly-color-error, #ef4444);
+  color: var(--bidly-marketplace-color-error, #ef4444);
 }
