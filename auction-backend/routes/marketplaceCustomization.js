@@ -120,22 +120,26 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
         }
 
         // Validate colors
+        let cleanedColors = null;
         if (colors) {
             const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'buttonText', 'button', 'border', 'accent', 'success', 'error', 'gradient1', 'gradient2'];
-            const invalidKeys = Object.keys(colors).filter(key => !validColorKeys.includes(key));
-            if (invalidKeys.length > 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid color keys: ' + invalidKeys.join(', ') + '. Valid keys: ' + validColorKeys.join(', ')
-                });
-            }
+            cleanedColors = Object.entries(colors).reduce((acc, [key, value]) => {
+                if (validColorKeys.includes(key)) {
+                    acc[key] = value;
+                } else {
+                    console.warn(`⚠️ Ignoring unsupported color key "${key}" for shop ${shopDomain}`);
+                }
+                return acc;
+            }, {});
         }
 
         const updateData = {};
         if (template) updateData.template = template;
         if (font) updateData.font = font;
         if (typeof gradientEnabled === 'boolean') updateData.gradientEnabled = gradientEnabled;
-        if (colors) updateData.colors = colors;
+        if (cleanedColors && Object.keys(cleanedColors).length > 0) {
+            updateData.colors = cleanedColors;
+        }
 
         const customization = await MarketplaceCustomization.findOneAndUpdate(
             { shopDomain },
