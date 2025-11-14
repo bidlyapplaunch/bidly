@@ -33,7 +33,6 @@ const COLOR_FIELDS = [
   { key: 'accent', label: 'Accent', description: 'Timers, stats, and pills.' },
   { key: 'success', label: 'Success', description: 'Positive badges and buy-now confirmations.' },
   { key: 'error', label: 'Error', description: 'Errors, ended states, and blocking toasts.' },
-  { key: 'hover', label: 'Hover', description: 'Button hover and focus states.' },
   { key: 'gradient1', label: 'Gradient start', description: 'Hero gradient starting color.' },
   { key: 'gradient2', label: 'Gradient end', description: 'Hero gradient ending color.' }
 ];

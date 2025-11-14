@@ -428,34 +428,6 @@ function App() {
             }
           ]}
         >
-          {/* Shop Information and Connection Status */}
-          <div style={{ marginBottom: '1rem' }}>
-            {shopName && (
-              <Banner status="info">
-                <Text variant="bodyMd">🏪 Viewing auctions from <strong>{shopName}</strong></Text>
-              </Banner>
-            )}
-            {connectionStatus === 'connected' && (
-              <Banner status="success">
-                <Text variant="bodyMd">🟢 Connected to live updates</Text>
-              </Banner>
-            )}
-            {connectionStatus === 'connecting' && (
-              <Banner status="info">
-                <Text variant="bodyMd">🟡 Connecting to live updates...</Text>
-              </Banner>
-            )}
-            {connectionStatus === 'disconnected' && (
-              <Banner status="warning">
-                <Text variant="bodyMd">🔴 Disconnected from live updates. Refreshing...</Text>
-              </Banner>
-            )}
-            {connectionStatus === 'error' && (
-              <Banner status="critical">
-                <Text variant="bodyMd">❌ Connection error. Some features may not work properly.</Text>
-              </Banner>
-            )}
-          </div>
           {error && (
             <div style={{ marginBottom: '1rem' }}>
               <Banner status="critical">

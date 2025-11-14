@@ -69,11 +69,6 @@ const marketplaceCustomizationSchema = new mongoose.Schema({
             required: true,
             default: '#ff4444'
         },
-        hover: {
-            type: String,
-            required: true,
-            default: '#0056b3'
-        },
         button: {
             type: String,
             required: true,

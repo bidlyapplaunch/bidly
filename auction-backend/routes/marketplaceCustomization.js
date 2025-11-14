@@ -55,7 +55,6 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
                     accent: '#00b894',
                     success: '#00c851',
                     error: '#ff4444',
-                    hover: '#0056b3',
                     button: '#1f2933',
                     buttonText: '#ffffff',
                     gradient1: '#007bff',
@@ -122,7 +121,7 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
 
         // Validate colors
         if (colors) {
-            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'buttonText', 'button', 'border', 'accent', 'success', 'error', 'hover', 'gradient1', 'gradient2'];
+            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'buttonText', 'button', 'border', 'accent', 'success', 'error', 'gradient1', 'gradient2'];
             const invalidKeys = Object.keys(colors).filter(key => !validColorKeys.includes(key));
             if (invalidKeys.length > 0) {
                 return res.status(400).json({
@@ -199,7 +198,6 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
                     accent: '#00b894',
                     success: '#00c851',
                     error: '#ff4444',
-                    hover: '#0056b3',
                     button: '#1f2933',
                     buttonText: '#ffffff',
                     gradient1: '#007bff',

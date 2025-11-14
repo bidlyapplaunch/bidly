@@ -49,7 +49,6 @@ const DEFAULT_COLORS = {
   accent: '#00b894',
   success: '#00c851',
   error: '#ff4444',
-  hover: '#0056b3',
   button: '#1f2933',
   buttonText: '#ffffff',
   gradient1: '#007bff',
@@ -101,7 +100,6 @@ ${fontImport}
   --bidly-marketplace-color-accent: ${theme.colors.accent};
   --bidly-marketplace-color-success: ${theme.colors.success};
   --bidly-marketplace-color-error: ${theme.colors.error};
-  --bidly-marketplace-color-hover: ${theme.colors.hover};
   --bidly-marketplace-color-button: ${theme.colors.button};
   --bidly-marketplace-color-button-text: ${theme.colors.buttonText};
   --bidly-marketplace-color-gradient1: ${theme.colors.gradient1};
@@ -116,6 +114,7 @@ ${fontImport}
   --bidly-marketplace-primary-hover: color-mix(in srgb, ${theme.colors.primary} 85%, #000000);
   --bidly-marketplace-primary-light: color-mix(in srgb, ${theme.colors.primary} 90%, #ffffff);
   --bidly-marketplace-gradient: linear-gradient(140deg, ${theme.colors.gradient1}, ${theme.colors.gradient2});
+  --pc-box-background: ${theme.colors.primary};
 }
 
 .bidly-marketplace-root,

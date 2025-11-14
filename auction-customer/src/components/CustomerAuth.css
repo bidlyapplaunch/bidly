@@ -297,7 +297,7 @@
 }
 
 .bidly-marketplace-root .auth-submit-btn:hover:not(:disabled) {
-  background: var(--bidly-marketplace-color-hover, #1d4ed8);
+  background: var(--bidly-marketplace-primary-hover, #1d4ed8);
   box-shadow: 0 10px 22px rgba(29, 78, 216, 0.3);
 }
 
@@ -315,7 +315,7 @@
 }
 
 .bidly-marketplace-root .switch-btn:hover:not(:disabled) {
-  color: var(--bidly-marketplace-color-hover, #1d4ed8);
+  color: color-mix(in srgb, var(--bidly-marketplace-color-button, #1f2933) 85%, #000000);
 }
 
 .bidly-marketplace-root .switch-btn:disabled {
