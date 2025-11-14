@@ -129,12 +129,10 @@ ${fontImport}
   padding-bottom: calc(var(--bidly-marketplace-spacing) * 2);
   transition: background 200ms ease, color 200ms ease;
   --pc-box-background: var(--bidly-marketplace-color-primary);
-  --p-color-bg-surface: var(--bidly-marketplace-color-primary);
 }
 
-.bidly-marketplace-root .Polaris-Box {
+.bidly-marketplace-root .Polaris-Card .Polaris-Box {
   --pc-box-background: var(--bidly-marketplace-color-primary);
-  --p-color-bg-surface: var(--bidly-marketplace-color-primary);
   background: var(--bidly-marketplace-color-primary);
 }
 
