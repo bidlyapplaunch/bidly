@@ -403,6 +403,7 @@ const MarketplaceCustomizationSettings = () => {
         />
       )}
       <Page
+        fullWidth
         title="Marketplace customization"
         subtitle="Control the typography, template, and color system for the public auction marketplace."
         backAction={{ content: 'Back', onAction: () => navigate(-1) }}
@@ -429,24 +430,39 @@ const MarketplaceCustomizationSettings = () => {
           .marketplace-customization-grid {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 32px;
+            width: 100%;
           }
-          @media (min-width: 1000px) {
+          @media (min-width: 1024px) {
             .marketplace-customization-grid {
               display: grid;
-              grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+              grid-template-columns: 1fr;
+            }
+          }
+          @media (min-width: 1280px) {
+            .marketplace-customization-grid {
+              grid-template-columns: minmax(640px, 1fr) 420px;
               align-items: flex-start;
-              gap: 24px;
             }
           }
           .marketplace-customization-grid__preview {
             position: relative;
           }
-          @media (min-width: 1000px) {
+          @media (min-width: 1280px) {
             .marketplace-customization-grid__preview {
               position: sticky;
-              top: 24px;
+              top: 16px;
             }
+          }
+          .marketplace-customization-grid__previewCard {
+            max-height: calc(100vh - 120px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+          }
+          .marketplace-customization-grid__previewBody {
+            overflow: auto;
+            padding-right: 4px;
           }
         `}</style>
         <div className="marketplace-customization-grid">
@@ -515,11 +531,13 @@ const MarketplaceCustomizationSettings = () => {
           </div>
 
           <div className="marketplace-customization-grid__preview">
-            <Card title="Live preview" sectioned>
-              <MarketplacePreview
-                customization={customization}
-                shopName={shopDisplayName || SHOP_NAME_FALLBACK}
-              />
+            <Card title="Live preview" sectioned className="marketplace-customization-grid__previewCard">
+              <div className="marketplace-customization-grid__previewBody">
+                <MarketplacePreview
+                  customization={customization}
+                  shopName={shopDisplayName || SHOP_NAME_FALLBACK}
+                />
+              </div>
             </Card>
           </div>
         </div>
