@@ -7,13 +7,15 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const sharedPath = path.resolve(__dirname, '../shared')
 const customerPath = path.resolve(__dirname, '../auction-customer/src')
+const polarisPath = path.resolve(__dirname, 'node_modules/@shopify/polaris')
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
       '@shared': sharedPath,
-      '@customer': customerPath
+      '@customer': customerPath,
+      '@shopify/polaris': polarisPath
     }
   },
   server: {
@@ -25,7 +27,7 @@ export default defineConfig({
       }
     },
     fs: {
-      allow: [sharedPath, __dirname, path.resolve(__dirname, '..')]
+      allow: [sharedPath, customerPath, __dirname, path.resolve(__dirname, '..')]
     }
   },
   build: {
