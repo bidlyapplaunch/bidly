@@ -374,12 +374,18 @@ export const customizationSettingsAPI = {
 
 export const marketplaceCustomizationAPI = {
   async getSettings() {
-    const response = await api.get('/marketplace-customization');
+    const shop = getShopFromURL();
+    const response = await api.get('/marketplace-customization', {
+      params: shop ? { shop } : undefined
+    });
     return response.data;
   },
 
   async saveSettings(settings) {
-    const response = await api.post('/marketplace-customization', settings);
+    const shop = getShopFromURL();
+    const response = await api.post('/marketplace-customization', settings, {
+      params: shop ? { shop } : undefined
+    });
     return response.data;
   }
 };
