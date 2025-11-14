@@ -252,14 +252,20 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     }
 
     try {
-      await onSave({
+      const payload = {
         ...formData,
         startTime: formData.startTime.toISOString(),
         endTime: formData.endTime.toISOString(),
         startingBid: parseFloat(formData.startingBid),
         buyNowPrice: formData.buyNowPrice ? parseFloat(formData.buyNowPrice) : undefined,
         reservePrice: formData.reservePrice ? parseFloat(formData.reservePrice) : 0,
-      });
+      };
+
+      if (auction) {
+        delete payload.shopifyProductId;
+      }
+
+      await onSave(payload);
       onClose();
     } catch (err) {
       console.error('Error saving auction:', err);
@@ -374,6 +380,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
             onChange={(value) => handleChange(value, 'shopifyProductId')}
             error={errors.shopifyProductId}
             placeholder="Product ID will be filled automatically when you select a product"
+            disabled={Boolean(auction)}
           />
 
           <FormLayout.Group>
