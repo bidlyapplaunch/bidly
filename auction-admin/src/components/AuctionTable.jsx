@@ -183,7 +183,6 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         icon={EditMinor}
         onClick={() => onEdit(auction)}
         size="slim"
-        disabled={auction.bidHistory?.length > 0}
         accessibilityLabel="Edit auction"
       />
       <Button
@@ -194,7 +193,6 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         }}
         size="slim"
         destructive
-        disabled={auction.bidHistory?.length > 0}
         accessibilityLabel="Delete auction"
       />
       {auction.status === 'active' && (

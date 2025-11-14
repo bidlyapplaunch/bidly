@@ -289,8 +289,11 @@
         const chatSurface = gradientEnabled
             ? `linear-gradient(135deg, ${normalized.bg_gradient_start}, ${normalized.bg_gradient_end})`
             : normalized.bg_solid || '#111827';
+        const headerBackground = gradientEnabled
+            ? `linear-gradient(135deg, ${normalized.bg_gradient_start}, ${normalized.bg_gradient_end})`
+            : normalized.bg_solid || normalized.button_bg || normalized.accent || '#6366f1';
 
-        host.style.setProperty('--bidly-chat-header-bg', normalized.accent || '#6366f1');
+        host.style.setProperty('--bidly-chat-header-bg', headerBackground);
         host.style.setProperty('--bidly-chat-header-text', normalized.button_text || '#ffffff');
         host.style.setProperty('--bidly-chat-surface', chatSurface);
         host.style.setProperty('--bidly-chat-surface-inner', hexToRgba(normalized.bg_solid || '#111827', gradientEnabled ? 0.9 : 0.95));
@@ -305,7 +308,9 @@
         host.style.setProperty('--bidly-chat-toggle-hover-bg', hexToRgba(normalized.accent || '#6366f1', 0.2));
         host.style.setProperty('--bidly-chat-toggle-active-bg', normalized.accent || '#6366f1');
         host.style.setProperty('--bidly-chat-toggle-active-color', normalized.button_text || '#ffffff');
-        host.style.setProperty('--bidly-chat-send-shadow', hexToRgba(normalized.accent || '#6366f1', 0.35));
+        host.style.setProperty('--bidly-chat-send-bg', headerBackground);
+        host.style.setProperty('--bidly-chat-send-color', normalized.button_text || '#ffffff');
+        host.style.setProperty('--bidly-chat-send-shadow', hexToRgba(normalized.accent || normalized.bg_gradient_end || '#6366f1', 0.35));
         host.style.setProperty('--bidly-history-bg', hexToRgba(normalized.text || '#ffffff', 0.12));
         host.style.setProperty('--bidly-history-border', hexToRgba(normalized.border || normalized.accent || '#ffffff', 0.2));
         host.style.setProperty('--bidly-history-color', normalized.button_text || '#ffffff');

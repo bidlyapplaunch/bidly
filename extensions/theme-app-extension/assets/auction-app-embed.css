@@ -578,7 +578,7 @@
 .bidly-countdown {
     font-size: 28px;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--bidly-text-color, #ffffff);
     font-family: 'Courier New', monospace;
     background: transparent;
     backdrop-filter: none;
@@ -907,11 +907,11 @@
 }
 
 .bidly-chat-send-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--bidly-chat-send-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
     border: none;
     border-radius: 8px;
     padding: 10px 20px;
-    color: white;
+    color: var(--bidly-chat-send-color, #ffffff);
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
@@ -920,7 +920,7 @@
 
 .bidly-chat-send-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px var(--bidly-chat-send-shadow, rgba(102, 126, 234, 0.4));
 }
 
 .bidly-chat-send-btn:disabled {
