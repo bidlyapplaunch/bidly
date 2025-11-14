@@ -428,25 +428,23 @@ const MarketplaceCustomizationSettings = () => {
       >
         <style>{`
           .marketplace-customization-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 32px;
             width: 100%;
-          }
-          @media (min-width: 1024px) {
-            .marketplace-customization-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-            }
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            gap: 32px;
+            grid-template-columns: 1fr;
           }
           @media (min-width: 1280px) {
             .marketplace-customization-grid {
-              grid-template-columns: minmax(640px, 1fr) 420px;
+              grid-template-columns: minmax(700px, 1fr) minmax(420px, 480px);
               align-items: flex-start;
             }
           }
           .marketplace-customization-grid__preview {
             position: relative;
+            display: flex;
+            justify-content: center;
           }
           @media (min-width: 1280px) {
             .marketplace-customization-grid__preview {
@@ -455,14 +453,27 @@ const MarketplaceCustomizationSettings = () => {
             }
           }
           .marketplace-customization-grid__previewCard {
-            max-height: calc(100vh - 120px);
+            width: 100%;
+            max-width: 480px;
+            min-width: min(420px, 100%);
+            flex: 0 0 auto;
+            margin-left: auto;
+            margin-right: auto;
+            max-height: calc(100vh - 96px);
             overflow: hidden;
             display: flex;
             flex-direction: column;
           }
           .marketplace-customization-grid__previewBody {
             overflow: auto;
-            padding-right: 4px;
+            padding-right: 6px;
+          }
+          .bidly-preview-shell {
+            width: 100%;
+            max-width: 480px;
+            min-width: min(420px, 100%);
+            margin-left: auto;
+            margin-right: auto;
           }
         `}</style>
         <div className="marketplace-customization-grid">

@@ -57,6 +57,7 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
 
   return (
     <div
+      className="bidly-preview-shell"
       style={{
         border: '1px solid var(--p-color-border-subdued)',
         borderRadius: 18,
