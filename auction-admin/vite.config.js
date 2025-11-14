@@ -6,12 +6,14 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const sharedPath = path.resolve(__dirname, '../shared')
+const customerPath = path.resolve(__dirname, '../auction-customer/src')
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@shared': sharedPath
+      '@shared': sharedPath,
+      '@customer': customerPath
     }
   },
   server: {

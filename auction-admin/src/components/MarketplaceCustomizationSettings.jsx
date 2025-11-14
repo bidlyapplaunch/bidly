@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Frame, Page, Layout, Card, Text, Banner, Button, InlineGrid, BlockStack, Select, Spinner, Toast } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { marketplaceCustomizationAPI } from '../services/api';
-import { buildMarketplaceCSS, normalizeMarketplaceTheme, DEFAULT_MARKETPLACE_THEME } from '@shared/marketplaceTheme.js';
+import { normalizeMarketplaceTheme, DEFAULT_MARKETPLACE_THEME } from '@shared/marketplaceTheme.js';
+import MarketplacePreview from './MarketplacePreview.jsx';
 
 const FONT_OPTIONS = [
   { label: 'Inter', value: 'Inter' },
@@ -39,29 +40,6 @@ const DEFAULT_CUSTOMIZATION = {
   colors: { ...DEFAULT_MARKETPLACE_THEME.colors },
   gradientEnabled: DEFAULT_MARKETPLACE_THEME.gradientEnabled
 };
-
-const SAMPLE_AUCTIONS = [
-  {
-    id: 'sample-1',
-    productTitle: 'Modern Canvas Backpack',
-    status: 'active',
-    startingBid: 95,
-    currentBid: 142,
-    bidCount: 12,
-    timeLabel: '08:12 remaining',
-    buyNow: 220
-  },
-  {
-    id: 'sample-2',
-    productTitle: 'Nordic Ceramic Planter Set',
-    status: 'pending',
-    startingBid: 40,
-    currentBid: 40,
-    bidCount: 0,
-    timeLabel: 'Starts in 02:17:44',
-    buyNow: null
-  }
-];
 
 const sanitizeHex = (value) => {
   if (!value) return '';
@@ -172,155 +150,6 @@ function TemplateSelector({ selected, onSelect }) {
         </button>
       ))}
     </InlineGrid>
-  );
-}
-
-function MarketplacePreview({ customization }) {
-  const theme = useMemo(() => normalizeMarketplaceTheme(customization), [customization]);
-  const previewCss = useMemo(() => {
-    const baseCss = buildMarketplaceCSS(theme);
-    const previewSpecificCss = `
-.bidly-preview-shell {
-  border: 1px solid var(--p-color-border-subdued);
-  border-radius: 18px;
-  overflow: hidden;
-  background: var(--bidly-marketplace-color-background);
-}
-
-.bidly-preview-canvas {
-  padding: var(--bidly-marketplace-spacing);
-  display: flex;
-  flex-direction: column;
-  gap: var(--bidly-marketplace-spacing);
-}
-
-.bidly-preview-banner {
-  border-radius: calc(var(--bidly-marketplace-border-radius) + 4px);
-  padding: 12px 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: var(--bidly-marketplace-color-surface);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.bidly-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--bidly-marketplace-spacing);
-}
-
-.bidly-preview-card {
-  border-radius: var(--bidly-marketplace-border-radius);
-  border: 1px solid var(--bidly-marketplace-color-border);
-  background: var(--bidly-marketplace-color-surface);
-  box-shadow: var(--bidly-marketplace-shadow);
-  padding: var(--bidly-marketplace-spacing);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.bidly-preview-card img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: calc(var(--bidly-marketplace-border-radius) - 2px);
-  border: 1px solid var(--bidly-marketplace-color-border);
-  background: rgba(255,255,255,0.6);
-}
-
-.bidly-preview-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--bidly-marketplace-color-text-secondary);
-  font-size: 13px;
-}
-
-.bidly-preview-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.bidly-preview-button {
-  flex: 1;
-  border-radius: calc(var(--bidly-marketplace-border-radius) - 4px);
-  padding: 10px 14px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-}
-
-.bidly-preview-button-primary {
-  background: var(--bidly-marketplace-color-primary);
-  color: #fff;
-}
-
-.bidly-preview-button-secondary {
-  background: var(--bidly-marketplace-color-surface);
-  color: var(--bidly-marketplace-color-text-primary);
-  border: 1px solid var(--bidly-marketplace-color-border);
-}
-    `;
-    return `${baseCss}\n${previewSpecificCss}`;
-  }, [theme]);
-
-  return (
-    <div className="bidly-preview-shell">
-      <style dangerouslySetInnerHTML={{ __html: previewCss }} />
-      <div
-        className="bidly-marketplace-root"
-        data-bidly-marketplace-template={theme.template}
-        data-bidly-marketplace-gradient={theme.gradientEnabled ? '1' : '0'}
-      >
-        <div className="bidly-preview-canvas">
-          <div className="bidly-preview-banner">
-            <Text variant="bodyMd" fontWeight="medium">
-              🏪 Viewing auctions from True Nordic Dev
-            </Text>
-            <Text variant="bodySm" tone="subdued">
-              Status: Connected
-            </Text>
-          </div>
-          <div className="bidly-preview-grid">
-            {SAMPLE_AUCTIONS.map((auction) => (
-              <div key={auction.id} className="bidly-preview-card">
-                <img src="https://cdn.shopify.com/static/sample-images/clocks.jpg" alt={auction.productTitle} />
-                <BlockStack gap="tight">
-                  <Text variant="bodyMd" fontWeight="semibold">
-                    {auction.productTitle}
-                  </Text>
-                  <Text tone="subdued" variant="bodySm">
-                    Starting at ${auction.startingBid.toFixed(0)}
-                  </Text>
-                </BlockStack>
-                <BlockStack gap="extraTight">
-                  <Text variant="bodySm" tone="subdued">
-                    Current bid
-                  </Text>
-                  <Text variant="headingLg" as="p" color="primary">
-                    ${auction.currentBid.toFixed(0)}
-                  </Text>
-                </BlockStack>
-                <div className="bidly-preview-meta">
-                  <Text variant="bodySm">{auction.timeLabel}</Text>
-                  <Text variant="bodySm">{auction.bidCount} bids</Text>
-                </div>
-                <div className="bidly-preview-actions">
-                  <button className="bidly-preview-button bidly-preview-button-primary" type="button">
-                    {auction.status === 'active' ? 'Place bid' : auction.status === 'pending' ? 'Starting soon' : 'Ended'}
-                  </button>
-                  <button className="bidly-preview-button bidly-preview-button-secondary" type="button">
-                    Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
