@@ -471,22 +471,6 @@ const WidgetCustomizationSettings = () => {
             <Card>
               <BlockStack gap="loose">
                 <div>
-                  <Text variant="headingMd">Color palette</Text>
-                  <Text tone="subdued">
-                    Apply a curated palette to update background, text, and accent colors together. Afterwards you can fine-tune individual values.
-                  </Text>
-                </div>
-                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="tight">
-                  {meta.palettes.map((palette) => (
-                    <PaletteCard key={palette.id} palette={palette} onSelect={applyPalette} />
-                  ))}
-                </InlineGrid>
-              </BlockStack>
-            </Card>
-
-            <Card>
-              <BlockStack gap="loose">
-                <div>
                   <Text variant="headingMd">Typography & layout</Text>
                 </div>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
