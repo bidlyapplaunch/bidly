@@ -111,7 +111,14 @@ ${a?`@import url('https://fonts.googleapis.com/css2?family=${a}&display=swap');
   min-height: 100vh;
   padding-bottom: calc(var(--bidly-marketplace-spacing) * 2);
   transition: background 200ms ease, color 200ms ease;
-  --pc-box-background: var(--bidly-marketplace-color-primary) !important;
+  --pc-box-background: var(--bidly-marketplace-color-primary);
+  --p-color-bg-surface: var(--bidly-marketplace-color-primary);
+}
+
+.bidly-marketplace-root .Polaris-Box {
+  --pc-box-background: var(--bidly-marketplace-color-primary);
+  --p-color-bg-surface: var(--bidly-marketplace-color-primary);
+  background: var(--bidly-marketplace-color-primary);
 }
 
 .bidly-marketplace-root[data-bidly-marketplace-gradient="1"] {
