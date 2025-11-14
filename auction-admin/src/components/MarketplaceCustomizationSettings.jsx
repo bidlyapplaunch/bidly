@@ -443,35 +443,35 @@ const MarketplaceCustomizationSettings = () => {
           }
           .marketplace-customization-grid__preview {
             position: relative;
-            display: flex;
-            justify-content: center;
           }
           @media (min-width: 1280px) {
             .marketplace-customization-grid__preview {
               position: sticky;
-              top: 16px;
+              top: 80px;
+              height: calc(100vh - 100px);
+              overflow-y: auto;
+              padding-bottom: 24px;
             }
           }
           .marketplace-customization-grid__previewCard {
             width: 100%;
-            max-width: 480px;
-            min-width: min(420px, 100%);
+            max-width: 500px;
+            min-width: min(390px, 100%);
             flex: 0 0 auto;
             margin-left: auto;
             margin-right: auto;
-            max-height: calc(100vh - 96px);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+            border-radius: 26px;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
           }
           .marketplace-customization-grid__previewBody {
-            overflow: auto;
-            padding-right: 6px;
+            overflow: visible;
+            padding: 0;
           }
-          .bidly-preview-shell {
-            width: 100%;
-            max-width: 480px;
-            min-width: min(420px, 100%);
+          .bidly-preview-shell,
+          .bidly-preview-shell .bidly-marketplace-root {
+            width: min(max(390px, 28vw), 480px);
+            min-width: 390px;
             margin-left: auto;
             margin-right: auto;
           }
