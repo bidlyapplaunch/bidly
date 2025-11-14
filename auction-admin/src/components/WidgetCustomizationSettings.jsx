@@ -376,6 +376,7 @@ const WidgetCustomizationSettings = () => {
         />
       )}
       <Page
+        fullWidth
         title="Widget customization"
         subtitle="Control how the Bidly widget appears on your product pages without touching code."
         backAction={{
@@ -402,171 +403,201 @@ const WidgetCustomizationSettings = () => {
           }
         ]}
       >
-        {error && (
-          <Layout.Section>
-            <Banner title="We couldn’t save the widget settings" tone="critical">
-              <p>{error}</p>
-            </Banner>
-          </Layout.Section>
-        )}
+        <style>{`
+          .widget-customization-grid {
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            gap: 32px;
+            grid-template-columns: 1fr;
+          }
+          @media (min-width: 1280px) {
+            .widget-customization-grid {
+              grid-template-columns: 1fr 500px;
+              align-items: flex-start;
+            }
+          }
+          .widget-customization-grid__preview {
+            position: relative;
+          }
+          @media (min-width: 1280px) {
+            .widget-customization-grid__preview {
+              position: sticky;
+              top: 80px;
+            }
+          }
+          .widget-customization-grid__previewCard {
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 26px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+          }
+          .widget-customization-grid__previewBody {
+            padding: 0;
+          }
+        `}</style>
+        <div className="widget-customization-grid">
+          <div className="widget-customization-grid__controls">
+            {error && (
+              <Banner title="We couldn’t save the widget settings" tone="critical">
+                <p>{error}</p>
+              </Banner>
+            )}
 
-        <Layout>
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="loose">
-              <div>
-                <Text variant="headingMd">Templates</Text>
-                <Text tone="subdued">
-                  Start from a professionally designed preset. You can still adjust individual settings after selecting a template.
-                </Text>
-              </div>
-              <InlineGrid columns={{ xs: 1, sm: 2 }} gap="tight">
-                {meta.templates.map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    selected={settings.template === template.id}
-                    onSelect={applyTemplate}
-                  />
-                ))}
-              </InlineGrid>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="loose">
-              <div>
-                <Text variant="headingMd">Color palette</Text>
-                <Text tone="subdued">
-                  Apply a curated palette to update background, text, and accent colors together. Afterwards you can fine-tune individual values.
-                </Text>
-              </div>
-              <InlineGrid columns={{ xs: 1, sm: 2 }} gap="tight">
-                {meta.palettes.map((palette) => (
-                  <PaletteCard key={palette.id} palette={palette} onSelect={applyPalette} />
-                ))}
-              </InlineGrid>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="loose">
-              <div>
-                <Text variant="headingMd">Typography & layout</Text>
-              </div>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                <Select
-                  label="Font family"
-                  labelHidden
-                  options={meta.fonts.map((font) => ({ label: font, value: font }))}
-                  value={settings.font}
-                  onChange={(value) => updateField('font', value)}
-                />
-                <Select
-                  label="Border radius"
-                  labelHidden
-                  options={meta.borderRadius.map((radius) => ({ label: `${radius}px`, value: radius }))}
-                  value={settings.borderRadius}
-                  onChange={(value) => updateField('borderRadius', Number(value))}
-                />
-                <Select
-                  label="Depth / shadow"
-                  labelHidden
-                  options={meta.boxShadows.map((shadow) => ({
-                    label: shadow.charAt(0).toUpperCase() + shadow.slice(1),
-                    value: shadow
-                  }))}
-                  value={settings.boxShadow}
-                  onChange={(value) => updateField('boxShadow', value)}
-                />
-              </div>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="loose">
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <Text variant="headingMd">Gradient & background</Text>
-                  <Button size="slim" onClick={toggleGradient}>
-                    {settings.gradientEnabled ? 'Disable gradient' : 'Enable gradient'}
-                  </Button>
+            <Card>
+              <BlockStack gap="loose">
+                <div>
+                  <Text variant="headingMd">Templates</Text>
+                  <Text tone="subdued">
+                    Start from a professionally designed preset. You can still adjust individual settings after selecting a template.
+                  </Text>
                 </div>
-                <Text tone="subdued">
-                  Choose the gradient colors for the widget header or switch to a flat background.
-                </Text>
-              </div>
-              <InlineGrid columns={{ xs: 1, md: 3 }} gap="loose">
-                {GRADIENT_FIELDS.map((field) => (
-                  <ColorSwatchInput
-                    key={field.key}
-                    label={field.label}
-                    description={field.description}
-                    value={settings.colors[field.key]}
-                    onChange={(value) => updateColor(field.key, value)}
-                  />
-                ))}
-              </InlineGrid>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
+                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="tight">
+                  {meta.templates.map((template) => (
+                    <TemplateCard
+                      key={template.id}
+                      template={template}
+                      selected={settings.template === template.id}
+                      onSelect={applyTemplate}
+                    />
+                  ))}
+                </InlineGrid>
+              </BlockStack>
+            </Card>
 
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="loose">
-              <div>
-                <Text variant="headingMd">Fine tune colors</Text>
-                <Text tone="subdued">
-                  Adjust individual tokens for text, buttons, and borders. All colors support hex values only.
-                </Text>
-              </div>
-              <InlineGrid columns={{ xs: 1, md: 3 }} gap="loose">
-                {COLOR_FIELDS.map((field) => (
-                  <ColorSwatchInput
-                    key={field.key}
-                    label={field.label}
-                    description={field.description}
-                    value={settings.colors[field.key]}
-                    onChange={(value) => updateColor(field.key, value)}
-                  />
-                ))}
-              </InlineGrid>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
+            <Card>
+              <BlockStack gap="loose">
+                <div>
+                  <Text variant="headingMd">Color palette</Text>
+                  <Text tone="subdued">
+                    Apply a curated palette to update background, text, and accent colors together. Afterwards you can fine-tune individual values.
+                  </Text>
+                </div>
+                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="tight">
+                  {meta.palettes.map((palette) => (
+                    <PaletteCard key={palette.id} palette={palette} onSelect={applyPalette} />
+                  ))}
+                </InlineGrid>
+              </BlockStack>
+            </Card>
 
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="loose">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <Text variant="headingMd">Live widget preview</Text>
-                <Select
-                  label="Preview state"
-                  labelHidden
-                  options={previewOptions}
-                  value={previewState}
-                  onChange={(value) => loadPreview(value)}
-                />
+            <Card>
+              <BlockStack gap="loose">
+                <div>
+                  <Text variant="headingMd">Typography & layout</Text>
+                </div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <Select
+                    label="Font family"
+                    labelHidden
+                    options={meta.fonts.map((font) => ({ label: font, value: font }))}
+                    value={settings.font}
+                    onChange={(value) => updateField('font', value)}
+                  />
+                  <Select
+                    label="Border radius"
+                    labelHidden
+                    options={meta.borderRadius.map((radius) => ({ label: `${radius}px`, value: radius }))}
+                    value={settings.borderRadius}
+                    onChange={(value) => updateField('borderRadius', Number(value))}
+                  />
+                  <Select
+                    label="Depth / shadow"
+                    labelHidden
+                    options={meta.boxShadows.map((shadow) => ({
+                      label: shadow.charAt(0).toUpperCase() + shadow.slice(1),
+                      value: shadow
+                    }))}
+                    value={settings.boxShadow}
+                    onChange={(value) => updateField('boxShadow', value)}
+                  />
+                </div>
+              </BlockStack>
+            </Card>
+
+            <Card>
+              <BlockStack gap="loose">
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <Text variant="headingMd">Gradient & background</Text>
+                    <Button size="slim" onClick={toggleGradient}>
+                      {settings.gradientEnabled ? 'Disable gradient' : 'Enable gradient'}
+                    </Button>
+                  </div>
+                  <Text tone="subdued">
+                    Choose the gradient colors for the widget header or switch to a flat background.
+                  </Text>
+                </div>
+                <InlineGrid columns={{ xs: 1, md: 3 }} gap="loose">
+                  {GRADIENT_FIELDS.map((field) => (
+                    <ColorSwatchInput
+                      key={field.key}
+                      label={field.label}
+                      description={field.description}
+                      value={settings.colors[field.key]}
+                      onChange={(value) => updateColor(field.key, value)}
+                    />
+                  ))}
+                </InlineGrid>
+              </BlockStack>
+            </Card>
+
+            <Card>
+              <BlockStack gap="loose">
+                <div>
+                  <Text variant="headingMd">Fine tune colors</Text>
+                  <Text tone="subdued">
+                    Adjust individual tokens for text, buttons, and borders. All colors support hex values only.
+                  </Text>
+                </div>
+                <InlineGrid columns={{ xs: 1, md: 3 }} gap="loose">
+                  {COLOR_FIELDS.map((field) => (
+                    <ColorSwatchInput
+                      key={field.key}
+                      label={field.label}
+                      description={field.description}
+                      value={settings.colors[field.key]}
+                      onChange={(value) => updateColor(field.key, value)}
+                    />
+                  ))}
+                </InlineGrid>
+              </BlockStack>
+            </Card>
+          </div>
+
+          <div className="widget-customization-grid__preview">
+            <Card title="Live widget preview" sectioned className="widget-customization-grid__previewCard">
+              <div className="widget-customization-grid__previewBody">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '1.25rem', flexWrap: 'wrap' }}>
+                  <Text variant="headingMd">Live widget preview</Text>
+                  <Select
+                    label="Preview state"
+                    labelHidden
+                    options={previewOptions}
+                    value={previewState}
+                    onChange={(value) => loadPreview(value)}
+                  />
+                </div>
+                <div style={{ padding: '0 1.5rem 1.5rem' }}>
+                  <Text tone="subdued">
+                    Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.
+                  </Text>
+                </div>
+                <div style={{ padding: '0 1.5rem 1.75rem' }}>
+                  <WidgetPreviewFrame
+                    settings={settings}
+                    previewData={previewData}
+                    previewState={previewState}
+                    shopDomain={shopDomain}
+                  />
+                </div>
               </div>
-              <Text tone="subdued">
-                Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.
-              </Text>
-              <WidgetPreviewFrame
-                settings={settings}
-                previewData={previewData}
-                previewState={previewState}
-                shopDomain={shopDomain}
-              />
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-        </Layout>
+            </Card>
+          </div>
+        </div>
       </Page>
     </Frame>
   );
