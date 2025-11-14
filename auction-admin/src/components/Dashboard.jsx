@@ -198,12 +198,12 @@ const Dashboard = ({ onLogout }) => {
     }
 
     // Generate customer dashboard URL with shop parameter
-    const customerUrl = `https://bidly-auction-customer.onrender.com?shop=${currentShop}`;
+    const customerUrl = `https://${currentShop}/apps/bidly?shop=${currentShop}`;
     
     // Open in new tab
     window.open(customerUrl, '_blank');
     
-    setToastMessage('Opening customer dashboard in new tab');
+    setToastMessage('Opening auction marketplace in new tab');
     setToastError(false);
     setShowToast(true);
   };
@@ -252,7 +252,7 @@ const Dashboard = ({ onLogout }) => {
         primaryAction={primaryAction}
         secondaryActions={[
           {
-            content: 'View Customer Dashboard',
+            content: 'Auction Marketplace',
             onAction: handleViewCustomerDashboard
           },
           {

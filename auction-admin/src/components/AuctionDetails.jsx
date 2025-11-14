@@ -237,6 +237,33 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                     <Text variant="bodyLg">{formatDate(auctionData.updatedAt)}</Text>
                   </div>
                 </div>
+                <Divider />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <Text variant="bodyMd" color="subdued">Reserve Price</Text>
+                    <Text variant="bodyLg">
+                      {auctionData.reservePrice && auctionData.reservePrice > 0
+                        ? formatCurrency(auctionData.reservePrice)
+                        : 'Not set'}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text variant="bodyMd" color="subdued">Popcorn Bidding</Text>
+                    <Text variant="bodyLg">
+                      {auctionData.popcornEnabled ? 'Enabled' : 'Disabled'}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text variant="bodyMd" color="subdued">Popcorn Settings</Text>
+                    {auctionData.popcornEnabled ? (
+                      <Text variant="bodyLg">
+                        Trigger: {auctionData.popcornTriggerSeconds || 0}s · Extend: +{auctionData.popcornExtendSeconds || 0}s
+                      </Text>
+                    ) : (
+                      <Text variant="bodyLg">Not configured</Text>
+                    )}
+                  </div>
+                </div>
               </div>
             </Card>
 

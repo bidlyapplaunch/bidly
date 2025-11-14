@@ -59,6 +59,19 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     return new Date();
   };
 
+  const mergeDateWithExistingTime = (datePart, timeSource) => {
+    const merged = createSafeDate(datePart);
+    if (timeSource && timeSource instanceof Date && !isNaN(timeSource.getTime())) {
+      merged.setHours(
+        timeSource.getHours(),
+        timeSource.getMinutes(),
+        timeSource.getSeconds(),
+        timeSource.getMilliseconds()
+      );
+    }
+    return merged;
+  };
+
   const [formData, setFormData] = useState({
     shopifyProductId: '',
     startTime: createSafeDate(new Date(Date.now() + 60 * 60 * 1000)), // 1 hour from now
@@ -370,7 +383,8 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               value={formData.startTime.toISOString().split('T')[0]}
               onChange={(value) => {
                 const [year, month, day] = value.split('-');
-                const newDate = createSafeDate(new Date(year, month - 1, day));
+                const dateOnly = new Date(year, month - 1, day);
+                const newDate = mergeDateWithExistingTime(dateOnly, formData.startTime);
                 handleChange(newDate, 'startTime');
               }}
             />
@@ -395,7 +409,8 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               value={formData.endTime.toISOString().split('T')[0]}
               onChange={(value) => {
                 const [year, month, day] = value.split('-');
-                const newDate = createSafeDate(new Date(year, month - 1, day));
+                const dateOnly = new Date(year, month - 1, day);
+                const newDate = mergeDateWithExistingTime(dateOnly, formData.endTime);
                 handleChange(newDate, 'endTime');
               }}
             />

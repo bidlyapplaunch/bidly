@@ -423,7 +423,7 @@ function App() {
           subtitle={shopName ? `Browse auctions from ${shopName}` : "Browse pending, active, and ended auctions"}
           secondaryActions={[
             {
-              content: customer ? `👤 ${customer.name}` : 'Login to Bid',
+              content: customer ? `👤 ${customer.name} · Logout` : 'Login to Bid',
               onAction: customer ? handleCustomerLogout : handleLoginAction
             }
           ]}
