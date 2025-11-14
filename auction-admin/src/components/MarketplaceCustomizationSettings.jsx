@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Frame, Page, Layout, Card, Text, Banner, Button, InlineGrid, BlockStack, Select, Spinner, Toast } from '@shopify/polaris';
+import { Frame, Page, Layout, Card, Text, Banner, Button, InlineGrid, BlockStack, Select, Spinner, Toast, ButtonGroup } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { marketplaceCustomizationAPI, billingAPI } from '../services/api';
 import { normalizeMarketplaceTheme, DEFAULT_MARKETPLACE_THEME } from '@shared/marketplaceTheme.js';
@@ -87,7 +87,7 @@ const normalizeCustomization = (settings = {}) => {
   };
 };
 
-function ColorInput({ field, value, onChange }) {
+function ColorInput({ field, value, onChange, disabled = false }) {
   const handleTextChange = (event) => {
     const next = sanitizeHex(event.target.value);
     if (/^#[0-9A-F]{0,6}$/.test(next)) {
@@ -103,31 +103,35 @@ function ColorInput({ field, value, onChange }) {
       <Text variant="bodySm" tone="subdued">
         {field.description}
       </Text>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', opacity: disabled ? 0.45 : 1 }}>
         <input
           type="color"
           value={value}
           onChange={(event) => onChange(field.key, event.target.value.toUpperCase())}
+          disabled={disabled}
           style={{
             width: 48,
             height: 36,
             borderRadius: 8,
             border: '1px solid var(--p-color-border-subdued)',
             background: '#fff',
-            cursor: 'pointer'
+            cursor: disabled ? 'not-allowed' : 'pointer'
           }}
         />
         <input
           value={value}
           onChange={handleTextChange}
           maxLength={7}
+          disabled={disabled}
           style={{
             width: 110,
             padding: '6px 10px',
             borderRadius: 6,
             border: '1px solid var(--p-color-border-subdued)',
             fontFamily: 'monospace',
-            fontSize: 13
+            fontSize: 13,
+            background: disabled ? 'var(--p-color-bg-surface-disabled, #f6f6f7)' : '#fff',
+            cursor: disabled ? 'not-allowed' : 'text'
           }}
         />
       </div>
@@ -182,6 +186,7 @@ const MarketplaceCustomizationSettings = () => {
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
   const [planStatus, setPlanStatus] = useState({ loading: true, plan: 'none', allowed: false });
+  const backgroundDisabled = customization.gradientEnabled;
   const [shopDomainState, setShopDomainState] = useState(() => {
     const sessionUser = authService.getUser();
     if (sessionUser?.shopDomain) {
@@ -420,8 +425,32 @@ const MarketplaceCustomizationSettings = () => {
           }
         ]}
       >
-        <Layout>
-          <Layout.Section>
+        <style>{`
+          .marketplace-customization-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+          }
+          @media (min-width: 1000px) {
+            .marketplace-customization-grid {
+              display: grid;
+              grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+              align-items: flex-start;
+              gap: 24px;
+            }
+          }
+          .marketplace-customization-grid__preview {
+            position: relative;
+          }
+          @media (min-width: 1000px) {
+            .marketplace-customization-grid__preview {
+              position: sticky;
+              top: 24px;
+            }
+          }
+        `}</style>
+        <div className="marketplace-customization-grid">
+          <div className="marketplace-customization-grid__controls">
             {error && (
               <Banner tone="critical" title="Marketplace customization unavailable">
                 <p>{error}</p>
@@ -446,21 +475,30 @@ const MarketplaceCustomizationSettings = () => {
                     onChange={handleFontChange}
                   />
                 </div>
-                <div>
-                  <Button onClick={toggleGradient} variant="secondary">
-                    {customization.gradientEnabled ? 'Disable gradient background' : 'Enable gradient background'}
-                  </Button>
-                </div>
               </BlockStack>
             </Card>
-          </Layout.Section>
 
-          <Layout.Section>
             <Card title="Color palette" sectioned>
               <BlockStack gap="base">
-                <Text tone="subdued" variant="bodySm">
-                  Every UI element in the marketplace references these tokens. Update them to match your storefront.
-                </Text>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                  <Text tone="subdued" variant="bodySm">
+                    Every UI element in the marketplace references these tokens. Update them to match your storefront.
+                  </Text>
+                  <ButtonGroup>
+                    <Button
+                      pressed={customization.gradientEnabled}
+                      onClick={toggleGradient}
+                      accessibilityLabel="Toggle gradient background"
+                    >
+                      {customization.gradientEnabled ? 'Gradient enabled' : 'Gradient disabled'}
+                    </Button>
+                  </ButtonGroup>
+                </div>
+                {customization.gradientEnabled && (
+                  <Banner tone="info">
+                    Background color is managed by your gradient. Disable the gradient toggle to edit the solid background color.
+                  </Banner>
+                )}
                 <InlineGrid columns={{ xs: 1, sm: 2 }} gap="loose">
                   {COLOR_FIELDS.map((field) => (
                     <ColorInput
@@ -468,22 +506,23 @@ const MarketplaceCustomizationSettings = () => {
                       field={field}
                       value={customization.colors[field.key]}
                       onChange={handleColorChange}
+                      disabled={backgroundDisabled && field.key === 'background'}
                     />
                   ))}
                 </InlineGrid>
               </BlockStack>
             </Card>
-          </Layout.Section>
+          </div>
 
-          <Layout.Section>
+          <div className="marketplace-customization-grid__preview">
             <Card title="Live preview" sectioned>
               <MarketplacePreview
                 customization={customization}
                 shopName={shopDisplayName || SHOP_NAME_FALLBACK}
               />
             </Card>
-          </Layout.Section>
-        </Layout>
+          </div>
+        </div>
       </Page>
     </Frame>
   );
