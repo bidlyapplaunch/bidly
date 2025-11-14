@@ -50,6 +50,8 @@ const DEFAULT_COLORS = {
   success: '#00c851',
   error: '#ff4444',
   hover: '#0056b3',
+  button: '#1f2933',
+  buttonText: '#ffffff',
   gradient1: '#007bff',
   gradient2: '#0056b3'
 };
@@ -100,9 +102,10 @@ ${fontImport}
   --bidly-marketplace-color-success: ${theme.colors.success};
   --bidly-marketplace-color-error: ${theme.colors.error};
   --bidly-marketplace-color-hover: ${theme.colors.hover};
+  --bidly-marketplace-color-button: ${theme.colors.button};
+  --bidly-marketplace-color-button-text: ${theme.colors.buttonText};
   --bidly-marketplace-color-gradient1: ${theme.colors.gradient1};
   --bidly-marketplace-color-gradient2: ${theme.colors.gradient2};
-  --bidly-marketplace-color-button-text: #ffffff;
   --bidly-marketplace-font-family: ${fontStack};
   --bidly-marketplace-border-radius: ${templateTokens.radius}px;
   --bidly-marketplace-shadow: ${templateTokens.shadow};
@@ -180,6 +183,18 @@ ${fontImport}
   border-color: var(--bidly-marketplace-primary-hover);
 }
 
+.bidly-marketplace-root .Polaris-Button.Polaris-Button--variantSecondary {
+  background: var(--bidly-marketplace-color-button);
+  border-color: var(--bidly-marketplace-color-button);
+  color: var(--bidly-marketplace-color-button-text);
+}
+
+.bidly-marketplace-root .Polaris-Button.Polaris-Button--variantSecondary:hover,
+.bidly-marketplace-root .Polaris-Button.Polaris-Button--variantSecondary:focus {
+  background: color-mix(in srgb, var(--bidly-marketplace-color-button) 90%, #000000);
+  border-color: color-mix(in srgb, var(--bidly-marketplace-color-button) 85%, #000000);
+}
+
 .bidly-marketplace-root .Polaris-Button {
   border-radius: calc(var(--bidly-marketplace-border-radius) - 6px);
 }
@@ -202,16 +217,19 @@ ${fontImport}
   gap: var(--bidly-marketplace-spacing);
 }
 
-.bidly-marketplace-root .Polaris-Text--headingLg,
-.bidly-marketplace-root .Polaris-Text--headingMd,
-.bidly-marketplace-root .Polaris-Text--headingSm {
+.bidly-marketplace-root .Polaris-Text--root.Polaris-Text--headingLg,
+.bidly-marketplace-root .Polaris-Text--root.Polaris-Text--headingLg.Polaris-Text--bold,
+.bidly-marketplace-root .Polaris-Text--root.Polaris-Text--bodyMd.Polaris-Text--bold {
   color: var(--bidly-marketplace-color-text-primary);
 }
 
-.bidly-marketplace-root .Polaris-Text--bodyMd,
-.bidly-marketplace-root .Polaris-Text--bodySm,
-.bidly-marketplace-root .Polaris-Text--bodyLg {
+.bidly-marketplace-root .Polaris-Text--root.Polaris-Text--bodyLg,
+.bidly-marketplace-root .Polaris-Text--root.Polaris-Text--bodySm {
   color: var(--bidly-marketplace-color-text-secondary);
+}
+
+.bidly-marketplace-root .Polaris-Text--root.Polaris-Text--bodySm.Polaris-Text--medium {
+  color: var(--bidly-marketplace-color-button-text);
 }
 
 .bidly-marketplace-root[data-bidly-marketplace-template="Classic"] .Polaris-Card {

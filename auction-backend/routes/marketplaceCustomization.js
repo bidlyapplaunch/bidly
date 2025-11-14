@@ -44,6 +44,7 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
                 shopDomain,
                 template: 'Classic',
                 font: 'Inter',
+                gradientEnabled: true,
                 colors: {
                     primary: '#007bff',
                     background: '#f5f5f5',
@@ -55,6 +56,8 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
                     success: '#00c851',
                     error: '#ff4444',
                     hover: '#0056b3',
+                    button: '#1f2933',
+                    buttonText: '#ffffff',
                     gradient1: '#007bff',
                     gradient2: '#0056b3'
                 }
@@ -82,13 +85,14 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
 router.post('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
-        const { template, font, colors } = req.body;
+        const { template, font, colors, gradientEnabled } = req.body;
 
         console.log('🏪 Marketplace customization POST request:', {
             shopDomain,
             template,
             font,
-            colors: colors ? Object.keys(colors) : 'none'
+            colors: colors ? Object.keys(colors) : 'none',
+            gradientEnabled
         });
 
         if (!shopDomain) {
@@ -118,7 +122,7 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
 
         // Validate colors
         if (colors) {
-            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'border', 'accent', 'success', 'error', 'hover', 'gradient1', 'gradient2'];
+            const validColorKeys = ['primary', 'background', 'surface', 'textPrimary', 'textSecondary', 'buttonText', 'button', 'border', 'accent', 'success', 'error', 'hover', 'gradient1', 'gradient2'];
             const invalidKeys = Object.keys(colors).filter(key => !validColorKeys.includes(key));
             if (invalidKeys.length > 0) {
                 return res.status(400).json({
@@ -131,6 +135,7 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
         const updateData = {};
         if (template) updateData.template = template;
         if (font) updateData.font = font;
+        if (typeof gradientEnabled === 'boolean') updateData.gradientEnabled = gradientEnabled;
         if (colors) updateData.colors = colors;
 
         const customization = await MarketplaceCustomization.findOneAndUpdate(
@@ -183,6 +188,7 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
             customization = {
                 template: 'Classic',
                 font: 'Inter',
+                gradientEnabled: true,
                 colors: {
                     primary: '#007bff',
                     background: '#f5f5f5',
@@ -194,6 +200,8 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
                     success: '#00c851',
                     error: '#ff4444',
                     hover: '#0056b3',
+                    button: '#1f2933',
+                    buttonText: '#ffffff',
                     gradient1: '#007bff',
                     gradient2: '#0056b3'
                 }

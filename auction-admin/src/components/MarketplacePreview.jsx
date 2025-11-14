@@ -78,7 +78,6 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
             <Page
               title="Auction Marketplace · Preview"
               subtitle="This preview renders the exact markup used in the storefront."
-              primaryAction={{ content: 'Refresh', onAction: () => {} }}
               secondaryActions={[
                 {
                   content: 'Connected as demo customer',

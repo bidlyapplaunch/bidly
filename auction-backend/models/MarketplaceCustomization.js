@@ -7,6 +7,10 @@ const marketplaceCustomizationSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
+    gradientEnabled: {
+        type: Boolean,
+        default: true
+    },
     template: {
         type: String,
         required: true,
@@ -69,6 +73,16 @@ const marketplaceCustomizationSchema = new mongoose.Schema({
             type: String,
             required: true,
             default: '#0056b3'
+        },
+        button: {
+            type: String,
+            required: true,
+            default: '#1f2933'
+        },
+        buttonText: {
+            type: String,
+            required: true,
+            default: '#ffffff'
         },
         gradient1: {
             type: String,

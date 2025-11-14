@@ -27,6 +27,8 @@ const COLOR_FIELDS = [
   { key: 'surface', label: 'Surface', description: 'Cards, modals, and sheets.' },
   { key: 'textPrimary', label: 'Primary text', description: 'Headings and main text.' },
   { key: 'textSecondary', label: 'Secondary text', description: 'Muted text, helper copy, and labels.' },
+  { key: 'buttonText', label: 'Button text', description: 'Text inside secondary buttons and CTA labels.' },
+  { key: 'button', label: 'Button', description: 'Secondary button background and border.' },
   { key: 'border', label: 'Border', description: 'Card outlines, dividers, and inputs.' },
   { key: 'accent', label: 'Accent', description: 'Timers, stats, and pills.' },
   { key: 'success', label: 'Success', description: 'Positive badges and buy-now confirmations.' },

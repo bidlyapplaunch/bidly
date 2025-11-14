@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  AppProvider, 
-  Page, 
-  Card, 
-  Text, 
-  Layout, 
-  Banner, 
-  Spinner, 
+import {
+  AppProvider,
+  Page,
+  Card,
+  Text,
+  Layout,
+  Banner,
+  Spinner,
   Frame,
-  Toast,
-  Button
+  Toast
 } from '@shopify/polaris';
 import { auctionAPI } from './services/api';
 import socketService from './services/socket';
@@ -351,10 +350,6 @@ function App() {
     }
   };
 
-  const handleRefresh = () => {
-    fetchVisibleAuctions();
-  };
-
   // Customer authentication handlers
   const handleCustomerLogin = (customerData) => {
     setCustomer(customerData);
@@ -423,13 +418,9 @@ function App() {
     >
       <AppProvider>
         <Frame>
-        <Page 
+        <Page
           title={`Auction Marketplace${shopName ? ` - ${shopName}` : ''}`}
           subtitle={shopName ? `Browse auctions from ${shopName}` : "Browse pending, active, and ended auctions"}
-          primaryAction={{
-            content: 'Refresh',
-            onAction: handleRefresh
-          }}
           secondaryActions={[
             {
               content: customer ? `👤 ${customer.name}` : 'Login to Bid',
@@ -480,9 +471,6 @@ function App() {
                 <Text variant="bodyMd" color="subdued">
                   There are currently no pending, active, or ended auctions. Check back later!
                 </Text>
-                <div style={{ marginTop: '1rem' }}>
-                  <Button onClick={handleRefresh}>Refresh</Button>
-                </div>
               </div>
             </Card>
           ) : (
