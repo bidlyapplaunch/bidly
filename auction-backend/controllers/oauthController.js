@@ -3,6 +3,37 @@ import Store from '../models/Store.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 /**
+ * Build the Shopify admin URL for redirecting back into the embedded app
+ * @param {string} shop - Shop domain (e.g., store.myshopify.com)
+ * @param {string} [hostParam] - Base64 host value provided by Shopify
+ * @returns {string} - Fully qualified admin URL
+ */
+const buildShopifyAdminUrl = (shop, hostParam) => {
+  const fallbackAppUrl = process.env.SHOPIFY_APP_EMBED_URL || 'https://bidly-auction-admin.onrender.com';
+  const appHandle = process.env.SHOPIFY_APP_HANDLE || 'bidly';
+
+  if (hostParam) {
+    try {
+      const decodedHost = Buffer.from(hostParam, 'base64').toString('utf-8');
+      if (decodedHost && decodedHost.startsWith('admin.shopify.com')) {
+        const hasAppsSegment = decodedHost.includes('/apps/');
+        const adminPath = hasAppsSegment ? decodedHost : `${decodedHost}/apps/${appHandle}`;
+        return `https://${adminPath}`;
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to decode host parameter:', error.message);
+    }
+  }
+
+  if (shop) {
+    const storeSlug = shop.replace('.myshopify.com', '');
+    return `https://admin.shopify.com/store/${storeSlug}/apps/${appHandle}`;
+  }
+
+  return fallbackAppUrl;
+};
+
+/**
  * OAuth Controller
  * Handles Shopify OAuth flow for app installation and authentication
  * This controller manages the complete OAuth process from installation to token storage
@@ -118,11 +149,10 @@ export const initiateOAuth = async (req, res, next) => {
     // Check if store is already installed
     const existingStore = await Store.findByDomain(shop);
     if (existingStore && existingStore.isInstalled) {
-      console.log('✅ Store already installed, redirecting to admin dashboard');
-      // Store is already installed, redirect to the admin dashboard
-      const adminUrl = 'https://bidly-auction-admin.onrender.com';
-      console.log('🔄 Redirecting to admin dashboard (already installed):', `${adminUrl}?shop=${shop}&installed=true`);
-      return res.redirect(`${adminUrl}?shop=${shop}&installed=true`);
+      console.log('✅ Store already installed, redirecting to Shopify admin');
+      const adminUrl = buildShopifyAdminUrl(shop, req.query.host);
+      console.log('🔄 Redirecting to Shopify admin (already installed):', adminUrl);
+      return res.redirect(adminUrl);
     }
 
     // Dynamically set redirect URI based on the current backend URL
@@ -250,18 +280,18 @@ export const handleOAuthCallback = async (req, res, next) => {
     
     // For embedded apps, redirect to the admin dashboard URL with shop parameter
     // This will be handled by App Bridge in the frontend
-    const adminUrl = 'https://bidly-auction-admin.onrender.com';
-    console.log('🔄 Redirecting to admin dashboard:', `${adminUrl}?shop=${shop}&installed=true&success=true`);
-    res.redirect(`${adminUrl}?shop=${shop}&installed=true&success=true`);
+    const adminUrl = buildShopifyAdminUrl(shop, req.query.host);
+    console.log('🔄 Redirecting to Shopify admin:', adminUrl);
+    res.redirect(adminUrl);
     
   } catch (error) {
     console.error('❌ Error in OAuth callback:', error.message);
     
     // Redirect to error page or show error message
     const shop = req.query.shop || 'unknown';
-    const adminUrl = 'https://bidly-auction-admin.onrender.com';
-    console.log('🔄 Redirecting to admin dashboard (error):', `${adminUrl}?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
-    res.redirect(`${adminUrl}?shop=${shop}&error=oauth_failed&message=${encodeURIComponent(error.message)}`);
+    const adminUrl = buildShopifyAdminUrl(shop, req.query.host);
+    console.log('🔄 Redirecting to Shopify admin (error):', adminUrl);
+    res.redirect(`${adminUrl}?error=oauth_failed&message=${encodeURIComponent(error.message)}`);
   }
 };
 
@@ -272,22 +302,34 @@ export const handleOAuthCallback = async (req, res, next) => {
  */
 export const handleUninstall = async (req, res, next) => {
   try {
-    const { shop_domain } = req.body;
+    const payload = req.body || {};
+    const shopDomain =
+      payload.shop_domain ||
+      payload.myshopify_domain ||
+      (payload.domain ? `${payload.domain}` : null);
     
-    console.log('🗑️ Processing uninstall for shop:', shop_domain);
+    console.log('🗑️ Processing uninstall payload:', {
+      shop_domain: payload.shop_domain,
+      myshopify_domain: payload.myshopify_domain,
+      domain: payload.domain
+    });
     
-    if (!shop_domain) {
+    if (!shopDomain) {
       throw new AppError('Shop domain is required', 400);
     }
 
+    const normalizedDomain = shopDomain.endsWith('.myshopify.com')
+      ? shopDomain
+      : `${shopDomain}.myshopify.com`;
+
     // Find and mark store as uninstalled
-    const store = await Store.findByDomain(shop_domain);
+    const store = await Store.findByDomain(normalizedDomain);
     if (store) {
       store.isInstalled = false;
       await store.save();
-      console.log('✅ Store marked as uninstalled:', shop_domain);
+      console.log('✅ Store marked as uninstalled:', normalizedDomain);
     } else {
-      console.log('⚠️ Store not found for uninstall:', shop_domain);
+      console.log('⚠️ Store not found for uninstall:', normalizedDomain);
     }
 
     // Always return 200 to acknowledge webhook
