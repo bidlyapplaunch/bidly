@@ -64,7 +64,6 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
         margin: '0 auto',
         border: '1px solid rgba(15, 23, 42, 0.12)',
         borderRadius: 28,
-        background: '#fff',
         boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)',
         padding: '18px 16px'
       }}
