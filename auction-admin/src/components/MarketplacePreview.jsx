@@ -62,10 +62,9 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
         width: '100%',
         maxWidth: 480,
         margin: '0 auto',
-        border: '1px solid rgba(15, 23, 42, 0.12)',
-        borderRadius: 28,
-        boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)',
-        padding: '18px 16px'
+        borderRadius: 32,
+        overflow: 'hidden',
+        boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)'
       }}
     >
       <style dangerouslySetInnerHTML={{ __html: css }} />
