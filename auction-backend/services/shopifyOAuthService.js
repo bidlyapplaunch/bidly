@@ -14,6 +14,8 @@ class ShopifyOAuthService {
     this._redirectUri = null;
     this.scopes = 'read_customers,read_draft_orders,read_inventory,read_product_listings,read_products,write_customers,write_draft_orders,write_products';
     this.apiVersion = '2025-10';
+    this._webhookBaseUrl = null;
+    this._uninstallWebhookPath = null;
   }
 
   /**
@@ -62,6 +64,27 @@ class ShopifyOAuthService {
     console.log('  - Client Secret:', this.clientSecret ? 'Present' : 'Missing');
     console.log('  - Redirect URI:', this.redirectUri);
     console.log('  - Scopes:', this.scopes);
+  }
+
+  get webhookBaseUrl() {
+    if (this._webhookBaseUrl === null) {
+      const fallback = process.env.APP_URL || 'https://bidly-auction-backend.onrender.com';
+      this._webhookBaseUrl = (process.env.SHOPIFY_WEBHOOK_BASE_URL || fallback).replace(/\/$/, '');
+    }
+    return this._webhookBaseUrl;
+  }
+
+  get uninstallWebhookPath() {
+    if (this._uninstallWebhookPath === null) {
+      this._uninstallWebhookPath = process.env.SHOPIFY_UNINSTALL_WEBHOOK_PATH || '/webhooks/shopify/uninstall';
+    }
+    return this._uninstallWebhookPath.startsWith('/')
+      ? this._uninstallWebhookPath
+      : `/${this._uninstallWebhookPath}`;
+  }
+
+  get uninstallWebhookUrl() {
+    return `${this.webhookBaseUrl}${this.uninstallWebhookPath}`;
   }
 
   /**
@@ -258,6 +281,52 @@ class ShopifyOAuthService {
     } catch (error) {
       console.error('❌ Error fetching shop info:', error.response?.data || error.message);
       throw new Error(`Failed to fetch shop info: ${error.response?.data?.errors || error.message}`);
+    }
+  }
+
+  async ensureUninstallWebhook(shopDomain, accessToken) {
+    const uninstallUrl = this.uninstallWebhookUrl;
+    const headers = {
+      'X-Shopify-Access-Token': accessToken,
+      'Content-Type': 'application/json',
+    };
+    try {
+      const existing = await axios.get(
+        `https://${shopDomain}/admin/api/${this.apiVersion}/webhooks.json`,
+        {
+          params: { topic: 'app/uninstalled' },
+          headers,
+        }
+      );
+
+      const alreadyRegistered = existing.data?.webhooks?.some(
+        (webhook) => webhook.address === uninstallUrl
+      );
+
+      if (alreadyRegistered) {
+        console.log('🔁 app/uninstalled webhook already registered for', shopDomain);
+        return;
+      }
+    } catch (error) {
+      console.warn('⚠️ Unable to verify existing webhooks:', error.response?.data || error.message);
+    }
+
+    try {
+      await axios.post(
+        `https://${shopDomain}/admin/api/${this.apiVersion}/webhooks.json`,
+        {
+          webhook: {
+            topic: 'app/uninstalled',
+            address: uninstallUrl,
+            format: 'json',
+          },
+        },
+        { headers }
+      );
+      console.log('✅ Registered app/uninstalled webhook for', shopDomain, '→', uninstallUrl);
+    } catch (error) {
+      console.error('❌ Failed to register app/uninstalled webhook:', error.response?.data || error.message);
+      throw new Error('Failed to register uninstall webhook');
     }
   }
 }

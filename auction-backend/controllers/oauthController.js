@@ -278,6 +278,12 @@ export const handleOAuthCallback = async (req, res, next) => {
 
     console.log('✅ OAuth flow completed successfully for shop:', shop);
     
+    try {
+      await shopifyOAuthService.ensureUninstallWebhook(shop, tokenData.accessToken);
+    } catch (webhookError) {
+      console.warn('⚠️ Unable to ensure uninstall webhook:', webhookError.message);
+    }
+    
     // For embedded apps, redirect to the admin dashboard URL with shop parameter
     // This will be handled by App Bridge in the frontend
     const adminUrl = buildShopifyAdminUrl(shop, req.query.host);
