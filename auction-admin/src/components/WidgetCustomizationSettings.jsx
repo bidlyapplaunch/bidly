@@ -309,6 +309,10 @@ const WidgetCustomizationSettings = () => {
   const goToPlans = () => navigate(`/plans${search}`);
 
   if (planGate) {
+    const gateMessage =
+      planGate.message && !/widget customization requires the pro plan/i.test(planGate.message)
+        ? planGate.message
+        : 'The widget customization requires the pro or enterprise plan.';
     return (
       <Frame>
         <Page
@@ -329,13 +333,7 @@ const WidgetCustomizationSettings = () => {
                   onAction: goToPlans
                 }}
               >
-                <p>
-                  {planGate.message ||
-                    `Widget theming is available on the ${
-                      (planGate.requiredPlan || 'pro').charAt(0).toUpperCase() +
-                      (planGate.requiredPlan || 'pro').slice(1)
-                    } plan and above. Upgrade to continue customizing your storefront experience.`}
-                </p>
+                <p>{gateMessage}</p>
               </Banner>
             </Layout.Section>
           </Layout>

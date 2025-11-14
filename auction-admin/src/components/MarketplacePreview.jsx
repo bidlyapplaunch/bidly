@@ -49,10 +49,11 @@ const MOCK_AUCTIONS = [
   }
 ];
 
-const MarketplacePreview = ({ customization }) => {
+const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
   const theme = useMemo(() => normalizeMarketplaceTheme(customization), [customization]);
   const css = useMemo(() => buildMarketplaceCSS(theme), [theme]);
   const hasGradient = theme.gradientEnabled ? '1' : '0';
+  const resolvedShopName = shopName || 'your store';
 
   return (
     <div
@@ -85,7 +86,7 @@ const MarketplacePreview = ({ customization }) => {
               <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.75rem' }}>
                 <Banner status="info">
                   <Text variant="bodyMd">
-                    🏪 Viewing auctions from <strong>True Nordic Dev</strong>
+                    🏪 Viewing auctions from <strong>{resolvedShopName}</strong>
                   </Text>
                 </Banner>
                 <Banner status="success">

@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Frame, Page, Layout, Card, Text, Banner, Button, InlineGrid, BlockStack, Select, Spinner, Toast } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { marketplaceCustomizationAPI } from '../services/api';
+import { marketplaceCustomizationAPI, billingAPI } from '../services/api';
 import { normalizeMarketplaceTheme, DEFAULT_MARKETPLACE_THEME } from '@shared/marketplaceTheme.js';
 import MarketplacePreview from './MarketplacePreview.jsx';
+import { useAppBridgeActions } from '../hooks/useAppBridge';
+import authService from '../services/auth';
 
 const FONT_OPTIONS = [
   { label: 'Inter', value: 'Inter' },
@@ -39,6 +41,22 @@ const DEFAULT_CUSTOMIZATION = {
   font: DEFAULT_MARKETPLACE_THEME.font,
   colors: { ...DEFAULT_MARKETPLACE_THEME.colors },
   gradientEnabled: DEFAULT_MARKETPLACE_THEME.gradientEnabled
+};
+
+const ALLOWED_MARKETPLACE_PLANS = new Set(['pro', 'enterprise']);
+const PLAN_REQUIRED_MESSAGE = 'The marketplace customization requires the pro or enterprise plan.';
+const SHOP_NAME_FALLBACK = 'your store';
+
+const formatShopName = (value) => {
+  if (!value) {
+    return '';
+  }
+  const cleaned = value.replace('.myshopify.com', '').replace(/[-_]/g, ' ');
+  return cleaned
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 const sanitizeHex = (value) => {
@@ -156,36 +174,115 @@ function TemplateSelector({ selected, onSelect }) {
 const MarketplaceCustomizationSettings = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { getShopInfo } = useAppBridgeActions();
   const [customization, setCustomization] = useState(DEFAULT_CUSTOMIZATION);
   const [original, setOriginal] = useState(DEFAULT_CUSTOMIZATION);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
+  const [planStatus, setPlanStatus] = useState({ loading: true, plan: 'none', allowed: false });
+  const [shopDomainState, setShopDomainState] = useState(() => {
+    const sessionUser = authService.getUser();
+    if (sessionUser?.shopDomain) {
+      return sessionUser.shopDomain;
+    }
+    const info = getShopInfo();
+    return info?.shop || '';
+  });
+  const [shopDisplayName, setShopDisplayName] = useState(() => {
+    const sessionUser = authService.getUser();
+    if (sessionUser?.storeName) {
+      return sessionUser.storeName;
+    }
+    const info = getShopInfo();
+    const domain = sessionUser?.shopDomain || info?.shop || '';
+    return formatShopName(domain) || SHOP_NAME_FALLBACK;
+  });
+  const search = location.search || '';
+  const goToPlans = () => navigate(`/plans${search}`);
+
+  const updateShopIdentity = useCallback((domain, label) => {
+    if (domain) {
+      setShopDomainState(domain);
+    }
+    if (label) {
+      setShopDisplayName(label);
+      return;
+    }
+    if (domain) {
+      setShopDisplayName((prev) => {
+        if (!prev || prev === SHOP_NAME_FALLBACK) {
+          return formatShopName(domain) || SHOP_NAME_FALLBACK;
+        }
+        return prev;
+      });
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchSettings() {
+    if (!shopDisplayName && shopDomainState) {
+      setShopDisplayName(formatShopName(shopDomainState) || SHOP_NAME_FALLBACK);
+    }
+  }, [shopDisplayName, shopDomainState]);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await marketplaceCustomizationAPI.getSettings();
+      if (response.success && response.customization) {
+        const normalized = normalizeCustomization(response.customization);
+        setCustomization(normalized);
+        setOriginal(normalized);
+        updateShopIdentity(response.customization.shopDomain, response.customization.storeName);
+        setError('');
+      } else {
+        throw new Error(response.message || 'Failed to load marketplace customization');
+      }
+    } catch (err) {
+      console.error('Failed to load marketplace customization', err);
+      setError(err.message || 'Failed to load marketplace customization');
+    } finally {
+      setLoading(false);
+    }
+  }, [updateShopIdentity]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadPlan = async () => {
       try {
-        setLoading(true);
-        const response = await marketplaceCustomizationAPI.getSettings();
-        if (response.success && response.customization) {
-          const normalized = normalizeCustomization(response.customization);
-          setCustomization(normalized);
-          setOriginal(normalized);
-          setError('');
-        } else {
-          throw new Error(response.message || 'Failed to load marketplace customization');
+        const response = await billingAPI.getCurrentPlan();
+        if (!isMounted) {
+          return;
+        }
+        const planKey = (response.plan || 'none').toLowerCase();
+        const allowed = ALLOWED_MARKETPLACE_PLANS.has(planKey);
+        setPlanStatus({ loading: false, plan: planKey, allowed });
+        updateShopIdentity(response.shopDomain, response.storeName);
+        if (!allowed) {
+          setLoading(false);
         }
       } catch (err) {
-        console.error('Failed to load marketplace customization', err);
-        setError(err.message || 'Failed to load marketplace customization');
-      } finally {
+        if (!isMounted) {
+          return;
+        }
+        console.error('Failed to load plan info for marketplace customization', err);
+        setPlanStatus({ loading: false, plan: 'none', allowed: false });
         setLoading(false);
       }
-    }
+    };
+    loadPlan();
+    return () => {
+      isMounted = false;
+    };
+  }, [updateShopIdentity]);
 
+  useEffect(() => {
+    if (planStatus.loading || !planStatus.allowed) {
+      return;
+    }
     fetchSettings();
-  }, []);
+  }, [planStatus.loading, planStatus.allowed, fetchSettings]);
 
   const handleTemplateSelect = (value) => {
     setCustomization((prev) => ({ ...prev, template: value }));
@@ -253,13 +350,39 @@ const MarketplaceCustomizationSettings = () => {
 
   const dirty = useMemo(() => JSON.stringify(customization) !== JSON.stringify(original), [customization, original]);
 
-  if (loading) {
+  const showLoadingState = planStatus.loading || (planStatus.allowed && loading);
+
+  if (showLoadingState) {
     return (
       <Frame>
         <Page title="Marketplace customization" backAction={{ content: 'Back', onAction: () => navigate(-1) }}>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
             <Spinner size="large" />
           </div>
+        </Page>
+      </Frame>
+    );
+  }
+
+  if (!planStatus.loading && !planStatus.allowed) {
+    return (
+      <Frame>
+        <Page
+          title="Marketplace customization"
+          subtitle="Upgrade your Bidly plan to unlock marketplace styling."
+          backAction={{ content: 'Back', onAction: () => navigate(-1) }}
+        >
+          <Layout>
+            <Layout.Section>
+              <Banner
+                tone="info"
+                title="Upgrade required to customize the marketplace"
+                action={{ content: 'View plans', onAction: goToPlans }}
+              >
+                <p>{PLAN_REQUIRED_MESSAGE}</p>
+              </Banner>
+            </Layout.Section>
+          </Layout>
         </Page>
       </Frame>
     );
@@ -354,7 +477,10 @@ const MarketplaceCustomizationSettings = () => {
 
           <Layout.Section>
             <Card title="Live preview" sectioned>
-              <MarketplacePreview customization={customization} />
+              <MarketplacePreview
+                customization={customization}
+                shopName={shopDisplayName || SHOP_NAME_FALLBACK}
+              />
             </Card>
           </Layout.Section>
         </Layout>

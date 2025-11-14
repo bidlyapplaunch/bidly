@@ -3,55 +3,76 @@ import { getApiBaseUrl } from '../config/backendConfig.js';
 import authService from './auth.js';
 
 // Helper function to get shop from URL parameters
-// Try multiple sources: URL params, hash, App Bridge, or hostname
+// Try multiple sources: URL params, hash, App Bridge, hostname, parent window, or session
 const getShopFromURL = () => {
+  let detectedShop = null;
+  let detectedSource = null;
+
+  const recordShop = (candidate, source) => {
+    if (candidate && !detectedShop) {
+      detectedShop = candidate;
+      detectedSource = source;
+    }
+  };
+
   // Method 1: URL search params
   const urlParams = new URLSearchParams(window.location.search);
-  let shop = urlParams.get('shop');
-  
-  if (shop) {
-    console.log('🔍 Found shop in URL params:', shop);
-    return shop;
-  }
+  recordShop(urlParams.get('shop'), 'querystring');
   
   // Method 2: Try URL hash (for embedded apps)
-  if (window.location.hash) {
+  if (!detectedShop && window.location.hash) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    shop = hashParams.get('shop');
-    if (shop) {
-      console.log('🔍 Found shop in URL hash:', shop);
-      return shop;
-    }
+    recordShop(hashParams.get('shop'), 'hash');
   }
   
   // Method 3: Try App Bridge if available
-  if (window.shopify && window.shopify.config) {
-    const shopDomain = window.shopify.config.shop?.split('//')[1]?.split('/')[0];
-    if (shopDomain) {
-      console.log('🔍 Found shop in App Bridge config:', shopDomain);
-      return shopDomain;
-    }
+  if (!detectedShop && window.shopify && window.shopify.config) {
+    const shopDomain = window.shopify.config.shop
+      ?.toString()
+      ?.split('//')
+      ?.slice(-1)[0]
+      ?.split('/')[0];
+    recordShop(shopDomain, 'appBridge');
   }
   
   // Method 4: Extract from hostname (for embedded apps)
-  const hostname = window.location.hostname;
-  if (hostname.includes('.myshopify.com')) {
-    console.log('🔍 Found shop from hostname:', hostname);
-    return hostname;
+  if (!detectedShop) {
+    const hostname = window.location.hostname;
+    if (hostname.includes('.myshopify.com')) {
+      recordShop(hostname, 'hostname');
+    }
   }
   
   // Method 5: Try to get from parent window (if in iframe)
-  try {
-    if (window.parent && window.parent !== window) {
-      const parentUrl = new URL(window.parent.location.href);
-      shop = parentUrl.searchParams.get('shop');
-      if (shop) {
-        console.log('🔍 Found shop in parent window:', shop);
-        return shop;
+  if (!detectedShop) {
+    try {
+      if (window.parent && window.parent !== window) {
+        const parentUrl = new URL(window.parent.location.href);
+        recordShop(parentUrl.searchParams.get('shop'), 'parentWindow');
       }
+    } catch (e) {
+      // Cross-origin, can't access parent
     }
-  } catch (e) {
-    // Cross-origin, can't access parent
+  }
+  
+  if (detectedShop) {
+    console.log(`🔍 Found shop via ${detectedSource}:`, detectedShop);
+  }
+
+  const userShop = authService.getUser()?.shopDomain;
+  if (userShop) {
+    if (detectedShop && detectedShop !== userShop) {
+      console.warn(
+        `⚠️ Shop mismatch detected (URL: ${detectedShop}, session: ${userShop}). Using session shop domain instead.`
+      );
+    } else if (!detectedShop) {
+      console.log('🔐 Using shop from authenticated session:', userShop);
+    }
+    return userShop;
+  }
+  
+  if (detectedShop) {
+    return detectedShop;
   }
   
   // Fallback: return null (will use default backend)
