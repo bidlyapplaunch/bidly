@@ -96,6 +96,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const allowAuctions = planKey !== 'none';
   const allowPopcorn = planKey === 'pro' || planKey === 'enterprise';
   const allowChat = planKey === 'enterprise';
+  const auctionHasBids = Boolean(auction?.bidHistory?.length);
 
   useEffect(() => {
     if (!allowPopcorn && formData.popcornEnabled) {
@@ -263,6 +264,9 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
 
       if (auction) {
         delete payload.shopifyProductId;
+        if (auctionHasBids) {
+          delete payload.startingBid;
+        }
       }
 
       await onSave(payload);
@@ -271,7 +275,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
       console.error('Error saving auction:', err);
       setErrors({ general: err.message || 'Failed to save auction' });
     }
-  }, [formData, onSave, onClose]);
+  }, [formData, onSave, onClose, auctionHasBids]);
 
   const today = new Date();
   const { month, year } = { month: today.getMonth(), year: today.getFullYear() };
@@ -441,6 +445,12 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
             value={String(formData.startingBid)}
             onChange={(value) => handleChange(value, 'startingBid')}
             error={errors.startingBid}
+            disabled={auctionHasBids}
+            helpText={
+              auctionHasBids
+                ? 'Starting bid cannot be changed after a bid has been placed.'
+                : undefined
+            }
           />
           <TextField
             label="Buy Now Price (Optional)"

@@ -279,12 +279,26 @@
     }
 
     function applyChatTheme(host, theme) {
-        if (!host || !theme) {
+        if (!theme) {
             return;
         }
 
         const normalized = theme.colors || DEFAULT_WIDGET_THEME.colors;
         const gradientEnabled = Boolean(theme.gradientEnabled);
+        const targets = [];
+
+        if (host) {
+            targets.push(host);
+        }
+
+        const chatContainer = document.querySelector('.bidly-chat-container');
+        if (chatContainer && !targets.includes(chatContainer)) {
+            targets.push(chatContainer);
+        }
+
+        if (targets.length === 0) {
+            return;
+        }
 
         const chatSurface = gradientEnabled
             ? `linear-gradient(135deg, ${normalized.bg_gradient_start}, ${normalized.bg_gradient_end})`
@@ -293,29 +307,34 @@
             ? `linear-gradient(135deg, ${normalized.bg_gradient_start}, ${normalized.bg_gradient_end})`
             : normalized.bg_solid || normalized.button_bg || normalized.accent || '#6366f1';
 
-        host.style.setProperty('--bidly-chat-header-bg', headerBackground);
-        host.style.setProperty('--bidly-chat-header-text', normalized.button_text || '#ffffff');
-        host.style.setProperty('--bidly-chat-surface', chatSurface);
-        host.style.setProperty('--bidly-chat-surface-inner', hexToRgba(normalized.bg_solid || '#111827', gradientEnabled ? 0.9 : 0.95));
-        host.style.setProperty('--bidly-chat-bubble-bg', hexToRgba(normalized.accent || '#6366f1', 0.18));
-        host.style.setProperty('--bidly-chat-bubble-text', normalized.text || '#e2e8f0');
-        host.style.setProperty('--bidly-chat-muted', hexToRgba(normalized.text || '#94a3b8', 0.6));
-        host.style.setProperty('--bidly-chat-border', hexToRgba(normalized.border || normalized.accent || '#6366f1', 0.28));
-        host.style.setProperty('--bidly-chat-input-bg', hexToRgba(normalized.bg_solid || '#111827', 0.85));
-        host.style.setProperty('--bidly-chat-input-border', hexToRgba(normalized.border || normalized.text || '#475569', 0.45));
-        host.style.setProperty('--bidly-chat-toggle-bg', hexToRgba(normalized.accent || '#6366f1', 0.12));
-        host.style.setProperty('--bidly-chat-toggle-color', normalized.accent || '#6366f1');
-        host.style.setProperty('--bidly-chat-toggle-hover-bg', hexToRgba(normalized.accent || '#6366f1', 0.2));
-        host.style.setProperty('--bidly-chat-toggle-active-bg', normalized.accent || '#6366f1');
-        host.style.setProperty('--bidly-chat-toggle-active-color', normalized.button_text || '#ffffff');
-        host.style.setProperty('--bidly-chat-send-bg', headerBackground);
-        host.style.setProperty('--bidly-chat-send-color', normalized.button_text || '#ffffff');
-        host.style.setProperty('--bidly-chat-send-shadow', hexToRgba(normalized.accent || normalized.bg_gradient_end || '#6366f1', 0.35));
-        host.style.setProperty('--bidly-history-bg', hexToRgba(normalized.text || '#ffffff', 0.12));
-        host.style.setProperty('--bidly-history-border', hexToRgba(normalized.border || normalized.accent || '#ffffff', 0.2));
-        host.style.setProperty('--bidly-history-color', normalized.button_text || '#ffffff');
-        host.style.setProperty('--bidly-history-hover-bg', hexToRgba(normalized.text || '#ffffff', 0.2));
-        host.style.setProperty('--bidly-history-hover-color', normalized.button_text || '#ffffff');
+        targets.forEach((target) => {
+            target.style.setProperty('--bidly-chat-header-bg', headerBackground);
+            target.style.setProperty('--bidly-chat-header-text', normalized.button_text || '#ffffff');
+            target.style.setProperty('--bidly-chat-surface', chatSurface);
+            target.style.setProperty(
+                '--bidly-chat-surface-inner',
+                hexToRgba(normalized.bg_solid || '#111827', gradientEnabled ? 0.9 : 0.95)
+            );
+            target.style.setProperty('--bidly-chat-bubble-bg', hexToRgba(normalized.accent || '#6366f1', 0.18));
+            target.style.setProperty('--bidly-chat-bubble-text', normalized.text || '#e2e8f0');
+            target.style.setProperty('--bidly-chat-muted', hexToRgba(normalized.text || '#94a3b8', 0.6));
+            target.style.setProperty('--bidly-chat-border', hexToRgba(normalized.border || normalized.accent || '#6366f1', 0.28));
+            target.style.setProperty('--bidly-chat-input-bg', hexToRgba(normalized.bg_solid || '#111827', 0.85));
+            target.style.setProperty('--bidly-chat-input-border', hexToRgba(normalized.border || normalized.text || '#475569', 0.45));
+            target.style.setProperty('--bidly-chat-toggle-bg', hexToRgba(normalized.accent || '#6366f1', 0.12));
+            target.style.setProperty('--bidly-chat-toggle-color', normalized.accent || '#6366f1');
+            target.style.setProperty('--bidly-chat-toggle-hover-bg', hexToRgba(normalized.accent || '#6366f1', 0.2));
+            target.style.setProperty('--bidly-chat-toggle-active-bg', normalized.accent || '#6366f1');
+            target.style.setProperty('--bidly-chat-toggle-active-color', normalized.button_text || '#ffffff');
+            target.style.setProperty('--bidly-chat-send-bg', headerBackground);
+            target.style.setProperty('--bidly-chat-send-color', normalized.button_text || '#ffffff');
+            target.style.setProperty('--bidly-chat-send-shadow', hexToRgba(normalized.accent || normalized.bg_gradient_end || '#6366f1', 0.35));
+            target.style.setProperty('--bidly-history-bg', hexToRgba(normalized.text || '#ffffff', 0.12));
+            target.style.setProperty('--bidly-history-border', hexToRgba(normalized.border || normalized.accent || '#ffffff', 0.2));
+            target.style.setProperty('--bidly-history-color', normalized.button_text || '#ffffff');
+            target.style.setProperty('--bidly-history-hover-bg', hexToRgba(normalized.text || '#ffffff', 0.2));
+            target.style.setProperty('--bidly-history-hover-color', normalized.button_text || '#ffffff');
+        });
     }
 
     async function fetchWidgetThemeSettings(force = false) {
@@ -2623,6 +2642,12 @@
         const existingChat = document.querySelector('.bidly-chat-container');
         if (existingChat) {
             setupChatToggleControls();
+            const widgetRoot = document.querySelector('.bidly-widget-root');
+            const currentTheme =
+                (widgetRoot && widgetRoot.__bidlyThemeSettings) ||
+                widgetThemeSettingsCache ||
+                normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
+            applyChatTheme(widgetRoot || existingChat, currentTheme);
             return existingChat;
         }
 
@@ -2667,6 +2692,12 @@
         }
 
         setupChatToggleControls();
+        const widgetRoot = document.querySelector('.bidly-widget-root');
+        const currentTheme =
+            (widgetRoot && widgetRoot.__bidlyThemeSettings) ||
+            widgetThemeSettingsCache ||
+            normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
+        applyChatTheme(widgetRoot || chatContainer, currentTheme);
 
         return chatContainer;
     }
