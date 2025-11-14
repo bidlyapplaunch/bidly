@@ -344,7 +344,17 @@ export const updateAuction = async (req, res, next) => {
     }
 
     const currentPlan = sanitizePlan(req.store?.plan || 'none');
-    if (req.body.popcornEnabled === true && !planMeetsRequirement(currentPlan, 'pro')) {
+    const parseBoolean = (value) => {
+      if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'true') return true;
+        if (normalized === 'false') return false;
+      }
+      return Boolean(value);
+    };
+    
+    const wantsPopcornEnabled = req.body.popcornEnabled !== undefined ? parseBoolean(req.body.popcornEnabled) : undefined;
+    if (wantsPopcornEnabled === true && !planMeetsRequirement(currentPlan, 'pro')) {
       return res.status(403).json({
         success: false,
         code: 'PLAN_UPGRADE_REQUIRED',
@@ -365,9 +375,9 @@ export const updateAuction = async (req, res, next) => {
       throw new AppError('Auction not found', 404);
     }
     
-    // Prevent updating certain fields if auction has bids
+    // Prevent changing immutable fields once bidders are involved
     if (auction.bidHistory.length > 0) {
-      const restrictedFields = ['shopifyProductId', 'startingBid', 'startTime', 'endTime'];
+      const restrictedFields = ['shopifyProductId', 'startingBid'];
       for (const field of restrictedFields) {
         if (req.body[field] !== undefined) {
           throw new AppError(`Cannot update ${field} after bids have been placed`, 400);
@@ -376,35 +386,109 @@ export const updateAuction = async (req, res, next) => {
     }
     
     // Update allowed fields
-    const allowedUpdates = ['shopifyProductId', 'startTime', 'endTime', 'startingBid', 'buyNowPrice', 'status'];
-    const updates = {};
+    const allowedUpdates = [
+      'shopifyProductId',
+      'startTime',
+      'endTime',
+      'startingBid',
+      'buyNowPrice',
+      'status',
+      'reservePrice',
+      'popcornEnabled',
+      'popcornTriggerSeconds',
+      'popcornExtendSeconds'
+    ];
+    const setUpdates = {};
+    const unsetUpdates = {};
+    
+    const isEmptyValue = (value) =>
+      value === null ||
+      value === undefined ||
+      (typeof value === 'string' && value.trim() === '');
     
     for (const field of allowedUpdates) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
+      if (req.body[field] === undefined) continue;
+      const rawValue = req.body[field];
+      
+      switch (field) {
+        case 'buyNowPrice':
+        case 'reservePrice': {
+          if (isEmptyValue(rawValue)) {
+            unsetUpdates[field] = '';
+          } else {
+            const numericValue = parseFloat(rawValue);
+            if (Number.isNaN(numericValue) || numericValue < 0) {
+              throw new AppError(`${field === 'buyNowPrice' ? 'Buy now price' : 'Reserve price'} must be a positive number`, 400);
+            }
+            setUpdates[field] = numericValue;
+          }
+          break;
+        }
+        case 'popcornEnabled': {
+          const parsedValue = parseBoolean(rawValue);
+          if (parsedValue && !planMeetsRequirement(currentPlan, 'pro')) {
+            throw new AppError('Popcorn bidding is available on the Pro plan or higher.', 403);
+          }
+          setUpdates[field] = parsedValue;
+          break;
+        }
+        case 'popcornTriggerSeconds': {
+          const triggerSeconds = parseInt(rawValue, 10);
+          if (Number.isNaN(triggerSeconds) || triggerSeconds < 1 || triggerSeconds > 120) {
+            throw new AppError('Popcorn trigger seconds must be between 1 and 120.', 400);
+          }
+          setUpdates[field] = triggerSeconds;
+          break;
+        }
+        case 'popcornExtendSeconds': {
+          const extendSeconds = parseInt(rawValue, 10);
+          if (Number.isNaN(extendSeconds) || extendSeconds < 5 || extendSeconds > 600) {
+            throw new AppError('Popcorn extend seconds must be between 5 and 600.', 400);
+          }
+          setUpdates[field] = extendSeconds;
+          break;
+        }
+        default:
+          setUpdates[field] = rawValue;
       }
     }
     
     // Custom validation for start/end time relationship
-    if (updates.startTime && updates.endTime) {
-      if (new Date(updates.endTime) <= new Date(updates.startTime)) {
+    if (setUpdates.startTime && setUpdates.endTime) {
+      if (new Date(setUpdates.endTime) <= new Date(setUpdates.startTime)) {
         throw new AppError('End time must be after start time', 400);
       }
-    } else if (updates.endTime) {
+    } else if (setUpdates.endTime) {
       // If only end time is being updated, compare with current start time
-      if (new Date(updates.endTime) <= auction.startTime) {
+      if (new Date(setUpdates.endTime) <= auction.startTime) {
         throw new AppError('End time must be after start time', 400);
       }
-    } else if (updates.startTime) {
+    } else if (setUpdates.startTime) {
       // If only start time is being updated, compare with current end time
-      if (new Date(updates.startTime) >= auction.endTime) {
+      if (new Date(setUpdates.startTime) >= auction.endTime) {
         throw new AppError('Start time must be before end time', 400);
       }
     }
     
+    const updatePayload = {};
+    if (Object.keys(setUpdates).length > 0) {
+      updatePayload.$set = setUpdates;
+    }
+    if (Object.keys(unsetUpdates).length > 0) {
+      updatePayload.$unset = unsetUpdates;
+    }
+    
+    if (Object.keys(updatePayload).length === 0) {
+      return res.json({
+        success: true,
+        message: 'No changes detected',
+        data: auction
+      });
+    }
+    
     const updatedAuction = await Auction.findByIdAndUpdate(
       req.params.id,
-      updates,
+      updatePayload,
       { new: true, runValidators: false } // Disable schema validators since we're doing custom validation
     );
     

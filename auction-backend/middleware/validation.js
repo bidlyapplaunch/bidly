@@ -102,15 +102,55 @@ export const validateUpdateAuction = [
   
   body('buyNowPrice')
     .optional()
-    .isNumeric()
-    .withMessage('Buy now price must be a number')
-    .isFloat({ min: 0 })
-    .withMessage('Buy now price must be a positive number'),
+    .custom(value => {
+      if (value === null) return true;
+      if (typeof value === 'string' && value.trim() === '') {
+        return true;
+      }
+      if (isNaN(value)) {
+        throw new Error('Buy now price must be a number');
+      }
+      if (parseFloat(value) < 0) {
+        throw new Error('Buy now price must be a positive number');
+      }
+      return true;
+    }),
+  
+  body('reservePrice')
+    .optional()
+    .custom(value => {
+      if (value === null) return true;
+      if (typeof value === 'string' && value.trim() === '') {
+        return true;
+      }
+      if (isNaN(value)) {
+        throw new Error('Reserve price must be a number');
+      }
+      if (parseFloat(value) < 0) {
+        throw new Error('Reserve price must be a positive number');
+      }
+      return true;
+    }),
   
   body('status')
     .optional()
     .isIn(['pending', 'active', 'ended', 'closed', 'reserve_not_met'])
     .withMessage('Status must be either pending, active, ended, closed, or reserve_not_met'),
+  
+  body('popcornEnabled')
+    .optional()
+    .isBoolean()
+    .withMessage('Popcorn enabled must be a boolean value'),
+  
+  body('popcornTriggerSeconds')
+    .optional()
+    .isInt({ min: 1, max: 120 })
+    .withMessage('Popcorn trigger seconds must be between 1 and 120'),
+  
+  body('popcornExtendSeconds')
+    .optional()
+    .isInt({ min: 5, max: 600 })
+    .withMessage('Popcorn extend seconds must be between 5 and 600'),
   
   handleValidationErrors
 ];
