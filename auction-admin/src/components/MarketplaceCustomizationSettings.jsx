@@ -437,7 +437,7 @@ const MarketplaceCustomizationSettings = () => {
           }
           @media (min-width: 1280px) {
             .marketplace-customization-grid {
-              grid-template-columns: minmax(700px, 1fr) minmax(420px, 480px);
+              grid-template-columns: 1fr 500px;
               align-items: flex-start;
             }
           }
@@ -448,32 +448,18 @@ const MarketplaceCustomizationSettings = () => {
             .marketplace-customization-grid__preview {
               position: sticky;
               top: 80px;
-              height: calc(100vh - 100px);
-              overflow-y: auto;
-              padding-bottom: 24px;
             }
           }
           .marketplace-customization-grid__previewCard {
             width: 100%;
             max-width: 500px;
-            min-width: min(390px, 100%);
-            flex: 0 0 auto;
             margin-left: auto;
             margin-right: auto;
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
             border-radius: 26px;
-            overflow: hidden;
           }
           .marketplace-customization-grid__previewBody {
-            overflow: visible;
             padding: 0;
-          }
-          .bidly-preview-shell,
-          .bidly-preview-shell .bidly-marketplace-root {
-            width: min(max(390px, 28vw), 480px);
-            min-width: 390px;
-            margin-left: auto;
-            margin-right: auto;
           }
         `}</style>
         <div className="marketplace-customization-grid">

@@ -55,77 +55,65 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
   const hasGradient = theme.gradientEnabled ? '1' : '0';
   const resolvedShopName = shopName || 'your store';
 
-  const shellWidth = 'min(max(390px, 28vw), 480px)';
-
   return (
     <div
       className="bidly-preview-shell"
       style={{
-        width: shellWidth,
-        minWidth: 390,
+        width: '100%',
+        maxWidth: 480,
         margin: '0 auto',
-        border: '1px solid rgba(15, 23, 42, 0.08)',
+        border: '1px solid rgba(15, 23, 42, 0.12)',
         borderRadius: 28,
-        overflow: 'hidden',
         background: '#fff',
         boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)',
         padding: '18px 16px'
       }}
     >
+      <style dangerouslySetInnerHTML={{ __html: css }} />
       <div
-        style={{
-          minWidth: 390,
-          maxWidth: 480,
-          margin: '0 auto'
-        }}
+        className="bidly-marketplace-root"
+        data-bidly-marketplace-template={theme.template}
+        data-bidly-marketplace-gradient={hasGradient}
       >
-        <style dangerouslySetInnerHTML={{ __html: css }} />
-        <div
-          className="bidly-marketplace-root"
-          data-bidly-marketplace-template={theme.template}
-          data-bidly-marketplace-gradient={hasGradient}
-          style={{ minWidth: 390 }}
-        >
-          <AppProvider>
-            <Frame>
-              <Page
-                title="Auction Marketplace · Preview"
-                subtitle="This preview renders the exact markup used in the storefront."
-                primaryAction={{ content: 'Refresh', onAction: () => {} }}
-                secondaryActions={[
-                  {
-                    content: 'Connected as demo customer',
-                    onAction: () => {}
-                  }
-                ]}
-              >
-                <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.75rem' }}>
-                  <Banner status="info">
-                    <Text variant="bodyMd">
-                      🏪 Viewing auctions from <strong>{resolvedShopName}</strong>
-                    </Text>
-                  </Banner>
-                  <Banner status="success">
-                    <Text variant="bodyMd">🟢 Connected to live updates</Text>
-                  </Banner>
-                </div>
+        <AppProvider>
+          <Frame>
+            <Page
+              title="Auction Marketplace · Preview"
+              subtitle="This preview renders the exact markup used in the storefront."
+              primaryAction={{ content: 'Refresh', onAction: () => {} }}
+              secondaryActions={[
+                {
+                  content: 'Connected as demo customer',
+                  onAction: () => {}
+                }
+              ]}
+            >
+              <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.75rem' }}>
+                <Banner status="info">
+                  <Text variant="bodyMd">
+                    🏪 Viewing auctions from <strong>{resolvedShopName}</strong>
+                  </Text>
+                </Banner>
+                <Banner status="success">
+                  <Text variant="bodyMd">🟢 Connected to live updates</Text>
+                </Banner>
+              </div>
 
-                <Layout>
-                  {MOCK_AUCTIONS.map((auction) => (
-                    <Layout.Section key={auction._id} oneHalf>
-                      <AuctionCard
-                        auction={auction}
-                        onBidPlaced={() => {}}
-                        onBuyNow={() => {}}
-                        isLoading={false}
-                      />
-                    </Layout.Section>
-                  ))}
-                </Layout>
-              </Page>
-            </Frame>
-          </AppProvider>
-        </div>
+              <Layout>
+                {MOCK_AUCTIONS.map((auction) => (
+                  <Layout.Section key={auction._id} oneHalf>
+                    <AuctionCard
+                      auction={auction}
+                      onBidPlaced={() => {}}
+                      onBuyNow={() => {}}
+                      isLoading={false}
+                    />
+                  </Layout.Section>
+                ))}
+              </Layout>
+            </Page>
+          </Frame>
+        </AppProvider>
       </div>
     </div>
   );
