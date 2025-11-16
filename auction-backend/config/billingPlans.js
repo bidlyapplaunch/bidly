@@ -1,20 +1,20 @@
 export const PLAN_LEVELS = Object.freeze({
-  none: 0,
+  free: 0,
   basic: 1,
   pro: 2,
   enterprise: 3
 });
 
 export const BILLING_PLANS = Object.freeze({
-  none: {
-    key: 'none',
-    name: 'Bidly Preview',
+  free: {
+    key: 'free',
+    name: 'Bidly Free',
     price: 0,
     currencyCode: 'USD',
     trialDays: 0,
-    level: PLAN_LEVELS.none,
+    level: PLAN_LEVELS.free,
     limits: {
-      auctions: 0
+      auctions: 1
     },
     features: {
       removeBranding: false,
@@ -76,9 +76,9 @@ export const BILLING_PLANS = Object.freeze({
   }
 });
 
-export const PLAN_ORDER = ['none', 'basic', 'pro', 'enterprise'];
+export const PLAN_ORDER = ['free', 'basic', 'pro', 'enterprise'];
 
-export const DEFAULT_PLAN = 'none';
+export const DEFAULT_PLAN = 'free';
 
 export function sanitizePlan(planKey) {
   if (!planKey) return DEFAULT_PLAN;
@@ -91,16 +91,16 @@ export function sanitizePlan(planKey) {
 
 export function getPlan(levelOrKey) {
   if (!levelOrKey && levelOrKey !== 0) {
-    return BILLING_PLANS.none;
+    return BILLING_PLANS.free;
   }
 
   if (typeof levelOrKey === 'string') {
     const key = sanitizePlan(levelOrKey);
-    return BILLING_PLANS[key] || BILLING_PLANS.none;
+    return BILLING_PLANS[key] || BILLING_PLANS.free;
   }
 
   const match = Object.values(BILLING_PLANS).find((plan) => plan.level === levelOrKey);
-  return match || BILLING_PLANS.none;
+  return match || BILLING_PLANS.free;
 }
 
 export function getPlanLevel(planKey) {

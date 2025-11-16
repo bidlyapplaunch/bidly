@@ -281,18 +281,13 @@
     }
 
     function applyChatTheme() {
-        const chatContainer = document.querySelector('.bidly-chat-container');
-        if (!chatContainer) {
-            return;
-        }
+        const root = document.body;
+        const gradient = root.getAttribute('data-bidly-widget-gradient');
 
-        const marketplaceRoot = document.querySelector('.bidly-marketplace-root') || document.body;
-        const gradientFlag =
-            marketplaceRoot?.getAttribute('data-bidly-marketplace-gradient') ||
-            marketplaceRoot?.dataset?.bidlyMarketplaceGradient;
-
-        if (gradientFlag) {
-            chatContainer.setAttribute('data-bidly-marketplace-gradient', gradientFlag);
+        if (gradient === '1') {
+            root.setAttribute('data-bidly-widget-gradient', '1');
+        } else {
+            root.setAttribute('data-bidly-widget-gradient', '0');
         }
     }
 
@@ -370,10 +365,22 @@
             el.style.setProperty('--bidly-border-color', colors.border);
             el.style.setProperty('--bidly-border-radius', `${theme.borderRadius || DEFAULT_WIDGET_THEME.borderRadius}px`);
             el.style.setProperty('--bidly-box-shadow', THEME_BOX_SHADOWS[theme.boxShadow] || THEME_BOX_SHADOWS[DEFAULT_WIDGET_THEME.boxShadow]);
+
+            // Widget-scoped variables used by chat
+            el.style.setProperty('--bidly-widget-background', colors.bg_solid);
+            el.style.setProperty('--bidly-widget-text-primary', colors.text);
+            el.style.setProperty('--bidly-widget-primary', colors.accent);
+            el.style.setProperty('--bidly-widget-border', colors.border);
+            el.style.setProperty('--bidly-widget-button-text', colors.button_text);
+            el.style.setProperty('--bidly-widget-gradient-start', colors.bg_gradient_start);
+            el.style.setProperty('--bidly-widget-gradient-end', colors.bg_gradient_end);
         };
 
         ensureVariables(host);
-        applyChatTheme(host, theme);
+
+        // Sync gradient flag for chat / global styles
+        document.body.setAttribute('data-bidly-widget-gradient', theme.gradientEnabled ? '1' : '0');
+        applyChatTheme();
 
         if (PREVIEW_MODE) {
             const previewRoot = document.querySelector('[data-preview="1"]');

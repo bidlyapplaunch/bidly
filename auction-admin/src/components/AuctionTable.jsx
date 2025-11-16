@@ -127,7 +127,24 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     }
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, auction) => {
+    // Reserve / winner aware statuses for ended auctions
+    if (status === 'ended') {
+      const hasBids = (auction.bidHistory?.length || 0) > 0;
+      if (hasBids) {
+        const reserve = typeof auction.reservePrice === 'number' ? auction.reservePrice : null;
+        const currentBid = typeof auction.currentBid === 'number' ? auction.currentBid : null;
+        if (reserve && currentBid && currentBid < reserve) {
+          return <Badge status="warning">Ended - Reserve not met</Badge>;
+        }
+        if (!reserve) {
+          return <Badge status="success">Ended</Badge>;
+        }
+      } else {
+        return <Badge status="attention">Ended - No winner</Badge>;
+      }
+    }
+
     const statusMap = {
       pending: { status: 'warning', children: 'Pending' },
       active: { status: 'success', children: 'Active' },
@@ -165,7 +182,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     // Reserve Price
     auction.reservePrice ? formatCurrency(auction.reservePrice) : '-',
     // Status
-    getStatusBadge(auction.status),
+    getStatusBadge(auction.status, auction),
     // Bid Count
     auction.bidHistory?.length || 0,
     <ButtonGroup key={auction.id}>

@@ -264,7 +264,7 @@ const PlansPage = () => {
 
   const buildDowngradeInfo = useCallback(
     (targetPlanKey) => {
-      const currentPlanKey = (planData.plan || 'none').toLowerCase();
+      const currentPlanKey = (planData.plan || 'free').toLowerCase();
       const currentPlanConfig = PLAN_CONFIG[currentPlanKey] || PLAN_CONFIG.none;
       const targetPlanConfig = PLAN_CONFIG[targetPlanKey] || PLAN_CONFIG.none;
       const currentFeatures = planData.planDetails?.features || currentPlanConfig.features || {};
@@ -302,7 +302,7 @@ const PlansPage = () => {
   const handlePlanSelection = useCallback(
     (planKey) => {
       const targetPlanKey = (planKey || '').toLowerCase();
-      const currentPlanKey = (planData.plan || 'none').toLowerCase();
+      const currentPlanKey = (planData.plan || 'free').toLowerCase();
       if (!targetPlanKey || targetPlanKey === currentPlanKey) {
         return;
       }

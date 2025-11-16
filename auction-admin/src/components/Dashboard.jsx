@@ -215,8 +215,8 @@ const Dashboard = ({ onLogout }) => {
     }).format(amount);
   };
 
-  const currentPlanKey = (planInfo?.plan || 'none').toLowerCase();
-  const canCreateAuctions = currentPlanKey !== 'none';
+  const currentPlanKey = (planInfo?.plan || 'free').toLowerCase();
+  const canCreateAuctions = currentPlanKey !== 'free';
   const pageSubtitle = canCreateAuctions
     ? (shopInfo.storeName ? `Store: ${shopInfo.storeName}` : 'Manage your auctions and monitor performance')
     : 'Upgrade to a paid plan to start hosting auctions.';
@@ -284,23 +284,6 @@ const Dashboard = ({ onLogout }) => {
               </Banner>
             </Layout.Section>
           )}
-          <Layout.Section>
-            <Card sectioned>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                <Button onClick={() => navigate(`/customization/widget${location.search || ''}`)}>
-                  Widget styles
-                </Button>
-                <Button onClick={() => navigate(`/customization/marketplace${location.search || ''}`)}>
-                  Marketplace styles
-                </Button>
-                <Button onClick={() => navigate(`/plans${location.search || ''}`)}>
-                  Plans
-                </Button>
-              </div>
-            </Card>
-          </Layout.Section>
-
-          
           {/* Statistics Cards */}
           <Layout.Section>
             <Card sectioned>
@@ -331,6 +314,23 @@ const Dashboard = ({ onLogout }) => {
                 <Text variant="heading2xl" as="div">
                   {stats?.totalBids || 0}
                 </Text>
+              </div>
+            </Card>
+          </Layout.Section>
+
+          {/* Quick navigation buttons */}
+          <Layout.Section>
+            <Card sectioned>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                <Button onClick={() => navigate(`/customization/widget${location.search || ''}`)}>
+                  🎨 Widget styles
+                </Button>
+                <Button onClick={() => navigate(`/customization/marketplace${location.search || ''}`)}>
+                  🛒 Marketplace styles
+                </Button>
+                <Button onClick={() => navigate(`/plans${location.search || ''}`)}>
+                  🧾 Plans
+                </Button>
               </div>
             </Card>
           </Layout.Section>

@@ -772,22 +772,23 @@
     display: none;
 }
 
+/* CHAT HEADER – follows widget theme */
 .bidly-chat-header {
-    background: var(--bidly-marketplace-color-background, #111827);
+    background: var(--bidly-widget-background, #111827);
+    color: var(--bidly-widget-text-primary, #ffffff);
+    border-bottom: 1px solid var(--bidly-widget-border, rgba(255,255,255,0.16));
     padding: 16px 20px;
-    color: var(--bidly-marketplace-color-text-primary, #ffffff);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--bidly-marketplace-color-border, rgba(255, 255, 255, 0.16));
 }
 
-body[data-bidly-marketplace-gradient="1"] .bidly-chat-header,
-.bidly-chat-container[data-bidly-marketplace-gradient="1"] .bidly-chat-header {
+/* If gradient enabled */
+body[data-bidly-widget-gradient="1"] .bidly-chat-header {
     background: linear-gradient(
-        to bottom,
-        var(--bidly-marketplace-gradient-start, #667eea),
-        var(--bidly-marketplace-gradient-end, #764ba2)
+        to right,
+        var(--bidly-widget-gradient-start, #667eea),
+        var(--bidly-widget-gradient-end, #764ba2)
     );
 }
 
@@ -917,22 +918,26 @@ body[data-bidly-marketplace-gradient="1"] .bidly-chat-header,
     color: var(--bidly-marketplace-color-text-secondary, #6b7280);
 }
 
+/* SEND BUTTON – follows primary color or gradient */
 .bidly-chat-send-btn {
-    background: var(--bidly-marketplace-color-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    background: var(--bidly-widget-primary, #4f46e5);
+    color: var(--bidly-widget-button-text, #ffffff);
     border: none;
     border-radius: 8px;
     padding: 10px 20px;
-    color: var(--bidly-marketplace-color-button-text, #ffffff);
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.bidly-chat-send-btn:hover {
-    background: var(--bidly-marketplace-color-hover, #7c3aed);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+/* Gradient send button */
+body[data-bidly-widget-gradient="1"] .bidly-chat-send-btn {
+    background: linear-gradient(
+        135deg,
+        var(--bidly-widget-gradient-start, #667eea),
+        var(--bidly-widget-gradient-end, #764ba2)
+    );
 }
 
 .bidly-chat-send-btn:disabled {
