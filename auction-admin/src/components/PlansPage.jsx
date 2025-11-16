@@ -97,7 +97,7 @@ const PLAN_CONFIG = {
   }
 };
 
-const PLAN_DISPLAY_ORDER = ['basic', 'pro', 'enterprise'];
+const PLAN_DISPLAY_ORDER = ['free', 'basic', 'pro', 'enterprise'];
 
 const trialCopy = 'Includes a 7-day free trial. You can cancel anytime from your Shopify admin.';
 
@@ -113,11 +113,14 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
   const actionLabel = useMemo(() => {
     if (isCurrent) return 'Current plan';
     if (isPending) return 'Pending activation';
+    if (planKey === 'free') return 'Free plan';
     if (isDowngrade) return `Downgrade to ${plan.title}`;
     return `Upgrade to ${plan.title}`;
-  }, [isCurrent, isPending, isDowngrade, plan.title]);
+  }, [isCurrent, isPending, isDowngrade, plan.title, planKey]);
 
   const handleSelect = useCallback(() => {
+    // Free plan cannot be selected (it's the default)
+    if (planKey === 'free') return;
     if (!isCurrent && !isPending) {
       onSelect(planKey);
     }
@@ -142,15 +145,21 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
         </div>
       </LegacyCard.Section>
       <LegacyCard.Section>
-        <Button
-          primary={isUpgrade && !isPending}
-          tone={isDowngrade ? 'critical' : undefined}
-          disabled={isCurrent || isPending}
-          loading={isLoading}
-          onClick={handleSelect}
-        >
-          {actionLabel}
-        </Button>
+        {planKey === 'free' ? (
+          <Button disabled>
+            {actionLabel}
+          </Button>
+        ) : (
+          <Button
+            primary={isUpgrade && !isPending}
+            tone={isDowngrade ? 'critical' : undefined}
+            disabled={isCurrent || isPending}
+            loading={isLoading}
+            onClick={handleSelect}
+          >
+            {actionLabel}
+          </Button>
+        )}
       </LegacyCard.Section>
     </LegacyCard>
   );
@@ -165,6 +174,8 @@ const PlansPage = () => {
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [auctionStats, setAuctionStats] = useState(null);
   const [downgradeModal, setDowngradeModal] = useState({ open: false, targetPlan: null, info: null });
+  const [cancelModal, setCancelModal] = useState({ open: false });
+  const [cancelling, setCancelling] = useState(false);
 
   const billingStatus = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -333,6 +344,35 @@ const PlansPage = () => {
     }
   }, [closeDowngradeModal, downgradeModal.targetPlan, startSubscription]);
 
+  const handleCancelSubscription = useCallback(() => {
+    setCancelModal({ open: true });
+  }, []);
+
+  const closeCancelModal = useCallback(() => {
+    setCancelModal({ open: false });
+  }, []);
+
+  const confirmCancelSubscription = useCallback(async () => {
+    try {
+      setCancelling(true);
+      setError('');
+      const response = await billingAPI.cancelSubscription();
+      if (response.success) {
+        closeCancelModal();
+        // Show success message
+        setError(response.message || 'Subscription cancelled successfully. Your plan will revert to Free when the current billing period ends.');
+        await loadPlan(); // Reload plan data
+      } else {
+        setError(response.message || 'Failed to cancel subscription');
+      }
+    } catch (err) {
+      console.error('Cancel subscription error', err);
+      setError(err.response?.data?.message || err.message || 'Unable to cancel subscription.');
+    } finally {
+      setCancelling(false);
+    }
+  }, [closeCancelModal, loadPlan]);
+
   const banner = useMemo(() => {
     if (billingStatus.status === 'success') {
       return (
@@ -365,15 +405,23 @@ const PlansPage = () => {
       );
     }
     if (error) {
+      // Check if it's a cancellation success message
+      if (error.includes('cancelled successfully') || error.includes('revert to Free')) {
+        return (
+          <Banner tone="success" title="Subscription cancelled">
+            <p>{error}</p>
+          </Banner>
+        );
+      }
       return (
-        <Banner tone="critical" title="We couldn’t load your plan">
+        <Banner tone="critical" title="We couldn't load your plan">
           <p>{error}</p>
           <Button onClick={loadPlan}>Retry</Button>
         </Banner>
       );
     }
     return null;
-  }, [billingStatus, error]);
+  }, [billingStatus, error, loadPlan]);
 
   const previewModeBanner =
     !loading && !planData.plan ? (
@@ -446,6 +494,15 @@ const PlansPage = () => {
                       </div>
                     )}
                   </div>
+                  {!loading && planData.plan && planData.plan !== 'free' && (
+                    <Button
+                      tone="critical"
+                      onClick={handleCancelSubscription}
+                      disabled={cancelling}
+                    >
+                      Cancel subscription
+                    </Button>
+                  )}
                 </div>
               </LegacyCard.Section>
             </LegacyCard>
@@ -526,6 +583,45 @@ const PlansPage = () => {
             </div>
             <Text tone="critical" variant="bodySm">
               Downgrading takes effect immediately and cannot be undone automatically.
+            </Text>
+          </Modal.Section>
+        </Modal>
+      )}
+
+      {cancelModal.open && (
+        <Modal
+          open
+          onClose={closeCancelModal}
+          title="Cancel subscription"
+          primaryAction={{
+            content: 'Confirm cancellation',
+            destructive: true,
+            onAction: confirmCancelSubscription,
+            loading: cancelling
+          }}
+          secondaryActions={[
+            {
+              content: 'Keep subscription',
+              onAction: closeCancelModal
+            }
+          ]}
+        >
+          <Modal.Section>
+            <Text variant="bodyMd">
+              Are you sure you want to cancel your subscription?
+            </Text>
+            <div style={{ marginTop: '16px' }}>
+              <Text tone="subdued" variant="bodyMd">
+                Your subscription will remain active until the end of the current billing period. After that, your plan will automatically revert to the Free plan, which includes:
+              </Text>
+              <List type="bullet">
+                <List.Item>1 active auction at a time</List.Item>
+                <List.Item>Standard Bidly branding</List.Item>
+                <List.Item>Basic auction features</List.Item>
+              </List>
+            </div>
+            <Text tone="critical" variant="bodySm" style={{ marginTop: '16px' }}>
+              You can resubscribe at any time to regain access to premium features.
             </Text>
           </Modal.Section>
         </Modal>

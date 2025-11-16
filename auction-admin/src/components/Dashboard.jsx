@@ -176,7 +176,26 @@ const Dashboard = ({ onLogout }) => {
         statusText: error.response?.statusText,
         data: error.response?.data
       });
+      
+      // Handle PLAN_LIMIT_REACHED error specifically
+      if (error.response?.data?.code === 'PLAN_LIMIT_REACHED') {
+        const errorData = error.response.data;
+        const limitMessage = `You've reached your auction limit (${errorData.limit} auction${errorData.limit === 1 ? '' : 's'}) for your current plan.`;
+        const upgradeMessage = 'Please upgrade your plan to create more auctions, or wait for existing auctions to end or close them manually.';
+        setToastMessage(`${limitMessage} ${upgradeMessage}`);
+        setToastError(true);
+        setShowToast(true);
+        // Optionally navigate to plans page after a delay
+        setTimeout(() => {
+          if (window.confirm('Would you like to view available plans to upgrade?')) {
+            navigate(`/plans${location.search || ''}`);
+          }
+        }, 2000);
+        return;
+      }
+      
       setToastMessage(`Error saving auction: ${error.response?.data?.message || error.message || error}`);
+      setToastError(true);
       setShowToast(true);
     }
   };

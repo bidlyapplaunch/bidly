@@ -259,6 +259,47 @@ export async function getSubscriptionById(store, gid) {
   return data?.appSubscription || null;
 }
 
+export async function cancelSubscription(store, subscriptionId) {
+  if (!subscriptionId) {
+    throw new Error('Subscription ID is required');
+  }
+
+  const mutation = `
+    mutation CancelSubscription($id: ID!) {
+      appSubscriptionCancel(id: $id) {
+        appSubscription {
+          id
+          status
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+
+  const data = await postShopifyGraphQL(store, mutation, { id: subscriptionId });
+
+  const result = data.appSubscriptionCancel;
+  if (!result) {
+    throw new Error('Unexpected billing response. Please try again.');
+  }
+
+  if (result.userErrors?.length) {
+    const message = result.userErrors.map((err) => err.message).join('; ');
+    throw new Error(message || 'Failed to cancel subscription');
+  }
+
+  // Mark subscription as cancelled in store
+  // The plan will revert to free when the subscription period ends
+  // This is handled by Shopify webhooks or periodic sync
+  return {
+    success: true,
+    subscription: result.appSubscription
+  };
+}
+
 export async function attachStoreWithAccessToken(shopDomain) {
   const store = await Store.findByDomain(shopDomain);
   if (!store) {

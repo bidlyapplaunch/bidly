@@ -1,5 +1,5 @@
 import express from 'express';
-import { subscribeToPlan, getCurrentPlan, confirmSubscription, syncPlan, getPlanCapabilitiesHandler } from '../controllers/billingController.js';
+import { subscribeToPlan, getCurrentPlan, confirmSubscription, syncPlan, getPlanCapabilitiesHandler, cancelCurrentSubscription } from '../controllers/billingController.js';
 import { requireAuth } from '../middleware/auth.js';
 import { identifyStore } from '../middleware/storeMiddleware.js';
 
@@ -16,6 +16,9 @@ router.get('/capabilities', identifyStore, getPlanCapabilitiesHandler);
 
 // Manual sync endpoint (admin)
 router.post('/sync', requireAuth, identifyStore, syncPlan);
+
+// Cancel current subscription
+router.post('/cancel', requireAuth, identifyStore, cancelCurrentSubscription);
 
 // Shopify return URL after merchant approves billing
 router.get('/confirm', identifyStore, confirmSubscription);

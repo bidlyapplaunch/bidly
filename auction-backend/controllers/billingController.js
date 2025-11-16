@@ -1,7 +1,9 @@
 import { AppError } from '../middleware/errorHandler.js';
 import {
   applyPlanChangeEffects,
+  cancelSubscription,
   createSubscription,
+  getActiveSubscriptions,
   getSubscriptionById,
   serializePlanContext,
   syncStorePlanFromShopify
@@ -180,6 +182,36 @@ export const getPlanCapabilitiesHandler = async (req, res, next) => {
     return res.json({
       success: true,
       context: serializePlanContext(req.store)
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelCurrentSubscription = async (req, res, next) => {
+  try {
+    if (!req.store) {
+      throw new AppError('Store context required', 400);
+    }
+
+    // Get active subscriptions
+    const subscriptions = await getActiveSubscriptions(req.store);
+    
+    if (!subscriptions || subscriptions.length === 0) {
+      throw new AppError('No active subscription found to cancel', 400);
+    }
+
+    // Cancel the first active subscription (typically there's only one)
+    const subscriptionToCancel = subscriptions[0];
+    const result = await cancelSubscription(req.store, subscriptionToCancel.id);
+
+    // Note: The plan will revert to 'free' when the subscription period ends
+    // This is handled by Shopify webhooks or periodic sync via syncStorePlanFromShopify
+
+    return res.json({
+      success: true,
+      message: 'Subscription cancelled successfully. Your plan will revert to Free when the current billing period ends.',
+      subscription: result.subscription
     });
   } catch (error) {
     next(error);

@@ -470,6 +470,29 @@ export const updateAuction = async (req, res, next) => {
       }
     }
     
+    // If startTime or endTime is being updated, recalculate status
+    // Also clear reserve_not_met status when extending end time
+    if (setUpdates.startTime || setUpdates.endTime) {
+      const newStartTime = setUpdates.startTime ? new Date(setUpdates.startTime) : new Date(auction.startTime);
+      const newEndTime = setUpdates.endTime ? new Date(setUpdates.endTime) : new Date(auction.endTime);
+      const now = new Date();
+      
+      // Recalculate status based on new times
+      if (now < newStartTime) {
+        setUpdates.status = 'pending';
+      } else if (now >= newStartTime && now < newEndTime) {
+        setUpdates.status = 'active';
+      } else {
+        // If new end time is in the future, set to active, otherwise ended
+        setUpdates.status = now < newEndTime ? 'active' : 'ended';
+      }
+      
+      // Clear reserve_not_met status when extending end time to future
+      if (auction.status === 'reserve_not_met' && now < newEndTime) {
+        // Status will be recalculated above, so reserve_not_met will be cleared
+      }
+    }
+    
     const updatePayload = {};
     if (Object.keys(setUpdates).length > 0) {
       updatePayload.$set = setUpdates;
@@ -491,6 +514,9 @@ export const updateAuction = async (req, res, next) => {
       updatePayload,
       { new: true, runValidators: false } // Disable schema validators since we're doing custom validation
     );
+    
+    // Update product metafields with new status
+    await updateProductMetafields(updatedAuction, shopDomain);
     
     res.json({
       success: true,
@@ -1156,15 +1182,20 @@ export const getAuctionStats = async (req, res, next) => {
 // Relist auction (reactivate ended auction without bids)
 export const relistAuction = async (req, res, next) => {
   try {
-    const auction = await Auction.findById(req.params.id);
+    const shopDomain = req.shopDomain;
+    const auction = await Auction.findOne({ 
+      _id: req.params.id,
+      shopDomain: shopDomain,
+      isDeleted: { $ne: true }
+    });
     
     if (!auction) {
       throw new AppError('Auction not found', 404);
     }
     
-    // Check if auction can be relisted (closed or ended without bids)
-    if (auction.status !== 'closed' && auction.status !== 'ended') {
-      throw new AppError('Only closed or ended auctions can be relisted', 400);
+    // Check if auction can be relisted (closed, ended, or reserve_not_met without bids)
+    if (auction.status !== 'closed' && auction.status !== 'ended' && auction.status !== 'reserve_not_met') {
+      throw new AppError('Only closed, ended, or reserve_not_met auctions can be relisted', 400);
     }
     
     // Check if auction has bids (cannot relist if there were bidders/buyers)
@@ -1193,6 +1224,9 @@ export const relistAuction = async (req, res, next) => {
       },
       { new: true, runValidators: false }
     );
+    
+    // Update product metafields with new status
+    await updateProductMetafields(updatedAuction, shopDomain);
     
     res.json({
       success: true,

@@ -430,6 +430,11 @@ export const billingAPI = {
   async getCapabilities() {
     const response = await api.get('/billing/capabilities');
     return response.data;
+  },
+
+  async cancelSubscription() {
+    const response = await api.post('/billing/cancel');
+    return response.data;
   }
 };
 
