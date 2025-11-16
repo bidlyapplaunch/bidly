@@ -103,7 +103,7 @@ const trialCopy = 'Includes a 7-day free trial. You can cancel anytime from your
 
 function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) {
   const plan = PLAN_CONFIG[planKey];
-  const normalizedCurrent = (currentPlan || 'none').toLowerCase();
+  const normalizedCurrent = (currentPlan || 'free').toLowerCase();
   const isCurrent = normalizedCurrent === planKey;
   const isPending = pendingPlan === planKey && pendingPlan !== currentPlan;
   const isLoading = loadingPlan === planKey;
@@ -161,7 +161,7 @@ const PlansPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [planData, setPlanData] = useState({ plan: 'none', pendingPlan: null });
+  const [planData, setPlanData] = useState({ plan: 'free', pendingPlan: null });
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [auctionStats, setAuctionStats] = useState(null);
   const [downgradeModal, setDowngradeModal] = useState({ open: false, targetPlan: null, info: null });
@@ -376,7 +376,7 @@ const PlansPage = () => {
   }, [billingStatus, error]);
 
   const previewModeBanner =
-    !loading && (planData.plan || 'none').toLowerCase() === 'none' ? (
+    !loading && !planData.plan ? (
       <Banner
         tone="warning"
         title="Upgrade to activate Bidly"
@@ -393,7 +393,7 @@ const PlansPage = () => {
     ) : null;
 
   const cancellationBanner =
-    !loading && (planData.plan || 'none').toLowerCase() !== 'none' ? (
+    !loading && !!planData.plan ? (
       <Banner tone="info" title="Cancelling your subscription">
         <p>
           Cancelling your Shopify subscription will revert your account to preview mode. Any active or scheduled
@@ -438,7 +438,7 @@ const PlansPage = () => {
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <Text tone="subdued">Active: {planData.plan || 'none'}</Text>
+                        <Text tone="subdued">Active: {planData.plan || 'free'}</Text>
                         {planData.pendingPlan && planData.pendingPlan !== planData.plan && (
                           <Text tone="subdued">Pending: {planData.pendingPlan}</Text>
                         )}

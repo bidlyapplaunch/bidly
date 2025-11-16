@@ -367,13 +367,12 @@
             el.style.setProperty('--bidly-box-shadow', THEME_BOX_SHADOWS[theme.boxShadow] || THEME_BOX_SHADOWS[DEFAULT_WIDGET_THEME.boxShadow]);
 
             // Widget-scoped variables used by chat
-            el.style.setProperty('--bidly-widget-background', colors.bg_solid);
-            el.style.setProperty('--bidly-widget-text-primary', colors.text);
-            el.style.setProperty('--bidly-widget-primary', colors.accent);
-            el.style.setProperty('--bidly-widget-border', colors.border);
+            el.style.setProperty('--bidly-widget-bg-solid', colors.bg_solid);
+            el.style.setProperty('--bidly-widget-bg-gradient-start', colors.bg_gradient_start);
+            el.style.setProperty('--bidly-widget-bg-gradient-end', colors.bg_gradient_end);
+            el.style.setProperty('--bidly-widget-button-bg', colors.button_bg);
+            el.style.setProperty('--bidly-widget-button-hover', colors.button_hover);
             el.style.setProperty('--bidly-widget-button-text', colors.button_text);
-            el.style.setProperty('--bidly-widget-gradient-start', colors.bg_gradient_start);
-            el.style.setProperty('--bidly-widget-gradient-end', colors.bg_gradient_end);
         };
 
         ensureVariables(host);

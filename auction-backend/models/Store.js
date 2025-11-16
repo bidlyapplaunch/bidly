@@ -59,7 +59,7 @@ const storeSchema = new mongoose.Schema({
   // App subscription plan tracking
   plan: {
     type: String,
-    enum: ['none', 'free', 'basic', 'pro', 'enterprise'],
+    enum: ['free', 'basic', 'pro', 'enterprise'],
     default: 'free'
   },
 

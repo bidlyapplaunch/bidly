@@ -755,9 +755,9 @@
 .bidly-chat-box {
     width: 350px;
     height: 500px;
-    background: var(--bidly-marketplace-color-surface, var(--bidly-marketplace-color-background, rgba(17, 24, 39, 0.93)));
+    background: rgba(17, 24, 39, 0.93);
     border-radius: 16px;
-    border: 1px solid var(--bidly-marketplace-color-border, rgba(255, 255, 255, 0.16));
+    border: 1px solid rgba(255, 255, 255, 0.16);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
@@ -774,9 +774,9 @@
 
 /* CHAT HEADER – follows widget theme */
 .bidly-chat-header {
-    background: var(--bidly-widget-background, #111827);
-    color: var(--bidly-widget-text-primary, #ffffff);
-    border-bottom: 1px solid var(--bidly-widget-border, rgba(255,255,255,0.16));
+    background: var(--bidly-widget-bg-solid, #111827);
+    color: var(--bidly-widget-button-text, #ffffff);
+    border-bottom: 1px solid rgba(255,255,255,0.16);
     padding: 16px 20px;
     display: flex;
     justify-content: space-between;
@@ -786,9 +786,9 @@
 /* If gradient enabled */
 body[data-bidly-widget-gradient="1"] .bidly-chat-header {
     background: linear-gradient(
-        to right,
-        var(--bidly-widget-gradient-start, #667eea),
-        var(--bidly-widget-gradient-end, #764ba2)
+        to bottom,
+        var(--bidly-widget-bg-gradient-start, #667eea),
+        var(--bidly-widget-bg-gradient-end, #764ba2)
     );
 }
 
@@ -830,7 +830,7 @@ body[data-bidly-widget-gradient="1"] .bidly-chat-header {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
-    background: var(--bidly-marketplace-color-background, #111827);
+    background: #111827;
     scrollbar-width: thin;
     scrollbar-color: rgba(102, 126, 234, 0.55) transparent;
 }
@@ -868,19 +868,19 @@ body[data-bidly-widget-gradient="1"] .bidly-chat-header {
 .bidly-chat-message .username {
     font-weight: 600;
     font-size: 13px;
-    color: var(--bidly-marketplace-color-text-secondary, #9ca3af);
+    color: #9ca3af;
 }
 
 .bidly-chat-message .timestamp {
     font-size: 11px;
-    color: var(--bidly-marketplace-color-text-secondary, #6b7280);
+    color: #6b7280;
 }
 
 .bidly-chat-message .message-content {
-    background: var(--bidly-marketplace-color-surface, #374151);
+    background: #374151;
     padding: 10px 14px;
     border-radius: 12px;
-    color: var(--bidly-marketplace-color-text-primary, #f3f4f6);
+    color: #f3f4f6;
     font-size: 14px;
     line-height: 1.5;
     word-wrap: break-word;
@@ -888,8 +888,8 @@ body[data-bidly-widget-gradient="1"] .bidly-chat-header {
 
 .bidly-chat-input-container {
     padding: 16px;
-    background: var(--bidly-marketplace-color-surface, #1f2937);
-    border-top: 1px solid var(--bidly-marketplace-color-border, #374151);
+    background: #1f2937;
+    border-top: 1px solid #374151;
 }
 
 .bidly-chat-input-form {
@@ -899,11 +899,11 @@ body[data-bidly-widget-gradient="1"] .bidly-chat-header {
 
 .bidly-chat-input {
     flex: 1;
-    background: var(--bidly-marketplace-color-background, #374151);
-    border: 1px solid var(--bidly-marketplace-color-border, #4b5563);
+    background: #374151;
+    border: 1px solid #4b5563;
     border-radius: 8px;
     padding: 10px 14px;
-    color: var(--bidly-marketplace-color-text-primary, #f3f4f6);
+    color: #f3f4f6;
     font-size: 14px;
     font-family: 'Inter', sans-serif;
     outline: none;
@@ -911,16 +911,16 @@ body[data-bidly-widget-gradient="1"] .bidly-chat-header {
 }
 
 .bidly-chat-input:focus {
-    border-color: var(--bidly-marketplace-color-primary, #667eea);
+    border-color: #667eea;
 }
 
 .bidly-chat-input::placeholder {
-    color: var(--bidly-marketplace-color-text-secondary, #6b7280);
+    color: #6b7280;
 }
 
-/* SEND BUTTON – follows primary color or gradient */
+/* SEND BUTTON – follows widget primary colors */
 .bidly-chat-send-btn {
-    background: var(--bidly-widget-primary, #4f46e5);
+    background: var(--bidly-widget-button-bg, #4f46e5);
     color: var(--bidly-widget-button-text, #ffffff);
     border: none;
     border-radius: 8px;
@@ -929,15 +929,6 @@ body[data-bidly-widget-gradient="1"] .bidly-chat-header {
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
-}
-
-/* Gradient send button */
-body[data-bidly-widget-gradient="1"] .bidly-chat-send-btn {
-    background: linear-gradient(
-        135deg,
-        var(--bidly-widget-gradient-start, #667eea),
-        var(--bidly-widget-gradient-end, #764ba2)
-    );
 }
 
 .bidly-chat-send-btn:disabled {

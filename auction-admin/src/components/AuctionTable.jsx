@@ -128,6 +128,11 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   };
 
   const getStatusBadge = (status, auction) => {
+    // Normalize legacy / special statuses into the same display rules
+    if (status === 'reserve_not_met') {
+      return <Badge status="warning">Ended - Reserve not met</Badge>;
+    }
+
     // Reserve / winner aware statuses for ended auctions
     if (status === 'ended') {
       const hasBids = (auction.bidHistory?.length || 0) > 0;
