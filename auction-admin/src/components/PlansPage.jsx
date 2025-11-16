@@ -133,6 +133,10 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
           <Text variant="headingMd">{plan.title}</Text>
           <Text tone="subdued">{plan.price}</Text>
           <Text tone="subdued">{plan.description}</Text>
+          {/* Show trial message only for paid plans */}
+          {planKey !== 'free' && (
+            <Text tone="subdued" variant="bodySm">{trialCopy}</Text>
+          )}
         </div>
       </LegacyCard.Section>
       <LegacyCard.Section>
@@ -144,12 +148,8 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
           ))}
         </div>
       </LegacyCard.Section>
-      <LegacyCard.Section>
-        {planKey === 'free' ? (
-          <Button disabled>
-            {actionLabel}
-          </Button>
-        ) : (
+      {planKey !== 'free' && (
+        <LegacyCard.Section>
           <Button
             primary={isUpgrade && !isPending}
             tone={isDowngrade ? 'critical' : undefined}
@@ -159,8 +159,8 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
           >
             {actionLabel}
           </Button>
-        )}
-      </LegacyCard.Section>
+        </LegacyCard.Section>
+      )}
     </LegacyCard>
   );
 }
@@ -234,23 +234,6 @@ const PlansPage = () => {
     return 'unlimited';
   }, []);
 
-  const getTrialCopy = useMemo(() => {
-    if (!planData.trialEndsAt) {
-      return trialCopy;
-    }
-
-    try {
-      const formatted = new Date(planData.trialEndsAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-      return `${trialCopy} Trial ends on ${formatted}.`;
-    } catch (err) {
-      console.warn('Plan trial date formatting failed:', err);
-      return trialCopy;
-    }
-  }, [planData.trialEndsAt]);
 
   useEffect(() => {
     loadPlan();
@@ -440,15 +423,6 @@ const PlansPage = () => {
       </Banner>
     ) : null;
 
-  const cancellationBanner =
-    !loading && !!planData.plan ? (
-      <Banner tone="info" title="Cancelling your subscription">
-        <p>
-          Cancelling your Shopify subscription will revert your account to preview mode. Any active or scheduled
-          auctions beyond the preview limit will be closed automatically during that downgrade.
-        </p>
-      </Banner>
-    ) : null;
 
   return (
     <Frame>
@@ -469,10 +443,6 @@ const PlansPage = () => {
             <Layout.Section>{previewModeBanner}</Layout.Section>
           )}
 
-          {cancellationBanner && (
-            <Layout.Section>{cancellationBanner}</Layout.Section>
-          )}
-
           <Layout.Section>
             <LegacyCard>
               <LegacyCard.Section>
@@ -487,10 +457,12 @@ const PlansPage = () => {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <Text tone="subdued">Active: {planData.plan || 'free'}</Text>
-                        {planData.pendingPlan && planData.pendingPlan !== planData.plan && (
+                        {/* Only show Pending if there's a real pending change (cancellation or downgrade) */}
+                        {planData.pendingPlan && 
+                         planData.pendingPlan !== planData.plan && 
+                         (planData.pendingPlan === 'free' || PLAN_LEVELS[planData.pendingPlan] < PLAN_LEVELS[planData.plan]) && (
                           <Text tone="subdued">Pending: {planData.pendingPlan}</Text>
                         )}
-                        <Text tone="subdued">{getTrialCopy}</Text>
                       </div>
                     )}
                   </div>

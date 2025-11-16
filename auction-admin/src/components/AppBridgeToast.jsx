@@ -1,23 +1,68 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Banner } from '@shopify/polaris';
 
 /**
  * App Bridge Toast Component
- * Replaces regular toast notifications with App Bridge toasts
- * These toasts appear in the Shopify admin interface
+ * Shows a visible toast notification on the page
  */
-const AppBridgeToast = ({ message, isError = false, duration = 5000 }) => {
+const AppBridgeToast = ({ message, isError = false, duration = 5000, onDismiss }) => {
+  const [visible, setVisible] = useState(true);
+
   useEffect(() => {
-    if (!message) return;
+    if (!message) {
+      setVisible(false);
+      return;
+    }
 
-    // Simplified toast - just log to console for now
-    console.log(`🍞 Toast: ${message}`, { isError, duration });
-    
-    // In a real implementation, you would show a toast notification
-    // For now, we'll just log it
-  }, [message, isError, duration]);
+    setVisible(true);
+    const timer = setTimeout(() => {
+      setVisible(false);
+      if (onDismiss) {
+        onDismiss();
+      }
+    }, duration);
 
-  // This component doesn't render anything visible
-  return null;
+    return () => clearTimeout(timer);
+  }, [message, duration, onDismiss]);
+
+  if (!visible || !message) {
+    return null;
+  }
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      zIndex: 10000,
+      maxWidth: '400px',
+      animation: 'slideIn 0.3s ease-out'
+    }}>
+      <Banner
+        tone={isError ? 'critical' : 'info'}
+        onDismiss={() => {
+          setVisible(false);
+          if (onDismiss) {
+            onDismiss();
+          }
+        }}
+      >
+        <p>{message}</p>
+      </Banner>
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </div>
+  );
 };
 
 export default AppBridgeToast;

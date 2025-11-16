@@ -185,12 +185,12 @@ const Dashboard = ({ onLogout }) => {
         setToastMessage(`${limitMessage} ${upgradeMessage}`);
         setToastError(true);
         setShowToast(true);
-        // Optionally navigate to plans page after a delay
+        // Show prompt after toast is visible
         setTimeout(() => {
           if (window.confirm('Would you like to view available plans to upgrade?')) {
             navigate(`/plans${location.search || ''}`);
           }
-        }, 2000);
+        }, 3000);
         return;
       }
       
@@ -416,7 +416,12 @@ const Dashboard = ({ onLogout }) => {
           <AppBridgeToast 
             message={toastMessage}
             isError={toastError}
-            duration={5000}
+            duration={8000}
+            onDismiss={() => {
+              setShowToast(false);
+              setToastMessage('');
+              setToastError(false);
+            }}
           />
         )}
       </Page>
