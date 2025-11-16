@@ -186,7 +186,7 @@ const MarketplaceCustomizationSettings = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
-  const [planStatus, setPlanStatus] = useState({ loading: true, plan: 'none', allowed: false });
+  const [planStatus, setPlanStatus] = useState({ loading: true, plan: 'free', allowed: false });
   const backgroundDisabled = customization.gradientEnabled;
   const [shopDomainState, setShopDomainState] = useState(() => {
     const sessionUser = authService.getUser();
@@ -261,7 +261,7 @@ const MarketplaceCustomizationSettings = () => {
         if (!isMounted) {
           return;
         }
-        const planKey = (response.plan || 'none').toLowerCase();
+        const planKey = (response.plan || 'free').toLowerCase();
         const allowed = ALLOWED_MARKETPLACE_PLANS.has(planKey);
         setPlanStatus({ loading: false, plan: planKey, allowed });
         updateShopIdentity(response.shopDomain, response.storeName);
@@ -273,7 +273,7 @@ const MarketplaceCustomizationSettings = () => {
           return;
         }
         console.error('Failed to load plan info for marketplace customization', err);
-        setPlanStatus({ loading: false, plan: 'none', allowed: false });
+        setPlanStatus({ loading: false, plan: 'free', allowed: false });
         setLoading(false);
       }
     };

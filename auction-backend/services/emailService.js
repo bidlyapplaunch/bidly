@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
 
 function getBrandSignature(options = {}) {
-  const plan = sanitizePlan(options.plan || 'none');
+  const plan = sanitizePlan(options.plan || 'free');
   const storeName = options.storeName?.trim();
 
   if (planMeetsRequirement(plan, 'pro') && storeName) {

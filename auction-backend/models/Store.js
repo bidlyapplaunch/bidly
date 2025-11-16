@@ -59,8 +59,8 @@ const storeSchema = new mongoose.Schema({
   // App subscription plan tracking
   plan: {
     type: String,
-    enum: ['none', 'basic', 'pro', 'enterprise'],
-    default: 'none'
+    enum: ['none', 'free', 'basic', 'pro', 'enterprise'],
+    default: 'free'
   },
 
   onboardingComplete: {

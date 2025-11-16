@@ -101,9 +101,9 @@
             '.price-wrapper',
             '.product-price-wrapper'
         ],
-        plan: 'none',
+        plan: 'free',
         capabilities: {
-            key: 'none',
+            key: 'free',
             features: {
                 removeBranding: false,
                 customization: false,

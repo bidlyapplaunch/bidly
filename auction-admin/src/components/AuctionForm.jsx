@@ -92,8 +92,8 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const [searching, setSearching] = useState(false);
   const [shopifyConfigured, setShopifyConfigured] = useState(false);
   const [searchError, setSearchError] = useState(null);
-  const planKey = (planInfo?.plan || 'none').toLowerCase();
-  const allowAuctions = planKey !== 'none';
+  const planKey = (planInfo?.plan || 'free').toLowerCase();
+  const allowAuctions = ['free', 'basic', 'pro', 'enterprise'].includes(planKey);
   const allowPopcorn = planKey === 'pro' || planKey === 'enterprise';
   const allowChat = planKey === 'enterprise';
   const auctionHasBids = Boolean(auction?.bidHistory?.length);

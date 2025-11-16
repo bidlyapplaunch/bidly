@@ -15,7 +15,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { auctionAPI, billingAPI } from '../services/api';
 
 const PLAN_LEVELS = {
-  none: 0,
+  free: 0,
   basic: 1,
   pro: 2,
   enterprise: 3
@@ -29,13 +29,13 @@ const FEATURE_LABELS = {
 };
 
 const PLAN_CONFIG = {
-  none: {
-    key: 'none',
-    title: 'Preview',
+  free: {
+    key: 'free',
+    title: 'Free',
     price: '$0/mo',
-    description: 'Explore the admin before choosing a plan.',
-    highlights: ['Preview dashboard access', 'No active auctions', 'Upgrade to unlock core features'],
-    limits: { auctions: 0 },
+    description: 'Get started with Bidly and run your first auction.',
+    highlights: ['1 active auction at a time', 'Preview dashboard access', 'Upgrade to unlock more auctions'],
+    limits: { auctions: 1 },
     features: {
       removeBranding: false,
       customization: false,
@@ -265,8 +265,8 @@ const PlansPage = () => {
   const buildDowngradeInfo = useCallback(
     (targetPlanKey) => {
       const currentPlanKey = (planData.plan || 'free').toLowerCase();
-      const currentPlanConfig = PLAN_CONFIG[currentPlanKey] || PLAN_CONFIG.none;
-      const targetPlanConfig = PLAN_CONFIG[targetPlanKey] || PLAN_CONFIG.none;
+      const currentPlanConfig = PLAN_CONFIG[currentPlanKey] || PLAN_CONFIG.free;
+      const targetPlanConfig = PLAN_CONFIG[targetPlanKey] || PLAN_CONFIG.free;
       const currentFeatures = planData.planDetails?.features || currentPlanConfig.features || {};
       const targetFeatures = targetPlanConfig.features || {};
       const lostFeatures = Object.keys(FEATURE_LABELS).filter(

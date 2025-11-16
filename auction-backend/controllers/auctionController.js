@@ -121,7 +121,7 @@ export const createAuction = async (req, res, next) => {
       throw new AppError('Store domain is required', 400);
     }
 
-    const currentPlan = sanitizePlan(req.store?.plan || 'none');
+    const currentPlan = sanitizePlan(req.store?.plan || 'free');
     if (req.body.popcornEnabled && !planMeetsRequirement(currentPlan, 'pro')) {
       return res.status(403).json({
         success: false,
@@ -343,7 +343,7 @@ export const updateAuction = async (req, res, next) => {
       throw new AppError('Store domain is required', 400);
     }
 
-    const currentPlan = sanitizePlan(req.store?.plan || 'none');
+    const currentPlan = sanitizePlan(req.store?.plan || 'free');
     const parseBoolean = (value) => {
       if (typeof value === 'string') {
         const normalized = value.trim().toLowerCase();

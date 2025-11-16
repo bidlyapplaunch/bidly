@@ -131,18 +131,19 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     // Reserve / winner aware statuses for ended auctions
     if (status === 'ended') {
       const hasBids = (auction.bidHistory?.length || 0) > 0;
-      if (hasBids) {
-        const reserve = typeof auction.reservePrice === 'number' ? auction.reservePrice : null;
-        const currentBid = typeof auction.currentBid === 'number' ? auction.currentBid : null;
-        if (reserve && currentBid && currentBid < reserve) {
+      const hasReserve = auction.reservePrice != null && auction.reservePrice > 0;
+      const currentBid = auction.currentBid != null ? Number(auction.currentBid) : null;
+
+      if (hasBids && hasReserve && currentBid != null && currentBid < Number(auction.reservePrice)) {
           return <Badge status="warning">Ended - Reserve not met</Badge>;
-        }
-        if (!reserve) {
-          return <Badge status="success">Ended</Badge>;
-        }
-      } else {
+      }
+
+      if (!hasBids) {
         return <Badge status="attention">Ended - No winner</Badge>;
       }
+
+      // Has bids and no reserve (or reserve met)
+      return <Badge status="success">Ended</Badge>;
     }
 
     const statusMap = {

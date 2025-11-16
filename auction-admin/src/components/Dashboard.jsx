@@ -39,7 +39,7 @@ const Dashboard = ({ onLogout }) => {
   const [shopifyProducts, setShopifyProducts] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
-  const [planInfo, setPlanInfo] = useState({ plan: 'none', pendingPlan: null });
+  const [planInfo, setPlanInfo] = useState({ plan: 'free', pendingPlan: null });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -216,10 +216,11 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const currentPlanKey = (planInfo?.plan || 'free').toLowerCase();
-  const canCreateAuctions = currentPlanKey !== 'free';
+  const recognizedPlans = ['free', 'basic', 'pro', 'enterprise'];
+  const canCreateAuctions = recognizedPlans.includes(currentPlanKey);
   const pageSubtitle = canCreateAuctions
     ? (shopInfo.storeName ? `Store: ${shopInfo.storeName}` : 'Manage your auctions and monitor performance')
-    : 'Upgrade to a paid plan to start hosting auctions.';
+    : 'Upgrade to a plan to start hosting auctions.';
   const primaryAction = canCreateAuctions
     ? {
         content: 'Create Auction',
@@ -326,7 +327,7 @@ const Dashboard = ({ onLogout }) => {
                   🎨 Widget styles
                 </Button>
                 <Button onClick={() => navigate(`/customization/marketplace${location.search || ''}`)}>
-                  🛒 Marketplace styles
+                  🎨 Marketplace styles
                 </Button>
                 <Button onClick={() => navigate(`/plans${location.search || ''}`)}>
                   🧾 Plans
