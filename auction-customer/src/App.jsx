@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   AppProvider,
   Page,
@@ -10,7 +10,7 @@ import {
   Frame,
   Toast
 } from '@shopify/polaris';
-import { auctionAPI } from './services/api';
+import { auctionAPI, customerAPI } from './services/api';
 import socketService from './services/socket';
 import customerAuthService from './services/customerAuth';
 import AuctionCard from './components/AuctionCard';
@@ -66,9 +66,70 @@ function App() {
       winner: normalizeWinner(auction.winner)
     };
   };
+
+  const syncCustomerProfile = useCallback(async (sourceCustomer) => {
+    if (!sourceCustomer?.email || !resolvedShopDomain) {
+      return null;
+    }
+
+    const displayNameCandidate =
+      sourceCustomer.displayName ||
+      sourceCustomer.fullName ||
+      sourceCustomer.name ||
+      sourceCustomer.email ||
+      ANONYMOUS_BIDDER;
+
+    const nameSeed = sourceCustomer.fullName || sourceCustomer.name || '';
+    const [seedFirst = '', ...seedRest] = nameSeed.trim().split(' ').filter(Boolean);
+    const fallbackFirst = sourceCustomer.firstName || seedFirst;
+    const fallbackLast = sourceCustomer.lastName || seedRest.join(' ');
+
+    setCustomerSyncing(true);
+    try {
+      const payload = {
+        shopifyId: sourceCustomer.id,
+        email: sourceCustomer.email,
+        firstName: fallbackFirst,
+        lastName: fallbackLast,
+        displayName: displayNameCandidate,
+        shopDomain: resolvedShopDomain
+      };
+
+      const response = await customerAPI.saveCustomer(payload);
+      if (response?.customer) {
+        setCustomerProfile(response.customer);
+        return response.customer;
+      }
+    } catch (error) {
+      console.error('Error syncing customer profile:', error);
+    } finally {
+      setCustomerSyncing(false);
+    }
+
+    return null;
+  }, [resolvedShopDomain]);
+
+  const ensureCustomerProfile = useCallback(async () => {
+    if (!customer) {
+      return null;
+    }
+    if (customerProfile?.id) {
+      return customerProfile;
+    }
+    return await syncCustomerProfile(customer);
+  }, [customer, customerProfile, syncCustomerProfile]);
+
+  const currentDisplayName =
+    customerProfile?.displayName ||
+    customer?.fullName ||
+    customer?.name ||
+    customer?.email ||
+    ANONYMOUS_BIDDER;
   
   // Customer authentication state
   const [customer, setCustomer] = useState(null);
+  const [customerProfile, setCustomerProfile] = useState(null);
+  const [customerSyncing, setCustomerSyncing] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authRequired, setAuthRequired] = useState(false);
 
@@ -84,6 +145,7 @@ function App() {
   };
 
   const { shop, shopName } = getShopInfo();
+  const resolvedShopDomain = shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
 
   useEffect(() => {
     let isMounted = true;
@@ -237,6 +299,14 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (customer) {
+      syncCustomerProfile(customer);
+    } else {
+      setCustomerProfile(null);
+    }
+  }, [customer, syncCustomerProfile]);
+
   // Join auction rooms when auctions are loaded or updated
   useEffect(() => {
     if (auctions.length > 0 && socketService.isSocketConnected()) {
@@ -299,19 +369,32 @@ function App() {
       return;
     }
 
+    let activeProfile = customerProfile;
+    if (!activeProfile && customer) {
+      activeProfile = await ensureCustomerProfile();
+    }
+
+    if (!activeProfile?.id) {
+      const profileError = 'We could not load your bidder profile. Please refresh and try again.';
+      setError(profileError);
+      setToastMessage(`❌ ${profileError}`);
+      setShowToast(true);
+      setAuthRequired(true);
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       setBidLoading(true);
       setError(null);
       
-      // Find the auction ID (assuming we have it in the context)
-      // For now, we'll need to pass the auction ID from the component
       const auctionId = bidData.auctionId;
       await auctionAPI.placeBid(auctionId, {
         amount: bidData.amount,
-        customerId: customer.id
+        customerId: activeProfile.id
       });
       
-      const bidderName = customer.fullName || customer.name || ANONYMOUS_BIDDER;
+      const bidderName = activeProfile.displayName || currentDisplayName;
       setToastMessage(`✅ Bid placed successfully! $${bidData.amount} by ${bidderName}`);
       setShowToast(true);
       
@@ -359,18 +442,33 @@ function App() {
       return;
     }
 
+    let activeProfile = customerProfile;
+    if (!activeProfile && customer) {
+      activeProfile = await ensureCustomerProfile();
+    }
+
+    if (!activeProfile?.id) {
+      const profileError = 'We could not load your bidder profile. Please refresh and try again.';
+      setError(profileError);
+      setToastMessage(`❌ ${profileError}`);
+      setShowToast(true);
+      setAuthRequired(true);
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       setBidLoading(true);
       setError(null);
       
       const { auctionId } = data;
       
-      await auctionAPI.buyNow(auctionId, { customerId: customer.id });
+      await auctionAPI.buyNow(auctionId, { customerId: activeProfile.id });
       
       // Find the auction to get product name
       const auction = auctions.find(a => (a._id || a.id) === auctionId);
       const productName = auction?.productData?.title || 'the item';
-      const bidderName = customer.fullName || customer.name || ANONYMOUS_BIDDER;
+      const bidderName = activeProfile.displayName || currentDisplayName;
       setToastMessage(`🎉 Buy now successful! ${bidderName} won ${productName}!`);
       setShowToast(true);
       
@@ -406,15 +504,18 @@ function App() {
   // Customer authentication handlers
   const handleCustomerLogin = (customerData) => {
     setCustomer(customerData);
+    syncCustomerProfile(customerData);
     setShowAuthModal(false);
     setAuthRequired(false);
-    setToastMessage(`Welcome, ${customerData.name}! You can now place bids.`);
+    const alias = customerData.name || customerData.fullName || customerData.email || 'your account';
+    setToastMessage(`Welcome, ${alias}! You can now place bids.`);
     setShowToast(true);
   };
 
   const handleCustomerLogout = () => {
     customerAuthService.logout();
     setCustomer(null);
+    setCustomerProfile(null);
     if (!enforceShopifyLogin) {
       setToastMessage('You have been logged out.');
       setShowToast(true);
@@ -476,7 +577,7 @@ function App() {
           subtitle={shopName ? `Browse auctions from ${shopName}` : "Browse pending, active, and ended auctions"}
           secondaryActions={[
             {
-              content: customer ? `👤 ${customer.name} · Logout` : 'Login to Bid',
+              content: customer ? `👤 ${currentDisplayName} · Logout` : 'Login to Bid',
               onAction: customer ? handleCustomerLogout : handleLoginAction
             }
           ]}
@@ -506,7 +607,7 @@ function App() {
                     auction={auction} 
                     onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
                     onBuyNow={() => handleBuyNow({ auctionId: auction._id || auction.id })}
-                    isLoading={bidLoading}
+                    isLoading={bidLoading || customerSyncing}
                   />
                 </Layout.Section>
               ))}

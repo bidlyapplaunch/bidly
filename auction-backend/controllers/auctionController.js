@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Auction from '../models/Auction.js';
 import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -6,6 +7,8 @@ import emailService from '../services/emailService.js';
 import ProductDuplicationService from '../services/productDuplicationService.js';
 import AuctionEndService from '../services/auctionEndService.js';
 import { getHigherPlans, planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
+
+const ANONYMOUS_DISPLAY_NAME = 'Anonymous Bidder';
 
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
@@ -30,6 +33,63 @@ const computeAuctionStatus = (auction) => {
   } else {
     return 'ended';
   }
+};
+
+const decorateBid = (bid) => {
+  if (!bid) return bid;
+  const plain = typeof bid.toObject === 'function' ? bid.toObject() : { ...bid };
+  const displayName = plain.displayName || plain.bidder || plain.bidderName || ANONYMOUS_DISPLAY_NAME;
+  return {
+    ...plain,
+    displayName
+  };
+};
+
+const decorateAuction = (auction) => {
+  if (!auction) return auction;
+  const plain = typeof auction.toObject === 'function' ? auction.toObject() : { ...auction };
+  const bidHistory = Array.isArray(plain.bidHistory) ? plain.bidHistory.map(decorateBid) : [];
+  const winner = plain.winner
+    ? {
+        ...plain.winner,
+        displayName: plain.winner.displayName || plain.winner.bidder || plain.winner.bidderName || ANONYMOUS_DISPLAY_NAME
+      }
+    : null;
+
+  return {
+    ...plain,
+    bidHistory,
+    winner
+  };
+};
+
+const buildCustomerLookupQuery = ({ customerId, shopifyCustomerId, email, shopDomain }) => {
+  const orConditions = [];
+
+  if (customerId && mongoose.Types.ObjectId.isValid(customerId)) {
+    orConditions.push({ _id: customerId });
+  }
+
+  const normalizedShopifyId =
+    shopifyCustomerId ||
+    (customerId && !mongoose.Types.ObjectId.isValid(customerId) ? customerId : null);
+
+  if (normalizedShopifyId) {
+    orConditions.push({ shopifyId: normalizedShopifyId.toString() });
+  }
+
+  if (email) {
+    orConditions.push({ email: email.toLowerCase() });
+  }
+
+  if (!orConditions.length || !shopDomain) {
+    return null;
+  }
+
+  return {
+    shopDomain,
+    $or: orConditions
+  };
 };
 
 // Helper function to update product metafields for auction widget
@@ -266,8 +326,10 @@ export const getAllAuctions = async (req, res, next) => {
       .limit(parseInt(limit))
       .lean();
     
+    const decoratedAuctions = auctions.map(decorateAuction);
+    
     // Compute real-time status for each auction
-    const auctionsWithRealTimeStatus = auctions.map(auction => ({
+    const auctionsWithRealTimeStatus = decoratedAuctions.map(auction => ({
       ...auction,
       status: computeAuctionStatus(auction)
     }));
@@ -319,9 +381,11 @@ export const getAuctionById = async (req, res, next) => {
       throw new AppError('Auction not found', 404);
     }
     
+    const decoratedAuction = decorateAuction(auction);
+    
     // Compute real-time status
     const auctionWithRealTimeStatus = {
-      ...auction.toObject(),
+      ...decoratedAuction,
       status: computeAuctionStatus(auction)
     };
     
@@ -631,7 +695,7 @@ export const deleteAuction = async (req, res, next) => {
 // Place a bid on an auction
 export const placeBid = async (req, res, next) => {
   try {
-    const { bidder, amount, customerEmail, bidderName, bidderEmail, customerId } = req.body;
+    const { bidder, amount, customerEmail, bidderName, bidderEmail, customerId, shopifyCustomerId } = req.body;
     const shopDomain = req.shopDomain; // Get from store middleware
     
     if (!shopDomain) {
@@ -646,20 +710,29 @@ export const placeBid = async (req, res, next) => {
     let effectiveBidder = sanitizedBidder || '';
     let effectiveEmail = sanitizedEmail || '';
     let effectiveCustomerId = null;
+    let customerRecord = null;
 
-    if (customerId) {
+    const lookupQuery = buildCustomerLookupQuery({
+      customerId,
+      shopifyCustomerId,
+      email: sanitizedEmail,
+      shopDomain
+    });
+
+    if (lookupQuery) {
       try {
-        const customerRecord = await Customer.findOne({ _id: customerId, shopDomain });
-        if (customerRecord) {
-          effectiveBidder = customerRecord.displayName || effectiveBidder;
-          if (!effectiveEmail) {
-            effectiveEmail = customerRecord.email || '';
-          }
-          effectiveCustomerId = customerRecord._id;
-        }
+        customerRecord = await Customer.findOne(lookupQuery);
       } catch (lookupError) {
         console.warn('⚠️ Failed to load customer for bid placement:', lookupError.message);
       }
+    }
+
+    if (customerRecord) {
+      effectiveBidder = customerRecord.displayName || customerRecord.fullName || effectiveBidder;
+      if (!effectiveEmail) {
+        effectiveEmail = customerRecord.email || '';
+      }
+      effectiveCustomerId = customerRecord._id;
     }
 
     if (!effectiveBidder || effectiveBidder.length === 0) {
@@ -743,6 +816,7 @@ export const placeBid = async (req, res, next) => {
     
     // Refresh auction data
     const updatedAuction = await Auction.findById(req.params.id);
+    const decoratedUpdatedAuction = decorateAuction(updatedAuction);
 
     // Track if auction ended (e.g., via Buy Now) — declare BEFORE any checks that reference it
     let auctionEnded = false;
@@ -865,12 +939,20 @@ export const placeBid = async (req, res, next) => {
       const bidUpdateData = {
         auctionId: req.params.id,
         currentBid: updatedAuction.currentBid,
-        bidHistory: updatedAuction.bidHistory,
+        bidHistory: decoratedUpdatedAuction.bidHistory,
         bidder: effectiveBidder,
+        displayName: effectiveBidder,
         amount: amount,
         timestamp: new Date().toISOString(),
         auctionEnded: auctionEnded,
-        winner: auctionEnded ? effectiveBidder : null,
+        winner: auctionEnded
+          ? {
+              bidder: effectiveBidder,
+              displayName: effectiveBidder,
+              amount,
+              customerId: effectiveCustomerId
+            }
+          : null,
         productTitle: updatedAuction.productData?.title || 'Unknown Product',
         timeExtended: timeExtended,
         newEndTime: timeExtended ? updatedAuction.endTime.toISOString() : null,
@@ -887,8 +969,8 @@ export const placeBid = async (req, res, next) => {
       io.to('admin-room').emit('admin-notification', {
         type: auctionEnded ? 'auction-ended' : 'new-bid',
         message: auctionEnded 
-          ? `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" ended with winning bid of $${amount} by ${bidder}`
-          : `New bid of $${amount} placed on "${updatedAuction.productData?.title || 'Unknown Product'}" by ${bidder}`,
+          ? `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" ended with winning bid of $${amount} by ${effectiveBidder}`
+          : `New bid of $${amount} placed on "${updatedAuction.productData?.title || 'Unknown Product'}" by ${effectiveBidder}`,
         auctionId: req.params.id,
         timestamp: new Date().toISOString(),
         data: {
@@ -911,7 +993,7 @@ export const placeBid = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Bid placed successfully',
-      data: updatedAuction
+      data: decoratedUpdatedAuction
     });
   } catch (error) {
     next(error);
@@ -922,7 +1004,7 @@ export const placeBid = async (req, res, next) => {
 // Get auction statistics
 export const buyNow = async (req, res, next) => {
   try {
-    const { bidder, customerEmail, customerId } = req.body;
+    const { bidder, customerEmail, customerId, shopifyCustomerId } = req.body;
     const shopDomain = req.shopDomain; // Get from store middleware
     
     if (!shopDomain) {
@@ -934,20 +1016,29 @@ export const buyNow = async (req, res, next) => {
     let effectiveBidder = sanitizedBidder;
     let effectiveEmail = sanitizedEmail;
     let effectiveCustomerId = null;
+    let customerRecord = null;
 
-    if (customerId) {
+    const lookupQuery = buildCustomerLookupQuery({
+      customerId,
+      shopifyCustomerId,
+      email: sanitizedEmail,
+      shopDomain
+    });
+
+    if (lookupQuery) {
       try {
-        const customerRecord = await Customer.findOne({ _id: customerId, shopDomain });
-        if (customerRecord) {
-          effectiveBidder = customerRecord.displayName || effectiveBidder;
-          if (!effectiveEmail) {
-            effectiveEmail = customerRecord.email || '';
-          }
-          effectiveCustomerId = customerRecord._id;
-        }
+        customerRecord = await Customer.findOne(lookupQuery);
       } catch (lookupError) {
         console.warn('⚠️ Failed to load customer for buy now:', lookupError.message);
       }
+    }
+
+    if (customerRecord) {
+      effectiveBidder = customerRecord.displayName || customerRecord.fullName || effectiveBidder;
+      if (!effectiveEmail) {
+        effectiveEmail = customerRecord.email || '';
+      }
+      effectiveCustomerId = customerRecord._id;
     }
 
     if (!effectiveBidder) {
@@ -1045,17 +1136,25 @@ export const buyNow = async (req, res, next) => {
     }
     
     // Broadcast real-time update to all clients watching this auction
+    const decoratedAuction = decorateAuction(auction);
+
     const io = req.app.get('io');
     if (io) {
       const buyNowData = {
         auctionId: req.params.id,
         currentBid: auction.buyNowPrice,
-        bidHistory: auction.bidHistory,
+        bidHistory: decoratedAuction.bidHistory,
         bidder: effectiveBidder,
+        displayName: effectiveBidder,
         amount: auction.buyNowPrice,
         timestamp: new Date().toISOString(),
         auctionEnded: true,
-        winner: effectiveBidder,
+        winner: {
+          bidder: effectiveBidder,
+          displayName: effectiveBidder,
+          amount: auction.buyNowPrice,
+          customerId: effectiveCustomerId
+        },
         buyNow: true,
         productTitle: auction.productData?.title || 'Unknown Product'
       };
@@ -1070,7 +1169,7 @@ export const buyNow = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Buy now successful! Auction ended.',
-      data: auction
+      data: decoratedAuction
     });
   } catch (error) {
     next(error);

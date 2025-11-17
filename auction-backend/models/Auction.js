@@ -6,6 +6,10 @@ const bidSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  displayName: {
+    type: String,
+    trim: true
+  },
   customerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer',
@@ -239,6 +243,7 @@ auctionSchema.methods.addBid = function(bidder, amount, customerEmail, customerI
   
   const bid = {
     bidder,
+    displayName: bidder,
     customerEmail,
     amount,
     timestamp: now,

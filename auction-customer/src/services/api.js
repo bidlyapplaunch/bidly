@@ -80,6 +80,13 @@ export const auctionAPI = {
   }
 };
 
+export const customerAPI = {
+  saveCustomer: async (payload) => {
+    const response = await api.post('/customers/saveCustomer', payload);
+    return response.data;
+  }
+};
+
 // Shopify API endpoints for customer frontend
 export const shopifyAPI = {
   getProduct: async (productId) => {

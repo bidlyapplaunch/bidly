@@ -126,7 +126,7 @@ class WinnerProcessingService {
             // 5. Create (or reuse) private product for winner (duplicated product)
             let privateProduct = null;
 
-            if (auction.privateProduct?.productId) {
+            if (claimedAuction.privateProduct?.productId) {
                 console.log(`ℹ️ Existing private product found for auction ${auctionId}, reusing to avoid duplicate creation.`);
                 privateProduct = {
                     productId: claimedAuction.privateProduct.productId,
@@ -211,7 +211,7 @@ class WinnerProcessingService {
                 );
                 
                 // 9. Send invoice via Shopify
-                const invoiceSubject = `Congratulations! You Won the Auction for ${privateProduct.productTitle || auction.productTitle || 'the auction item'}`;
+                const invoiceSubject = `Congratulations! You Won the Auction for ${privateProduct.productTitle || claimedAuction.productTitle || 'the auction item'}`;
                 const invoiceMessage = `Congratulations! You have successfully won the auction. You have 30 minutes to claim your win, or the second highest bidder will receive the win instead.`;
                 
                 await shopifyService.sendDraftOrderInvoice(
