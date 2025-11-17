@@ -154,6 +154,11 @@ const auctionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+
+  winnerProcessingLock: {
+    type: Boolean,
+    default: false
+  },
   
   winnerProcessed: {
     type: Boolean,

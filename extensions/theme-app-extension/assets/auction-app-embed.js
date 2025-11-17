@@ -1549,11 +1549,11 @@
             const statusElement = widget.querySelector('.bidly-widget-status');
             if (statusElement) {
                 if (auctionData.status === 'reserve_not_met') {
-                    statusElement.innerHTML = '<span class="bidly-status-ended">● RESERVE NOT MET</span>';
+                    statusElement.innerHTML = '<span class="bidly-status-ended">RESERVE NOT MET</span>';
                 } else if (auctionData.status === 'ended') {
-                    statusElement.innerHTML = '<span class="bidly-status-ended">● ENDED</span>';
+                    statusElement.innerHTML = '<span class="bidly-status-ended">ENDED</span>';
                 } else {
-                    statusElement.innerHTML = '<span class="bidly-status-pending">● PENDING</span>';
+                    statusElement.innerHTML = '<span class="bidly-status-pending">PENDING</span>';
                 }
                 console.log('Bidly: Updated status to:', auctionData.status);
             }

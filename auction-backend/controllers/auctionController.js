@@ -492,6 +492,21 @@ export const updateAuction = async (req, res, next) => {
         // Status will be recalculated above, so reserve_not_met will be cleared
       }
     }
+
+    // Determine if we're reactivating an auction that was previously completed/reserve_not_met
+    const reactiveStatuses = ['pending', 'active'];
+    const completedStatuses = ['ended', 'reserve_not_met', 'closed'];
+    const resultingStatus = setUpdates.status || auction.status;
+    if (completedStatuses.includes(auction.status) && reactiveStatuses.includes(resultingStatus)) {
+      setUpdates.winnerProcessed = false;
+      setUpdates.invoiceSent = false;
+      unsetUpdates.winner = '';
+      unsetUpdates.privateProduct = '';
+      unsetUpdates.winnerProcessedAt = '';
+      unsetUpdates.draftOrderId = '';
+      unsetUpdates.duplicatedProductId = '';
+      unsetUpdates.processingError = '';
+    }
     
     const updatePayload = {};
     if (Object.keys(setUpdates).length > 0) {
@@ -1213,14 +1228,32 @@ export const relistAuction = async (req, res, next) => {
     const now = new Date();
     const newStatus = newStartTime > now ? 'pending' : 'active';
     
+    const resetWinnerFields = {
+      winnerProcessed: false,
+      invoiceSent: false
+    };
+    
+    const unsetWinnerFields = {
+      winner: '',
+      privateProduct: '',
+      winnerProcessedAt: '',
+      draftOrderId: '',
+      duplicatedProductId: '',
+      processingError: ''
+    };
+    
     // Update auction with new data and reactivate
     const updatedAuction = await Auction.findByIdAndUpdate(
       req.params.id,
       {
-        ...req.body,
-        status: newStatus,
-        bidHistory: [], // Reset bid history
-        currentBid: 0 // Reset current bid to 0 (no bids yet)
+        $set: {
+          ...req.body,
+          status: newStatus,
+          bidHistory: [], // Reset bid history
+          currentBid: 0, // Reset current bid to 0 (no bids yet)
+          ...resetWinnerFields
+        },
+        $unset: unsetWinnerFields
       },
       { new: true, runValidators: false }
     );

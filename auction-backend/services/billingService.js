@@ -313,9 +313,10 @@ export async function attachStoreWithAccessToken(shopDomain) {
 
 export function serializePlanContext(store) {
   const planKey = sanitizePlan(store?.plan || DEFAULT_PLAN);
+  const pendingPlanRaw = store?.pendingPlan;
   return {
     plan: planKey,
-    pendingPlan: sanitizePlan(store?.pendingPlan) || null,
+    pendingPlan: pendingPlanRaw ? sanitizePlan(pendingPlanRaw) : null,
     capabilities: getPlanCapabilities(planKey)
   };
 }

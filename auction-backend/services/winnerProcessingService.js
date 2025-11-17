@@ -20,6 +20,7 @@ class WinnerProcessingService {
      */
     async processAuctionWinner(auctionId, shopDomain) {
         const processingKey = `${auctionId}-${shopDomain}`;
+        let claimedAuction = null;
         
         if (this.isProcessing.has(processingKey)) {
             console.log(`⏳ Winner processing already in progress for auction ${auctionId}`);
@@ -31,15 +32,38 @@ class WinnerProcessingService {
         try {
             console.log(`🏆 Processing winner for auction ${auctionId} in store ${shopDomain}`);
 
-            // 1. Get auction and validate it has ended
-            const auction = await this.getEndedAuction(auctionId, shopDomain);
+            // Atomically claim the auction to prevent duplicate processing across instances
+            const claimFilter = {
+                _id: auctionId,
+                shopDomain,
+                status: 'ended',
+                winnerProcessed: { $ne: true },
+                $or: [
+                    { winnerProcessingLock: { $exists: false } },
+                    { winnerProcessingLock: { $ne: true } }
+                ]
+            };
+
+            const claimUpdate = {
+                $set: {
+                    winnerProcessingLock: true,
+                    updatedAt: new Date()
+                }
+            };
+
+            claimedAuction = await Auction.findOneAndUpdate(claimFilter, claimUpdate, { new: true });
+
+            if (!claimedAuction) {
+                console.log(`⚠️ Winner processing skipped for auction ${auctionId} – already locked or processed`);
+                return;
+            }
             
             // 2. Determine winner
-            const winner = this.determineWinner(auction);
+            const winner = this.determineWinner(claimedAuction);
             
             // 3. Check reserve price
-            const reservePrice = auction.reservePrice || 0;
-            const highestBid = auction.currentBid || 0;
+            const reservePrice = claimedAuction.reservePrice || 0;
+            const highestBid = claimedAuction.currentBid || 0;
             
             if (reservePrice > 0 && highestBid < reservePrice) {
                 // Reserve price not met - mark auction as reserve_not_met
@@ -48,7 +72,9 @@ class WinnerProcessingService {
                     status: 'reserve_not_met',
                     winner: null,
                     winnerProcessed: true,
-                    winnerProcessedAt: new Date()
+                    winnerProcessedAt: new Date(),
+                    winnerProcessingLock: false,
+                    updatedAt: new Date()
                 });
                 console.log(`✅ Auction ${auctionId} marked as reserve_not_met`);
                 return;
@@ -56,6 +82,12 @@ class WinnerProcessingService {
             
             if (!winner) {
                 console.log(`⚠️ No winner found for auction ${auctionId}`);
+                await Auction.findByIdAndUpdate(auctionId, {
+                    $set: {
+                        winnerProcessingLock: false,
+                        updatedAt: new Date()
+                    }
+                });
                 return;
             }
 
@@ -63,7 +95,7 @@ class WinnerProcessingService {
             const store = await this.getStoreAccessToken(shopDomain);
             
             // 4. Get original product details
-            const originalProduct = await this.getOriginalProduct(store, auction.shopifyProductId);
+            const originalProduct = await this.getOriginalProduct(store, claimedAuction.shopifyProductId);
             
             // 5. Create (or reuse) private product for winner (duplicated product)
             let privateProduct = null;
@@ -71,10 +103,10 @@ class WinnerProcessingService {
             if (auction.privateProduct?.productId) {
                 console.log(`ℹ️ Existing private product found for auction ${auctionId}, reusing to avoid duplicate creation.`);
                 privateProduct = {
-                    productId: auction.privateProduct.productId,
-                    productHandle: auction.privateProduct.productHandle,
-                    productTitle: auction.privateProduct.productTitle,
-                    productUrl: auction.privateProduct.productUrl
+                    productId: claimedAuction.privateProduct.productId,
+                    productHandle: claimedAuction.privateProduct.productHandle,
+                    productTitle: claimedAuction.privateProduct.productTitle,
+                    productUrl: claimedAuction.privateProduct.productUrl
                 };
             }
 
@@ -83,7 +115,7 @@ class WinnerProcessingService {
                     store,
                     originalProduct,
                     winner,
-                    auction.currentBid
+                    claimedAuction.currentBid
                 );
 
                 const duplicatedProductId = privateProduct.productId.includes('gid://')
@@ -106,17 +138,17 @@ class WinnerProcessingService {
                 });
 
                 // Reflect the persisted data on the in-memory auction document
-                auction.privateProduct = {
+                claimedAuction.privateProduct = {
                     productId: privateProduct.productId,
                     productHandle: privateProduct.productHandle,
                     productTitle: privateProduct.productTitle,
                     productUrl: privateProduct.productUrl,
                     createdAt: new Date()
                 };
-                auction.duplicatedProductId = duplicatedProductId;
-            } else if (!auction.duplicatedProductId) {
+                claimedAuction.duplicatedProductId = duplicatedProductId;
+            } else if (!claimedAuction.duplicatedProductId) {
                 // Ensure duplicatedProductId is populated for downstream logic
-                auction.duplicatedProductId = privateProduct.productId.includes('gid://')
+                claimedAuction.duplicatedProductId = privateProduct.productId.includes('gid://')
                     ? privateProduct.productId.split('/').pop()
                     : privateProduct.productId;
             }
@@ -131,46 +163,55 @@ class WinnerProcessingService {
             );
             
             // 7. Extract numeric product ID from GraphQL ID (gid://shopify/Product/123 -> 123)
-            const duplicatedProductId = auction.duplicatedProductId || (
+            const duplicatedProductId = claimedAuction.duplicatedProductId || (
                 privateProduct.productId.includes('gid://')
                     ? privateProduct.productId.split('/').pop()
                     : privateProduct.productId
             );
             
             // 8. Create draft order with duplicated product
-            const draftOrder = await shopifyService.createDraftOrder(
-                shopDomain,
-                shopifyCustomer.id.toString(),
-                duplicatedProductId,
-                auction.currentBid,
-                `Generated automatically by Bidly Auction App for auction #${auctionId}`
-            );
-            
-            // 9. Send invoice via Shopify
-            const invoiceSubject = `Congratulations! You Won the Auction for ${privateProduct.productTitle || auction.productTitle || 'the auction item'}`;
-            const invoiceMessage = `Congratulations! You have successfully won the auction. You have 30 minutes to claim your win, or the second highest bidder will receive the win instead.`;
-            
-            await shopifyService.sendDraftOrderInvoice(
-                shopDomain,
-                draftOrder.id.toString(),
-                invoiceSubject,
-                invoiceMessage
-            );
+            let draftOrder = null;
+            let invoiceSent = false;
+            if (claimedAuction.draftOrderId) {
+                console.log(`ℹ️ Existing draft order ${claimedAuction.draftOrderId} found for auction ${auctionId}, skipping creation.`);
+                draftOrder = { id: claimedAuction.draftOrderId };
+            } else {
+                draftOrder = await shopifyService.createDraftOrder(
+                    shopDomain,
+                    shopifyCustomer.id.toString(),
+                    duplicatedProductId,
+                    claimedAuction.currentBid,
+                    `Generated automatically by Bidly Auction App for auction #${auctionId}`
+                );
+                
+                // 9. Send invoice via Shopify
+                const invoiceSubject = `Congratulations! You Won the Auction for ${privateProduct.productTitle || auction.productTitle || 'the auction item'}`;
+                const invoiceMessage = `Congratulations! You have successfully won the auction. You have 30 minutes to claim your win, or the second highest bidder will receive the win instead.`;
+                
+                await shopifyService.sendDraftOrderInvoice(
+                    shopDomain,
+                    draftOrder.id.toString(),
+                    invoiceSubject,
+                    invoiceMessage
+                );
+                invoiceSent = true;
+            }
             
             // 10. Update auction with winner, private product, and draft order info
             await this.updateAuctionWithWinnerAndDraftOrder(
-                auction, 
+                claimedAuction, 
                 winner, 
                 privateProduct, 
                 draftOrder.id.toString(),
-                duplicatedProductId
+                duplicatedProductId,
+                invoiceSent
             );
             
             // 11. Update customer stats
-            await this.updateCustomerStats(winner, auction);
+            await this.updateCustomerStats(winner, claimedAuction);
             
             // 12. Send winner notification email (only notification, no product link)
-            await this.sendWinnerNotification(winner, auction, privateProduct, store);
+            await this.sendWinnerNotification(winner, claimedAuction, privateProduct, store);
             
             console.log(`✅ Winner processing completed for auction ${auctionId}`);
             
@@ -183,6 +224,15 @@ class WinnerProcessingService {
                 // Mark auction as failed but don't throw to prevent blocking other auctions
                 await this.markAuctionAsFailed(auctionId, error.message);
                 return;
+            }
+
+            if (claimedAuction) {
+                await Auction.findByIdAndUpdate(auctionId, {
+                    $set: {
+                        winnerProcessingLock: false,
+                        updatedAt: new Date()
+                    }
+                });
             }
             
             throw error;
@@ -317,7 +367,7 @@ class WinnerProcessingService {
     /**
      * Update auction with winner information and draft order details
      */
-    async updateAuctionWithWinnerAndDraftOrder(auction, winner, privateProduct, draftOrderId, duplicatedProductId) {
+    async updateAuctionWithWinnerAndDraftOrder(auction, winner, privateProduct, draftOrderId, duplicatedProductId, invoiceWasSent = true) {
         auction.winner = {
             bidder: winner.bidder,
             bidderEmail: winner.bidderEmail,
@@ -337,10 +387,13 @@ class WinnerProcessingService {
         // Save draft order information
         auction.draftOrderId = draftOrderId;
         auction.duplicatedProductId = duplicatedProductId;
-        auction.invoiceSent = true;
+        if (invoiceWasSent) {
+            auction.invoiceSent = true;
+        }
 
         auction.winnerProcessed = true;
         auction.winnerProcessedAt = new Date();
+        auction.winnerProcessingLock = false;
 
         await auction.save();
         console.log(`📝 Auction updated with winner information and draft order: ${draftOrderId}`);
@@ -391,6 +444,7 @@ class WinnerProcessingService {
                 $set: {
                     status: 'failed',
                     winnerProcessed: false,
+                    winnerProcessingLock: false,
                     processingError: errorMessage,
                     updatedAt: new Date()
                 }

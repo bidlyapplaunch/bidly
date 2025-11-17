@@ -67,7 +67,8 @@ export const getCurrentPlan = async (req, res, next) => {
 
     const planKey = sanitizePlan(req.store.plan || DEFAULT_PLAN);
     const plan = BILLING_PLANS[planKey] || BILLING_PLANS.none;
-    const pendingPlan = sanitizePlan(req.store.pendingPlan) || null;
+    const pendingPlanRaw = req.store.pendingPlan;
+    const pendingPlan = pendingPlanRaw ? sanitizePlan(pendingPlanRaw) : null;
 
     const response = {
       success: true,
