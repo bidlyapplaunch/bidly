@@ -183,7 +183,7 @@
     font-weight: 700;
     margin: 0;
     color: #ffffff;
-    flex: 1;
+    flex: 0 0 auto;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -470,6 +470,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    flex: 1;
+    justify-content: center;
+    text-align: center;
 }
 
 .bidly-status-active {

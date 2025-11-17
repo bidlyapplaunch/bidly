@@ -780,7 +780,7 @@
                     <div class="bidly-widget-footer">
                         <div class="bidly-footer-actions">
                             <button type="button" class="bidly-chat-toggle-inline" id="bidly-chat-toggle-inline" aria-controls="bidly-chat-box">
-                                Live Chat
+                                Chat Box
                             </button>
                             ${show_bid_history ? `
                                 <a href="#" onclick="window.BidlyAuctionWidget.openBidHistory('${auctionId}')" class="bidly-history-link">
