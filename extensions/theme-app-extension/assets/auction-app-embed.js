@@ -281,14 +281,15 @@
     }
 
     function applyChatTheme() {
-        const root = document.body;
-        const gradient = root.getAttribute('data-bidly-widget-gradient');
+        const widgetRoot = document.querySelector('.bidly-widget-root');
+        const chatContainer = document.querySelector('.bidly-chat-container');
 
-        if (gradient === '1') {
-            root.setAttribute('data-bidly-widget-gradient', '1');
-        } else {
-            root.setAttribute('data-bidly-widget-gradient', '0');
+        if (!widgetRoot || !chatContainer) {
+            return;
         }
+
+        const gradient = widgetRoot.getAttribute('data-bidly-gradient') || '0';
+        chatContainer.setAttribute('data-bidly-gradient', gradient);
     }
 
     async function fetchWidgetThemeSettings(force = false) {
@@ -377,8 +378,7 @@
 
         ensureVariables(host);
 
-        // Sync gradient flag for chat / global styles
-        document.body.setAttribute('data-bidly-widget-gradient', theme.gradientEnabled ? '1' : '0');
+        // Sync chat theme
         applyChatTheme();
 
         if (PREVIEW_MODE) {
@@ -402,9 +402,6 @@
 
         const headerEl = host.querySelector('.bidly-widget-header');
         if (headerEl) {
-            headerEl.style.background = theme.gradientEnabled
-                ? `linear-gradient(135deg, ${colors.bg_gradient_start}, ${colors.bg_gradient_end})`
-                : colors.bg_solid;
             headerEl.style.color = colors.button_text;
         }
 
@@ -2604,16 +2601,19 @@
      * Create chat UI HTML
      */
     function createChatUI() {
+        const widgetRoot = document.querySelector('.bidly-widget-root');
+        if (!widgetRoot) {
+            return null;
+        }
+
         // Remove existing chat if any
         const existingChat = document.querySelector('.bidly-chat-container');
         if (existingChat) {
+            if (existingChat.parentNode !== widgetRoot) {
+                widgetRoot.appendChild(existingChat);
+            }
             setupChatToggleControls();
-            const widgetRoot = document.querySelector('.bidly-widget-root');
-            const currentTheme =
-                (widgetRoot && widgetRoot.__bidlyThemeSettings) ||
-                widgetThemeSettingsCache ||
-                normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
-            applyChatTheme(widgetRoot || existingChat, currentTheme);
+            applyChatTheme();
             return existingChat;
         }
 
@@ -2623,8 +2623,8 @@
             <div class="bidly-chat-box hidden" id="bidly-chat-box">
                 <div class="bidly-chat-header">
                     <h3>
-                        <span class="online-indicator"></span>
-                        Live Chat
+                            <span class="online-indicator"></span>
+                            Chat Box
                     </h3>
                     <button class="bidly-chat-close" id="bidly-chat-close" aria-label="Close chat">✕</button>
                 </div>
@@ -2647,7 +2647,7 @@
             </div>
         `;
 
-        document.body.appendChild(chatContainer);
+        widgetRoot.appendChild(chatContainer);
 
         const chatForm = chatContainer.querySelector('#bidly-chat-form');
         if (chatForm) {
@@ -2658,12 +2658,7 @@
         }
 
         setupChatToggleControls();
-        const widgetRoot = document.querySelector('.bidly-widget-root');
-        const currentTheme =
-            (widgetRoot && widgetRoot.__bidlyThemeSettings) ||
-            widgetThemeSettingsCache ||
-            normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
-        applyChatTheme(widgetRoot || chatContainer, currentTheme);
+        applyChatTheme();
 
         return chatContainer;
     }
