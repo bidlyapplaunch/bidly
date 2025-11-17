@@ -16,6 +16,8 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   const [detailsModalOpen, setDetailsModalOpen] = React.useState(false);
   const [bidModalOpen, setBidModalOpen] = React.useState(false);
 
+  const getBidderName = (bid) => bid?.displayName || bid?.bidder || 'Anonymous';
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -114,7 +116,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
               </Text>
               {auction.status === 'ended' && auction.bidHistory && auction.bidHistory.length > 0 && (
                 <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-accent, #2563eb)', fontWeight: 'bold' }}>
-                  Winner: {auction.bidHistory[auction.bidHistory.length - 1].bidder}
+                  Winner: {getBidderName(auction.bidHistory[auction.bidHistory.length - 1])}
                 </Text>
               )}
             </div>
@@ -258,7 +260,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                         justifyContent: 'space-between'
                       }}
                     >
-                      <Text variant="bodyMd">{bid.bidder}</Text>
+                      <Text variant="bodyMd">{getBidderName(bid)}</Text>
                       <Text variant="bodyMd" fontWeight="bold">{formatCurrency(bid.amount)}</Text>
                     </div>
                   ))}
@@ -330,8 +332,8 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                 onBidPlaced(bidData);
                 setBidModalOpen(false); // Close modal after successful bid
               }}
-              onBuyNow={(bidder) => {
-                onBuyNow(bidder);
+              onBuyNow={() => {
+                onBuyNow();
                 setBidModalOpen(false); // Close modal after buy now
               }}
               isLoading={isLoading}

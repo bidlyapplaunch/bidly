@@ -162,13 +162,17 @@ export const validatePlaceBid = [
     .withMessage('Invalid auction ID'),
   
   body('bidder')
-    .notEmpty()
-    .withMessage('Bidder name is required')
+    .optional({ checkFalsy: true })
     .isString()
     .withMessage('Bidder name must be a string')
     .trim()
     .isLength({ min: 1, max: 100 })
-    .withMessage('Bidder name must be between 1 and 100 characters'),
+    .withMessage('Bidder name must be 100 characters or less'),
+
+  body('customerId')
+    .optional()
+    .isMongoId()
+    .withMessage('Invalid customer ID'),
   
   body('amount')
     .notEmpty()
@@ -178,6 +182,15 @@ export const validatePlaceBid = [
     .isFloat({ min: 0 })
     .withMessage('Bid amount must be a positive number'),
   
+  body()
+    .custom((_, { req }) => {
+      const bidderProvided = typeof req.body.bidder === 'string' && req.body.bidder.trim().length > 0;
+      if (!bidderProvided && !req.body.customerId) {
+        throw new Error('Bidder name or customerId is required');
+      }
+      return true;
+    }),
+
   handleValidationErrors
 ];
 
@@ -188,13 +201,26 @@ export const validateBuyNow = [
     .withMessage('Invalid auction ID'),
   
   body('bidder')
-    .notEmpty()
-    .withMessage('Bidder name is required')
+    .optional({ checkFalsy: true })
     .isString()
     .withMessage('Bidder name must be a string')
     .trim()
     .isLength({ min: 1, max: 100 })
-    .withMessage('Bidder name must be between 1 and 100 characters'),
+    .withMessage('Bidder name must be 100 characters or less'),
+
+  body('customerId')
+    .optional()
+    .isMongoId()
+    .withMessage('Invalid customer ID'),
+
+  body()
+    .custom((_, { req }) => {
+      const bidderProvided = typeof req.body.bidder === 'string' && req.body.bidder.trim().length > 0;
+      if (!bidderProvided && !req.body.customerId) {
+        throw new Error('Bidder name or customerId is required');
+      }
+      return true;
+    }),
   
   handleValidationErrors
 ];

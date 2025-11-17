@@ -45,7 +45,9 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   };
 
   const confirmBuyNow = () => {
-    onBuyNow();
+    if (onBuyNow) {
+      onBuyNow();
+    }
     setShowBuyNowModal(false);
     setAmount('');
   };

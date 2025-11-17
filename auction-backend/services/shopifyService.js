@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Store from '../models/Store.js';
+import generateRandomName from '../utils/generateRandomName.js';
 
 /**
  * Enhanced Shopify Service with OAuth Support
@@ -724,13 +725,15 @@ class ShopifyService {
         return searchResponse.data.customers[0];
       }
 
+      const namePayload = buildShopifyCustomerName(firstName, lastName, email);
+
       // Customer doesn't exist, create a new one
-      console.log(`🆕 Creating new customer: ${email}`);
+      console.log(`🆕 Creating new customer with alias "${namePayload.firstName}" for: ${email}`);
       const createResponse = await client.post('/customers.json', {
         customer: {
           email: email,
-          first_name: firstName || email.split('@')[0],
-          last_name: lastName || 'Customer',
+          first_name: namePayload.firstName,
+          last_name: namePayload.lastName,
           send_email_welcome: false // Don't send welcome email
         }
       });
@@ -873,3 +876,26 @@ const getShopifyService = () => {
 };
 
 export default getShopifyService;
+
+function buildShopifyCustomerName(firstName, lastName, email) {
+  const trimmedFirst = typeof firstName === 'string' ? firstName.trim() : '';
+  const trimmedLast = typeof lastName === 'string' ? lastName.trim() : '';
+  const hasValidFirst = trimmedFirst && trimmedFirst.toLowerCase() !== 'undefined';
+  const hasValidLast =
+    trimmedLast &&
+    trimmedLast.toLowerCase() !== 'undefined' &&
+    trimmedLast.toLowerCase() !== 'customer';
+
+  if (!hasValidFirst) {
+    const alias = generateRandomName();
+    return {
+      firstName: alias,
+      lastName: hasValidLast ? trimmedLast : ''
+    };
+  }
+
+  return {
+    firstName: trimmedFirst,
+    lastName: hasValidLast ? trimmedLast : ''
+  };
+}

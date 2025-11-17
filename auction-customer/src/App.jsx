@@ -32,6 +32,40 @@ function App() {
     template: 'A',
     gradientEnabled: false
   });
+
+  const ANONYMOUS_BIDDER = 'Anonymous';
+
+  const getDisplayName = (entity) => {
+    if (!entity) return ANONYMOUS_BIDDER;
+    return (
+      entity.displayName ||
+      entity.bidder ||
+      entity.bidderName ||
+      entity.name ||
+      ANONYMOUS_BIDDER
+    );
+  };
+
+  const normalizeBid = (bid = {}) => {
+    const displayName = getDisplayName(bid);
+    return { ...bid, displayName };
+  };
+
+  const normalizeBidHistory = (history = []) => history.map(normalizeBid);
+
+  const normalizeWinner = (winner) => {
+    if (!winner) return null;
+    return { ...winner, displayName: getDisplayName(winner) };
+  };
+
+  const normalizeAuction = (auction = {}) => {
+    if (!auction) return auction;
+    return {
+      ...auction,
+      bidHistory: normalizeBidHistory(auction.bidHistory || []),
+      winner: normalizeWinner(auction.winner)
+    };
+  };
   
   // Customer authentication state
   const [customer, setCustomer] = useState(null);
@@ -95,30 +129,33 @@ function App() {
     // Listen for real-time bid updates
     const handleBidUpdate = (bidData) => {
       console.log('📡 Received real-time bid update:', bidData);
+      const normalizedBidHistory = normalizeBidHistory(bidData.bidHistory || []);
+      const normalizedWinner = normalizeWinner(bidData.winner);
+      const bidderName = getDisplayName(bidData);
       
-      // Update the auction in the local state
       setAuctions(prevAuctions => 
-        prevAuctions.map(auction => 
-          auction._id === bidData.auctionId || auction.id === bidData.auctionId
-            ? {
-                ...auction,
-                currentBid: bidData.currentBid,
-                bidHistory: bidData.bidHistory,
-                status: bidData.auctionEnded ? 'ended' : auction.status,
-                endTime: bidData.auctionEnded ? new Date().toISOString() : auction.endTime
-              }
-            : auction
-        )
+        prevAuctions.map(auction => {
+          if (auction._id === bidData.auctionId || auction.id === bidData.auctionId) {
+            return {
+              ...auction,
+              currentBid: typeof bidData.currentBid === 'number' ? bidData.currentBid : auction.currentBid,
+              bidHistory: normalizedBidHistory.length ? normalizedBidHistory : auction.bidHistory,
+              status: bidData.auctionEnded ? 'ended' : auction.status,
+              endTime: bidData.auctionEnded ? new Date().toISOString() : auction.endTime,
+              winner: normalizedWinner || auction.winner
+            };
+          }
+          return auction;
+        })
       );
       
-      // Show notification for new bid or buy now
+      const productName = bidData.productTitle || 'the item';
       if (bidData.buyNow) {
-        const productName = bidData.productTitle || 'the item';
-        setToastMessage(`🎉 ${bidData.bidder} bought ${productName} now! Auction ended.`);
+        setToastMessage(`🎉 ${bidderName} bought ${productName} now! Auction ended.`);
       } else if (bidData.auctionEnded) {
-        setToastMessage(`🏆 ${bidData.bidder} won the auction with $${bidData.amount}!`);
+        setToastMessage(`🏆 ${bidderName} won the auction with $${bidData.amount}!`);
       } else {
-        setToastMessage(`New bid: $${bidData.amount} by ${bidData.bidder}`);
+        setToastMessage(`New bid: $${bidData.amount} by ${bidderName}`);
       }
       setShowToast(true);
     };
@@ -131,11 +168,11 @@ function App() {
       setAuctions(prevAuctions => 
         prevAuctions.map(auction => 
           auction._id === statusData.auctionId || auction.id === statusData.auctionId
-            ? {
+            ? normalizeAuction({
                 ...auction,
-                status: statusData.newStatus,
-                ...statusData.auctionData
-              }
+                ...(statusData.auctionData || {}),
+                status: statusData.newStatus
+              })
             : auction
         )
       );
@@ -222,7 +259,7 @@ function App() {
       const visibleAuctions = (response.data || []).filter(auction => 
         auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
       );
-      setAuctions(visibleAuctions);
+      setAuctions(visibleAuctions.map(normalizeAuction));
     } catch (err) {
       console.error('Error fetching auctions:', err);
       setError('Failed to fetch auctions. Please try again later.');
@@ -240,7 +277,7 @@ function App() {
       const visibleAuctions = (response.data || []).filter(auction => 
         auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
       );
-      setAuctions(visibleAuctions);
+      setAuctions(visibleAuctions.map(normalizeAuction));
     } catch (err) {
       console.error('Error in silent refresh:', err);
       // Don't set error for silent refresh to avoid disrupting user experience
@@ -253,6 +290,15 @@ function App() {
       return;
     }
 
+    if (!customer?.id) {
+      setError('We could not verify your bidder profile. Please log in again.');
+      setToastMessage('❌ Please log in again to place bids.');
+      setShowToast(true);
+      setAuthRequired(true);
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       setBidLoading(true);
       setError(null);
@@ -260,15 +306,13 @@ function App() {
       // Find the auction ID (assuming we have it in the context)
       // For now, we'll need to pass the auction ID from the component
       const auctionId = bidData.auctionId;
-      const bidder = customer.name; // Use authenticated customer name
-      
       await auctionAPI.placeBid(auctionId, {
-        bidder: bidder,
         amount: bidData.amount,
-        customerEmail: customer.email
+        customerId: customer.id
       });
       
-      setToastMessage(`✅ Bid placed successfully! $${bidData.amount} by ${bidder}`);
+      const bidderName = customer.fullName || customer.name || ANONYMOUS_BIDDER;
+      setToastMessage(`✅ Bid placed successfully! $${bidData.amount} by ${bidderName}`);
       setShowToast(true);
       
       // Refresh auctions to get updated data
@@ -306,19 +350,28 @@ function App() {
       return;
     }
 
+    if (!customer?.id) {
+      setError('We could not verify your bidder profile. Please log in again.');
+      setToastMessage('❌ Please log in again to buy now.');
+      setShowToast(true);
+      setAuthRequired(true);
+      setShowAuthModal(true);
+      return;
+    }
+
     try {
       setBidLoading(true);
       setError(null);
       
       const { auctionId } = data;
-      const bidder = customer.name; // Use authenticated customer name
       
-      await auctionAPI.buyNow(auctionId, bidder, customer.email);
+      await auctionAPI.buyNow(auctionId, { customerId: customer.id });
       
       // Find the auction to get product name
       const auction = auctions.find(a => (a._id || a.id) === auctionId);
       const productName = auction?.productData?.title || 'the item';
-      setToastMessage(`🎉 Buy now successful! ${bidder} won ${productName}!`);
+      const bidderName = customer.fullName || customer.name || ANONYMOUS_BIDDER;
+      setToastMessage(`🎉 Buy now successful! ${bidderName} won ${productName}!`);
       setShowToast(true);
       
       // Refresh auctions to get updated data
@@ -452,7 +505,7 @@ function App() {
                   <AuctionCard 
                     auction={auction} 
                     onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
-                    onBuyNow={(bidder) => handleBuyNow({ bidder, auctionId: auction._id || auction.id })}
+                    onBuyNow={() => handleBuyNow({ auctionId: auction._id || auction.id })}
                     isLoading={bidLoading}
                   />
                 </Layout.Section>

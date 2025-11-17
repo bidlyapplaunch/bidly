@@ -5,6 +5,9 @@ import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
+const sanitizeOptionalString = (value) =>
+  typeof value === 'string' ? value : undefined;
+
 // Test route to check if customer routes are working
 router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Customer routes are working' });
@@ -22,7 +25,8 @@ router.post('/saveCustomer', async (req, res, next) => {
       email, 
       firstName, 
       lastName, 
-      shopDomain 
+      shopDomain,
+      displayName 
     } = req.body;
 
     console.log('📧 Customer save request:', {
@@ -33,38 +37,20 @@ router.post('/saveCustomer', async (req, res, next) => {
       shopDomain
     });
 
-    if (!email || !firstName || !shopDomain) {
-      console.error('❌ Missing required fields:', { email: !!email, firstName: !!firstName, shopDomain: !!shopDomain });
-      return next(new AppError('Missing required customer data: email, firstName, and shopDomain are required', 400));
+    if (!email || !shopDomain) {
+      console.error('❌ Missing required fields:', { email: !!email, shopDomain: !!shopDomain });
+      return next(new AppError('Missing required customer data: email and shop domain are required', 400));
     }
-
-    // Handle missing lastName (some Shopify customers might not have last name)
-    const customerLastName = lastName || 'Customer';
-
-    console.log('📧 About to call Customer.findOrCreate with:', {
-      shopifyId,
-      email,
-      firstName,
-      lastName: customerLastName,
-      isTemp: !shopifyId,
-      shopDomain
-    });
 
     // Find or create customer
     const customer = await Customer.findOrCreate({
       shopifyId,
       email,
-      firstName,
-      lastName: customerLastName,
+      firstName: sanitizeOptionalString(firstName),
+      lastName: sanitizeOptionalString(lastName),
+      displayName: sanitizeOptionalString(displayName),
       isTemp: !shopifyId // If no shopifyId, it's a temp customer
     }, shopDomain);
-
-    console.log('📧 Customer.findOrCreate result:', {
-      id: customer._id,
-      email: customer.email,
-      firstName: customer.firstName,
-      lastName: customer.lastName
-    });
 
     console.log('✅ Customer saved/updated successfully:', {
       id: customer._id,
@@ -79,6 +65,7 @@ router.post('/saveCustomer', async (req, res, next) => {
         email: customer.email,
         firstName: customer.firstName,
         lastName: customer.lastName,
+        displayName: customer.displayName,
         fullName: customer.fullName,
         shopifyId: customer.shopifyId,
         isTemp: customer.isTemp,
@@ -125,19 +112,21 @@ router.post('/sync', async (req, res, next) => {
       email, 
       firstName, 
       lastName, 
-      shopDomain 
+      shopDomain,
+      displayName 
     } = req.body;
 
-    if (!email || !firstName || !lastName || !shopDomain) {
-      return next(new AppError('Missing required customer data', 400));
+    if (!email || !shopDomain) {
+      return next(new AppError('Missing required customer data: email and shop domain are required', 400));
     }
 
     // Find or create customer
     const customer = await Customer.findOrCreate({
       shopifyId,
       email,
-      firstName,
-      lastName,
+      firstName: sanitizeOptionalString(firstName),
+      lastName: sanitizeOptionalString(lastName),
+      displayName: sanitizeOptionalString(displayName),
       isTemp: false
     }, shopDomain);
 
@@ -148,6 +137,7 @@ router.post('/sync', async (req, res, next) => {
         email: customer.email,
         firstName: customer.firstName,
         lastName: customer.lastName,
+        displayName: customer.displayName,
         fullName: customer.fullName,
         shopifyId: customer.shopifyId,
         isTemp: customer.isTemp,
@@ -168,18 +158,20 @@ router.post('/temp-login', async (req, res, next) => {
       firstName, 
       lastName, 
       email, 
-      shopDomain 
+      shopDomain,
+      displayName
     } = req.body;
 
-    if (!firstName || !lastName || !email || !shopDomain) {
-      return next(new AppError('First name, last name, email, and shop domain are required', 400));
+    if (!email || !shopDomain) {
+      return next(new AppError('Email and shop domain are required', 400));
     }
 
     // Find or create temporary customer
     const customer = await Customer.findOrCreate({
       email,
-      firstName,
-      lastName,
+      firstName: sanitizeOptionalString(firstName),
+      lastName: sanitizeOptionalString(lastName),
+      displayName: sanitizeOptionalString(displayName),
       isTemp: true
     }, shopDomain);
 
@@ -190,6 +182,7 @@ router.post('/temp-login', async (req, res, next) => {
         email: customer.email,
         firstName: customer.firstName,
         lastName: customer.lastName,
+        displayName: customer.displayName,
         fullName: customer.fullName,
         shopifyId: customer.shopifyId,
         isTemp: customer.isTemp,

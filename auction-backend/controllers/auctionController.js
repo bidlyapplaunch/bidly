@@ -1,4 +1,5 @@
 import Auction from '../models/Auction.js';
+import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
 import emailService from '../services/emailService.js';
@@ -500,6 +501,7 @@ export const updateAuction = async (req, res, next) => {
     if (completedStatuses.includes(auction.status) && reactiveStatuses.includes(resultingStatus)) {
       setUpdates.winnerProcessed = false;
       setUpdates.invoiceSent = false;
+      setUpdates.winnerProcessingLock = false;
       unsetUpdates.winner = '';
       unsetUpdates.privateProduct = '';
       unsetUpdates.winnerProcessedAt = '';
@@ -641,12 +643,30 @@ export const placeBid = async (req, res, next) => {
     const sanitizedEmail = (customerEmail || bidderEmail)?.trim();
     const sanitizedAmount = parseFloat(amount);
     
-    // Basic validation
-    if (!sanitizedBidder || sanitizedBidder.length === 0) {
+    let effectiveBidder = sanitizedBidder || '';
+    let effectiveEmail = sanitizedEmail || '';
+    let effectiveCustomerId = null;
+
+    if (customerId) {
+      try {
+        const customerRecord = await Customer.findOne({ _id: customerId, shopDomain });
+        if (customerRecord) {
+          effectiveBidder = customerRecord.displayName || effectiveBidder;
+          if (!effectiveEmail) {
+            effectiveEmail = customerRecord.email || '';
+          }
+          effectiveCustomerId = customerRecord._id;
+        }
+      } catch (lookupError) {
+        console.warn('⚠️ Failed to load customer for bid placement:', lookupError.message);
+      }
+    }
+
+    if (!effectiveBidder || effectiveBidder.length === 0) {
       throw new AppError('Bidder name is required', 400);
     }
     
-    if (sanitizedBidder.length > 100) {
+    if (effectiveBidder.length > 100) {
       throw new AppError('Bidder name must be 100 characters or less', 400);
     }
     
@@ -654,7 +674,7 @@ export const placeBid = async (req, res, next) => {
       throw new AppError('Valid bid amount is required', 400);
     }
     
-    if (!sanitizedEmail || sanitizedEmail.length === 0) {
+    if (!effectiveEmail || effectiveEmail.length === 0) {
       throw new AppError('Bidder email is required', 400);
     }
     
@@ -677,7 +697,7 @@ export const placeBid = async (req, res, next) => {
       startTime: auction.startTime,
       endTime: auction.endTime,
       currentTime: new Date(),
-      bidder: sanitizedBidder,
+      bidder: effectiveBidder,
       amount: sanitizedAmount
     });
     
@@ -711,7 +731,7 @@ export const placeBid = async (req, res, next) => {
     
     try {
       // Add the bid with customer email
-      await auction.addBid(sanitizedBidder, sanitizedAmount, sanitizedEmail);
+      await auction.addBid(effectiveBidder, sanitizedAmount, effectiveEmail, effectiveCustomerId);
     } catch (error) {
       // Restore original status if bid fails
       if (originalStatus !== auction.status) {
@@ -794,8 +814,8 @@ export const placeBid = async (req, res, next) => {
       };
       // Send bid confirmation to the bidder
       await emailService.sendBidConfirmation(
-        sanitizedEmail, // Use actual customer email
-        sanitizedBidder,
+        effectiveEmail, // Use actual customer email
+        effectiveBidder,
         updatedAuction,
         amount,
         brandOptions
@@ -804,7 +824,7 @@ export const placeBid = async (req, res, next) => {
       // Send outbid notification to previous highest bidder
       if (updatedAuction.bidHistory.length > 1) {
         const previousBid = updatedAuction.bidHistory[updatedAuction.bidHistory.length - 2];
-        if (previousBid.bidder !== sanitizedBidder && previousBid.customerEmail) {
+        if (previousBid.bidder !== effectiveBidder && previousBid.customerEmail) {
           await emailService.sendOutbidNotification(
             previousBid.customerEmail, // Use actual customer email
             previousBid.bidder,
@@ -818,8 +838,8 @@ export const placeBid = async (req, res, next) => {
       // Send auction won notification if buy now
       if (auctionEnded) {
         await emailService.sendAuctionWonNotification(
-          sanitizedEmail, // Use actual customer email
-          sanitizedBidder,
+          effectiveEmail, // Use actual customer email
+          effectiveBidder,
           updatedAuction,
           amount,
           brandOptions
@@ -828,7 +848,7 @@ export const placeBid = async (req, res, next) => {
         // Send admin notification
         await emailService.sendAdminNotification(
           'Auction Won via Buy Now',
-          `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" was won by ${sanitizedBidder} for $${amount}`,
+          `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" was won by ${effectiveBidder} for $${amount}`,
           updatedAuction
         );
       }
@@ -846,11 +866,11 @@ export const placeBid = async (req, res, next) => {
         auctionId: req.params.id,
         currentBid: updatedAuction.currentBid,
         bidHistory: updatedAuction.bidHistory,
-        bidder: sanitizedBidder,
+        bidder: effectiveBidder,
         amount: amount,
         timestamp: new Date().toISOString(),
         auctionEnded: auctionEnded,
-        winner: auctionEnded ? sanitizedBidder : null,
+        winner: auctionEnded ? effectiveBidder : null,
         productTitle: updatedAuction.productData?.title || 'Unknown Product',
         timeExtended: timeExtended,
         newEndTime: timeExtended ? updatedAuction.endTime.toISOString() : null,
@@ -902,14 +922,35 @@ export const placeBid = async (req, res, next) => {
 // Get auction statistics
 export const buyNow = async (req, res, next) => {
   try {
-    const { bidder, customerEmail } = req.body;
+    const { bidder, customerEmail, customerId } = req.body;
     const shopDomain = req.shopDomain; // Get from store middleware
     
     if (!shopDomain) {
       throw new AppError('Store domain is required', 400);
     }
     
-    if (!bidder || !bidder.trim()) {
+    const sanitizedBidder = bidder?.trim() || '';
+    const sanitizedEmail = customerEmail?.trim() || '';
+    let effectiveBidder = sanitizedBidder;
+    let effectiveEmail = sanitizedEmail;
+    let effectiveCustomerId = null;
+
+    if (customerId) {
+      try {
+        const customerRecord = await Customer.findOne({ _id: customerId, shopDomain });
+        if (customerRecord) {
+          effectiveBidder = customerRecord.displayName || effectiveBidder;
+          if (!effectiveEmail) {
+            effectiveEmail = customerRecord.email || '';
+          }
+          effectiveCustomerId = customerRecord._id;
+        }
+      } catch (lookupError) {
+        console.warn('⚠️ Failed to load customer for buy now:', lookupError.message);
+      }
+    }
+
+    if (!effectiveBidder) {
       throw new AppError('Bidder name is required', 400);
     }
     
@@ -942,8 +983,9 @@ export const buyNow = async (req, res, next) => {
     }
     
     try {
+      const finalEmail = effectiveEmail || `${effectiveBidder.toLowerCase().replace(/\s+/g, '')}@example.com`;
       // Add the buy now bid with customer email
-      await auction.addBid(bidder.trim(), auction.buyNowPrice, customerEmail);
+      await auction.addBid(effectiveBidder, auction.buyNowPrice, finalEmail, effectiveCustomerId);
     } catch (error) {
       // Restore original status if bid fails
       if (originalStatus !== auction.status) {
@@ -964,10 +1006,12 @@ export const buyNow = async (req, res, next) => {
         plan: req.store?.plan,
         storeName: req.store?.storeName
       };
+      const finalEmail =
+        effectiveEmail || `${effectiveBidder.toLowerCase().replace(/\s+/g, '')}@example.com`;
       // Send auction won notification to the buyer
       await emailService.sendAuctionWonNotification(
-        customerEmail || `${bidder.toLowerCase().replace(/\s+/g, '')}@example.com`, // Use customer email or demo email
-        bidder.trim(),
+        finalEmail, // Use customer email or demo email
+        effectiveBidder,
         auction,
         auction.buyNowPrice,
         brandOptions
@@ -976,7 +1020,7 @@ export const buyNow = async (req, res, next) => {
       // Send outbid notification to previous highest bidder (if any)
       if (auction.bidHistory.length > 1) {
         const previousBid = auction.bidHistory[auction.bidHistory.length - 2];
-        if (previousBid.bidder !== bidder.trim() && previousBid.customerEmail) {
+        if (previousBid.bidder !== effectiveBidder && previousBid.customerEmail) {
           await emailService.sendOutbidNotification(
             previousBid.customerEmail, // Use actual customer email
             previousBid.bidder,
@@ -990,7 +1034,7 @@ export const buyNow = async (req, res, next) => {
       // Send admin notification
       await emailService.sendAdminNotification(
         'Auction Won via Buy Now',
-        `Auction "${auction.productData?.title || 'Unknown Product'}" was won by ${bidder.trim()} for $${auction.buyNowPrice}`,
+        `Auction "${auction.productData?.title || 'Unknown Product'}" was won by ${effectiveBidder} for $${auction.buyNowPrice}`,
         auction
       );
 
@@ -1007,11 +1051,11 @@ export const buyNow = async (req, res, next) => {
         auctionId: req.params.id,
         currentBid: auction.buyNowPrice,
         bidHistory: auction.bidHistory,
-        bidder: bidder.trim(),
+        bidder: effectiveBidder,
         amount: auction.buyNowPrice,
         timestamp: new Date().toISOString(),
         auctionEnded: true,
-        winner: bidder.trim(),
+        winner: effectiveBidder,
         buyNow: true,
         productTitle: auction.productData?.title || 'Unknown Product'
       };
@@ -1230,7 +1274,8 @@ export const relistAuction = async (req, res, next) => {
     
     const resetWinnerFields = {
       winnerProcessed: false,
-      invoiceSent: false
+      invoiceSent: false,
+      winnerProcessingLock: false
     };
     
     const unsetWinnerFields = {

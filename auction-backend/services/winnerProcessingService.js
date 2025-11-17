@@ -91,6 +91,32 @@ class WinnerProcessingService {
                 return;
             }
 
+            let winnerCustomer = null;
+            if (winner.customerId) {
+                try {
+                    winnerCustomer = await Customer.findOne({ _id: winner.customerId, shopDomain });
+                } catch (lookupError) {
+                    console.warn(`⚠️ Unable to load winner customer ${winner.customerId}:`, lookupError.message);
+                }
+            }
+
+            const winnerDisplayName = winnerCustomer?.displayName || winner.bidder;
+            const baseAlias = winnerDisplayName?.toLowerCase().replace(/\s+/g, '') || 'bidlywinner';
+            const resolvedEmail =
+                winner.bidderEmail ||
+                winnerCustomer?.email ||
+                `${baseAlias}@example.com`;
+            const winnerFirstName = winnerCustomer?.firstName || null;
+            const winnerLastName = winnerCustomer?.lastName || null;
+            const enrichedWinner = {
+                ...winner,
+                bidder: winnerDisplayName,
+                bidderEmail: resolvedEmail,
+                customerId: winnerCustomer?._id || winner.customerId || null,
+                firstName: winnerFirstName,
+                lastName: winnerLastName
+            };
+
             // 3. Get store access token
             const store = await this.getStoreAccessToken(shopDomain);
             
@@ -114,7 +140,7 @@ class WinnerProcessingService {
                 privateProduct = await this.createPrivateProductForWinner(
                     store,
                     originalProduct,
-                    winner,
+                    enrichedWinner,
                     claimedAuction.currentBid
                 );
 
@@ -157,9 +183,9 @@ class WinnerProcessingService {
             const shopifyService = getShopifyService();
             const shopifyCustomer = await shopifyService.findOrCreateCustomer(
                 shopDomain,
-                winner.bidderEmail,
-                winner.bidder.split(' ')[0], // First name
-                winner.bidder.split(' ').slice(1).join(' ') || 'Customer' // Last name
+                resolvedEmail,
+                winnerFirstName || winnerDisplayName,
+                winnerLastName || ''
             );
             
             // 7. Extract numeric product ID from GraphQL ID (gid://shopify/Product/123 -> 123)
@@ -200,7 +226,7 @@ class WinnerProcessingService {
             // 10. Update auction with winner, private product, and draft order info
             await this.updateAuctionWithWinnerAndDraftOrder(
                 claimedAuction, 
-                winner, 
+                enrichedWinner, 
                 privateProduct, 
                 draftOrder.id.toString(),
                 duplicatedProductId,
@@ -211,7 +237,7 @@ class WinnerProcessingService {
             await this.updateCustomerStats(winner, claimedAuction);
             
             // 12. Send winner notification email (only notification, no product link)
-            await this.sendWinnerNotification(winner, claimedAuction, privateProduct, store);
+            await this.sendWinnerNotification(enrichedWinner, claimedAuction, privateProduct, store);
             
             console.log(`✅ Winner processing completed for auction ${auctionId}`);
             
@@ -286,7 +312,7 @@ class WinnerProcessingService {
             bidderEmail: winner.bidderEmail || winner.customerEmail,
             amount: winner.amount,
             timestamp: winner.timestamp,
-            customerId: winner.customerId
+            customerId: winner.customerId || null
         };
     }
 

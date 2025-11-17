@@ -1,4 +1,53 @@
 import mongoose from 'mongoose';
+import generateRandomName from '../utils/generateRandomName.js';
+
+const INVALID_NAME_TOKENS = new Set(['', ' ', 'undefined', 'null', 'na', 'n/a']);
+
+const hasMeaningfulValue = (value) =>
+  typeof value === 'string' &&
+  value.trim().length > 0 &&
+  !INVALID_NAME_TOKENS.has(value.trim().toLowerCase());
+
+const isDefaultCustomerLastName = (value) =>
+  typeof value === 'string' && value.trim().toLowerCase() === 'customer';
+
+const normalizeFirstNameInput = (value) => {
+  if (typeof value === 'undefined') return undefined;
+  if (!hasMeaningfulValue(value)) return null;
+  return value.trim();
+};
+
+const normalizeLastNameInput = (value) => {
+  if (typeof value === 'undefined') return undefined;
+  if (!hasMeaningfulValue(value) || isDefaultCustomerLastName(value)) return null;
+  return value.trim();
+};
+
+const normalizeDisplayNameInput = (value) => {
+  if (typeof value === 'undefined') return undefined;
+  if (!hasMeaningfulValue(value)) return null;
+  return value.trim();
+};
+
+const resolveDisplayName = ({ firstName, lastName, displayName, existingDisplayName }) => {
+  if (typeof displayName !== 'undefined') {
+    if (displayName) {
+      return displayName;
+    }
+    return null;
+  }
+
+  const combined = [firstName, lastName].filter(Boolean).join(' ').trim();
+  if (combined) {
+    return combined;
+  }
+
+  if (hasMeaningfulValue(existingDisplayName)) {
+    return existingDisplayName.trim();
+  }
+
+  return generateRandomName();
+};
 
 const customerSchema = new mongoose.Schema({
   // Shopify customer data
@@ -18,11 +67,17 @@ const customerSchema = new mongoose.Schema({
   
   firstName: {
     type: String,
-    required: true,
-    trim: true
+    trim: true,
+    default: null
   },
   
   lastName: {
+    type: String,
+    trim: true,
+    default: null
+  },
+
+  displayName: {
     type: String,
     required: true,
     trim: true
@@ -117,7 +172,10 @@ customerSchema.index({ isTemp: 1, shopDomain: 1 });
 
 // Virtual for full name
 customerSchema.virtual('fullName').get(function() {
-  return `${this.firstName} ${this.lastName}`;
+  if (hasMeaningfulValue(this.displayName)) {
+    return this.displayName.trim();
+  }
+  return [this.firstName, this.lastName].filter(Boolean).join(' ').trim();
 });
 
 // Method to add a bid to customer history
@@ -158,36 +216,98 @@ customerSchema.methods.syncToShopify = function() {
 
 // Static method to find or create customer
 customerSchema.statics.findOrCreate = async function(customerData, shopDomain) {
-  const { email, firstName, lastName, shopifyId, isTemp = false } = customerData;
-  
-  // Try to find existing customer
-  let customer = await this.findOne({ 
-    email: email.toLowerCase(), 
-    shopDomain 
+  const {
+    email,
+    firstName,
+    lastName,
+    displayName,
+    shopifyId,
+    isTemp = false
+  } = customerData;
+
+  if (!email) {
+    throw new Error('Email is required to create or update a customer');
+  }
+
+  let customer = await this.findOne({
+    email: email.toLowerCase(),
+    shopDomain
   });
-  
+
+  const normalizedFirst = normalizeFirstNameInput(firstName);
+  const normalizedLast = normalizeLastNameInput(lastName);
+  const normalizedDisplay = normalizeDisplayNameInput(displayName);
+
   if (customer) {
-    // Update last login and Shopify ID if provided
+    let shouldSave = false;
+
+    if (typeof normalizedFirst !== 'undefined' && normalizedFirst !== customer.firstName) {
+      customer.firstName = normalizedFirst;
+      shouldSave = true;
+    }
+
+    if (typeof normalizedLast !== 'undefined' && normalizedLast !== customer.lastName) {
+      customer.lastName = normalizedLast;
+      shouldSave = true;
+    }
+
+    const candidateFirst =
+      typeof normalizedFirst !== 'undefined' ? normalizedFirst : customer.firstName;
+    const candidateLast =
+      typeof normalizedLast !== 'undefined' ? normalizedLast : customer.lastName;
+
+    const nextDisplayName = resolveDisplayName({
+      firstName: candidateFirst,
+      lastName: candidateLast,
+      displayName: normalizedDisplay,
+      existingDisplayName: customer.displayName
+    });
+
+    if (nextDisplayName !== customer.displayName) {
+      customer.displayName = nextDisplayName;
+      shouldSave = true;
+    }
+
     customer.lastLoginAt = new Date();
+
     if (shopifyId && !customer.shopifyId) {
       customer.shopifyId = shopifyId;
       customer.isTemp = false;
+      shouldSave = true;
     }
-    await customer.save();
+
+    if (typeof isTemp !== 'undefined' && customer.isTemp !== isTemp) {
+      customer.isTemp = !!isTemp;
+      shouldSave = true;
+    }
+
+    if (shouldSave) {
+      await customer.save();
+    }
+
     return customer;
   }
-  
-  // Create new customer
+
+  const firstValue = typeof normalizedFirst === 'undefined' ? null : normalizedFirst;
+  const lastValue = typeof normalizedLast === 'undefined' ? null : normalizedLast;
+  const displayValue = resolveDisplayName({
+    firstName: firstValue,
+    lastName: lastValue,
+    displayName: normalizedDisplay,
+    existingDisplayName: null
+  });
+
   customer = new this({
     email: email.toLowerCase(),
-    firstName,
-    lastName,
+    firstName: firstValue,
+    lastName: lastValue,
+    displayName: displayValue,
     shopifyId: shopifyId || null,
     isTemp,
     shopDomain,
     lastLoginAt: new Date()
   });
-  
+
   await customer.save();
   return customer;
 };
