@@ -20,6 +20,129 @@ const TEMPLATE_METADATA = [
   { key: 'adminNotification', title: 'Admin notification' }
 ];
 
+const TEMPLATE_DEFAULTS = {
+  bidConfirmation: {
+    subject: 'Your bid on {{auction_title}} has been received',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2c3e50;">🎯 Bid Confirmation</h2>
+        <p>Hello {{display_name}},</p>
+        <p>Your bid has been successfully placed!</p>
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #2c3e50; margin-top: 0;">Auction Details</h3>
+          <p><strong>Item:</strong> {{auction_title}}</p>
+          <p><strong>Your Bid:</strong> ${{current_bid}}</p>
+          <p><strong>Auction Ends:</strong> {{auction_end_time}}</p>
+          <p><strong>Current Status:</strong> Active</p>
+        </div>
+        <p>You will be notified if someone outbids you or if you win the auction.</p>
+        <p style="color: #7f8c8d; font-size: 14px;">
+          Best regards,<br />
+          The {{store_name}} Team
+        </p>
+      </div>
+    `
+  },
+  outbidNotification: {
+    subject: 'You have been outbid on {{auction_title}}',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #e74c3c;">⚠️ You've Been Outbid</h2>
+        <p>Hello {{display_name}},</p>
+        <p>Someone has placed a higher bid on the auction you were participating in.</p>
+        <div style="background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;">
+          <h3 style="color: #721c24; margin-top: 0;">Auction Update</h3>
+          <p><strong>Item:</strong> {{auction_title}}</p>
+          <p><strong>New Highest Bid:</strong> ${{current_bid}}</p>
+          <p><strong>Time Remaining:</strong> {{time_remaining}}</p>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="{{cta_url}}"
+             style="background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Place a New Bid
+          </a>
+        </div>
+        <p style="color: #7f8c8d; font-size: 14px;">
+          Best regards,<br />
+          The {{store_name}} Team
+        </p>
+      </div>
+    `
+  },
+  winnerNotification: {
+    subject: 'You won the auction for {{auction_title}}!',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>
+        <p>Dear {{display_name}},</p>
+        <p>Congratulations! You have successfully won the auction for <strong>"{{auction_title}}"</strong> with a winning bid of <strong>$${{winning_bid}}</strong>.</p>
+        <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
+          <h3 style="color: #155724; margin-top: 0;">🏆 Auction Details</h3>
+          <p><strong>Product:</strong> {{auction_title}}</p>
+          <p><strong>Winning Bid:</strong> ${{winning_bid}}</p>
+          <p><strong>Auction Ended:</strong> {{auction_end_time}}</p>
+        </div>
+        <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+          <h3 style="color: #856404; margin-top: 0;">📧 Next Steps</h3>
+          <p>You will receive an invoice from us shortly with a link to complete your purchase. Please wait for the invoice email which will contain all the details you need to claim your win.</p>
+          <p><strong>You have 30 minutes to claim your win</strong>, or the second highest bidder will receive the win instead.</p>
+        </div>
+        <p style="color: #7f8c8d; font-size: 14px;">
+          Best regards,<br />
+          The {{store_name}} Team
+        </p>
+      </div>
+    `
+  },
+  auctionEndingSoon: {
+    subject: '⏰ {{auction_title}} is ending soon',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #f39c12;">⏰ Auction Ending Soon!</h2>
+        <p>Hello {{display_name}},</p>
+        <p>The auction you're participating in is ending soon!</p>
+        <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f39c12;">
+          <h3 style="color: #856404; margin-top: 0;">Auction Details</h3>
+          <p><strong>Item:</strong> {{auction_title}}</p>
+          <p><strong>Current Bid:</strong> ${{current_bid}}</p>
+          <p><strong>Time Remaining:</strong> {{time_remaining}}</p>
+        </div>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="{{cta_url}}"
+             style="background-color: #e74c3c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Place Your Final Bid
+          </a>
+        </div>
+        <p style="color: #7f8c8d; font-size: 14px;">
+          Best regards,<br />
+          The {{store_name}} Team
+        </p>
+      </div>
+    `
+  },
+  adminNotification: {
+    subject: 'Admin Notification: {{subject_override}}',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2c3e50;">Admin Notification for {{store_name}}</h2>
+        <p>{{message}}</p>
+        {{#if auction_title}}
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #2c3e50; margin-top: 0;">Auction Details</h3>
+          <p><strong>Item:</strong> {{auction_title}}</p>
+          <p><strong>Status:</strong> {{auction_status}}</p>
+          <p><strong>Current Bid:</strong> ${{current_bid}}</p>
+          <p><strong>Bid Count:</strong> {{bid_count}}</p>
+        </div>
+        {{/if}}
+        <p style="color: #7f8c8d; font-size: 14px;">
+          Auction System Admin Panel
+        </p>
+      </div>
+    `
+  }
+};
+
 const TOKEN_LIST = [
   '{{customer_name}}',
   '{{display_name}}',
@@ -47,7 +170,12 @@ const DEFAULT_SETTINGS = {
     fromEmail: ''
   },
   templates: TEMPLATE_METADATA.reduce((acc, template) => {
-    acc[template.key] = { enabled: true, subject: '', html: '' };
+    const defaults = TEMPLATE_DEFAULTS[template.key];
+    acc[template.key] = {
+      enabled: true,
+      subject: defaults.subject,
+      html: defaults.html
+    };
     return acc;
   }, {})
 };
@@ -61,9 +189,16 @@ function mergeSettings(serverSettings = {}) {
     ...(serverSettings.smtp || {})
   };
   TEMPLATE_METADATA.forEach(({ key }) => {
+    const defaults = TEMPLATE_DEFAULTS[key];
+    const serverTemplate = serverSettings.templates?.[key] || {};
     merged.templates[key] = {
-      ...merged.templates[key],
-      ...(serverSettings.templates?.[key] || {})
+      enabled: serverTemplate.enabled ?? merged.templates[key].enabled,
+      subject: serverTemplate.subject?.trim()
+        ? serverTemplate.subject
+        : defaults.subject,
+      html: serverTemplate.html?.trim()
+        ? serverTemplate.html
+        : defaults.html
     };
   });
   return merged;
