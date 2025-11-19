@@ -200,6 +200,78 @@
                             isTemp: false
                         };
                         console.log('Bidly: Customer synced with backend:', currentCustomer);
+                    } else if (response.status === 409) {
+                        // 409 = Customer already exists - try to fetch the existing customer
+                        console.log('Bidly: Customer already exists (409), fetching existing customer...');
+                        try {
+                            // The backend should now return the existing customer, but if it doesn't,
+                            // we'll try to fetch it by email
+                            const errorData = await response.json().catch(() => null);
+                            if (errorData?.customer) {
+                                // Backend returned the existing customer in the error response
+                                currentCustomer = {
+                                    id: customerData.id,
+                                    email: customerData.email,
+                                    firstName: errorData.customer.firstName || customerData.firstName || null,
+                                    lastName: errorData.customer.lastName || customerData.lastName || null,
+                                    fullName: errorData.customer.fullName || null,
+                                    displayName: errorData.customer.displayName || errorData.customer.fullName || 'Guest User',
+                                    shopifyId: customerData.id,
+                                    isTemp: false
+                                };
+                                console.log('Bidly: Using existing customer from 409 response:', currentCustomer);
+                            } else {
+                                // Fallback: retry the request - backend should now return the existing customer
+                                const retryResponse = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        shopifyId: customerData.id,
+                                        email: customerData.email,
+                                        firstName: customerData.firstName || undefined,
+                                        lastName: customerData.lastName || undefined,
+                                        displayName: customerData.displayName || undefined,
+                                        shopDomain: CONFIG.shopDomain
+                                    })
+                                });
+                                
+                                if (retryResponse.ok) {
+                                    const retryResult = await retryResponse.json();
+                                    currentCustomer = {
+                                        id: customerData.id,
+                                        email: customerData.email,
+                                        firstName: retryResult.customer?.firstName || customerData.firstName || null,
+                                        lastName: retryResult.customer?.lastName || customerData.lastName || null,
+                                        fullName: retryResult.customer?.fullName || null,
+                                        displayName: retryResult.customer?.displayName || retryResult.customer?.fullName || 'Guest User',
+                                        shopifyId: customerData.id,
+                                        isTemp: false
+                                    };
+                                    console.log('Bidly: Retry successful, got existing customer:', currentCustomer);
+                                } else {
+                                    throw new Error('Retry failed');
+                                }
+                            }
+                        } catch (retryError) {
+                            console.warn('Bidly: Failed to fetch existing customer after 409:', retryError);
+                            // Fallback: construct a temporary name, but don't use 'Customer'
+                            const firstName = customerData.firstName || '';
+                            const lastName = customerData.lastName || '';
+                            const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Guest User';
+                            currentCustomer = {
+                                id: customerData.id,
+                                email: customerData.email,
+                                firstName: firstName || null,
+                                lastName: lastName || null,
+                                fullName: tempName,
+                                displayName: tempName,
+                                shopifyId: customerData.id,
+                                isTemp: false
+                            };
+                            console.log('Bidly: Using fallback customer data after 409 retry failed:', currentCustomer);
+                        }
                     } else {
                         const errorText = await response.text();
                         console.warn('Bidly: Failed to sync customer with backend:', response.status, errorText);
