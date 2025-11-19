@@ -3,8 +3,56 @@ import { identifyStore } from '../middleware/storeMiddleware.js';
 import getShopifyService from '../services/shopifyService.js';
 
 const router = express.Router();
+const shopifyService = getShopifyService();
 
-// Get metafields for a product
+async function getShopifyClient(shopDomain) {
+  const { client } = await shopifyService.getStoreClient(shopDomain);
+  return client;
+}
+
+async function listProductMetafields(client, productId, extraParams = {}) {
+  const response = await client.get('/metafields.json', {
+    params: {
+      owner_id: productId,
+      owner_resource: 'product',
+      limit: 250,
+      ...extraParams
+    }
+  });
+  return response.data?.metafields || [];
+}
+
+async function upsertMetafield(client, productId, payload) {
+  const existing = await listProductMetafields(client, productId, {
+    namespace: 'auction',
+    key: payload.key
+  });
+
+  if (existing.length > 0) {
+    const metafieldId = existing[0].id;
+    const response = await client.put(`/metafields/${metafieldId}.json`, {
+      metafield: {
+        id: metafieldId,
+        value: payload.value,
+        type: payload.type
+      }
+    });
+    return response.data?.metafield;
+  }
+
+  const response = await client.post('/metafields.json', {
+    metafield: {
+      owner_id: productId,
+      owner_resource: 'product',
+      namespace: 'auction',
+      key: payload.key,
+      value: payload.value,
+      type: payload.type
+    }
+  });
+  return response.data?.metafield;
+}
+
 router.get('/products/:productId/metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
@@ -14,15 +62,8 @@ router.get('/products/:productId/metafields', identifyStore, async (req, res) =>
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyService().getClient(shop);
-    if (!shopify) {
-      return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
-    }
-
-    const metafields = await shopify.metafield.list({
-      owner_id: productId,
-      owner_resource: 'product'
-    });
+    const client = await getShopifyClient(shop);
+    const metafields = await listProductMetafields(client, productId);
 
     res.json({
       success: true,
@@ -38,122 +79,37 @@ router.get('/products/:productId/metafields', identifyStore, async (req, res) =>
   }
 });
 
-// Set auction metafields for a product
 router.post('/products/:productId/auction-metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
     const { auctionData } = req.body;
     const shopDomain = req.shopDomain || req.query.shop || req.body.shop;
     
-    console.log('🔍 Debug - metafields POST:', {
-      shopDomain,
-      auctionDataStartTime: auctionData?.startTime,
-      auctionDataStartTimeType: typeof auctionData?.startTime,
-      fullAuctionData: auctionData
-    });
-    
     if (!shopDomain) {
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyService().getClient(shopDomain);
-    if (!shopify) {
-      return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
-    }
+    const client = await getShopifyClient(shopDomain);
 
     const metafields = [
-      {
-        namespace: 'auction',
-        key: 'is_auction',
-        value: 'true',
-        type: 'boolean'
-      },
-      {
-        namespace: 'auction',
-        key: 'auction_id',
-        value: auctionData.auctionId.toString(),
-        type: 'single_line_text_field'
-      },
-      {
-        namespace: 'auction',
-        key: 'status',
-        value: auctionData.status,
-        type: 'single_line_text_field'
-      },
-      {
-        namespace: 'auction',
-        key: 'current_bid',
-        value: auctionData.currentBid.toString(),
-        type: 'number_decimal'
-      },
-      {
-        namespace: 'auction',
-        key: 'starting_bid',
-        value: auctionData.startingBid.toString(),
-        type: 'number_decimal'
-      },
-      {
-        namespace: 'auction',
-        key: 'reserve_price',
-        value: (auctionData.reservePrice || 0).toString(),
-        type: 'number_decimal'
-      },
-      {
-        namespace: 'auction',
-        key: 'start_time',
-        value: auctionData.startTime instanceof Date ? auctionData.startTime.toISOString() : auctionData.startTime,
-        type: 'date_time'
-      },
-      {
-        namespace: 'auction',
-        key: 'end_time',
-        value: auctionData.endTime instanceof Date ? auctionData.endTime.toISOString() : auctionData.endTime,
-        type: 'date_time'
-      },
-      {
-        namespace: 'auction',
-        key: 'bid_count',
-        value: (auctionData.bidCount || 0).toString(),
-        type: 'number_integer'
-      },
-      {
-        namespace: 'auction',
-        key: 'buy_now_price',
-        value: (auctionData.buyNowPrice || 0).toString(),
-        type: 'number_decimal'
-      }
+      { key: 'is_auction', value: 'true', type: 'boolean' },
+      { key: 'auction_id', value: auctionData.auctionId.toString(), type: 'single_line_text_field' },
+      { key: 'status', value: auctionData.status, type: 'single_line_text_field' },
+      { key: 'current_bid', value: auctionData.currentBid.toString(), type: 'number_decimal' },
+      { key: 'starting_bid', value: auctionData.startingBid.toString(), type: 'number_decimal' },
+      { key: 'reserve_price', value: (auctionData.reservePrice || 0).toString(), type: 'number_decimal' },
+      { key: 'start_time', value: (auctionData.startTime instanceof Date ? auctionData.startTime.toISOString() : auctionData.startTime), type: 'date_time' },
+      { key: 'end_time', value: (auctionData.endTime instanceof Date ? auctionData.endTime.toISOString() : auctionData.endTime), type: 'date_time' },
+      { key: 'bid_count', value: (auctionData.bidCount || 0).toString(), type: 'number_integer' },
+      { key: 'buy_now_price', value: (auctionData.buyNowPrice || 0).toString(), type: 'number_decimal' }
     ];
 
     const createdMetafields = [];
     
     for (const metafield of metafields) {
-      try {
-        const created = await shopify.metafield.create({
-          owner_id: productId,
-          owner_resource: 'product',
-          ...metafield
-        });
-        createdMetafields.push(created);
-      } catch (error) {
-        console.warn(`Failed to create metafield ${metafield.key}:`, error.message);
-        // Try to update existing metafield
-        try {
-          const existing = await shopify.metafield.list({
-            owner_id: productId,
-            owner_resource: 'product',
-            namespace: metafield.namespace,
-            key: metafield.key
-          });
-          
-          if (existing.length > 0) {
-            const updated = await shopify.metafield.update(existing[0].id, {
-              value: metafield.value
-            });
-            createdMetafields.push(updated);
-          }
-        } catch (updateError) {
-          console.error(`Failed to update metafield ${metafield.key}:`, updateError.message);
-        }
+      const result = await upsertMetafield(client, productId, metafield);
+      if (result) {
+        createdMetafields.push(result);
       }
     }
 
@@ -172,7 +128,6 @@ router.post('/products/:productId/auction-metafields', identifyStore, async (req
   }
 });
 
-// Update auction metafields
 router.put('/products/:productId/auction-metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
@@ -183,41 +138,22 @@ router.put('/products/:productId/auction-metafields', identifyStore, async (req,
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyService().getClient(shopDomain);
-    if (!shopify) {
-      return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
-    }
+    const client = await getShopifyClient(shopDomain);
 
     const updatedMetafields = [];
     
     for (const [key, value] of Object.entries(updates)) {
       try {
-        // Find existing metafield
-        const existing = await shopify.metafield.list({
-          owner_id: productId,
-          owner_resource: 'product',
-          namespace: 'auction',
-          key: key
+        const result = await upsertMetafield(client, productId, {
+          key,
+          value: value.toString(),
+          type: key.includes('bid') || key.includes('price') ? 'number_decimal'
+            : key === 'bid_count' ? 'number_integer'
+            : key.includes('time') ? 'date_time'
+            : 'single_line_text_field'
         });
-        
-        if (existing.length > 0) {
-          const updated = await shopify.metafield.update(existing[0].id, {
-            value: value.toString()
-          });
-          updatedMetafields.push(updated);
-        } else {
-          // Create new metafield if it doesn't exist
-          const created = await shopify.metafield.create({
-            owner_id: productId,
-            owner_resource: 'product',
-            namespace: 'auction',
-            key: key,
-            value: value.toString(),
-            type: key.includes('bid') || key.includes('price') ? 'number_decimal' : 
-                  key === 'bid_count' ? 'number_integer' : 
-                  key.includes('time') ? 'date_time' : 'single_line_text_field'
-          });
-          updatedMetafields.push(created);
+        if (result) {
+          updatedMetafields.push(result);
         }
       } catch (error) {
         console.error(`Failed to update metafield ${key}:`, error.message);
@@ -239,7 +175,6 @@ router.put('/products/:productId/auction-metafields', identifyStore, async (req,
   }
 });
 
-// Remove auction metafields (when auction is deleted)
 router.delete('/products/:productId/auction-metafields', identifyStore, async (req, res) => {
   try {
     const { productId } = req.params;
@@ -249,23 +184,14 @@ router.delete('/products/:productId/auction-metafields', identifyStore, async (r
       return res.status(400).json({ success: false, message: 'Shop parameter is required' });
     }
 
-    const shopify = getShopifyService().getClient(shopDomain);
-    if (!shopify) {
-      return res.status(400).json({ success: false, message: 'Shop not found or invalid credentials' });
-    }
+    const client = await getShopifyClient(shopDomain);
 
-    // Get all auction metafields for this product
-    const metafields = await shopify.metafield.list({
-      owner_id: productId,
-      owner_resource: 'product',
-      namespace: 'auction'
-    });
-
+    const metafields = await listProductMetafields(client, productId, { namespace: 'auction' });
     const deletedMetafields = [];
     
     for (const metafield of metafields) {
       try {
-        await shopify.metafield.delete(metafield.id);
+        await client.delete(`/metafields/${metafield.id}.json`);
         deletedMetafields.push(metafield.id);
       } catch (error) {
         console.error(`Failed to delete metafield ${metafield.key}:`, error.message);
