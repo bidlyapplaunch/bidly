@@ -230,7 +230,19 @@ class AuctionEndService {
                 `
             };
 
-            await emailService.sendEmail(emailData);
+            await emailService.sendEmail(
+                auction?.shopDomain,
+                'winnerNotification',
+                emailData.to,
+                emailData.subject,
+                emailData.html,
+                {
+                    display_name: winner.bidderName,
+                    product_title: emailData.productTitle || auction.productTitle || 'Auction Item',
+                    winning_bid: `$${winningBid}`,
+                    current_bid: `$${winningBid}`
+                }
+            );
             console.log(`✅ Winner notification sent to ${winner.bidderEmail}`);
             
             return { success: true };

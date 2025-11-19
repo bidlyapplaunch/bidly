@@ -62,6 +62,7 @@ const AppNavigationMenu = () => {
       { label: 'Dashboard', destination: withQuery('/') },
       { label: 'Widget styles', destination: withQuery('/customization/widget') },
       { label: 'Marketplace styles', destination: withQuery('/customization/marketplace') },
+      { label: 'Mail service', destination: withQuery('/mail-service') },
       { label: 'Plans', destination: withQuery('/plans') }
     ];
 

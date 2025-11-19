@@ -26,6 +26,7 @@ import debugRoutes from './routes/debugRoutes.js';
 import billingRoutes from './routes/billingRoutes.js';
 import onboardingRoutes from './routes/onboarding.js';
 import marketplaceCustomizationRoutes from './routes/marketplaceCustomization.js';
+import emailSettingsRoutes from './routes/emailSettings.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
 
@@ -143,6 +144,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/marketplace-customization', marketplaceCustomizationRoutes);
+app.use('/api/email-settings', emailSettingsRoutes);
 
 // Load customer routes synchronously to ensure availability for widget login
 try {
@@ -697,11 +699,12 @@ const checkAuctionStatusChanges = async () => {
             // Send auction won notification to the winner
             if (winningBid.customerEmail) {
               await emailService.sendAuctionWonNotification(
+                auction.shopDomain,
                 winningBid.customerEmail,
                 winningBid.bidder,
                 auction,
-                    winningBid.amount,
-                    brandOptions
+                winningBid.amount,
+                brandOptions
               );
             }
 
@@ -710,17 +713,19 @@ const checkAuctionStatusChanges = async () => {
               const bid = auction.bidHistory[i];
               if (bid.customerEmail && bid.bidder !== winningBid.bidder) {
                 await emailService.sendOutbidNotification(
+                  auction.shopDomain,
                   bid.customerEmail,
                   bid.bidder,
                   auction,
-                      winningBid.amount,
-                      brandOptions
+                  winningBid.amount,
+                  brandOptions
                 );
               }
             }
 
             // Send admin notification
             await emailService.sendAdminNotification(
+              auction.shopDomain,
               'Auction Ended',
               `Auction "${auction.productData?.title || 'Unknown Product'}" ended. Winner: ${winningBid.bidder} with $${winningBid.amount}`,
               auction

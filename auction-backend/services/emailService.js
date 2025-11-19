@@ -1,363 +1,346 @@
 import nodemailer from 'nodemailer';
+import Store from '../models/Store.js';
 import { planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
+import { DEFAULT_EMAIL_TEMPLATES, EMAIL_TEMPLATE_KEYS } from '../constants/emailTemplates.js';
+import {
+  getEmailSettingsForShop,
+  normalizeEmailSettingsDomain
+} from './emailSettingsService.js';
 
-function getBrandSignature(options = {}) {
-  const plan = sanitizePlan(options.plan || 'free');
-  const storeName = options.storeName?.trim();
+const CUSTOMIZATION_PLAN = 'pro';
+const DEFAULT_FRONTEND_URL = process.env.FRONTEND_URL || 'https://bidly.app';
 
-  if (planMeetsRequirement(plan, 'pro') && storeName) {
-    return {
-      brand: storeName,
-      closing: `The ${storeName} Team`
-    };
+const transportCache = new Map();
+const defaultTransportState = {
+  initialized: false,
+  transporter: null,
+  isConfigured: false,
+  fromEmail: 'Bidly <noreply@auctions.com>'
+};
+
+function initDefaultTransport() {
+  if (defaultTransportState.initialized) {
+    return;
   }
 
+  console.log('🔍 Email Service Debug:');
+  console.log('  - EMAIL_USER:', process.env.EMAIL_USER ? 'Present' : 'Missing');
+  console.log('  - EMAIL_PASS:', process.env.EMAIL_PASS ? 'Present' : 'Missing');
+
+  defaultTransportState.isConfigured = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+
+  if (defaultTransportState.isConfigured) {
+    defaultTransportState.transporter = nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    console.log('📧 Email service configured with real credentials');
+  } else {
+    // Use a stream transport to avoid actual network calls in demo mode
+    defaultTransportState.transporter = nodemailer.createTransport({
+      streamTransport: true,
+      newline: 'unix',
+      buffer: true
+    });
+    console.log('📧 Email service running in DEMO mode (no real credentials)');
+  }
+
+  const fallbackFrom = process.env.EMAIL_USER ? `Bidly <${process.env.EMAIL_USER}>` : defaultTransportState.fromEmail;
+  defaultTransportState.fromEmail = process.env.EMAIL_FROM || fallbackFrom;
+  defaultTransportState.initialized = true;
+}
+
+function renderTemplate(templateString, data = {}) {
+  if (!templateString) return '';
+  return templateString.replace(/{{\s*([\w.]+)\s*}}/g, (_, key) => {
+    const value = data[key];
+    if (value === null || value === undefined) {
+      return '';
+    }
+    return value.toString();
+  });
+}
+
+function formatFromAddress(name, email) {
+  if (!email) {
+    return defaultTransportState.fromEmail;
+  }
+  const trimmedName = (name || '').toString().trim();
+  return trimmedName ? `${trimmedName} <${email}>` : email;
+}
+
+function formatCurrency(amount, currency = 'USD') {
+  if (amount === undefined || amount === null || Number.isNaN(Number(amount))) {
+    return '';
+  }
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2
+    }).format(Number(amount));
+  } catch {
+    return `$${Number(amount).toFixed(2)}`;
+  }
+}
+
+function formatDateTime(value, timeZone) {
+  if (!value) return '';
+  try {
+    const date = new Date(value);
+    return date.toLocaleString('en-US', timeZone ? { timeZone } : undefined);
+  } catch {
+    return '';
+  }
+}
+
+function getAuctionTitle(auction) {
+  return (
+    auction?.productData?.title ||
+    auction?.productTitle ||
+    auction?.title ||
+    'your auction item'
+  );
+}
+
+function getProductTitle(auction) {
+  return auction?.productData?.title || auction?.productTitle || getAuctionTitle(auction);
+}
+
+function getTimeRemaining(endTime) {
+  if (!endTime) return '';
+  const now = new Date();
+  const end = new Date(endTime);
+  const diff = end.getTime() - now.getTime();
+  if (diff <= 0) return 'Auction has ended';
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
+function getDefaultTemplateConfig() {
+  return EMAIL_TEMPLATE_KEYS.reduce((acc, key) => {
+    const defaults = DEFAULT_EMAIL_TEMPLATES[key];
+    acc[key] = {
+      enabled: true,
+      subject: defaults.subject,
+      html: defaults.html
+    };
+    return acc;
+  }, {});
+}
+
+async function getEffectiveEmailConfig(rawShopDomain) {
+  const normalizedShop = normalizeEmailSettingsDomain(rawShopDomain);
+  const baseConfig = {
+    normalizedShop,
+    plan: 'free',
+    canCustomize: false,
+    store: null,
+    useCustomSmtp: false,
+    smtp: {},
+    templates: getDefaultTemplateConfig()
+  };
+
+  if (!normalizedShop) {
+    return baseConfig;
+  }
+
+  const store = await Store.findOne({ shopDomain: normalizedShop }).lean();
+  baseConfig.store = store || null;
+  const plan = sanitizePlan(store?.plan || 'free');
+  baseConfig.plan = plan;
+  baseConfig.canCustomize = planMeetsRequirement(plan, CUSTOMIZATION_PLAN);
+
+  const settings = await getEmailSettingsForShop(normalizedShop);
+  baseConfig.useCustomSmtp =
+    baseConfig.canCustomize &&
+    settings.useCustomSmtp &&
+    settings.smtp?.host &&
+    settings.smtp?.user &&
+    settings.smtp?.pass;
+  baseConfig.smtp = settings.smtp || {};
+
+  const mergedTemplates = {};
+  EMAIL_TEMPLATE_KEYS.forEach((key) => {
+    const defaults = DEFAULT_EMAIL_TEMPLATES[key];
+    const custom = settings.templates?.[key];
+    const enabled = baseConfig.canCustomize ? custom?.enabled !== false : true;
+    const subject =
+      baseConfig.canCustomize && custom?.subject?.trim()
+        ? custom.subject.trim()
+        : defaults.subject;
+    const html =
+      baseConfig.canCustomize && custom?.html?.trim()
+        ? custom.html
+        : defaults.html;
+
+    mergedTemplates[key] = { enabled, subject, html };
+  });
+  baseConfig.templates = mergedTemplates;
+
+  return baseConfig;
+}
+
+async function getTransportForShop(normalizedShop, emailConfig) {
+  if (!emailConfig.useCustomSmtp) {
+    initDefaultTransport();
+    return defaultTransportState.transporter;
+  }
+
+  if (!normalizedShop) {
+    throw new Error('Custom SMTP requires a shop domain.');
+  }
+
+  const cacheKey = `shop:${normalizedShop}`;
+  if (transportCache.has(cacheKey)) {
+    return transportCache.get(cacheKey);
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: emailConfig.smtp.host,
+    port: emailConfig.smtp.port || 587,
+    secure: emailConfig.smtp.secure ?? false,
+    auth: {
+      user: emailConfig.smtp.user,
+      pass: emailConfig.smtp.pass
+    }
+  });
+
+  transportCache.set(cacheKey, transporter);
+  return transporter;
+}
+
+function buildAuctionTemplateData({ bidderName, auction, currency }) {
   return {
-    brand: 'Bidly',
-    closing: 'The Bidly Team'
+    customer_name: bidderName || '',
+    display_name: bidderName || '',
+    auction_title: getAuctionTitle(auction),
+    product_title: getProductTitle(auction),
+    auction_status: auction?.status || '',
+    auction_end_time: formatDateTime(auction?.endTime, auction?.timezone || auction?.timeZone),
+    current_bid:
+      auction?.currentBid !== undefined && auction?.currentBid !== null
+        ? formatCurrency(auction.currentBid, currency)
+        : '',
+    bid_count:
+      typeof auction?.bidHistory?.length === 'number'
+        ? String(auction.bidHistory.length)
+        : '',
+    buy_now_price:
+      auction?.buyNowPrice !== undefined && auction?.buyNowPrice !== null
+        ? formatCurrency(auction.buyNowPrice, currency)
+        : '',
+    winning_bid: '',
+    bid_amount: '',
+    time_remaining: getTimeRemaining(auction?.endTime)
   };
 }
 
 class EmailService {
-  constructor() {
-    this.transporter = null;
-    this.isConfigured = false;
-    this.fromEmail = 'Auction System <noreply@auctions.com>';
-    this.initialized = false;
+  async sendBidConfirmation(shopDomain, bidderEmail, bidderName, auctionData, bidAmount, options = {}) {
+    const currency = options.currency || auctionData?.currency || 'USD';
+    const templateData = buildAuctionTemplateData({ bidderName, auction: auctionData, currency });
+    templateData.bid_amount = formatCurrency(bidAmount, currency);
+    templateData.current_bid = templateData.bid_amount;
+    templateData.auction_status = auctionData?.status || 'active';
+
+    return this.sendEmail(shopDomain, 'bidConfirmation', bidderEmail, null, null, templateData);
   }
 
-  // Lazy initialization - called when first used
-  initialize() {
-    if (this.initialized) return;
-    
-    // Debug environment variables
-    console.log('🔍 Email Service Debug:');
-    console.log('  - EMAIL_USER:', process.env.EMAIL_USER ? 'Present' : 'Missing');
-    console.log('  - EMAIL_PASS:', process.env.EMAIL_PASS ? 'Present' : 'Missing');
-    console.log('  - EMAIL_USER value:', process.env.EMAIL_USER || 'undefined');
-    console.log('  - EMAIL_PASS length:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0);
-    
-    // Check if email is configured
-    this.isConfigured = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
-    
-    if (this.isConfigured) {
-      // Create transporter with real credentials
-      this.transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS
-        }
-      });
-      console.log('📧 Email service configured with real credentials');
-    } else {
-      // Create transporter with demo credentials (will fail gracefully)
-      this.transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: 'your-email@gmail.com',
-          pass: 'your-app-password'
-        }
-      });
-      console.log('📧 Email service running in DEMO mode (no real credentials)');
-    }
-    
-    this.fromEmail = process.env.EMAIL_FROM || 'Auction System <noreply@auctions.com>';
-    this.initialized = true;
+  async sendAuctionWonNotification(shopDomain, bidderEmail, bidderName, auctionData, winningBid, options = {}) {
+    const currency = options.currency || auctionData?.currency || 'USD';
+    const templateData = buildAuctionTemplateData({ bidderName, auction: auctionData, currency });
+    templateData.winning_bid = formatCurrency(winningBid, currency);
+    templateData.current_bid = templateData.winning_bid;
+
+    return this.sendEmail(shopDomain, 'winnerNotification', bidderEmail, null, null, templateData);
   }
 
-  // Demo mode - log email content instead of sending
-  logEmailDemo(type, recipient, subject, content) {
-    console.log('\n📧 ===== EMAIL NOTIFICATION (DEMO MODE) =====');
-    console.log(`📬 Type: ${type}`);
-    console.log(`📮 To: ${recipient}`);
-    console.log(`📋 Subject: ${subject}`);
-    console.log(`📄 Content: ${content.substring(0, 200)}...`);
-    console.log('📧 ===========================================\n');
+  async sendWinnerNotification({ shopDomain, to, subject, html, templateData = {} }) {
+    return this.sendEmail(shopDomain, 'winnerNotification', to, subject || null, html || null, templateData);
   }
 
-  // Send bid confirmation email
-  async sendBidConfirmation(bidderEmail, bidderName, auctionData, bidAmount, options = {}) {
-    const subject = `Bid Confirmation - ${auctionData.productData?.title || 'Auction Item'}`;
-    const brand = getBrandSignature(options);
-    
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2c3e50;">🎯 Bid Confirmation</h2>
-        
-        <p>Hello ${bidderName},</p>
-        
-        <p>Your bid has been successfully placed!</p>
-        
-        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #2c3e50; margin-top: 0;">Auction Details</h3>
-          <p><strong>Item:</strong> ${auctionData.productData?.title || 'Unknown Product'}</p>
-          <p><strong>Your Bid:</strong> $${bidAmount}</p>
-          <p><strong>Auction Ends:</strong> ${new Date(auctionData.endTime).toLocaleString()}</p>
-          <p><strong>Current Status:</strong> ${auctionData.status}</p>
-        </div>
-        
-        <p>You will be notified if someone outbids you or if you win the auction.</p>
-        
-        <p style="color: #7f8c8d; font-size: 14px;">
-          Best regards,<br>
-          ${brand.closing}
-        </p>
-      </div>
-    `;
+  async sendOutbidNotification(shopDomain, bidderEmail, bidderName, auctionData, newHighestBid, options = {}) {
+    const currency = options.currency || auctionData?.currency || 'USD';
+    const templateData = buildAuctionTemplateData({ bidderName, auction: auctionData, currency });
+    templateData.current_bid = formatCurrency(newHighestBid, currency);
+    templateData.time_remaining = getTimeRemaining(auctionData?.endTime);
+    templateData.cta_url = options.ctaUrl || DEFAULT_FRONTEND_URL;
 
-    return this.sendEmail(bidderEmail, subject, html);
+    return this.sendEmail(shopDomain, 'outbidNotification', bidderEmail, null, null, templateData);
   }
 
-  // Send auction won notification
-  async sendAuctionWonNotification(bidderEmail, bidderName, auctionData, winningBid, options = {}) {
-    const subject = `🎉 You Won! - ${auctionData.productData?.title || 'Auction Item'}`;
-    const brand = getBrandSignature(options);
-    
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #27ae60;">🎉 Congratulations! You Won!</h2>
-        
-        <p>Hello ${bidderName},</p>
-        
-        <p>Congratulations! You have won the auction!</p>
-        
-        <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
-          <h3 style="color: #155724; margin-top: 0;">Winning Details</h3>
-          <p><strong>Item:</strong> ${auctionData.productData?.title || 'Unknown Product'}</p>
-          <p><strong>Winning Bid:</strong> $${winningBid}</p>
-          <p><strong>Auction Ended:</strong> ${new Date(auctionData.endTime).toLocaleString()}</p>
-        </div>
-        
-        <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
-          <h4 style="color: #856404; margin-top: 0;">Next Steps</h4>
-          <p>We will contact you shortly to send you the link to the product you have won for payment and arrangements.</p>
-        </div>
-        
-        <p style="color: #7f8c8d; font-size: 14px;">
-          Best regards,<br>
-          ${brand.closing}
-        </p>
-      </div>
-    `;
+  async sendAuctionEndingSoon(shopDomain, bidderEmail, bidderName, auctionData, timeRemaining, options = {}) {
+    const currency = options.currency || auctionData?.currency || 'USD';
+    const templateData = buildAuctionTemplateData({ bidderName, auction: auctionData, currency });
+    templateData.time_remaining = timeRemaining || getTimeRemaining(auctionData?.endTime);
+    templateData.cta_url = options.ctaUrl || DEFAULT_FRONTEND_URL;
 
-    return this.sendEmail(bidderEmail, subject, html);
+    return this.sendEmail(shopDomain, 'auctionEndingSoon', bidderEmail, null, null, templateData);
   }
 
-  // Send winner notification (with or without product link based on template)
-  async sendWinnerNotification(emailData, options = {}) {
-    const { to, subject, template, data } = emailData;
-    const brand = getBrandSignature(emailData.brandOptions || options);
-    
-    // If template is 'auction-winner-notification-only', send notification without product link
-    // The invoice with product link will be sent via Shopify's draft order invoice system
-    if (template === 'auction-winner-notification-only') {
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>
-          
-          <p>Dear ${data.winnerName},</p>
-          
-          <p>Congratulations! You have successfully won the auction for <strong>"${data.productTitle}"</strong> with a winning bid of <strong>$${data.winningBid}</strong>.</p>
-          
-          ${data.productImage ? `
-            <div style="text-align: center; margin: 20px 0;">
-              <img src="${data.productImage}" alt="${data.productTitle}" style="max-width: 300px; height: auto; border-radius: 8px;">
-            </div>
-          ` : ''}
-          
-          <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
-            <h3 style="color: #155724; margin-top: 0;">🏆 Auction Details</h3>
-            <p><strong>Product:</strong> ${data.productTitle}</p>
-            <p><strong>Winning Bid:</strong> $${data.winningBid}</p>
-            <p><strong>Auction Ended:</strong> ${new Date(data.auctionEndTime).toLocaleString()}</p>
-          </div>
-          
-          <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
-            <h3 style="color: #856404; margin-top: 0;">📧 Next Steps</h3>
-            <p>You will receive an invoice from us shortly with a link to complete your purchase. Please wait for the invoice email which will contain all the details you need to claim your win.</p>
-            <p><strong>You have 30 minutes to claim your win</strong>, or the second highest bidder will receive the win instead.</p>
-          </div>
-          
-          <p style="color: #7f8c8d; font-size: 14px;">
-            Best regards,<br>
-            ${brand.closing}
-          </p>
-        </div>
-      `;
-      
-      return this.sendEmail(to, subject, html);
-    }
-    
-    // Legacy template with product link (for backwards compatibility, if needed)
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>
-        
-        <p>Dear ${data.winnerName},</p>
-        
-        <p>Congratulations! You have successfully won the auction for <strong>"${data.productTitle}"</strong> with a winning bid of <strong>$${data.winningBid}</strong>.</p>
-        
-        ${data.productImage ? `
-          <div style="text-align: center; margin: 20px 0;">
-            <img src="${data.productImage}" alt="${data.productTitle}" style="max-width: 300px; height: auto; border-radius: 8px;">
-          </div>
-        ` : ''}
-        
-        <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
-          <h3 style="color: #155724; margin-top: 0;">🏆 Your Private Product</h3>
-          <p><strong>Product:</strong> ${data.productTitle}</p>
-          <p><strong>Winning Bid:</strong> $${data.winningBid}</p>
-          <p><strong>Auction Ended:</strong> ${new Date(data.auctionEndTime).toLocaleString()}</p>
-        </div>
-        
-        <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196f3;">
-          <h3 style="color: #0d47a1; margin-top: 0;">🛒 Complete Your Purchase</h3>
-          <p>Your private product has been created and is ready for purchase at your winning bid price.</p>
-          
-          <div style="text-align: center; margin: 20px 0;">
-            <a href="${data.privateProductUrl}" 
-               style="background-color: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">
-              🛒 Complete Purchase - $${data.winningBid}
-            </a>
-          </div>
-          
-          <p style="font-size: 14px; color: #666;">
-            <strong>Product Link:</strong><br>
-            <a href="${data.privateProductUrl}" style="color: #2196f3;">${data.privateProductUrl}</a>
-          </p>
-        </div>
-        
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <h4 style="color: #495057; margin-top: 0;">ℹ️ Important Information</h4>
-          <ul style="color: #6c757d;">
-            <li>This is a private product created specifically for you as the auction winner</li>
-            <li>The price is set to your winning bid amount</li>
-            <li>You have 7 days to complete your purchase</li>
-            <li>Contact us if you have any questions about your purchase</li>
-          </ul>
-        </div>
-        
-        <p style="color: #7f8c8d; font-size: 14px;">
-          Best regards,<br>
-          ${brand.closing}
-        </p>
-      </div>
-    `;
-
-    return this.sendEmail(to, subject, html);
-  }
-
-  // Send outbid notification
-  async sendOutbidNotification(bidderEmail, bidderName, auctionData, newHighestBid, options = {}) {
-    const subject = `⚠️ You've Been Outbid - ${auctionData.productData?.title || 'Auction Item'}`;
-    const brand = getBrandSignature(options);
-    
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #e74c3c;">⚠️ You've Been Outbid</h2>
-        
-        <p>Hello ${bidderName},</p>
-        
-        <p>Someone has placed a higher bid on the auction you were participating in.</p>
-        
-        <div style="background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;">
-          <h3 style="color: #721c24; margin-top: 0;">Auction Update</h3>
-          <p><strong>Item:</strong> ${auctionData.productData?.title || 'Unknown Product'}</p>
-          <p><strong>New Highest Bid:</strong> $${newHighestBid}</p>
-          <p><strong>Time Remaining:</strong> ${this.getTimeRemaining(auctionData.endTime)}</p>
-        </div>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.FRONTEND_URL || 'http://localhost:3002'}" 
-             style="background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-            Place a New Bid
-          </a>
-        </div>
-        
-        <p style="color: #7f8c8d; font-size: 14px;">
-          Best regards,<br>
-          ${brand.closing}
-        </p>
-      </div>
-    `;
-
-    return this.sendEmail(bidderEmail, subject, html);
-  }
-
-  // Send auction ending soon notification
-  async sendAuctionEndingSoon(bidderEmail, bidderName, auctionData, timeRemaining, options = {}) {
-    const subject = `⏰ Auction Ending Soon - ${auctionData.productData?.title || 'Auction Item'}`;
-    const brand = getBrandSignature(options);
-    
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #f39c12;">⏰ Auction Ending Soon!</h2>
-        
-        <p>Hello ${bidderName},</p>
-        
-        <p>The auction you're participating in is ending soon!</p>
-        
-        <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f39c12;">
-          <h3 style="color: #856404; margin-top: 0;">Auction Details</h3>
-          <p><strong>Item:</strong> ${auctionData.productData?.title || 'Unknown Product'}</p>
-          <p><strong>Current Bid:</strong> $${auctionData.currentBid || auctionData.startingBid}</p>
-          <p><strong>Time Remaining:</strong> ${timeRemaining}</p>
-        </div>
-        
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.FRONTEND_URL || 'http://localhost:3002'}" 
-             style="background-color: #e74c3c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-            Place Your Final Bid
-          </a>
-        </div>
-        
-        <p style="color: #7f8c8d; font-size: 14px;">
-          Best regards,<br>
-          ${brand.closing}
-        </p>
-      </div>
-    `;
-
-    return this.sendEmail(bidderEmail, subject, html);
-  }
-
-  // Send admin notification
-  async sendAdminNotification(subject, message, auctionData = null) {
+  async sendAdminNotification(shopDomain, subject, message, auctionData = null) {
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@auctions.com';
-    
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2c3e50;">Admin Notification</h2>
-        
-        <p>${message}</p>
-        
-        ${auctionData ? `
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #2c3e50; margin-top: 0;">Auction Details</h3>
-            <p><strong>Item:</strong> ${auctionData.productData?.title || 'Unknown Product'}</p>
-            <p><strong>Status:</strong> ${auctionData.status}</p>
-            <p><strong>Current Bid:</strong> $${auctionData.currentBid || 0}</p>
-            <p><strong>Bid Count:</strong> ${auctionData.bidHistory?.length || 0}</p>
-          </div>
-        ` : ''}
-        
-        <p style="color: #7f8c8d; font-size: 14px;">
-          Auction System Admin Panel
-        </p>
-      </div>
-    `;
+    const templateData = {
+      admin_message: message || '',
+      auction_title: auctionData ? getAuctionTitle(auctionData) : '',
+      auction_status: auctionData?.status || '',
+      current_bid:
+        auctionData?.currentBid !== undefined && auctionData?.currentBid !== null
+          ? formatCurrency(auctionData.currentBid, auctionData?.currency || 'USD')
+          : '',
+      bid_count:
+        typeof auctionData?.bidHistory?.length === 'number'
+          ? String(auctionData.bidHistory.length)
+          : ''
+    };
 
-    return this.sendEmail(adminEmail, subject, html);
+    return this.sendEmail(shopDomain, 'adminNotification', adminEmail, subject, null, templateData);
   }
 
-  // Helper method to send email
-  async sendEmail(to, subject, html) {
-    // Initialize if not already done
-    this.initialize();
-    
-    // Demo mode - just log the email content
-    if (!this.isConfigured) {
+  async sendEmail(shopDomain, type, to, subjectOverride, htmlOverride, templateData = {}) {
+    if (!to) {
+      throw new Error('Recipient email is required.');
+    }
+
+    const emailConfig = await getEffectiveEmailConfig(shopDomain);
+    const template = emailConfig.templates[type];
+
+    if (!template) {
+      throw new Error(`Unknown email template type "${type}"`);
+    }
+
+    if (template.enabled === false) {
+      console.log(`📭 Email template "${type}" disabled for ${emailConfig.normalizedShop || 'default'} — skipping send.`);
+      return { success: true, skipped: true };
+    }
+
+    const resolvedData = {
+      store_name: templateData.store_name || emailConfig.store?.storeName || emailConfig.normalizedShop || 'Bidly',
+      shop_domain: emailConfig.normalizedShop || '',
+      ...templateData
+    };
+
+    const subject = subjectOverride || renderTemplate(template.subject, resolvedData);
+    const html = htmlOverride || renderTemplate(template.html, resolvedData);
+
+    if (!subject.trim() || !html.trim()) {
+      console.warn(`⚠️ Email template "${type}" produced empty subject or HTML.`);
+      return { success: false, error: 'EMPTY_TEMPLATE' };
+    }
+
+    if (!emailConfig.useCustomSmtp) {
+      initDefaultTransport();
+    }
+
+    if (!emailConfig.useCustomSmtp && !defaultTransportState.isConfigured) {
       console.log('\n📧 ===== EMAIL NOTIFICATION (DEMO MODE) =====');
       console.log(`📮 To: ${to}`);
       console.log(`📋 Subject: ${subject}`);
@@ -367,14 +350,17 @@ class EmailService {
     }
 
     try {
+      const transporter = await getTransportForShop(emailConfig.normalizedShop, emailConfig);
       const mailOptions = {
-        from: this.fromEmail,
-        to: to,
-        subject: subject,
-        html: html
+        from: emailConfig.useCustomSmtp
+          ? formatFromAddress(emailConfig.smtp.fromName || resolvedData.store_name, emailConfig.smtp.fromEmail || emailConfig.smtp.user)
+          : defaultTransportState.fromEmail,
+        to,
+        subject,
+        html
       };
 
-      const result = await this.transporter.sendMail(mailOptions);
+      const result = await transporter.sendMail(mailOptions);
       console.log('✅ Email sent successfully:', result.messageId);
       return { success: true, messageId: result.messageId };
     } catch (error) {
@@ -382,37 +368,13 @@ class EmailService {
       return { success: false, error: error.message };
     }
   }
-
-  // Helper method to calculate time remaining
-  getTimeRemaining(endTime) {
-    const now = new Date();
-    const end = new Date(endTime);
-    const diff = end - now;
-    
-    if (diff <= 0) return 'Auction has ended';
-    
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else {
-      return `${minutes}m`;
-    }
-  }
-
-  // Test email configuration
-  async testEmailConfiguration() {
-    try {
-      await this.transporter.verify();
-      console.log('✅ Email configuration is valid');
-      return true;
-    } catch (error) {
-      console.error('❌ Email configuration error:', error);
-      return false;
-    }
-  }
 }
 
-// Export singleton instance
+export function clearEmailTransportCache(shopDomain) {
+  if (!shopDomain) return;
+  const normalized = normalizeEmailSettingsDomain(shopDomain);
+  if (!normalized) return;
+  transportCache.delete(`shop:${normalized}`);
+}
+
 export default new EmailService();

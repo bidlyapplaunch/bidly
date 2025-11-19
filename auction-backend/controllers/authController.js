@@ -52,6 +52,7 @@ export const register = async (req, res, next) => {
     // Send welcome email
     try {
       await emailService.sendAdminNotification(
+        req.shopDomain,
         'New User Registration',
         `New user registered: ${name} (${email}) with role: ${role}`,
         null

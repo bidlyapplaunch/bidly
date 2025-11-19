@@ -888,7 +888,8 @@ export const placeBid = async (req, res, next) => {
       };
       // Send bid confirmation to the bidder
       await emailService.sendBidConfirmation(
-        effectiveEmail, // Use actual customer email
+        shopDomain,
+        effectiveEmail,
         effectiveBidder,
         updatedAuction,
         amount,
@@ -900,7 +901,8 @@ export const placeBid = async (req, res, next) => {
         const previousBid = updatedAuction.bidHistory[updatedAuction.bidHistory.length - 2];
         if (previousBid.bidder !== effectiveBidder && previousBid.customerEmail) {
           await emailService.sendOutbidNotification(
-            previousBid.customerEmail, // Use actual customer email
+            shopDomain,
+            previousBid.customerEmail,
             previousBid.bidder,
             updatedAuction,
             amount,
@@ -912,7 +914,8 @@ export const placeBid = async (req, res, next) => {
       // Send auction won notification if buy now
       if (auctionEnded) {
         await emailService.sendAuctionWonNotification(
-          effectiveEmail, // Use actual customer email
+          shopDomain,
+          effectiveEmail,
           effectiveBidder,
           updatedAuction,
           amount,
@@ -921,6 +924,7 @@ export const placeBid = async (req, res, next) => {
 
         // Send admin notification
         await emailService.sendAdminNotification(
+          shopDomain,
           'Auction Won via Buy Now',
           `Auction "${updatedAuction.productData?.title || 'Unknown Product'}" was won by ${effectiveBidder} for $${amount}`,
           updatedAuction
@@ -1101,7 +1105,8 @@ export const buyNow = async (req, res, next) => {
         effectiveEmail || `${effectiveBidder.toLowerCase().replace(/\s+/g, '')}@example.com`;
       // Send auction won notification to the buyer
       await emailService.sendAuctionWonNotification(
-        finalEmail, // Use customer email or demo email
+        shopDomain,
+        finalEmail,
         effectiveBidder,
         auction,
         auction.buyNowPrice,
@@ -1113,7 +1118,8 @@ export const buyNow = async (req, res, next) => {
         const previousBid = auction.bidHistory[auction.bidHistory.length - 2];
         if (previousBid.bidder !== effectiveBidder && previousBid.customerEmail) {
           await emailService.sendOutbidNotification(
-            previousBid.customerEmail, // Use actual customer email
+            shopDomain,
+            previousBid.customerEmail,
             previousBid.bidder,
             auction,
             auction.buyNowPrice,
@@ -1124,6 +1130,7 @@ export const buyNow = async (req, res, next) => {
 
       // Send admin notification
       await emailService.sendAdminNotification(
+        shopDomain,
         'Auction Won via Buy Now',
         `Auction "${auction.productData?.title || 'Unknown Product'}" was won by ${effectiveBidder} for $${auction.buyNowPrice}`,
         auction

@@ -486,26 +486,26 @@ class WinnerProcessingService {
      */
     async sendWinnerNotification(winner, auction, privateProduct, store) {
         try {
-            const emailData = {
-                to: winner.bidderEmail,
-                subject: `🎉 Congratulations! You Won the Auction for ${privateProduct.productTitle || auction.productTitle || 'the auction item'}`,
-                template: 'auction-winner-notification-only',
-                data: {
-                    winnerName: winner.bidder,
-                    productTitle: privateProduct.productTitle || auction.productTitle || 'the auction item',
-                    productImage: auction.productImage,
-                    winningBid: winner.amount,
-                    auctionEndTime: auction.endTime,
-                    storeDomain: auction.shopDomain
-                }
-            };
+            const currency = store?.currency || auction?.currency || 'USD';
+            const formattedBid =
+                winner.amount !== undefined && winner.amount !== null
+                    ? new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(winner.amount))
+                    : '';
 
-            await emailService.sendWinnerNotification(emailData, {
-                plan: store?.plan,
-                storeName: store?.storeName
+            await emailService.sendWinnerNotification({
+                shopDomain: auction.shopDomain,
+                to: winner.bidderEmail,
+                templateData: {
+                    display_name: winner.bidder,
+                    auction_title: privateProduct.productTitle || auction.productTitle || 'the auction item',
+                    product_title: privateProduct.productTitle || auction.productTitle || 'the auction item',
+                    winning_bid: formattedBid,
+                    current_bid: formattedBid,
+                    auction_end_time: auction.endTime ? new Date(auction.endTime).toLocaleString() : '',
+                    store_name: store?.storeName || winner.shopDomain
+                }
             });
             console.log(`📧 Winner notification sent to ${winner.bidderEmail}`);
-            
         } catch (error) {
             console.error('Error sending winner notification:', error);
             // Don't throw error as email is not critical for the main flow

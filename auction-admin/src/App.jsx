@@ -9,6 +9,7 @@ import AppBridgeProvider from './components/AppBridgeProvider';
 import authService from './services/auth';
 import MarketplaceCustomizationSettings from './components/MarketplaceCustomizationSettings';
 import WidgetCustomizationSettings from './components/WidgetCustomizationSettings';
+import MailServiceSettings from './components/MailServiceSettings';
 import PlansPage from './components/PlansPage';
 import AppNavigationMenu from './components/AppNavigationMenu';
 import OnboardingPage from './components/OnboardingPage';
@@ -132,6 +133,7 @@ function App() {
         <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
         <Route path="/customization/marketplace" element={<MarketplaceCustomizationSettings />} />
         <Route path="/customization/widget" element={<WidgetCustomizationSettings />} />
+        <Route path="/mail-service" element={<MailServiceSettings />} />
         <Route path="/plans" element={<PlansPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
