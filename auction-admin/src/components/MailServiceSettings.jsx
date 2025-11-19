@@ -9,7 +9,6 @@ import {
   Checkbox,
   Button,
   Spinner,
-  Frame,
   Toast
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
@@ -171,7 +170,7 @@ function MailServiceSettings() {
   ) : null;
 
   return (
-    <Frame>
+    <>
       {toastMarkup}
       <Page
         title="Mail service"
@@ -187,19 +186,19 @@ function MailServiceSettings() {
             <Spinner accessibilityLabel="Loading mail settings" />
           </div>
         ) : (
-        <Layout>
-          <Layout.Section>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {disabled && (
-                <Banner
-                  title="Upgrade required"
-                  tone="warning"
-                >
-                  <p>Custom mail settings are available on Pro and Enterprise plans.</p>
-                </Banner>
-              )}
+          <Layout>
+            <Layout.Section>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {disabled && (
+                  <Banner
+                    title="Upgrade required"
+                    tone="warning"
+                  >
+                    <p>Custom mail settings are available on Pro and Enterprise plans.</p>
+                  </Banner>
+                )}
 
-              <Card title="SMTP configuration" sectioned>
+                <Card title="SMTP configuration" sectioned>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <Checkbox
                     label="Use my own email server"
@@ -304,7 +303,7 @@ function MailServiceSettings() {
                 </div>
               </Card>
 
-              <Card title="Email templates" sectioned>
+                <Card title="Email templates" sectioned>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <div>
                     <Text as="span" tone="subdued">
@@ -367,13 +366,13 @@ function MailServiceSettings() {
                     );
                   })}
                 </div>
-              </Card>
-            </div>
-          </Layout.Section>
-        </Layout>
+                </Card>
+              </div>
+            </Layout.Section>
+          </Layout>
         )}
       </Page>
-    </Frame>
+    </>
   );
 }
 
