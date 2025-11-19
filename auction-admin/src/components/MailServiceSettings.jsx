@@ -9,7 +9,8 @@ import {
   Checkbox,
   Button,
   Spinner,
-  Toast
+  Toast,
+  Frame
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 
@@ -170,7 +171,7 @@ function MailServiceSettings() {
   ) : null;
 
   return (
-    <>
+    <Frame>
       {toastMarkup}
       <Page
         title="Mail service"
@@ -372,7 +373,7 @@ function MailServiceSettings() {
           </Layout>
         )}
       </Page>
-    </>
+    </Frame>
   );
 }
 
