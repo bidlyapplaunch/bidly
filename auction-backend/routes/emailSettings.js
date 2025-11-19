@@ -5,9 +5,13 @@ import { identifyStore } from '../middleware/storeMiddleware.js';
 import { attachPlanContext, getStorePlan } from '../middleware/planGuard.js';
 import { planMeetsRequirement } from '../config/billingPlans.js';
 import EmailSettings from '../models/EmailSettings.js';
-import { DEFAULT_EMAIL_SETTINGS, EMAIL_TEMPLATE_KEYS } from '../constants/emailTemplates.js';
+import {
+  DEFAULT_EMAIL_SETTINGS,
+  EMAIL_TEMPLATE_KEYS,
+  DEFAULT_EMAIL_TEMPLATES
+} from '../constants/emailTemplates.js';
 import { mergeWithDefaultEmailSettings } from '../services/emailSettingsService.js';
-import { clearEmailTransportCache } from '../services/emailService.js';
+import emailService, { clearEmailTransportCache } from '../services/emailService.js';
 
 const router = express.Router();
 const CUSTOMIZATION_PLAN = 'pro';
@@ -83,6 +87,28 @@ function applyPayloadToSettings(baseSettings, payload = {}) {
   return { nextSettings: next, errors };
 }
 
+function buildSampleTemplateData(storeName = 'Bidly Store') {
+  return {
+    customer_name: 'Jane Doe',
+    display_name: 'Jane Doe',
+    auction_title: 'Demo Auction Item',
+    product_title: 'Exclusive Collectible',
+    current_bid: '$250.00',
+    winning_bid: '$300.00',
+    buy_now_price: '$350.00',
+    bid_amount: '$250.00',
+    auction_end_time: new Date().toLocaleString(),
+    time_remaining: '2 hours',
+    store_name: storeName || 'Bidly Store',
+    cta_url: 'https://example.com/auctions/demo',
+    auction_status: 'Active',
+    bid_count: '5',
+    message: 'This is a test notification from Bidly.',
+    admin_message: 'This is a demo admin message.',
+    subject_override: 'Demo Subject'
+  };
+}
+
 router.get('/', async (req, res) => {
   try {
     const plan = getStorePlan(req);
@@ -97,7 +123,10 @@ router.get('/', async (req, res) => {
       plan,
       canCustomize,
       hasCustom: !!existing,
-      settings
+      settings,
+      defaults: {
+        templates: DEFAULT_EMAIL_TEMPLATES
+      }
     });
   } catch (error) {
     console.error('❌ Failed to load email settings:', error);
@@ -247,6 +276,70 @@ router.post('/test-smtp', requireAuth, async (req, res) => {
     return res.status(400).json({
       success: false,
       message: error.message || 'SMTP test failed'
+    });
+  }
+});
+
+router.post('/test-template', requireAuth, async (req, res) => {
+  try {
+    const plan = getStorePlan(req);
+    if (!planMeetsRequirement(plan, CUSTOMIZATION_PLAN)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Template tests are available on Pro and Enterprise plans.'
+      });
+    }
+
+    const { templateKey, to, overrides = {} } = req.body || {};
+    if (!templateKey || !EMAIL_TEMPLATE_KEYS.includes(templateKey)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid templateKey is required.'
+      });
+    }
+
+    const recipient = typeof to === 'string' ? to.trim() : '';
+    if (!recipient) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid test recipient email is required.'
+      });
+    }
+
+    const defaults = DEFAULT_EMAIL_TEMPLATES[templateKey] || { subject: '', html: '' };
+    const subjectOverride =
+      typeof overrides.subject === 'string' && overrides.subject.trim()
+        ? overrides.subject
+        : defaults.subject;
+    const htmlOverride =
+      typeof overrides.html === 'string' && overrides.html.trim()
+        ? overrides.html
+        : defaults.html;
+
+    const templateData = buildSampleTemplateData(req.store?.storeName);
+
+    const result = await emailService.sendEmail(
+      req.shopDomain,
+      templateKey,
+      recipient,
+      subjectOverride,
+      htmlOverride,
+      templateData
+    );
+
+    if (!result?.success) {
+      throw new Error(result?.error || 'Unable to send test email.');
+    }
+
+    return res.json({
+      success: true,
+      message: `Template test sent to ${recipient}.`
+    });
+  } catch (error) {
+    console.error('❌ Template test failed:', error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to send template test email.'
     });
   }
 });

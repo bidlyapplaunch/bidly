@@ -12,6 +12,10 @@ export const emailSettingsAPI = {
   testSmtp: async (payload) => {
     const response = await api.post('/email-settings/test-smtp', payload);
     return response.data;
+  },
+  testTemplate: async (payload) => {
+    const response = await api.post('/email-settings/test-template', payload);
+    return response.data;
   }
 };
 

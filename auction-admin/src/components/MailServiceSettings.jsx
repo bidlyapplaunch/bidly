@@ -157,7 +157,7 @@ const TOKEN_LIST = [
   '{{cta_url}}'
 ];
 
-const DEFAULT_SETTINGS = {
+const createDefaultSettings = (templateDefaults = TEMPLATE_DEFAULTS) => ({
   enabled: true,
   useCustomSmtp: false,
   smtp: {
@@ -170,18 +170,20 @@ const DEFAULT_SETTINGS = {
     fromEmail: ''
   },
   templates: TEMPLATE_METADATA.reduce((acc, template) => {
-    const defaults = TEMPLATE_DEFAULTS[template.key];
+    const defaults = templateDefaults[template.key] || TEMPLATE_DEFAULTS[template.key];
     acc[template.key] = {
       enabled: true,
-      subject: defaults.subject,
-      html: defaults.html
+      subject: defaults?.subject || '',
+      html: defaults?.html || ''
     };
     return acc;
   }, {})
-};
+});
 
-function mergeSettings(serverSettings = {}) {
-  const merged = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+const DEFAULT_SETTINGS = createDefaultSettings();
+
+function mergeSettings(serverSettings = {}, templateDefaults = TEMPLATE_DEFAULTS) {
+  const merged = createDefaultSettings(templateDefaults);
   merged.enabled = serverSettings.enabled ?? merged.enabled;
   merged.useCustomSmtp = serverSettings.useCustomSmtp ?? merged.useCustomSmtp;
   merged.smtp = {
@@ -189,16 +191,16 @@ function mergeSettings(serverSettings = {}) {
     ...(serverSettings.smtp || {})
   };
   TEMPLATE_METADATA.forEach(({ key }) => {
-    const defaults = TEMPLATE_DEFAULTS[key];
+    const defaults = templateDefaults[key] || TEMPLATE_DEFAULTS[key];
     const serverTemplate = serverSettings.templates?.[key] || {};
     merged.templates[key] = {
       enabled: serverTemplate.enabled ?? merged.templates[key].enabled,
       subject: serverTemplate.subject?.trim()
         ? serverTemplate.subject
-        : defaults.subject,
+        : defaults?.subject || '',
       html: serverTemplate.html?.trim()
         ? serverTemplate.html
-        : defaults.html
+        : defaults?.html || ''
     };
   });
   return merged;
@@ -209,9 +211,12 @@ function MailServiceSettings() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState(null);
+  const [defaultTemplates, setDefaultTemplates] = useState(TEMPLATE_DEFAULTS);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [planContext, setPlanContext] = useState({ plan: 'free', canCustomize: false });
   const [testEmail, setTestEmail] = useState('');
+  const [templateTestEmail, setTemplateTestEmail] = useState('');
+  const [templateTestLoading, setTemplateTestLoading] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -219,7 +224,9 @@ function MailServiceSettings() {
       try {
         const response = await emailSettingsAPI.getSettings();
         if (!mounted) return;
-        setSettings(mergeSettings(response.settings));
+        const templateDefaults = response?.defaults?.templates || TEMPLATE_DEFAULTS;
+        setDefaultTemplates(templateDefaults);
+        setSettings(mergeSettings(response.settings, templateDefaults));
         setPlanContext({
           plan: response.plan,
           canCustomize: response.canCustomize
@@ -265,6 +272,24 @@ function MailServiceSettings() {
     }));
   };
 
+  const handleResetTemplate = (templateKey) => {
+    if (disabled) return;
+    const defaults = defaultTemplates[templateKey] || TEMPLATE_DEFAULTS[templateKey];
+    if (!defaults) return;
+
+    setSettings((prev) => ({
+      ...prev,
+      templates: {
+        ...prev.templates,
+        [templateKey]: {
+          ...prev.templates[templateKey],
+          subject: defaults.subject,
+          html: defaults.html
+        }
+      }
+    }));
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -294,6 +319,49 @@ function MailServiceSettings() {
       });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const handleSendTemplateTest = async (templateKey) => {
+    if (disabled) {
+      setMessage({
+        tone: 'critical',
+        content: 'Upgrade to a Pro or Enterprise plan to send template tests.'
+      });
+      return;
+    }
+
+    const recipient = templateTestEmail.trim();
+    if (!recipient) {
+      setMessage({ tone: 'critical', content: 'Enter a test email recipient.' });
+      return;
+    }
+
+    const template = settings.templates[templateKey];
+    if (!template) {
+      setMessage({ tone: 'critical', content: 'Template not found.' });
+      return;
+    }
+
+    try {
+      setTemplateTestLoading(templateKey);
+      await emailSettingsAPI.testTemplate({
+        templateKey,
+        to: recipient,
+        overrides: {
+          subject: template.subject,
+          html: template.html
+        }
+      });
+      setMessage({ tone: 'success', content: `Template test sent to ${recipient}.` });
+    } catch (error) {
+      console.error('Template test failed', error);
+      setMessage({
+        tone: 'critical',
+        content: error?.response?.data?.message || error?.message || 'Template test failed.'
+      });
+    } finally {
+      setTemplateTestLoading(null);
     }
   };
 
@@ -455,6 +523,21 @@ function MailServiceSettings() {
                 <div style={{ marginTop: 8 }}>{renderTokens()}</div>
               </div>
 
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <TextField
+                  label="Test email recipient"
+                  type="email"
+                  value={templateTestEmail}
+                  onChange={setTemplateTestEmail}
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                  disabled={disabled}
+                />
+                <Text tone="subdued" variant="bodySm">
+                  This address is used by the “Send test using this template” buttons below.
+                </Text>
+              </div>
+
               <div>
                 {TEMPLATE_METADATA.map(({ key, title }, index) => {
                   const template = settings.templates[key] || {
@@ -506,6 +589,23 @@ function MailServiceSettings() {
                           disabled={disabled}
                         />
                       </FormLayout>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        <Button
+                          size="slim"
+                          onClick={() => handleResetTemplate(key)}
+                          disabled={disabled}
+                        >
+                          Reset to default
+                        </Button>
+                        <Button
+                          size="slim"
+                          onClick={() => handleSendTemplateTest(key)}
+                          disabled={disabled || !templateTestEmail.trim()}
+                          loading={templateTestLoading === key}
+                        >
+                          Send test using this template
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
