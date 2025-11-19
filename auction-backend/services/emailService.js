@@ -64,6 +64,23 @@ function renderTemplate(templateString, data = {}) {
   });
 }
 
+function wrapPlainText(text = '') {
+  const safeText = text || '';
+  const escaped = safeText
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\r\n|\n\r|\r|\n/g, '<br>');
+
+  return `
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+        ${escaped}
+      </body>
+    </html>
+  `;
+}
+
 function formatFromAddress(name, email) {
   if (!email) {
     return defaultTransportState.fromEmail;
@@ -130,7 +147,8 @@ function getDefaultTemplateConfig() {
     acc[key] = {
       enabled: true,
       subject: defaults.subject,
-      html: defaults.html
+      html: defaults.html,
+      mode: defaults.mode === 'text' ? 'text' : 'html'
     };
     return acc;
   }, {});
@@ -180,8 +198,16 @@ async function getEffectiveEmailConfig(rawShopDomain) {
       baseConfig.canCustomize && custom?.html?.trim()
         ? custom.html
         : defaults.html;
+    const defaultMode = defaults.mode === 'text' ? 'text' : 'html';
+    const mode = baseConfig.canCustomize
+      ? custom?.mode === 'text'
+        ? 'text'
+        : custom?.mode === 'html'
+        ? 'html'
+        : defaultMode
+      : defaultMode;
 
-    mergedTemplates[key] = { enabled, subject, html };
+    mergedTemplates[key] = { enabled, subject, html, mode };
   });
   baseConfig.templates = mergedTemplates;
 
@@ -329,7 +355,9 @@ class EmailService {
     };
 
     const subject = subjectOverride || renderTemplate(template.subject, resolvedData);
-    const html = htmlOverride || renderTemplate(template.html, resolvedData);
+    const rawBody = htmlOverride || renderTemplate(template.html, resolvedData);
+    const resolvedMode = template.mode === 'text' ? 'text' : 'html';
+    const html = resolvedMode === 'text' ? wrapPlainText(rawBody) : rawBody;
 
     if (!subject.trim() || !html.trim()) {
       console.warn(`⚠️ Email template "${type}" produced empty subject or HTML.`);

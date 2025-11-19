@@ -81,6 +81,13 @@ function applyPayloadToSettings(baseSettings, payload = {}) {
       if (incoming.enabled !== undefined) {
         next.templates[key].enabled = !!incoming.enabled;
       }
+
+      if (incoming.mode !== undefined) {
+        const normalizedMode = incoming.mode === 'html' ? 'html' : 'text';
+        next.templates[key].mode = normalizedMode;
+      } else if (!next.templates[key].mode) {
+        next.templates[key].mode = 'text';
+      }
     });
   }
 

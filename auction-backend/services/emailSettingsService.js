@@ -26,6 +26,11 @@ function mergeTemplate(baseTemplate, overrideTemplate = {}) {
   if (typeof overrideTemplate.html === 'string') {
     next.html = overrideTemplate.html;
   }
+  if (typeof overrideTemplate.mode === 'string') {
+    next.mode = overrideTemplate.mode === 'html' ? 'html' : 'text';
+  } else if (!next.mode) {
+    next.mode = 'text';
+  }
   return next;
 }
 

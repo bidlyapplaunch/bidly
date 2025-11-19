@@ -7,7 +7,8 @@ import {
   Checkbox,
   Button,
   Spinner,
-  FormLayout
+  FormLayout,
+  ChoiceList
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 
@@ -22,6 +23,7 @@ const TEMPLATE_METADATA = [
 const TEMPLATE_DEFAULTS = {
   bidConfirmation: {
     subject: 'Your bid on {{auction_title}} has been received',
+    mode: 'html',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2c3e50;">🎯 Bid Confirmation</h2>
@@ -44,6 +46,7 @@ const TEMPLATE_DEFAULTS = {
   },
   outbidNotification: {
     subject: 'You have been outbid on {{auction_title}}',
+    mode: 'html',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #e74c3c;">⚠️ You've Been Outbid</h2>
@@ -70,6 +73,7 @@ const TEMPLATE_DEFAULTS = {
   },
   winnerNotification: {
     subject: 'You won the auction for {{auction_title}}!',
+    mode: 'html',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>
@@ -95,6 +99,7 @@ const TEMPLATE_DEFAULTS = {
   },
   auctionEndingSoon: {
     subject: '⏰ {{auction_title}} is ending soon',
+    mode: 'html',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #f39c12;">⏰ Auction Ending Soon!</h2>
@@ -121,6 +126,7 @@ const TEMPLATE_DEFAULTS = {
   },
   adminNotification: {
     subject: 'Admin Notification: {{subject_override}}',
+    mode: 'html',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2c3e50;">Admin Notification for {{store_name}}</h2>
@@ -173,7 +179,8 @@ const createDefaultSettings = (templateDefaults = TEMPLATE_DEFAULTS) => ({
     acc[template.key] = {
       enabled: true,
       subject: defaults?.subject || '',
-      html: defaults?.html || ''
+      html: defaults?.html || '',
+      mode: defaults?.mode || 'text'
     };
     return acc;
   }, {})
@@ -199,7 +206,11 @@ function mergeSettings(serverSettings = {}, templateDefaults = TEMPLATE_DEFAULTS
         : defaults?.subject || '',
       html: serverTemplate.html?.trim()
         ? serverTemplate.html
-        : defaults?.html || ''
+        : defaults?.html || '',
+      mode:
+        typeof serverTemplate.mode === 'string'
+          ? serverTemplate.mode
+          : merged.templates[key].mode || defaults?.mode || 'text'
     };
   });
   return merged;
@@ -650,7 +661,8 @@ function MailServiceSettings() {
                   const template = settings.templates[key] || {
                     enabled: true,
                     subject: '',
-                    html: ''
+                    html: '',
+                    mode: 'text'
                   };
                   return (
                     <div
@@ -688,14 +700,32 @@ function MailServiceSettings() {
                           autoComplete="off"
                           disabled={disabled}
                         />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <Text variant="bodySm" fontWeight="bold">
+                            Editor mode
+                          </Text>
+                          <ChoiceList
+                            title="Editor mode"
+                            titleHidden
+                            choices={[
+                              { label: 'Simple editor', value: 'text' },
+                              { label: 'HTML editor', value: 'html' }
+                            ]}
+                            selected={[template.mode || 'text']}
+                            onChange={(value) => handleTemplateChange(key, 'mode', value[0])}
+                            allowMultiple={false}
+                            disabled={disabled}
+                          />
+                        </div>
                         <TextField
-                          label="HTML content"
+                          label={template.mode === 'html' ? 'HTML content' : 'Message body'}
                           value={template.html}
                           onChange={(value) => handleTemplateChange(key, 'html', value)}
                           onFocus={() => handleTemplateFocus(key, 'html')}
-                          multiline={6}
+                          multiline={template.mode === 'html' ? 8 : 6}
                           autoComplete="off"
                           disabled={disabled}
+                          style={template.mode === 'html' ? { fontFamily: 'monospace' } : undefined}
                         />
                       </FormLayout>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

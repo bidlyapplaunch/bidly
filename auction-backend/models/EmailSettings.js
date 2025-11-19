@@ -14,6 +14,11 @@ const templateSchema = new mongoose.Schema(
     html: {
       type: String,
       default: ''
+    },
+    mode: {
+      type: String,
+      enum: ['text', 'html'],
+      default: 'text'
     }
   },
   { _id: false }
