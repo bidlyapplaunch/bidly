@@ -7,8 +7,7 @@ import {
   Checkbox,
   Button,
   Spinner,
-  FormLayout,
-  ButtonGroup
+  FormLayout
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 
@@ -704,8 +703,10 @@ function MailServiceSettings() {
                           <Text variant="bodySm" fontWeight="bold">
                             Editor mode
                           </Text>
-                          <ButtonGroup segmented>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <Button
+                              size="slim"
+                              primary={(template.mode || 'text') === 'text'}
                               pressed={(template.mode || 'text') === 'text'}
                               onClick={() => handleTemplateChange(key, 'mode', 'text')}
                               disabled={disabled}
@@ -713,13 +714,15 @@ function MailServiceSettings() {
                               Simple editor
                             </Button>
                             <Button
+                              size="slim"
+                              primary={template.mode === 'html'}
                               pressed={template.mode === 'html'}
                               onClick={() => handleTemplateChange(key, 'mode', 'html')}
                               disabled={disabled}
                             >
                               HTML editor
                             </Button>
-                          </ButtonGroup>
+                          </div>
                         </div>
                         <TextField
                           label={template.mode === 'html' ? 'HTML content' : 'Message body'}
