@@ -184,18 +184,18 @@
         colors: {
             accent: '#38BDF8',
             text: '#EDEEF3',
-            timer: '#FBBF24',
-            bg_solid: '#36526D',
+            timer: '#FF0000',
+            bg_solid: '#6B7280',
             bg_gradient_start: '#B7BDD2',
             bg_gradient_end: '#283E3B',
             button_bg: '#212736',
             button_hover: '#7FD2C1',
             button_text: '#FFFFFF',
-            border: '#FF1E05'
+            border: '#212736'
         },
         borderRadius: 16,
         boxShadow: 'medium',
-        gradientEnabled: true
+        gradientEnabled: false
     };
 
     let widgetThemeSettingsCache = null;

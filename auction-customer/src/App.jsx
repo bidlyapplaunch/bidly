@@ -67,6 +67,21 @@ function App() {
     };
   };
 
+  // Get shop information from URL parameters before defining hooks that depend on it
+  const getShopInfo = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shopParam = urlParams.get('shop');
+    if (shopParam) {
+      const shopNameParam = shopParam.replace('.myshopify.com', '');
+      return { shop: shopParam, shopName: shopNameParam };
+    }
+    return { shop: null, shopName: null };
+  };
+
+  const { shop, shopName } = getShopInfo();
+  const resolvedShopDomain =
+    shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
+
   const syncCustomerProfile = useCallback(async (sourceCustomer) => {
     if (!sourceCustomer?.email || !resolvedShopDomain) {
       return null;
@@ -132,20 +147,6 @@ function App() {
   const [customerSyncing, setCustomerSyncing] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authRequired, setAuthRequired] = useState(false);
-
-  // Get shop information from URL parameters
-  const getShopInfo = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shop = urlParams.get('shop');
-    if (shop) {
-      const shopName = shop.replace('.myshopify.com', '');
-      return { shop, shopName };
-    }
-    return { shop: null, shopName: null };
-  };
-
-  const { shop, shopName } = getShopInfo();
-  const resolvedShopDomain = shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
 
   useEffect(() => {
     let isMounted = true;
