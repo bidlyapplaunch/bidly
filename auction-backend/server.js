@@ -76,20 +76,38 @@ app.use(helmet({
 
 // CORS configuration - Allow requests from both backends and Shopify admin
 app.use(cors({
-  origin: [
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'https://bidly-auction-admin.onrender.com',
-    'https://bidly-auction-customer.onrender.com',
-    'https://bidly-auction-backend.onrender.com',
-    'https://bidly-auction-backend-2.onrender.com',
-    'https://admin.shopify.com',
-    'https://*.myshopify.com',
-    'https://bidly-2.myshopify.com',
-    'https://6sb15z-k1.myshopify.com',
-    'https://true-nordic.com',
-    'https://www.true-nordic.com'
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'https://bidly-auction-admin.onrender.com',
+      'https://bidly-auction-customer.onrender.com',
+      'https://bidly-auction-backend.onrender.com',
+      'https://bidly-auction-backend-2.onrender.com',
+      'https://admin.shopify.com',
+      'https://true-nordic.com',
+      'https://www.true-nordic.com'
+    ];
+
+    // Allow all *.myshopify.com domains
+    if (origin.endsWith('.myshopify.com')) {
+      return callback(null, true);
+    }
+
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Reject other origins
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   // Development headers for iframe compatibility
   allowedHeaders: [

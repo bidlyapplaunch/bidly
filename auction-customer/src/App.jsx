@@ -82,6 +82,13 @@ function App() {
   const resolvedShopDomain =
     shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
 
+  // Customer authentication state - declare before useCallback hooks that depend on them
+  const [customer, setCustomer] = useState(null);
+  const [customerProfile, setCustomerProfile] = useState(null);
+  const [customerSyncing, setCustomerSyncing] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
+
   const syncCustomerProfile = useCallback(async (sourceCustomer) => {
     if (!sourceCustomer?.email || !resolvedShopDomain) {
       return null;
@@ -140,13 +147,6 @@ function App() {
     customer?.name ||
     customer?.email ||
     ANONYMOUS_BIDDER;
-  
-  // Customer authentication state
-  const [customer, setCustomer] = useState(null);
-  const [customerProfile, setCustomerProfile] = useState(null);
-  const [customerSyncing, setCustomerSyncing] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
