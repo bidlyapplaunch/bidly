@@ -44,8 +44,8 @@
                 customerData = {
                     id: window.Shopify.customer.id,
                     email: window.Shopify.customer.email,
-                    firstName: window.Shopify.customer.first_name,
-                    lastName: window.Shopify.customer.last_name || 'Customer'
+                    firstName: window.Shopify.customer.first_name || null,
+                    lastName: window.Shopify.customer.last_name || null
                 };
                 console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
             }
@@ -59,8 +59,8 @@
                         customerData = {
                             id: customerJson.id,
                             email: customerJson.email,
-                            firstName: customerJson.first_name,
-                            lastName: customerJson.last_name || 'Customer'
+                            firstName: customerJson.first_name || null,
+                            lastName: customerJson.last_name || null
                         };
                         console.log('Bidly: Found customer via meta tag:', customerData);
                     } catch (e) {
@@ -78,8 +78,8 @@
                         customerData = {
                             id: customerJson.id,
                             email: customerJson.email,
-                            firstName: customerJson.first_name,
-                            lastName: customerJson.last_name || 'Customer'
+                            firstName: customerJson.first_name || null,
+                            lastName: customerJson.last_name || null
                         };
                         console.log('Bidly: Found customer via script tag:', customerData);
                     } catch (e) {
@@ -93,8 +93,8 @@
                 customerData = {
                     id: window.customer.id,
                     email: window.customer.email,
-                    firstName: window.customer.first_name,
-                    lastName: window.customer.last_name || 'Customer'
+                    firstName: window.customer.first_name || null,
+                    lastName: window.customer.last_name || null
                 };
                 console.log('Bidly: Found customer via window.customer:', customerData);
             }
@@ -110,8 +110,8 @@
                         customerData = {
                             id: customerJson.id,
                             email: customerJson.email,
-                            firstName: customerJson.first_name || customerJson.firstName,
-                            lastName: customerJson.last_name || customerJson.lastName || 'Customer'
+                            firstName: customerJson.first_name || customerJson.firstName || null,
+                            lastName: customerJson.last_name || customerJson.lastName || null
                         };
                         console.log('Bidly: Found customer via window.customerData:', customerData);
                     }
@@ -131,8 +131,8 @@
                         customerData = {
                             id: customerJson.id,
                             email: customerJson.email,
-                            firstName: customerJson.first_name || customerJson.firstName,
-                            lastName: customerJson.last_name || customerJson.lastName || 'Customer'
+                            firstName: customerJson.first_name || customerJson.firstName || null,
+                            lastName: customerJson.last_name || customerJson.lastName || null
                         };
                         console.log('Bidly: Found customer via window.Shopify.customerData:', customerData);
                     }
@@ -141,7 +141,7 @@
                 }
             }
             
-            // Method 5: Check for customer data in localStorage/sessionStorage
+            // Method 7: Check for customer data in localStorage/sessionStorage
             if (!customerData) {
                 const storedCustomer = localStorage.getItem('shopify_customer') || sessionStorage.getItem('shopify_customer');
                 if (storedCustomer) {
@@ -150,8 +150,8 @@
                         customerData = {
                             id: customerJson.id,
                             email: customerJson.email,
-                            firstName: customerJson.first_name,
-                            lastName: customerJson.last_name || 'Customer'
+                            firstName: customerJson.first_name || null,
+                            lastName: customerJson.last_name || null
                         };
                         console.log('Bidly: Found customer via storage:', customerData);
                     } catch (e) {
@@ -161,27 +161,6 @@
             }
             
             if (customerData && customerData.email) {
-                // Set customer data locally first
-                const customerLastName = customerData.lastName || 'Customer';
-                const customerFirstName = customerData.firstName || '';
-                // Construct fullName properly, avoiding "undefined Customer"
-                const constructedFullName = customerFirstName 
-                    ? `${customerFirstName} ${customerLastName}`.trim()
-                    : customerLastName;
-                
-                currentCustomer = {
-                    id: customerData.id,
-                    email: customerData.email,
-                    firstName: customerFirstName,
-                    lastName: customerLastName,
-                    fullName: constructedFullName,
-                    displayName: customerData.displayName || constructedFullName, // Use displayName if available
-                    shopifyId: customerData.id,
-                    isTemp: false
-                };
-                isLoggedIn = true;
-                console.log('Bidly: Customer detected locally:', currentCustomer);
-                
                 // Clear any guest customer data from sessionStorage since we have a Shopify customer
                 try {
                     sessionStorage.removeItem('bidly_guest_customer');
@@ -190,7 +169,7 @@
                     console.warn('Bidly: Could not clear guest storage:', storageError);
                 }
                 
-                // Try to sync with backend (but don't fail if it doesn't work)
+                // Sync with backend FIRST to get proper displayName (backend will generate random name if needed)
                 try {
                     const response = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
                         method: 'POST',
@@ -200,31 +179,67 @@
                     body: JSON.stringify({
                         shopifyId: customerData.id,
                         email: customerData.email,
-                        firstName: customerData.firstName,
-                        lastName: customerData.lastName || 'Customer', // Fallback for missing last names
-                        displayName: customerData.displayName, // Include displayName if available
+                        firstName: customerData.firstName || undefined,
+                        lastName: customerData.lastName || undefined,
+                        displayName: customerData.displayName || undefined,
                         shopDomain: CONFIG.shopDomain
                     })
                     });
                     
                     if (response.ok) {
                         const result = await response.json();
-                        // Merge backend response with local data, ensuring displayName is preserved
+                        // Use backend response which has proper displayName (generated if needed)
                         currentCustomer = {
-                            ...currentCustomer,
-                            ...result.customer,
-                            displayName: result.customer?.displayName || currentCustomer.displayName || currentCustomer.fullName
+                            id: customerData.id,
+                            email: customerData.email,
+                            firstName: result.customer?.firstName || customerData.firstName || null,
+                            lastName: result.customer?.lastName || customerData.lastName || null,
+                            fullName: result.customer?.fullName || null,
+                            displayName: result.customer?.displayName || result.customer?.fullName || 'Guest User',
+                            shopifyId: customerData.id,
+                            isTemp: false
                         };
                         console.log('Bidly: Customer synced with backend:', currentCustomer);
                     } else {
                         const errorText = await response.text();
                         console.warn('Bidly: Failed to sync customer with backend:', response.status, errorText);
-                        // Continue with local customer data
+                        // Fallback: construct a temporary name, but don't use 'Customer'
+                        const firstName = customerData.firstName || '';
+                        const lastName = customerData.lastName || '';
+                        const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Guest User';
+                        currentCustomer = {
+                            id: customerData.id,
+                            email: customerData.email,
+                            firstName: firstName || null,
+                            lastName: lastName || null,
+                            fullName: tempName,
+                            displayName: tempName,
+                            shopifyId: customerData.id,
+                            isTemp: false
+                        };
+                        console.log('Bidly: Using fallback customer data:', currentCustomer);
                     }
                 } catch (error) {
                     console.warn('Bidly: Error syncing customer with backend:', error);
-                    // Continue with local customer data
+                    // Fallback: construct a temporary name, but don't use 'Customer'
+                    const firstName = customerData.firstName || '';
+                    const lastName = customerData.lastName || '';
+                    const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Guest User';
+                    currentCustomer = {
+                        id: customerData.id,
+                        email: customerData.email,
+                        firstName: firstName || null,
+                        lastName: lastName || null,
+                        fullName: tempName,
+                        displayName: tempName,
+                        shopifyId: customerData.id,
+                        isTemp: false
+                    };
+                    console.log('Bidly: Using fallback customer data (error):', currentCustomer);
                 }
+                
+                isLoggedIn = true;
+                console.log('Bidly: Customer detected and processed:', currentCustomer);
                 
                 return true;
             }
