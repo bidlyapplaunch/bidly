@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Layout,
   Card,
   Text,
   Banner,
@@ -217,6 +216,11 @@ function MailServiceSettings() {
   const [testEmail, setTestEmail] = useState('');
   const [templateTestEmail, setTemplateTestEmail] = useState('');
   const [templateTestLoading, setTemplateTestLoading] = useState(null);
+  const [activeFieldContext, setActiveFieldContext] = useState({ templateKey: null, field: null });
+  const [isWideLayout, setIsWideLayout] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth >= 1100;
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -247,7 +251,41 @@ function MailServiceSettings() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsWideLayout(window.innerWidth >= 1100);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const disabled = useMemo(() => !planContext.canCustomize, [planContext]);
+
+  const layoutStyles = useMemo(
+    () => ({
+      container: {
+        display: 'flex',
+        flexDirection: isWideLayout ? 'row' : 'column',
+        gap: isWideLayout ? 24 : 16,
+        alignItems: 'flex-start'
+      },
+      mainColumn: {
+        flex: 1,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 20
+      },
+      sidebar: {
+        width: isWideLayout ? 300 : '100%',
+        position: isWideLayout ? 'sticky' : 'static',
+        top: isWideLayout ? 80 : 'auto',
+        alignSelf: 'flex-start'
+      }
+    }),
+    [isWideLayout]
+  );
 
   const handleSmtpChange = (field, value) => {
     setSettings((prev) => ({
@@ -257,6 +295,10 @@ function MailServiceSettings() {
         [field]: value
       }
     }));
+  };
+
+  const handleTemplateFocus = (templateKey, field) => {
+    setActiveFieldContext({ templateKey, field });
   };
 
   const handleTemplateChange = (templateKey, field, value) => {
@@ -365,6 +407,36 @@ function MailServiceSettings() {
     }
   };
 
+  const handleTokenClick = (token) => {
+    if (disabled) return;
+    const { templateKey, field } = activeFieldContext;
+    if (!templateKey || !field) {
+      setMessage({
+        tone: 'warning',
+        content: 'Select a template subject or HTML field to insert tokens.'
+      });
+      return;
+    }
+
+    setSettings((prev) => {
+      const currentTemplate = prev.templates[templateKey];
+      if (!currentTemplate) {
+        return prev;
+      }
+      const currentValue = currentTemplate[field] || '';
+      return {
+        ...prev,
+        templates: {
+          ...prev.templates,
+          [templateKey]: {
+            ...currentTemplate,
+            [field]: `${currentValue}${token}`
+          }
+        }
+      };
+    });
+  };
+
   const renderFeedback = () => {
     if (!message) return null;
     return (
@@ -374,7 +446,7 @@ function MailServiceSettings() {
     );
   };
 
-  const renderTokens = () => (
+  const renderTokenChips = () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
       {TOKEN_LIST.map((token) => (
         <code
@@ -382,12 +454,45 @@ function MailServiceSettings() {
           style={{
             padding: '4px 8px',
             borderRadius: 6,
-            background: 'var(--p-color-bg-subdued)'
+            background: 'var(--p-color-bg-subdued)',
+            cursor: disabled ? 'not-allowed' : 'pointer'
+          }}
+          role="button"
+          tabIndex={0}
+          aria-disabled={disabled}
+          onClick={() => handleTokenClick(token)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              handleTokenClick(token);
+            }
           }}
         >
           {token}
         </code>
       ))}
+    </div>
+  );
+
+  const renderTokenPanel = () => (
+    <div
+      style={{
+        background: 'var(--p-color-bg-surface, #fff)',
+        border: '1px solid var(--p-color-border-subdued, #dfe3e8)',
+        borderRadius: 12,
+        padding: 16,
+        boxShadow: '0 12px 30px rgba(24, 39, 75, 0.08)',
+        maxHeight: isWideLayout ? 'calc(100vh - 120px)' : 'none',
+        overflowY: 'auto'
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <Text variant="headingMd">Available tokens</Text>
+        <Text tone="subdued" variant="bodySm">
+          Click a token to insert it into the subject or HTML field you’re editing.
+        </Text>
+        {renderTokenChips()}
+      </div>
     </div>
   );
 
@@ -400,21 +505,29 @@ function MailServiceSettings() {
   }
 
   return (
-    <Layout>
-      <Layout.Section>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {renderFeedback()}
-          {disabled && (
-            <Banner tone="warning" title="Upgrade required">
-              <p>Custom mail settings are available on Pro and Enterprise plans.</p>
-            </Banner>
-          )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {renderFeedback()}
+      {disabled && (
+        <Banner tone="warning" title="Upgrade required">
+          <p>Custom mail settings are available on Pro and Enterprise plans.</p>
+        </Banner>
+      )}
 
+      <div style={layoutStyles.container}>
+        {!isWideLayout && (
+          <div style={{ width: '100%' }}>
+            {renderTokenPanel()}
+          </div>
+        )}
+
+        <div style={layoutStyles.mainColumn}>
           <Card sectioned>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <Text variant="headingMd">SMTP configuration</Text>
-                <Text tone="subdued">Connect your own email server to send notifications from your domain.</Text>
+                <Text tone="subdued">
+                  Connect your own email server to send notifications from your domain.
+                </Text>
               </div>
 
               <Checkbox
@@ -512,15 +625,9 @@ function MailServiceSettings() {
               <div>
                 <Text variant="headingMd">Email templates</Text>
                 <Text tone="subdued">
-                  Customize the content of Bidly notifications. Tokens help merge auction-specific data.
+                  Customize Bidly notification content. Use the token panel to pull in dynamic values like
+                  bidder names or auction details.
                 </Text>
-              </div>
-
-              <div>
-                <Text as="span" tone="subdued">
-                  Available tokens:
-                </Text>
-                <div style={{ marginTop: 8 }}>{renderTokens()}</div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -577,6 +684,7 @@ function MailServiceSettings() {
                           label="Subject"
                           value={template.subject}
                           onChange={(value) => handleTemplateChange(key, 'subject', value)}
+                          onFocus={() => handleTemplateFocus(key, 'subject')}
                           autoComplete="off"
                           disabled={disabled}
                         />
@@ -584,17 +692,14 @@ function MailServiceSettings() {
                           label="HTML content"
                           value={template.html}
                           onChange={(value) => handleTemplateChange(key, 'html', value)}
+                          onFocus={() => handleTemplateFocus(key, 'html')}
                           multiline={6}
                           autoComplete="off"
                           disabled={disabled}
                         />
                       </FormLayout>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        <Button
-                          size="slim"
-                          onClick={() => handleResetTemplate(key)}
-                          disabled={disabled}
-                        >
+                        <Button size="slim" onClick={() => handleResetTemplate(key)} disabled={disabled}>
                           Reset to default
                         </Button>
                         <Button
@@ -619,8 +724,14 @@ function MailServiceSettings() {
             </Button>
           </div>
         </div>
-      </Layout.Section>
-    </Layout>
+
+        {isWideLayout && (
+          <div style={layoutStyles.sidebar}>
+            {renderTokenPanel()}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
