@@ -8,7 +8,7 @@ import {
   Button,
   Spinner,
   FormLayout,
-  ChoiceList
+  ButtonGroup
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 
@@ -704,18 +704,22 @@ function MailServiceSettings() {
                           <Text variant="bodySm" fontWeight="bold">
                             Editor mode
                           </Text>
-                          <ChoiceList
-                            title="Editor mode"
-                            titleHidden
-                            choices={[
-                              { label: 'Simple editor', value: 'text' },
-                              { label: 'HTML editor', value: 'html' }
-                            ]}
-                            selected={[template.mode || 'text']}
-                            onChange={(value) => handleTemplateChange(key, 'mode', value[0])}
-                            allowMultiple={false}
-                            disabled={disabled}
-                          />
+                          <ButtonGroup segmented>
+                            <Button
+                              pressed={(template.mode || 'text') === 'text'}
+                              onClick={() => handleTemplateChange(key, 'mode', 'text')}
+                              disabled={disabled}
+                            >
+                              Simple editor
+                            </Button>
+                            <Button
+                              pressed={template.mode === 'html'}
+                              onClick={() => handleTemplateChange(key, 'mode', 'html')}
+                              disabled={disabled}
+                            >
+                              HTML editor
+                            </Button>
+                          </ButtonGroup>
                         </div>
                         <TextField
                           label={template.mode === 'html' ? 'HTML content' : 'Message body'}
