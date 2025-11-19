@@ -692,7 +692,7 @@
                               '<span class="bidly-status-ended">ENDED</span>'}
                         </div>
                         <div class="bidly-customer-info">
-                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.fullName || 'Guest User'}</span>
+                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.displayName || getCurrentCustomer()?.fullName || getCurrentCustomer()?.name || 'Guest User'}</span>
                             <button class="bidly-logout-btn" onclick="window.BidlyAuctionWidgetLogout && window.BidlyAuctionWidgetLogout(); return false;" title="Logout">×</button>
                         </div>
                     </div>

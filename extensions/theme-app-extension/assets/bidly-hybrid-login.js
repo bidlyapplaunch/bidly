@@ -163,12 +163,19 @@
             if (customerData && customerData.email) {
                 // Set customer data locally first
                 const customerLastName = customerData.lastName || 'Customer';
+                const customerFirstName = customerData.firstName || '';
+                // Construct fullName properly, avoiding "undefined Customer"
+                const constructedFullName = customerFirstName 
+                    ? `${customerFirstName} ${customerLastName}`.trim()
+                    : customerLastName;
+                
                 currentCustomer = {
                     id: customerData.id,
                     email: customerData.email,
-                    firstName: customerData.firstName,
+                    firstName: customerFirstName,
                     lastName: customerLastName,
-                    fullName: `${customerData.firstName} ${customerLastName}`,
+                    fullName: constructedFullName,
+                    displayName: customerData.displayName || constructedFullName, // Use displayName if available
                     shopifyId: customerData.id,
                     isTemp: false
                 };
@@ -195,13 +202,19 @@
                         email: customerData.email,
                         firstName: customerData.firstName,
                         lastName: customerData.lastName || 'Customer', // Fallback for missing last names
+                        displayName: customerData.displayName, // Include displayName if available
                         shopDomain: CONFIG.shopDomain
                     })
                     });
                     
                     if (response.ok) {
                         const result = await response.json();
-                        currentCustomer = result.customer;
+                        // Merge backend response with local data, ensuring displayName is preserved
+                        currentCustomer = {
+                            ...currentCustomer,
+                            ...result.customer,
+                            displayName: result.customer?.displayName || currentCustomer.displayName || currentCustomer.fullName
+                        };
                         console.log('Bidly: Customer synced with backend:', currentCustomer);
                     } else {
                         const errorText = await response.text();
@@ -232,6 +245,7 @@
             const nameParts = name.trim().split(' ');
             const firstName = nameParts[0];
             const lastName = nameParts.slice(1).join(' ') || 'Guest';
+            const fullName = `${firstName} ${lastName}`;
             
             // Create guest customer object (NOT saved to database)
             const guestCustomer = {
@@ -239,7 +253,8 @@
                 email: email,
                 firstName: firstName,
                 lastName: lastName,
-                fullName: `${firstName} ${lastName}`,
+                fullName: fullName,
+                displayName: fullName, // Use fullName as displayName for guests
                 isTemp: true,
                 shopifyId: null // No Shopify ID = guest
             };
