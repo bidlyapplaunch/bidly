@@ -170,6 +170,18 @@ try {
   });
 }
 
+// Metafields routes are required for every bid, so load synchronously
+try {
+  const { default: metafieldsRoutes } = await import('./routes/metafields.js');
+  app.use('/api/metafields', metafieldsRoutes);
+  console.log('✅ Metafields routes loaded synchronously');
+} catch (error) {
+  console.error('❌ Failed to load metafields routes:', error.message);
+  app.use('/api/metafields', (req, res) => {
+    res.status(500).json({ success: false, message: 'Metafields routes not available', error: error.message });
+  });
+}
+
 // Load other optional routes asynchronously without blocking server startup
 (async () => {
   const routeLoaders = [
@@ -177,11 +189,6 @@ try {
       name: 'winner',
       import: () => import('./routes/winnerRoutes.js'),
       mount: (routes) => app.use('/api/winner', routes.default)
-    },
-    {
-      name: 'metafields',
-      import: () => import('./routes/metafields.js'),
-      mount: (routes) => app.use('/api/metafields', routes.default)
     },
     {
       name: 'product-duplication',
