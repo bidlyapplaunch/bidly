@@ -1,21 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Badge,
-  BlockStack,
-  Button,
-  Card,
-  InlineStack,
-  Layout,
-  Frame,
-  Page,
-  Spinner,
-  Text,
-  TextField,
-  Toast
-} from '@shopify/polaris';
+import { Badge, Banner, Button, Card, Layout, Page, Spinner, Text, TextField } from '@shopify/polaris';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useAppBridge } from '@shopify/app-bridge-react';
 import { onboardingAPI } from '../services/api';
+
+const stackStyle = (gap = 16) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: typeof gap === 'number' ? `${gap}px` : gap
+});
+
+const rowStyle = ({ gap = 12, justify = 'flex-start', align = 'center', wrap = true } = {}) => ({
+  display: 'flex',
+  alignItems: align,
+  justifyContent: justify,
+  flexWrap: wrap ? 'wrap' : 'nowrap',
+  gap: typeof gap === 'number' ? `${gap}px` : gap
+});
 
 const OnboardingPage = ({ initialStatus, onComplete }) => {
   const app = useAppBridge();
@@ -135,127 +136,123 @@ const OnboardingPage = ({ initialStatus, onComplete }) => {
 
   if (loading || !status) {
     return (
-      <Frame>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh'
-          }}
-        >
-          <Spinner accessibilityLabel="Loading onboarding status" size="large" />
-        </div>
-      </Frame>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh'
+        }}
+      >
+        <Spinner accessibilityLabel="Loading onboarding status" size="large" />
+      </div>
     );
   }
 
   return (
-    <Frame>
+    <Page
+      title="Welcome to Bidly"
+      subtitle="Complete these steps to finish your setup."
+      narrowWidth
+    >
       {toast && (
-        <Toast
-          content={toast.content}
-          tone={toast.tone === 'critical' ? 'critical' : 'success'}
-          onDismiss={() => setToast(null)}
-        />
+        <div style={{ marginBottom: 16 }}>
+          <Banner tone={toast.tone === 'critical' ? 'critical' : 'success'} onDismiss={() => setToast(null)}>
+            <p>{toast.content}</p>
+          </Banner>
+        </div>
       )}
-      <Page
-        title="Welcome to Bidly"
-        subtitle="Complete these steps to finish your setup."
-        narrowWidth
-      >
-        <Layout>
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text variant="headingMd">Step 1 · Enable the Auction Widget</Text>
-                  <Badge tone={widgetEnabled ? 'success' : 'attention'}>
-                    {widgetEnabled ? 'Completed' : 'Pending'}
-                  </Badge>
-                </InlineStack>
-                <Text>
-                  Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <div style={stackStyle(28)}>
+              <div style={rowStyle({ justify: 'space-between' })}>
+                <Text variant="headingMd">Step 1 · Enable the Auction Widget</Text>
+                <Badge tone={widgetEnabled ? 'success' : 'attention'}>
+                  {widgetEnabled ? 'Completed' : 'Pending'}
+                </Badge>
+              </div>
+              <Text>
+                Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.
+              </Text>
+              {widgetDetected ? (
+                <Text tone="success">We detected the widget is enabled in your theme.</Text>
+              ) : (
+                <Text tone={widgetError ? 'critical' : 'subdued'}>
+                  {widgetError
+                    ? `We couldn’t confirm the widget automatically: ${widgetError}`
+                    : 'If you have already enabled the widget, you can mark this step as complete manually.'}
                 </Text>
-                {widgetDetected ? (
-                  <Text tone="success">We detected the widget is enabled in your theme.</Text>
-                ) : (
-                  <Text tone={widgetError ? 'critical' : 'subdued'}>
-                    {widgetError
-                      ? `We couldn’t confirm the widget automatically: ${widgetError}`
-                      : 'If you have already enabled the widget, you can mark this step as complete manually.'}
-                  </Text>
+              )}
+              <div style={rowStyle({ gap: 12 })}>
+                <Button onClick={handleOpenThemeEditor} variant="primary">
+                  Open theme editor
+                </Button>
+                <Button onClick={fetchStatus}>Refresh status</Button>
+                {!widgetEnabled && (
+                  <Button onClick={handleConfirmWidget} tone="critical">
+                    Mark widget as enabled
+                  </Button>
                 )}
-                <InlineStack gap="200">
-                  <Button onClick={handleOpenThemeEditor} variant="primary">
-                    Open theme editor
-                  </Button>
-                  <Button onClick={fetchStatus}>Refresh status</Button>
-                  {!widgetEnabled && (
-                    <Button onClick={handleConfirmWidget} tone="critical">
-                      Mark widget as enabled
-                    </Button>
-                  )}
-                </InlineStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
+              </div>
+            </div>
+          </Card>
+        </Layout.Section>
 
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text variant="headingMd">Step 2 · Add the Auction Marketplace to your menu</Text>
-                  <Badge tone={stepTwoComplete ? 'success' : 'attention'}>
-                    {stepTwoComplete ? 'Completed' : 'Pending'}
-                  </Badge>
-                </InlineStack>
-                <Text>{stepTwoDescription}</Text>
-                <InlineStack gap="200" wrap={false}>
-                  <TextField
-                    label="Marketplace URL"
-                    labelHidden
-                    value={marketplaceUrl}
-                    onChange={() => {}}
-                    readOnly
-                    autoComplete="off"
-                  />
-                  <Button onClick={handleCopyMarketplaceUrl}>Copy</Button>
-                </InlineStack>
-                <InlineStack gap="200">
-                  <Button onClick={handleOpenMenuSettings}>Go to menu settings</Button>
-                  <Button onClick={handleMarkStepTwo} variant={stepTwoComplete ? 'secondary' : 'primary'} disabled={stepTwoComplete}>
-                    {stepTwoComplete ? 'Marked as done' : 'Mark step as done'}
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
+        <Layout.Section>
+          <Card>
+            <div style={stackStyle(28)}>
+              <div style={rowStyle({ justify: 'space-between' })}>
+                <Text variant="headingMd">Step 2 · Add the Auction Marketplace to your menu</Text>
+                <Badge tone={stepTwoComplete ? 'success' : 'attention'}>
+                  {stepTwoComplete ? 'Completed' : 'Pending'}
+                </Badge>
+              </div>
+              <Text>{stepTwoDescription}</Text>
+              <div style={rowStyle({ gap: 12, wrap: false })}>
+                <TextField
+                  label="Marketplace URL"
+                  labelHidden
+                  value={marketplaceUrl}
+                  onChange={() => {}}
+                  readOnly
+                  autoComplete="off"
+                />
+                <Button onClick={handleCopyMarketplaceUrl}>Copy</Button>
+              </div>
+              <div style={rowStyle({ gap: 12 })}>
+                <Button onClick={handleOpenMenuSettings}>Go to menu settings</Button>
+                <Button onClick={handleMarkStepTwo} variant={stepTwoComplete ? 'secondary' : 'primary'} disabled={stepTwoComplete}>
+                  {stepTwoComplete ? 'Marked as done' : 'Mark step as done'}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </Layout.Section>
 
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="300">
-                <Text variant="headingMd">Finish setup</Text>
-                <Text>
-                  Once both steps are complete, you&apos;re ready to start creating auctions with Bidly.
-                </Text>
-                <InlineStack gap="200">
-                  <Button
-                    variant="primary"
-                    tone="success"
-                    disabled={!allStepsComplete || completing}
-                    loading={completing}
-                    onClick={handleComplete}
-                  >
-                    Finish setup and open dashboard
-                  </Button>
-                </InlineStack>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
-        </Layout>
-      </Page>
-    </Frame>
+        <Layout.Section>
+          <Card>
+            <div style={stackStyle(20)}>
+              <Text variant="headingMd">Finish setup</Text>
+              <Text>
+                Once both steps are complete, you&apos;re ready to start creating auctions with Bidly.
+              </Text>
+              <div style={rowStyle({ gap: 12 })}>
+                <Button
+                  variant="primary"
+                  tone="success"
+                  disabled={!allStepsComplete || completing}
+                  loading={completing}
+                  onClick={handleComplete}
+                >
+                  Finish setup and open dashboard
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 };
 

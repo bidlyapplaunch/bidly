@@ -1,19 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  Page,
-  Layout,
-  Card,
-  Text,
-  Button,
-  InlineGrid,
-  BlockStack,
-  Banner,
-  Spinner,
-  Select,
-  Toast,
-  Frame
-} from '@shopify/polaris';
+import { Page, Layout, Card, Text, Button, Banner, Spinner, Select } from '@shopify/polaris';
 import { useCustomizationSettings } from '../hooks/useCustomizationSettings';
 
 const COLOR_FIELDS = [
@@ -32,6 +19,12 @@ const GRADIENT_FIELDS = [
   { key: 'bg_gradient_end', label: 'Gradient end', description: 'Ending color of the header gradient.' }
 ];
 
+const stackStyle = (gap = 12) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: typeof gap === 'number' ? `${gap}px` : gap
+});
+
 function ColorSwatchInput({ label, description, value, onChange }) {
   const handleTextChange = (event) => {
     const next = event.target.value.startsWith('#') ? event.target.value : `#${event.target.value}`;
@@ -41,13 +34,15 @@ function ColorSwatchInput({ label, description, value, onChange }) {
   };
 
   return (
-    <BlockStack gap="extraTight" inlineAlign="start">
-      <Text variant="bodyMd" fontWeight="medium">
-        {label}
-      </Text>
-      <Text as="p" tone="subdued" variant="bodySm">
-        {description}
-      </Text>
+    <div style={stackStyle(6)}>
+      <div style={stackStyle(4)}>
+        <Text variant="bodyMd" fontWeight="medium">
+          {label}
+        </Text>
+        <Text as="p" tone="subdued" variant="bodySm">
+          {description}
+        </Text>
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <input
           type="color"
@@ -76,7 +71,7 @@ function ColorSwatchInput({ label, description, value, onChange }) {
           }}
         />
       </div>
-    </BlockStack>
+    </div>
   );
 }
 
@@ -95,7 +90,7 @@ function TemplateCard({ template, selected, onSelect }) {
         cursor: 'pointer'
       }}
     >
-      <BlockStack gap="tight">
+      <div style={stackStyle(6)}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div
             style={{
@@ -112,7 +107,7 @@ function TemplateCard({ template, selected, onSelect }) {
         <Text as="p" tone="subdued" variant="bodySm">
           {template.description}
         </Text>
-      </BlockStack>
+      </div>
     </button>
   );
 }
@@ -315,49 +310,45 @@ const WidgetCustomizationSettings = () => {
         ? planGate.message
         : 'The widget customization requires the pro or enterprise plan.';
     return (
-      <Frame>
-        <Page
-          title="Widget customization"
-          subtitle="Upgrade your Bidly plan to unlock widget styling controls."
-          backAction={{
-            content: 'Back',
-            onAction: () => navigate(-1)
-          }}
-        >
-          <Layout>
-            <Layout.Section>
-              <Banner
-                tone="info"
-                title="Upgrade required to customize the widget"
-                action={{
-                  content: 'View plans',
-                  onAction: goToPlans
-                }}
-              >
-                <p>{gateMessage}</p>
-              </Banner>
-            </Layout.Section>
-          </Layout>
-        </Page>
-      </Frame>
+      <Page
+        title="Widget customization"
+        subtitle="Upgrade your Bidly plan to unlock widget styling controls."
+        backAction={{
+          content: 'Back',
+          onAction: () => navigate(-1)
+        }}
+      >
+        <Layout>
+          <Layout.Section>
+            <Banner
+              tone="info"
+              title="Upgrade required to customize the widget"
+              action={{
+                content: 'View plans',
+                onAction: goToPlans
+              }}
+            >
+              <p>{gateMessage}</p>
+            </Banner>
+          </Layout.Section>
+        </Layout>
+      </Page>
     );
   }
 
   if (loading || !meta) {
     return (
-      <Frame>
-        <Page
-          title="Widget customization"
-          backAction={{
-            content: 'Back',
-            onAction: () => navigate(-1)
-          }}
-        >
-          <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
-            <Spinner accessibilityLabel="Loading customization settings" size="large" />
-          </div>
-        </Page>
-      </Frame>
+      <Page
+        title="Widget customization"
+        backAction={{
+          content: 'Back',
+          onAction: () => navigate(-1)
+        }}
+      >
+        <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
+          <Spinner accessibilityLabel="Loading customization settings" size="large" />
+        </div>
+      </Page>
     );
   }
 
@@ -368,15 +359,7 @@ const WidgetCustomizationSettings = () => {
   ];
 
   return (
-    <Frame>
-      {toast && (
-        <Toast
-          content={toast.message}
-          tone={toast.status === 'success' ? 'success' : 'critical'}
-          onDismiss={() => setToast(null)}
-        />
-      )}
-      <Page
+    <Page
         fullWidth
         title="Widget customization"
         subtitle="Control how the Bidly widget appears on your product pages without touching code."
@@ -404,6 +387,13 @@ const WidgetCustomizationSettings = () => {
           }
         ]}
       >
+        {toast && (
+          <div style={{ marginBottom: 16 }}>
+            <Banner tone={toast.status === 'success' ? 'success' : 'critical'} onDismiss={() => setToast(null)}>
+              <p>{toast.message}</p>
+            </Banner>
+          </div>
+        )}
         <style>{`
           .widget-customization-grid {
             width: 100%;
@@ -449,14 +439,20 @@ const WidgetCustomizationSettings = () => {
             )}
 
             <Card>
-              <BlockStack gap="loose">
-                <div>
+              <div style={stackStyle(20)}>
+                <div style={stackStyle(6)}>
                   <Text variant="headingMd">Templates</Text>
                   <Text tone="subdued">
                     Start from a professionally designed preset. You can still adjust individual settings after selecting a template.
                   </Text>
                 </div>
-                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="tight">
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 16,
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'
+                  }}
+                >
                   {meta.templates.map((template) => (
                     <TemplateCard
                       key={template.id}
@@ -465,15 +461,13 @@ const WidgetCustomizationSettings = () => {
                       onSelect={applyTemplate}
                     />
                   ))}
-                </InlineGrid>
-              </BlockStack>
+                </div>
+              </div>
             </Card>
 
             <Card>
-              <BlockStack gap="loose">
-                <div>
-                  <Text variant="headingMd">Typography & layout</Text>
-                </div>
+              <div style={stackStyle(16)}>
+                <Text variant="headingMd">Typography & layout</Text>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <Select
                     label="Font family"
@@ -500,12 +494,12 @@ const WidgetCustomizationSettings = () => {
                     onChange={(value) => updateField('boxShadow', value)}
                   />
                 </div>
-              </BlockStack>
+              </div>
             </Card>
 
             <Card>
-              <BlockStack gap="loose">
-                <div>
+              <div style={stackStyle(16)}>
+                <div style={stackStyle(4)}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <Text variant="headingMd">Gradient & background</Text>
                     <Button size="slim" onClick={toggleGradient}>
@@ -516,7 +510,13 @@ const WidgetCustomizationSettings = () => {
                     Choose the gradient colors for the widget header or switch to a flat background.
                   </Text>
                 </div>
-                <InlineGrid columns={{ xs: 1, md: 3 }} gap="loose">
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 16,
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
+                  }}
+                >
                   {GRADIENT_FIELDS.map((field) => (
                     <ColorSwatchInput
                       key={field.key}
@@ -526,19 +526,25 @@ const WidgetCustomizationSettings = () => {
                       onChange={(value) => updateColor(field.key, value)}
                     />
                   ))}
-                </InlineGrid>
-              </BlockStack>
+                </div>
+              </div>
             </Card>
 
             <Card>
-              <BlockStack gap="loose">
-                <div>
+              <div style={stackStyle(16)}>
+                <div style={stackStyle(4)}>
                   <Text variant="headingMd">Fine tune colors</Text>
                   <Text tone="subdued">
                     Adjust individual tokens for text, buttons, and borders. All colors support hex values only.
                   </Text>
                 </div>
-                <InlineGrid columns={{ xs: 1, md: 3 }} gap="loose">
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 16,
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
+                  }}
+                >
                   {COLOR_FIELDS.map((field) => (
                     <ColorSwatchInput
                       key={field.key}
@@ -548,8 +554,8 @@ const WidgetCustomizationSettings = () => {
                       onChange={(value) => updateColor(field.key, value)}
                     />
                   ))}
-                </InlineGrid>
-              </BlockStack>
+                </div>
+              </div>
             </Card>
           </div>
 
@@ -584,7 +590,6 @@ const WidgetCustomizationSettings = () => {
           </div>
         </div>
       </Page>
-    </Frame>
   );
 };
 

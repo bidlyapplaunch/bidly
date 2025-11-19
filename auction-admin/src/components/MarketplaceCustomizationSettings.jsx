@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Frame, Page, Layout, Card, Text, Banner, Button, InlineGrid, BlockStack, Select, Spinner, Toast, ButtonGroup } from '@shopify/polaris';
+import { Page, Layout, Card, Text, Banner, Button, Select, Spinner } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { marketplaceCustomizationAPI, billingAPI } from '../services/api';
 import { normalizeMarketplaceTheme, DEFAULT_MARKETPLACE_THEME } from '@shared/marketplaceTheme.js';
@@ -43,6 +43,12 @@ const DEFAULT_CUSTOMIZATION = {
   colors: { ...DEFAULT_MARKETPLACE_THEME.colors },
   gradientEnabled: DEFAULT_MARKETPLACE_THEME.gradientEnabled
 };
+
+const createStackStyle = (gap = 12) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: typeof gap === 'number' ? `${gap}px` : gap
+});
 
 const ALLOWED_MARKETPLACE_PLANS = new Set(['pro', 'enterprise']);
 const PLAN_REQUIRED_MESSAGE = 'The marketplace customization requires the pro or enterprise plan.';
@@ -97,13 +103,15 @@ function ColorInput({ field, value, onChange, disabled = false }) {
   };
 
   return (
-    <BlockStack gap="extraTight">
-      <Text variant="bodyMd" fontWeight="medium">
-        {field.label}
-      </Text>
-      <Text variant="bodySm" tone="subdued">
-        {field.description}
-      </Text>
+    <div style={createStackStyle(6)}>
+      <div style={createStackStyle(4)}>
+        <Text variant="bodyMd" fontWeight="medium">
+          {field.label}
+        </Text>
+        <Text variant="bodySm" tone="subdued">
+          {field.description}
+        </Text>
+      </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', opacity: disabled ? 0.45 : 1 }}>
         <input
           type="color"
@@ -136,13 +144,19 @@ function ColorInput({ field, value, onChange, disabled = false }) {
           }}
         />
       </div>
-    </BlockStack>
+    </div>
   );
 }
 
 function TemplateSelector({ selected, onSelect }) {
   return (
-    <InlineGrid columns={{ xs: 1, sm: 2 }} gap="base">
+    <div
+      style={{
+        display: 'grid',
+        gap: 16,
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
+      }}
+    >
       {TEMPLATE_OPTIONS.map((template) => (
         <button
           key={template.value}
@@ -162,17 +176,17 @@ function TemplateSelector({ selected, onSelect }) {
               selected === template.value ? '0 6px 16px rgba(15, 23, 42, 0.08)' : '0 1px 2px rgba(15, 23, 42, 0.03)'
           }}
         >
-          <BlockStack gap="tight">
+          <div style={createStackStyle(6)}>
             <Text variant="bodyMd" fontWeight="semibold">
               {template.label}
             </Text>
             <Text variant="bodySm" tone="subdued">
               {template.description}
             </Text>
-          </BlockStack>
+          </div>
         </button>
       ))}
-    </InlineGrid>
+    </div>
   );
 }
 
@@ -360,73 +374,68 @@ const MarketplaceCustomizationSettings = () => {
 
   if (showLoadingState) {
     return (
-      <Frame>
-        <Page title="Marketplace customization" backAction={{ content: 'Back', onAction: () => navigate(-1) }}>
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
-            <Spinner size="large" />
-          </div>
-        </Page>
-      </Frame>
+      <Page title="Marketplace customization" backAction={{ content: 'Back', onAction: () => navigate(-1) }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
+          <Spinner size="large" />
+        </div>
+      </Page>
     );
   }
 
   if (!planStatus.loading && !planStatus.allowed) {
     return (
-      <Frame>
-        <Page
-          title="Marketplace customization"
-          subtitle="Upgrade your Bidly plan to unlock marketplace styling."
-          backAction={{ content: 'Back', onAction: () => navigate(-1) }}
-        >
-          <Layout>
-            <Layout.Section>
-              <Banner
-                tone="info"
-                title="Upgrade required to customize the marketplace"
-                action={{ content: 'View plans', onAction: goToPlans }}
-              >
-                <p>{PLAN_REQUIRED_MESSAGE}</p>
-              </Banner>
-            </Layout.Section>
-          </Layout>
-        </Page>
-      </Frame>
+      <Page
+        title="Marketplace customization"
+        subtitle="Upgrade your Bidly plan to unlock marketplace styling."
+        backAction={{ content: 'Back', onAction: () => navigate(-1) }}
+      >
+        <Layout>
+          <Layout.Section>
+            <Banner
+              tone="info"
+              title="Upgrade required to customize the marketplace"
+              action={{ content: 'View plans', onAction: goToPlans }}
+            >
+              <p>{PLAN_REQUIRED_MESSAGE}</p>
+            </Banner>
+          </Layout.Section>
+        </Layout>
+      </Page>
     );
   }
 
   return (
-    <Frame>
-      {toast && (
-        <Toast
-          content={toast.content}
-          tone={toast.tone}
-          onDismiss={() => setToast(null)}
-        />
-      )}
-      <Page
-        fullWidth
-        title="Marketplace customization"
-        subtitle="Control the typography, template, and color system for the public auction marketplace."
-        backAction={{ content: 'Back', onAction: () => navigate(-1) }}
-        primaryAction={{
-          content: 'Save changes',
-          onAction: handleSave,
-          loading: saving,
+    <Page
+      fullWidth
+      title="Marketplace customization"
+      subtitle="Control the typography, template, and color system for the public auction marketplace."
+      backAction={{ content: 'Back', onAction: () => navigate(-1) }}
+      primaryAction={{
+        content: 'Save changes',
+        onAction: handleSave,
+        loading: saving,
+        disabled: !dirty || saving
+      }}
+      secondaryActions={[
+        {
+          content: 'Reset to applied',
+          onAction: handleReset,
           disabled: !dirty || saving
-        }}
-        secondaryActions={[
-          {
-            content: 'Reset to applied',
-            onAction: handleReset,
-            disabled: !dirty || saving
-          },
-          {
-            content: 'Restore defaults',
-            onAction: resetToDefaults,
-            disabled: saving
-          }
-        ]}
-      >
+        },
+        {
+          content: 'Restore defaults',
+          onAction: resetToDefaults,
+          disabled: saving
+        }
+      ]}
+    >
+      {toast && (
+        <div style={{ marginBottom: 16 }}>
+          <Banner tone={toast.tone === 'success' ? 'success' : 'critical'} onDismiss={() => setToast(null)}>
+            <p>{toast.content}</p>
+          </Banner>
+        </div>
+      )}
         <style>{`
           .marketplace-customization-grid {
             width: 100%;
@@ -471,8 +480,8 @@ const MarketplaceCustomizationSettings = () => {
               </Banner>
             )}
             <Card title="Design foundation" sectioned>
-              <BlockStack gap="loose">
-                <div>
+              <div style={createStackStyle(20)}>
+                <div style={createStackStyle(8)}>
                   <Text variant="headingSm" fontWeight="semibold">
                     Choose template
                   </Text>
@@ -489,31 +498,36 @@ const MarketplaceCustomizationSettings = () => {
                     onChange={handleFontChange}
                   />
                 </div>
-              </BlockStack>
+              </div>
             </Card>
 
             <Card title="Color palette" sectioned>
-              <BlockStack gap="base">
+              <div style={createStackStyle(16)}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                   <Text tone="subdued" variant="bodySm">
                     Every UI element in the marketplace references these tokens. Update them to match your storefront.
                   </Text>
-                  <ButtonGroup>
-                    <Button
-                      pressed={customization.gradientEnabled}
-                      onClick={toggleGradient}
-                      accessibilityLabel="Toggle gradient background"
-                    >
-                      {customization.gradientEnabled ? 'Gradient enabled' : 'Gradient disabled'}
-                    </Button>
-                  </ButtonGroup>
+                  <Button
+                    size="slim"
+                    pressed={customization.gradientEnabled}
+                    onClick={toggleGradient}
+                    accessibilityLabel="Toggle gradient background"
+                  >
+                    {customization.gradientEnabled ? 'Gradient enabled' : 'Gradient disabled'}
+                  </Button>
                 </div>
                 {customization.gradientEnabled && (
                   <Banner tone="info">
                     Background color is managed by your gradient. Disable the gradient toggle to edit the solid background color.
                   </Banner>
                 )}
-                <InlineGrid columns={{ xs: 1, sm: 2 }} gap="loose">
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 20,
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
+                  }}
+                >
                   {COLOR_FIELDS.map((field) => (
                     <ColorInput
                       key={field.key}
@@ -523,8 +537,8 @@ const MarketplaceCustomizationSettings = () => {
                       disabled={backgroundDisabled && field.key === 'background'}
                     />
                   ))}
-                </InlineGrid>
-              </BlockStack>
+                </div>
+              </div>
             </Card>
           </div>
 
@@ -540,8 +554,7 @@ const MarketplaceCustomizationSettings = () => {
           </div>
         </div>
       </Page>
-    </Frame>
-  );
+    );
 };
 
 export default MarketplaceCustomizationSettings;
