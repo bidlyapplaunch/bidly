@@ -173,18 +173,6 @@ function MailServiceSettings() {
     />
   ) : null;
 
-  if (loading) {
-    return (
-      <Frame>
-        <Page title="Mail service">
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 80 }}>
-            <Spinner accessibilityLabel="Loading mail settings" />
-          </div>
-        </Page>
-      </Frame>
-    );
-  }
-
   return (
     <Frame>
       {toastMarkup}
@@ -197,6 +185,11 @@ function MailServiceSettings() {
           disabled: disabled
         }}
       >
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 80 }}>
+            <Spinner accessibilityLabel="Loading mail settings" />
+          </div>
+        ) : (
         <Layout>
           <Layout.Section>
             <BlockStack gap="400">
@@ -356,6 +349,7 @@ function MailServiceSettings() {
             </BlockStack>
           </Layout.Section>
         </Layout>
+        )}
       </Page>
     </Frame>
   );
