@@ -72,6 +72,12 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     return merged;
   };
 
+  const planKey = (planInfo?.plan || 'free').toLowerCase();
+  const allowAuctions = ['free', 'basic', 'pro', 'enterprise'].includes(planKey);
+  const allowPopcorn = planKey === 'pro' || planKey === 'enterprise';
+  const allowChat = planKey === 'enterprise';
+  const auctionHasBids = Boolean(auction?.bidHistory?.length);
+
   const [formData, setFormData] = useState({
     shopifyProductId: '',
     startTime: createSafeDate(new Date(Date.now() + 60 * 60 * 1000)), // 1 hour from now
@@ -93,11 +99,6 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const [searching, setSearching] = useState(false);
   const [shopifyConfigured, setShopifyConfigured] = useState(false);
   const [searchError, setSearchError] = useState(null);
-  const planKey = (planInfo?.plan || 'free').toLowerCase();
-  const allowAuctions = ['free', 'basic', 'pro', 'enterprise'].includes(planKey);
-  const allowPopcorn = planKey === 'pro' || planKey === 'enterprise';
-  const allowChat = planKey === 'enterprise';
-  const auctionHasBids = Boolean(auction?.bidHistory?.length);
 
   useEffect(() => {
     if (!allowPopcorn && formData.popcornEnabled) {
