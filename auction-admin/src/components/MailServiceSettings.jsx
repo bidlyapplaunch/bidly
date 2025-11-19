@@ -208,7 +208,13 @@ function MailServiceSettings() {
                     disabled={disabled}
                   />
 
-                  <InlineGrid columns={{ xs: 1, sm: 2 }} gap="300">
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                      gap: 16
+                    }}
+                  >
                     <TextField
                       label="Host"
                       value={settings.smtp.host}
@@ -239,9 +245,15 @@ function MailServiceSettings() {
                       autoComplete="off"
                       disabled={disabled || !settings.useCustomSmtp}
                     />
-                  </InlineGrid>
+                  </div>
 
-                  <InlineGrid columns={{ xs: 1, sm: 2 }} gap="300">
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                      gap: 16
+                    }}
+                  >
                     <TextField
                       label="From name"
                       value={settings.smtp.fromName}
@@ -256,7 +268,7 @@ function MailServiceSettings() {
                       autoComplete="off"
                       disabled={disabled || !settings.useCustomSmtp}
                     />
-                  </InlineGrid>
+                  </div>
 
                   <Checkbox
                     label="Use secure connection (TLS)"
@@ -265,7 +277,13 @@ function MailServiceSettings() {
                     disabled={disabled || !settings.useCustomSmtp}
                   />
 
-                  <InlineGrid columns={{ xs: 1, sm: 2 }} gap="300">
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                      gap: 16
+                    }}
+                  >
                     <TextField
                       label="Test email recipient"
                       value={testEmail}
@@ -282,7 +300,7 @@ function MailServiceSettings() {
                         Send test email
                       </Button>
                     </div>
-                  </InlineGrid>
+                  </div>
                 </div>
               </Card>
 
