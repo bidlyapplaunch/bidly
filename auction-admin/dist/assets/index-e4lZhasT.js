@@ -352,7 +352,7 @@ ${a?`@import url('https://fonts.googleapis.com/css2?family=${a}&display=swap');
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #2c3e50; margin-top: 0;">Auction Details</h3>
           <p><strong>Item:</strong> {{auction_title}}</p>
-          <p><strong>Your Bid:</strong> ${{current_bid}}</p>
+          <p><strong>Your Bid:</strong> \${{current_bid}}</p>
           <p><strong>Auction Ends:</strong> {{auction_end_time}}</p>
           <p><strong>Current Status:</strong> Active</p>
         </div>
@@ -370,7 +370,7 @@ ${a?`@import url('https://fonts.googleapis.com/css2?family=${a}&display=swap');
         <div style="background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;">
           <h3 style="color: #721c24; margin-top: 0;">Auction Update</h3>
           <p><strong>Item:</strong> {{auction_title}}</p>
-          <p><strong>New Highest Bid:</strong> ${{current_bid}}</p>
+          <p><strong>New Highest Bid:</strong> \${{current_bid}}</p>
           <p><strong>Time Remaining:</strong> {{time_remaining}}</p>
         </div>
         <div style="text-align: center; margin: 30px 0;">
@@ -388,11 +388,11 @@ ${a?`@import url('https://fonts.googleapis.com/css2?family=${a}&display=swap');
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #27ae60;">🎉 Congratulations! You Won the Auction!</h2>
         <p>Dear {{display_name}},</p>
-        <p>Congratulations! You have successfully won the auction for <strong>"{{auction_title}}"</strong> with a winning bid of <strong>$${{winning_bid}}</strong>.</p>
+        <p>Congratulations! You have successfully won the auction for <strong>"{{auction_title}}"</strong> with a winning bid of <strong>\${{winning_bid}}</strong>.</p>
         <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60;">
           <h3 style="color: #155724; margin-top: 0;">🏆 Auction Details</h3>
           <p><strong>Product:</strong> {{auction_title}}</p>
-          <p><strong>Winning Bid:</strong> ${{winning_bid}}</p>
+          <p><strong>Winning Bid:</strong> \${{winning_bid}}</p>
           <p><strong>Auction Ended:</strong> {{auction_end_time}}</p>
         </div>
         <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
@@ -413,7 +413,7 @@ ${a?`@import url('https://fonts.googleapis.com/css2?family=${a}&display=swap');
         <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f39c12;">
           <h3 style="color: #856404; margin-top: 0;">Auction Details</h3>
           <p><strong>Item:</strong> {{auction_title}}</p>
-          <p><strong>Current Bid:</strong> ${{current_bid}}</p>
+          <p><strong>Current Bid:</strong> \${{current_bid}}</p>
           <p><strong>Time Remaining:</strong> {{time_remaining}}</p>
         </div>
         <div style="text-align: center; margin: 30px 0;">
@@ -436,7 +436,7 @@ ${a?`@import url('https://fonts.googleapis.com/css2?family=${a}&display=swap');
           <h3 style="color: #2c3e50; margin-top: 0;">Auction Details</h3>
           <p><strong>Item:</strong> {{auction_title}}</p>
           <p><strong>Status:</strong> {{auction_status}}</p>
-          <p><strong>Current Bid:</strong> ${{current_bid}}</p>
+          <p><strong>Current Bid:</strong> \${{current_bid}}</p>
           <p><strong>Bid Count:</strong> {{bid_count}}</p>
         </div>
         {{/if}}
