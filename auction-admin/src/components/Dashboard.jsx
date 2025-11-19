@@ -351,6 +351,9 @@ const Dashboard = ({ onLogout }) => {
                 <Button onClick={() => navigate(`/plans${location.search || ''}`)}>
                   🧾 Plans
                 </Button>
+                <Button onClick={() => navigate(`/mail-service${location.search || ''}`)}>
+                  📧 Mail service
+                </Button>
               </div>
             </Card>
           </Layout.Section>
