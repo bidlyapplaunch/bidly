@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Page,
   Layout,
   Card,
   Text,
@@ -189,187 +188,204 @@ function MailServiceSettings() {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}>
+        <Spinner accessibilityLabel="Loading mail settings" />
+      </div>
+    );
+  }
+
   return (
-    <Page
-      title="Mail service"
-      primaryAction={{
-        content: 'Save',
-        onAction: handleSave,
-        loading: saving,
-        disabled
-      }}
-    >
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}>
-          <Spinner accessibilityLabel="Loading mail settings" />
-        </div>
-      ) : (
-        <Layout>
-          <Layout.Section>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {renderFeedback()}
-              {disabled && (
-                <Banner tone="warning" title="Upgrade required">
-                  <p>Custom mail settings are available on Pro and Enterprise plans.</p>
-                </Banner>
-              )}
+    <Layout>
+      <Layout.Section>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {renderFeedback()}
+          {disabled && (
+            <Banner tone="warning" title="Upgrade required">
+              <p>Custom mail settings are available on Pro and Enterprise plans.</p>
+            </Banner>
+          )}
 
-              <Card title="SMTP configuration" sectioned>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <Checkbox
-                    label="Use my own email server"
-                    checked={settings.useCustomSmtp}
-                    onChange={(value) =>
-                      setSettings((prev) => ({ ...prev, useCustomSmtp: value }))
-                    }
-                    disabled={disabled}
+          <Card sectioned>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <Text variant="headingMd">SMTP configuration</Text>
+                <Text tone="subdued">Connect your own email server to send notifications from your domain.</Text>
+              </div>
+
+              <Checkbox
+                label="Use my own email server"
+                checked={settings.useCustomSmtp}
+                onChange={(value) => setSettings((prev) => ({ ...prev, useCustomSmtp: value }))}
+                disabled={disabled}
+              />
+
+              <FormLayout>
+                <FormLayout.Group condensed>
+                  <TextField
+                    label="Host"
+                    value={settings.smtp.host}
+                    onChange={(value) => handleSmtpChange('host', value)}
+                    autoComplete="off"
+                    disabled={disabled || !settings.useCustomSmtp}
                   />
+                  <TextField
+                    label="Port"
+                    type="number"
+                    value={String(settings.smtp.port ?? '')}
+                    onChange={(value) => handleSmtpChange('port', value)}
+                    autoComplete="off"
+                    disabled={disabled || !settings.useCustomSmtp}
+                  />
+                </FormLayout.Group>
 
-                  <FormLayout>
-                    <FormLayout.Group condensed>
-                      <TextField
-                        label="Host"
-                        value={settings.smtp.host}
-                        onChange={(value) => handleSmtpChange('host', value)}
-                        autoComplete="off"
-                        disabled={disabled || !settings.useCustomSmtp}
-                      />
-                      <TextField
-                        label="Port"
-                        type="number"
-                        value={String(settings.smtp.port ?? '')}
-                        onChange={(value) => handleSmtpChange('port', value)}
-                        autoComplete="off"
-                        disabled={disabled || !settings.useCustomSmtp}
-                      />
-                    </FormLayout.Group>
+                <FormLayout.Group condensed>
+                  <TextField
+                    label="Username"
+                    value={settings.smtp.user}
+                    onChange={(value) => handleSmtpChange('user', value)}
+                    autoComplete="off"
+                    disabled={disabled || !settings.useCustomSmtp}
+                  />
+                  <TextField
+                    label="Password / app password"
+                    type="password"
+                    value={settings.smtp.pass}
+                    onChange={(value) => handleSmtpChange('pass', value)}
+                    autoComplete="off"
+                    disabled={disabled || !settings.useCustomSmtp}
+                  />
+                </FormLayout.Group>
 
-                    <FormLayout.Group condensed>
-                      <TextField
-                        label="Username"
-                        value={settings.smtp.user}
-                        onChange={(value) => handleSmtpChange('user', value)}
-                        autoComplete="off"
-                        disabled={disabled || !settings.useCustomSmtp}
-                      />
-                      <TextField
-                        label="Password / app password"
-                        type="password"
-                        value={settings.smtp.pass}
-                        onChange={(value) => handleSmtpChange('pass', value)}
-                        autoComplete="off"
-                        disabled={disabled || !settings.useCustomSmtp}
-                      />
-                    </FormLayout.Group>
+                <FormLayout.Group condensed>
+                  <TextField
+                    label="From name"
+                    value={settings.smtp.fromName}
+                    onChange={(value) => handleSmtpChange('fromName', value)}
+                    autoComplete="off"
+                    disabled={disabled || !settings.useCustomSmtp}
+                  />
+                  <TextField
+                    label="From email"
+                    value={settings.smtp.fromEmail}
+                    onChange={(value) => handleSmtpChange('fromEmail', value)}
+                    autoComplete="off"
+                    disabled={disabled || !settings.useCustomSmtp}
+                  />
+                </FormLayout.Group>
 
-                    <FormLayout.Group condensed>
-                      <TextField
-                        label="From name"
-                        value={settings.smtp.fromName}
-                        onChange={(value) => handleSmtpChange('fromName', value)}
-                        autoComplete="off"
-                        disabled={disabled || !settings.useCustomSmtp}
-                      />
-                      <TextField
-                        label="From email"
-                        value={settings.smtp.fromEmail}
-                        onChange={(value) => handleSmtpChange('fromEmail', value)}
-                        autoComplete="off"
-                        disabled={disabled || !settings.useCustomSmtp}
-                      />
-                    </FormLayout.Group>
+                <Checkbox
+                  label="Use secure connection (TLS)"
+                  checked={!!settings.smtp.secure}
+                  onChange={(value) => handleSmtpChange('secure', value)}
+                  disabled={disabled || !settings.useCustomSmtp}
+                />
 
-                    <Checkbox
-                      label="Use secure connection (TLS)"
-                      checked={!!settings.smtp.secure}
-                      onChange={(value) => handleSmtpChange('secure', value)}
+                <FormLayout.Group condensed>
+                  <TextField
+                    label="Test email recipient"
+                    value={testEmail}
+                    onChange={setTestEmail}
+                    autoComplete="off"
+                    disabled={disabled || !settings.useCustomSmtp}
+                  />
+                  <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <Button
+                      onClick={handleTestSmtp}
                       disabled={disabled || !settings.useCustomSmtp}
-                    />
-
-                    <FormLayout.Group condensed>
-                      <TextField
-                        label="Test email recipient"
-                        value={testEmail}
-                        onChange={setTestEmail}
-                        autoComplete="off"
-                        disabled={disabled || !settings.useCustomSmtp}
-                      />
-                      <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                        <Button
-                          onClick={handleTestSmtp}
-                          disabled={disabled || !settings.useCustomSmtp}
-                          loading={testing}
-                        >
-                          Send test email
-                        </Button>
-                      </div>
-                    </FormLayout.Group>
-                  </FormLayout>
-                </div>
-              </Card>
-
-              <Card title="Email templates" sectioned>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div>
-                    <Text as="span" tone="subdued">
-                      Available tokens:
-                    </Text>
-                    <div style={{ marginTop: 8 }}>{renderTokens()}</div>
+                      loading={testing}
+                    >
+                      Send test email
+                    </Button>
                   </div>
-
-                  {TEMPLATE_METADATA.map(({ key, title }) => {
-                    const template = settings.templates[key] || {
-                      enabled: true,
-                      subject: '',
-                      html: ''
-                    };
-                    return (
-                      <Card.Section key={key}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              gap: 12
-                            }}
-                          >
-                            <Text variant="headingMd">{title}</Text>
-                            <Checkbox
-                              label="Enabled"
-                              checked={template.enabled}
-                              onChange={(value) => handleTemplateChange(key, 'enabled', value)}
-                              disabled={disabled}
-                            />
-                          </div>
-                          <FormLayout>
-                            <TextField
-                              label="Subject"
-                              value={template.subject}
-                              onChange={(value) => handleTemplateChange(key, 'subject', value)}
-                              autoComplete="off"
-                              disabled={disabled}
-                            />
-                            <TextField
-                              label="HTML content"
-                              value={template.html}
-                              onChange={(value) => handleTemplateChange(key, 'html', value)}
-                              multiline={6}
-                              autoComplete="off"
-                              disabled={disabled}
-                            />
-                          </FormLayout>
-                        </div>
-                      </Card.Section>
-                    );
-                  })}
-                </div>
-              </Card>
+                </FormLayout.Group>
+              </FormLayout>
             </div>
-          </Layout.Section>
-        </Layout>
-      )}
-    </Page>
+          </Card>
+
+          <Card sectioned>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
+                <Text variant="headingMd">Email templates</Text>
+                <Text tone="subdued">
+                  Customize the content of Bidly notifications. Tokens help merge auction-specific data.
+                </Text>
+              </div>
+
+              <div>
+                <Text as="span" tone="subdued">
+                  Available tokens:
+                </Text>
+                <div style={{ marginTop: 8 }}>{renderTokens()}</div>
+              </div>
+
+              <div>
+                {TEMPLATE_METADATA.map(({ key, title }, index) => {
+                  const template = settings.templates[key] || {
+                    enabled: true,
+                    subject: '',
+                    html: ''
+                  };
+                  return (
+                    <div
+                      key={key}
+                      style={{
+                        padding: '16px 0',
+                        borderTop: index === 0 ? 'none' : '1px solid var(--p-color-border-subdued, #dfe3e8)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 12
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: 12
+                        }}
+                      >
+                        <Text variant="headingMd">{title}</Text>
+                        <Checkbox
+                          label="Enabled"
+                          checked={template.enabled}
+                          onChange={(value) => handleTemplateChange(key, 'enabled', value)}
+                          disabled={disabled}
+                        />
+                      </div>
+                      <FormLayout>
+                        <TextField
+                          label="Subject"
+                          value={template.subject}
+                          onChange={(value) => handleTemplateChange(key, 'subject', value)}
+                          autoComplete="off"
+                          disabled={disabled}
+                        />
+                        <TextField
+                          label="HTML content"
+                          value={template.html}
+                          onChange={(value) => handleTemplateChange(key, 'html', value)}
+                          multiline={6}
+                          autoComplete="off"
+                          disabled={disabled}
+                        />
+                      </FormLayout>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button primary onClick={handleSave} loading={saving} disabled={disabled}>
+              Save mail settings
+            </Button>
+          </div>
+        </div>
+      </Layout.Section>
+    </Layout>
   );
 }
 
