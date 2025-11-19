@@ -714,6 +714,15 @@
     margin: 0;
 }
 
+.bidly-footer-actions.bidly-footer-single {
+    justify-content: center;
+}
+
+.bidly-footer-actions.bidly-footer-single .bidly-history-link {
+    flex: 0 0 auto;
+    min-width: 60%;
+}
+
 .bidly-bid-history-link,
 .bidly-history-link {
     display: inline-flex;

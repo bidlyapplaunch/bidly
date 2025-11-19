@@ -195,6 +195,10 @@ const auctionSchema = new mongoose.Schema({
     min: 1,
     max: 60 // Max 1 minute trigger threshold
   },
+  chatEnabled: {
+    type: Boolean,
+    default: true
+  },
   
   createdAt: {
     type: Date,

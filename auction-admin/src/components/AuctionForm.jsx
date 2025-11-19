@@ -85,6 +85,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     popcornEnabled: false,
     popcornExtendSeconds: 15,
     popcornTriggerSeconds: 10,
+    chatEnabled: allowChat
   });
   const [errors, setErrors] = useState({});
   const [productSearchQuery, setProductSearchQuery] = useState('');
@@ -109,6 +110,15 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   }, [allowPopcorn]);
 
   useEffect(() => {
+    if (!allowChat && formData.chatEnabled) {
+      setFormData((prev) => ({
+        ...prev,
+        chatEnabled: false
+      }));
+    }
+  }, [allowChat, formData.chatEnabled]);
+
+  useEffect(() => {
     if (auction) {
       setFormData({
         shopifyProductId: auction.shopifyProductId || '',
@@ -123,6 +133,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         popcornEnabled: auction.popcornEnabled || false,
         popcornExtendSeconds: auction.popcornExtendSeconds || 15,
         popcornTriggerSeconds: auction.popcornTriggerSeconds || 10,
+        chatEnabled: allowChat ? (auction.chatEnabled !== undefined ? auction.chatEnabled : true) : false,
       });
       if (auction.productData?.title) {
         setProductSearchQuery(auction.productData.title);
@@ -141,6 +152,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               popcornEnabled: false,
               popcornExtendSeconds: 15,
               popcornTriggerSeconds: 10,
+              chatEnabled: allowChat,
             });
             setProductSearchQuery('');
           }
@@ -510,6 +522,23 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               </FormLayout.Group>
             )}
           </Card>
+
+          {allowChat && (
+            <Card sectioned>
+              <Text variant="headingMd">💬 Chat Box Visibility</Text>
+              <Text variant="bodyMd" color="subdued">
+                Control whether the Chat Box button appears under your storefront auction widget for this auction.
+              </Text>
+              <div style={{ marginTop: '16px' }}>
+                <Checkbox
+                  label="Show Chat Box button on the widget"
+                  checked={formData.chatEnabled}
+                  onChange={(checked) => handleChange(checked, 'chatEnabled')}
+                  helpText="When disabled, bidders will only see the View Bids link centered beneath the widget."
+                />
+              </div>
+            </Card>
+          )}
 
           {!allowChat && (
             <Card sectioned>

@@ -10,6 +10,15 @@ import { getHigherPlans, planMeetsRequirement, sanitizePlan } from '../config/bi
 
 const ANONYMOUS_DISPLAY_NAME = 'Anonymous Bidder';
 
+const parseBooleanInput = (value) => {
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  return Boolean(value);
+};
+
 // Helper function to compute real-time auction status
 const computeAuctionStatus = (auction) => {
   // If auction is manually closed by admin, keep it closed
@@ -193,6 +202,24 @@ export const createAuction = async (req, res, next) => {
         upgradeOptions: getHigherPlans('pro')
       });
     }
+
+    const chatAllowed = planMeetsRequirement(currentPlan, 'enterprise');
+    const wantsChatEnabled = req.body.chatEnabled !== undefined ? parseBooleanInput(req.body.chatEnabled) : undefined;
+    if (wantsChatEnabled && !chatAllowed) {
+      return res.status(403).json({
+        success: false,
+        code: 'PLAN_UPGRADE_REQUIRED',
+        message: 'Live chat is available on the Enterprise plan.',
+        plan: currentPlan,
+        requiredPlan: 'enterprise',
+        upgradeOptions: getHigherPlans('enterprise')
+      });
+    }
+
+    req.body.chatEnabled =
+      wantsChatEnabled !== undefined
+        ? wantsChatEnabled
+        : chatAllowed;
     
     // Check for existing active/pending auction with same product (ignore soft-deleted auctions)
     const existingAuction = await Auction.findOne({
@@ -409,16 +436,7 @@ export const updateAuction = async (req, res, next) => {
     }
 
     const currentPlan = sanitizePlan(req.store?.plan || 'free');
-    const parseBoolean = (value) => {
-      if (typeof value === 'string') {
-        const normalized = value.trim().toLowerCase();
-        if (normalized === 'true') return true;
-        if (normalized === 'false') return false;
-      }
-      return Boolean(value);
-    };
-    
-    const wantsPopcornEnabled = req.body.popcornEnabled !== undefined ? parseBoolean(req.body.popcornEnabled) : undefined;
+    const wantsPopcornEnabled = req.body.popcornEnabled !== undefined ? parseBooleanInput(req.body.popcornEnabled) : undefined;
     if (wantsPopcornEnabled === true && !planMeetsRequirement(currentPlan, 'pro')) {
       return res.status(403).json({
         success: false,
@@ -461,7 +479,8 @@ export const updateAuction = async (req, res, next) => {
       'reservePrice',
       'popcornEnabled',
       'popcornTriggerSeconds',
-      'popcornExtendSeconds'
+      'popcornExtendSeconds',
+      'chatEnabled'
     ];
     const setUpdates = {};
     const unsetUpdates = {};
@@ -490,7 +509,7 @@ export const updateAuction = async (req, res, next) => {
           break;
         }
         case 'popcornEnabled': {
-          const parsedValue = parseBoolean(rawValue);
+          const parsedValue = parseBooleanInput(rawValue);
           if (parsedValue && !planMeetsRequirement(currentPlan, 'pro')) {
             throw new AppError('Popcorn bidding is available on the Pro plan or higher.', 403);
           }
@@ -511,6 +530,14 @@ export const updateAuction = async (req, res, next) => {
             throw new AppError('Popcorn extend seconds must be between 5 and 600.', 400);
           }
           setUpdates[field] = extendSeconds;
+          break;
+        }
+        case 'chatEnabled': {
+          const parsedValue = parseBooleanInput(rawValue);
+          if (parsedValue && !planMeetsRequirement(currentPlan, 'enterprise')) {
+            throw new AppError('Live chat is available on the Enterprise plan.', 403);
+          }
+          setUpdates[field] = parsedValue;
           break;
         }
         default:

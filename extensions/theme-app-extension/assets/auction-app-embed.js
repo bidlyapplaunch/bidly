@@ -623,6 +623,13 @@
     function createWidgetHTML(auctionData, settings) {
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice, startTime } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
+        const chatEnabled = auctionData.chatEnabled !== false;
+        const footerClassNames = ['bidly-footer-actions'];
+        if (!chatEnabled) {
+            footerClassNames.push('bidly-footer-single');
+        }
+        const footerClassAttr = footerClassNames.join(' ');
+        const bidHistoryLabel = chatEnabled ? 'View Bid History' : 'View Bids';
         
         // Determine the display bid and minimum bid logic
         const displayBid = bidCount > 0 ? currentBid : startingBid;
@@ -778,13 +785,15 @@
                     `}
 
                     <div class="bidly-widget-footer">
-                        <div class="bidly-footer-actions">
-                            <button type="button" class="bidly-chat-toggle-inline" id="bidly-chat-toggle-inline" aria-controls="bidly-chat-box">
-                                Chat Box
-                            </button>
+                        <div class="${footerClassAttr}">
+                            ${chatEnabled ? `
+                                <button type="button" class="bidly-chat-toggle-inline" id="bidly-chat-toggle-inline" aria-controls="bidly-chat-box">
+                                    Chat Box
+                                </button>
+                            ` : ''}
                             ${show_bid_history ? `
                                 <a href="#" onclick="window.BidlyAuctionWidget.openBidHistory('${auctionId}')" class="bidly-history-link">
-                                    View Bid History
+                                    ${bidHistoryLabel}
                                 </a>
                             ` : ''}
                         </div>
@@ -2466,10 +2475,31 @@
         return value;
     }
 
+    function isChatEnabledForCurrentAuction() {
+        if (!window.currentAuctionCheck) {
+            return null;
+        }
+        return window.currentAuctionCheck.chatEnabled !== false;
+    }
+
+    function destroyChatUI() {
+        const chatContainer = document.querySelector('.bidly-chat-container');
+        if (chatContainer && chatContainer.parentNode) {
+            chatContainer.parentNode.removeChild(chatContainer);
+        }
+        chatCloseButton = null;
+        chatInitialized = false;
+    }
+
     /**
      * Initialize chat for the current product (only for Shopify customers)
      */
     function initializeChat() {
+        if (!isChatEnabledForCurrentAuction()) {
+            console.log('Bidly: Chat disabled for this auction');
+            destroyChatUI();
+            return;
+        }
         // Only show chat for Shopify customers
         if (!isShopifyCustomer()) {
             console.log('Bidly: Chat only available for Shopify customers');
@@ -2826,12 +2856,29 @@
 
     // Initialize chat when widget is successfully injected
     // This will be called after injectWidget completes
-    function tryInitChat() {
-        if (document.querySelector('.bidly-auction-app-embed')) {
-            initializeChat();
-        } else {
-            setTimeout(tryInitChat, 300);
+    function tryInitChat(attempt = 0) {
+        const widgetExists = document.querySelector('.bidly-auction-app-embed');
+        if (!widgetExists) {
+            if (attempt < 10) {
+                setTimeout(() => tryInitChat(attempt + 1), 300);
+            }
+            return;
         }
+
+        const chatAvailability = isChatEnabledForCurrentAuction();
+        if (chatAvailability === null) {
+            if (attempt < 10) {
+                setTimeout(() => tryInitChat(attempt + 1), 300);
+            }
+            return;
+        }
+
+        if (!chatAvailability) {
+            destroyChatUI();
+            return;
+        }
+
+        initializeChat();
     }
 
     const originalInit = init;
@@ -2843,8 +2890,10 @@
     // Also initialize chat when login status changes
     window.addEventListener('bidly-login-success', () => {
         setTimeout(() => {
-            if (isShopifyCustomer()) {
+            if (isShopifyCustomer() && isChatEnabledForCurrentAuction()) {
                 initializeChat();
+            } else {
+                destroyChatUI();
             }
         }, 500);
     });

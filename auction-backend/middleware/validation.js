@@ -151,6 +151,11 @@ export const validateUpdateAuction = [
     .optional()
     .isInt({ min: 5, max: 600 })
     .withMessage('Popcorn extend seconds must be between 5 and 600'),
+
+  body('chatEnabled')
+    .optional()
+    .isBoolean()
+    .withMessage('Chat enabled must be a boolean value'),
   
   handleValidationErrors
 ];
