@@ -88,11 +88,20 @@ router.post('/saveCustomer', async (req, res, next) => {
     // Handle duplicate key errors (email already exists)
     // Instead of erroring, find and return the existing customer
     if (error.code === 11000) {
-      console.log('⚠️ Duplicate customer detected, fetching existing customer:', { email, shopDomain });
+      // Extract email and shopDomain from req.body (they might not be in scope)
+      const errorEmail = req.body?.email || error.keyValue?.email;
+      const errorShopDomain = req.body?.shopDomain;
+      
+      if (!errorEmail || !errorShopDomain) {
+        console.error('❌ Cannot handle duplicate error: missing email or shopDomain');
+        return next(new AppError('Customer with this email already exists in this store', 409));
+      }
+      
+      console.log('⚠️ Duplicate customer detected, fetching existing customer:', { email: errorEmail, shopDomain: errorShopDomain });
       try {
         const existingCustomer = await Customer.findOne({ 
-          email: email.toLowerCase(), 
-          shopDomain 
+          email: errorEmail.toLowerCase(), 
+          shopDomain: errorShopDomain 
         });
         
         if (existingCustomer) {

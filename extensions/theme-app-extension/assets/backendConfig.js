@@ -16,6 +16,7 @@
         
         // New store with second backend
         '6sb15z-k1.myshopify.com': 'https://bidly-auction-backend-2.onrender.com',
+        'true-nordic-dev.myshopify.com': 'https://bidly-auction-backend-2.onrender.com',
 
         // Custom domains that map to the second backend store
         'true-nordic.com': 'https://bidly-auction-backend-2.onrender.com',
