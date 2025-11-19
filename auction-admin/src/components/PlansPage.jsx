@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Banner,
   Button,
-  Frame,
   Layout,
   LegacyCard,
   Modal,
@@ -425,7 +424,7 @@ const PlansPage = () => {
 
 
   return (
-    <Frame>
+    <>
       <Page
         title="Choose your Bidly plan"
         subtitle="Manage your subscription and unlock premium auction features."
@@ -598,7 +597,7 @@ const PlansPage = () => {
           </Modal.Section>
         </Modal>
       )}
-    </Frame>
+    </>
   );
 };
 

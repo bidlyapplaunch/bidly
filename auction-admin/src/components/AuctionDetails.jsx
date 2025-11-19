@@ -6,20 +6,18 @@ import {
   Button,
   DataTable,
   Badge,
-  Banner,
-  Frame,
-  Toast,
-  ButtonGroup,
   Divider,
   TextContainer
 } from '@shopify/polaris';
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
+import AppBridgeToast from './AppBridgeToast';
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const [auctionData, setAuctionData] = useState(auction);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastError, setToastError] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
@@ -80,6 +78,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       if (!auctionId) {
         console.error('❌ No auction ID found. auctionData:', auctionData, 'auction:', auction);
         setToastMessage('Error: Auction ID not found');
+        setToastError(true);
         setShowToast(true);
         return;
       }
@@ -87,12 +86,14 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       console.log('🔍 Closing auction with ID:', auctionId);
       await auctionAPI.closeAuction(auctionId);
       setToastMessage('Auction closed successfully');
+      setToastError(false);
       setShowToast(true);
       fetchAuctionDetails();
       onRefresh?.();
     } catch (error) {
       console.error('Error closing auction:', error);
       setToastMessage(`Error closing auction: ${error.response?.data?.message || error.message}`);
+      setToastError(true);
       setShowToast(true);
     }
   };
@@ -155,7 +156,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const bidHistoryRows = getBidHistoryRows();
 
   return (
-    <Frame>
+    <>
       <Modal
         open={isOpen}
         onClose={onClose}
@@ -292,15 +293,13 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
             {/* Actions */}
             {auctionData.status === 'active' && (
               <Card sectioned>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <ButtonGroup>
-                    <Button onClick={fetchAuctionDetails} loading={loading}>
-                      Refresh
-                    </Button>
-                    <Button onClick={handleCloseAuction} destructive>
-                      Close Auction
-                    </Button>
-                  </ButtonGroup>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+                  <Button onClick={fetchAuctionDetails} loading={loading}>
+                    Refresh
+                  </Button>
+                  <Button onClick={handleCloseAuction} destructive>
+                    Close Auction
+                  </Button>
                 </div>
               </Card>
             )}
@@ -309,12 +308,14 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       </Modal>
 
       {showToast && (
-        <Toast
-          content={toastMessage}
+        <AppBridgeToast
+          message={toastMessage}
+          isError={toastError}
+          duration={6000}
           onDismiss={() => setShowToast(false)}
         />
       )}
-    </Frame>
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AppProvider, Frame, Page, Layout, Text } from '@shopify/polaris';
+import { AppProvider, Page, Layout, Text } from '@shopify/polaris';
 import { buildMarketplaceCSS, normalizeMarketplaceTheme } from '@shared/marketplaceTheme.js';
 import AuctionCard from '@customer/components/AuctionCard.jsx';
 
@@ -74,7 +74,6 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
         data-bidly-marketplace-gradient={hasGradient}
       >
         <AppProvider>
-          <Frame>
             <Page
               title="Auction Marketplace · Preview"
               subtitle="This preview renders the exact markup used in the storefront."
@@ -98,7 +97,6 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
                 ))}
               </Layout>
             </Page>
-          </Frame>
         </AppProvider>
       </div>
     </div>

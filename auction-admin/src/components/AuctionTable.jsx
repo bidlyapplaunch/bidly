@@ -6,20 +6,16 @@ import {
   Badge,
   Modal,
   Text,
-  ButtonGroup,
-  Toast,
-  Frame,
   Banner,
   EmptyState,
   Pagination,
-  Filters,
   ChoiceList,
-  TextField,
-  Select
+  TextField
 } from '@shopify/polaris';
 import { EditMinor, DeleteMinor, ViewMinor, StoreMinor } from '@shopify/polaris-icons';
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
+import AppBridgeToast from './AppBridgeToast';
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const [auctions, setAuctions] = useState([]);
@@ -29,6 +25,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const [closeModalOpen, setCloseModalOpen] = useState(false);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastError, setToastError] = useState(false);
   const [showToast, setShowToast] = useState(false);
   
   // Pagination state
@@ -92,6 +89,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       
       await auctionAPI.deleteAuction(auctionId);
       setToastMessage('Auction deleted successfully');
+      setToastError(false);
       setShowToast(true);
       setDeleteModalOpen(false);
       setSelectedAuction(null);
@@ -116,6 +114,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       console.log('🔍 Closing auction with ID:', auctionId);
       await auctionAPI.closeAuction(auctionId);
       setToastMessage('Auction closed successfully');
+      setToastError(false);
       setShowToast(true);
       setCloseModalOpen(false);
       setSelectedAuction(null);
@@ -191,7 +190,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     getStatusBadge(auction.status, auction),
     // Bid Count
     auction.bidHistory?.length || 0,
-    <ButtonGroup key={auction.id}>
+    <div key={auction.id} style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
       <Button
         icon={StoreMinor}
         onClick={() => handleViewInStore(auction)}
@@ -232,7 +231,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
           Close
         </Button>
       )}
-    </ButtonGroup>
+    </div>
   ]);
 
   const handleFiltersChange = (newFilters) => {
@@ -257,6 +256,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       if (!shop) {
         console.error('❌ No shop domain found in URL');
         setToastMessage('Error: No shop domain found');
+        setToastError(true);
         setShowToast(true);
         return;
       }
@@ -266,6 +266,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       if (!shopifyProductId) {
         console.error('❌ No Shopify product ID found for auction:', auction.id);
         setToastMessage('Error: No product ID found for this auction');
+        setToastError(true);
         setShowToast(true);
         return;
       }
@@ -297,6 +298,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     } catch (error) {
       console.error('❌ Error opening product in store:', error);
       setToastMessage('Error opening product in store');
+      setToastError(true);
       setShowToast(true);
     }
   };
@@ -341,7 +343,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   }
 
   return (
-    <Frame>
+    <>
       <Card>
         <div style={{ marginBottom: '1rem' }}>
           <Button onClick={() => setFilterModalOpen(true)}>
@@ -492,12 +494,14 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
       {/* Toast */}
       {showToast && (
-        <Toast
-          content={toastMessage}
+        <AppBridgeToast
+          message={toastMessage}
+          isError={toastError}
+          duration={6000}
           onDismiss={() => setShowToast(false)}
         />
       )}
-    </Frame>
+    </>
   );
 };
 

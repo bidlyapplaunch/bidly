@@ -6,7 +6,6 @@ import {
   Text,
   Button,
   Banner,
-  Frame,
   Tabs
 } from '@shopify/polaris';
 import { PlusMinor } from '@shopify/polaris-icons';
@@ -254,18 +253,15 @@ const Dashboard = ({ onLogout }) => {
 
   if (error) {
     return (
-      <Frame>
-        <Page>
-          <Banner status="critical">
-            <Text variant="bodyMd">{error}</Text>
-          </Banner>
-        </Page>
-      </Frame>
+      <Page>
+        <Banner status="critical">
+          <Text variant="bodyMd">{error}</Text>
+        </Banner>
+      </Page>
     );
   }
 
   return (
-    <Frame>
       <Page
         fullWidth
         title={`Auction Dashboard${shopInfo.shop ? ` - ${shopInfo.shop}` : ''}`}
@@ -428,7 +424,6 @@ const Dashboard = ({ onLogout }) => {
           />
         )}
       </Page>
-    </Frame>
   );
 };
 
