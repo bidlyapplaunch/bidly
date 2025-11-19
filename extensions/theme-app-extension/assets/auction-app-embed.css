@@ -174,7 +174,7 @@
     align-items: center;
     padding: 20px 24px;
     background: transparent;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    border-bottom: none;
     min-height: 60px;
 }
 

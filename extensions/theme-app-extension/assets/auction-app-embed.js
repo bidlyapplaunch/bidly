@@ -182,7 +182,7 @@
         template: 'A',
         font: 'Inter',
         colors: {
-            accent: '#38BDF8',
+            accent: '#384463',
             text: '#EDEEF3',
             timer: '#FF0000',
             bg_solid: '#6B7280',
