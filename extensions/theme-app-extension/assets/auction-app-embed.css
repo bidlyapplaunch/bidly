@@ -723,6 +723,14 @@
     min-width: 60%;
 }
 
+.bidly-widget-root[data-chat-enabled="false"] .bidly-chat-toggle-inline {
+    display: none !important;
+}
+
+.bidly-widget-root[data-chat-enabled="false"] .bidly-footer-actions {
+    justify-content: center;
+}
+
 .bidly-bid-history-link,
 .bidly-history-link {
     display: inline-flex;

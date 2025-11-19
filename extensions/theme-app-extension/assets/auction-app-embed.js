@@ -643,7 +643,7 @@
         // If not logged in, show ONLY login prompt (no auction info)
         if (!loggedIn) {
             return `
-                <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
+                <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
                     <div class="bidly-widget-container">
                         <div class="bidly-widget-header">
                             <h3 class="bidly-widget-title">Live Auction</h3>
@@ -681,7 +681,7 @@
         const isGuestViewOnly = isGuest;
         
         return `
-            <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}">
+        <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
                 <div class="bidly-widget-container">
                     <div class="bidly-widget-header">
                         <h3 class="bidly-widget-title">Live Auction</h3>
@@ -948,6 +948,7 @@
                     
                     if (data.success && data.auction) {
                         const auction = data.auction;
+                        const chatEnabled = auction.chatEnabled !== false;
                         console.log('Bidly: Found auction data:', auction);
                         return {
                             hasAuction: true,
@@ -958,7 +959,8 @@
                             reservePrice: parseFloat(auction.reservePrice) || 0,
                             endTime: auction.endTime,
                             bidCount: auction.bidHistory?.length || 0,
-                            buyNowPrice: parseFloat(auction.buyNowPrice) || 0
+                            buyNowPrice: parseFloat(auction.buyNowPrice) || 0,
+                            chatEnabled
                         };
                     } else {
                         console.log('Bidly: API returned success but no auction data:', data);
@@ -2178,6 +2180,12 @@
             }
         }
         
+        const chatEnabledAttr = auctionCheck.chatEnabled !== false ? 'true' : 'false';
+        widgetElement.setAttribute('data-chat-enabled', chatEnabledAttr);
+        if (innerWidget && innerWidget !== widgetElement) {
+            innerWidget.setAttribute('data-chat-enabled', chatEnabledAttr);
+        }
+        
         // Generate new widget content
         const newContent = createWidgetHTML(auctionCheck, settings);
         
@@ -2283,7 +2291,8 @@
                 endTime: data.auction.endTime,
                 startTime: data.auction.startTime,
                 bidCount: data.auction.bidHistory?.length || 0,
-                buyNowPrice: Number(data.auction.buyNowPrice) || 0
+                buyNowPrice: Number(data.auction.buyNowPrice) || 0,
+                chatEnabled: data.auction.chatEnabled !== false
             };
         } catch (error) {
             console.warn('Bidly: Failed to check auction for product', productId, error);

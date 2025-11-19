@@ -133,6 +133,15 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     }
   };
 
+  const getChatStatus = () => {
+    const enabled = auctionData?.chatEnabled !== false;
+    return (
+      <Badge status={enabled ? 'success' : 'attention'}>
+        {enabled ? 'Enabled' : 'Disabled'}
+      </Badge>
+    );
+  };
+
   const getBidHistoryRows = () => {
     if (!auctionData?.bidHistory?.length) {
       return [];
@@ -185,6 +194,10 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                   <div>
                     <Text variant="bodyMd" color="subdued">Time Status</Text>
                     <div>{getTimeStatus()}</div>
+                  </div>
+                  <div>
+                    <Text variant="bodyMd" color="subdued">Live Chat</Text>
+                    <div>{getChatStatus()}</div>
                   </div>
                 </div>
               </div>
