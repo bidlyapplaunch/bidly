@@ -8,12 +8,9 @@ import {
   TextField,
   Checkbox,
   Button,
-  BlockStack,
-  InlineGrid,
   Spinner,
   Frame,
-  Toast,
-  InlineStack
+  Toast
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 
@@ -192,7 +189,7 @@ function MailServiceSettings() {
         ) : (
         <Layout>
           <Layout.Section>
-            <BlockStack gap="400">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {disabled && (
                 <Banner
                   title="Upgrade required"
@@ -203,7 +200,7 @@ function MailServiceSettings() {
               )}
 
               <Card title="SMTP configuration" sectioned>
-                <BlockStack gap="300">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <Checkbox
                     label="Use my own email server"
                     checked={settings.useCustomSmtp}
@@ -276,7 +273,7 @@ function MailServiceSettings() {
                       autoComplete="off"
                       disabled={disabled || !settings.useCustomSmtp}
                     />
-                    <InlineStack align="end">
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <Button
                         onClick={handleTestSmtp}
                         loading={testing}
@@ -284,13 +281,13 @@ function MailServiceSettings() {
                       >
                         Send test email
                       </Button>
-                    </InlineStack>
+                    </div>
                   </InlineGrid>
-                </BlockStack>
+                </div>
               </Card>
 
               <Card title="Email templates" sectioned>
-                <BlockStack gap="400">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <div>
                     <Text as="span" tone="subdued">
                       Available tokens:
@@ -315,8 +312,15 @@ function MailServiceSettings() {
                     const template = settings.templates[key] || { enabled: true, subject: '', html: '' };
                     return (
                       <Card.Section key={key}>
-                        <BlockStack gap="200">
-                          <InlineStack align="space-between" blockAlign="center">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 12
+                            }}
+                          >
                             <Text variant="headingMd">{title}</Text>
                             <Checkbox
                               label="Enabled"
@@ -324,7 +328,7 @@ function MailServiceSettings() {
                               onChange={(value) => handleTemplateChange(key, 'enabled', value)}
                               disabled={disabled}
                             />
-                          </InlineStack>
+                          </div>
                           <TextField
                             label="Subject"
                             value={template.subject}
@@ -340,13 +344,13 @@ function MailServiceSettings() {
                             autoComplete="off"
                             disabled={disabled}
                           />
-                        </BlockStack>
+                        </div>
                       </Card.Section>
                     );
                   })}
-                </BlockStack>
+                </div>
               </Card>
-            </BlockStack>
+            </div>
           </Layout.Section>
         </Layout>
         )}
