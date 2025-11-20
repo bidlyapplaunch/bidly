@@ -2,6 +2,7 @@ import express from 'express';
 import MarketplaceCustomization from '../models/MarketplaceCustomization.js';
 import { optionalStoreIdentification } from '../middleware/storeMiddleware.js';
 import { buildMarketplaceCSS, normalizeMarketplaceTheme } from '../../shared/marketplaceTheme.js';
+import { getDefaultSettings } from '../services/customizationService.js';
 
 const router = express.Router();
 
@@ -39,26 +40,27 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
         let customization = await MarketplaceCustomization.findOne({ shopDomain });
 
         if (!customization) {
-            // Return default settings without saving
+            // Use default settings from customization service
+            const defaultSettings = getDefaultSettings('marketplace', 'A');
             customization = {
                 shopDomain,
-                template: 'Classic',
-                font: 'Inter',
-                gradientEnabled: true,
+                template: defaultSettings.template || 'A',
+                font: defaultSettings.font || 'Inter',
+                gradientEnabled: defaultSettings.gradientEnabled !== undefined ? defaultSettings.gradientEnabled : false,
                 colors: {
-                    primary: '#007bff',
-                    background: '#f5f5f5',
-                    surface: '#ffffff',
-                    textPrimary: '#222222',
-                    textSecondary: '#666666',
-                    border: '#dddddd',
-                    accent: '#00b894',
-                    success: '#00c851',
-                    error: '#ff4444',
-                    button: '#1f2933',
-                    buttonText: '#ffffff',
-                    gradient1: '#007bff',
-                    gradient2: '#0056b3'
+                    primary: defaultSettings.colors?.button_bg || '#FFFFFF',
+                    background: defaultSettings.colors?.bg_solid || '#EDEDED',
+                    surface: '#FFFFFF',
+                    textPrimary: defaultSettings.colors?.text || '#000000',
+                    textSecondary: '#1A2E37',
+                    border: defaultSettings.colors?.border || '#324462',
+                    accent: defaultSettings.colors?.accent || '#00B894',
+                    success: '#00C851',
+                    error: '#FF4444',
+                    button: defaultSettings.colors?.button_bg || '#FFFFFF',
+                    buttonText: defaultSettings.colors?.button_text || '#000000',
+                    gradient1: defaultSettings.colors?.bg_gradient_start || '#CEC236',
+                    gradient2: defaultSettings.colors?.bg_gradient_end || '#94C5F0'
                 }
             };
         }
@@ -187,25 +189,26 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
         let customization = await MarketplaceCustomization.findOne({ shopDomain });
 
         if (!customization) {
-            // Return default theme
+            // Use default settings from customization service
+            const defaultSettings = getDefaultSettings('marketplace', 'A');
             customization = {
-                template: 'Classic',
-                font: 'Inter',
-                gradientEnabled: true,
+                template: defaultSettings.template || 'A',
+                font: defaultSettings.font || 'Inter',
+                gradientEnabled: defaultSettings.gradientEnabled !== undefined ? defaultSettings.gradientEnabled : false,
                 colors: {
-                    primary: '#007bff',
-                    background: '#f5f5f5',
-                    surface: '#ffffff',
-                    textPrimary: '#222222',
-                    textSecondary: '#666666',
-                    border: '#dddddd',
-                    accent: '#00b894',
-                    success: '#00c851',
-                    error: '#ff4444',
-                    button: '#1f2933',
-                    buttonText: '#ffffff',
-                    gradient1: '#007bff',
-                    gradient2: '#0056b3'
+                    primary: defaultSettings.colors?.button_bg || '#FFFFFF',
+                    background: defaultSettings.colors?.bg_solid || '#EDEDED',
+                    surface: '#FFFFFF',
+                    textPrimary: defaultSettings.colors?.text || '#000000',
+                    textSecondary: '#1A2E37',
+                    border: defaultSettings.colors?.border || '#324462',
+                    accent: defaultSettings.colors?.accent || '#00B894',
+                    success: '#00C851',
+                    error: '#FF4444',
+                    button: defaultSettings.colors?.button_bg || '#FFFFFF',
+                    buttonText: defaultSettings.colors?.button_text || '#000000',
+                    gradient1: defaultSettings.colors?.bg_gradient_start || '#CEC236',
+                    gradient2: defaultSettings.colors?.bg_gradient_end || '#94C5F0'
                 }
             };
         }
