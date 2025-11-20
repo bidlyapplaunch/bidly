@@ -2138,12 +2138,21 @@
 
     // Wait for a product info container to become available
     async function waitForProductInfoContainer() {
-        console.log('Bidly: Waiting for product info container to become available...');
+        // Check immediately first
+        for (const selector of PRODUCT_INFO_SELECTORS) {
+            const candidate = document.querySelector(selector);
+            if (candidate) {
+                return candidate;
+            }
+        }
 
+        // If not found, wait briefly (max 1 second total)
         let attempts = 0;
-        const maxAttempts = 20;
+        const maxAttempts = 4; // Reduced from 20 to 4 (4 * 250ms = 1 second max)
 
         while (attempts < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 250)); // Reduced from 500ms to 250ms
+            
             for (const selector of PRODUCT_INFO_SELECTORS) {
                 const candidate = document.querySelector(selector);
                 if (candidate) {
@@ -2152,10 +2161,9 @@
             }
 
             attempts++;
-            await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
-        console.warn('Bidly: Product info container not found after waiting');
+        // Return null quickly to use fallback placement
         return null;
     }
 
@@ -2267,17 +2275,14 @@
             console.log('Bidly: Shared login system not available after waiting');
         }
 
-        const productInfoContainer = await waitForProductInfoContainer();
-        if (!productInfoContainer) {
-            console.warn('Bidly: Product info container did not appear; widget will use fallback placement.');
-        }
-        
+        // Resolve product ID first
         const productId = resolveProductId();
         if (!productId) {
             console.log('Bidly: No product ID detected; aborting widget injection.');
             return;
         }
 
+        // Fetch auction data immediately (injectWidget will find insertion point itself)
         try {
             const response = await fetch(`${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`);
             if (!response.ok) {

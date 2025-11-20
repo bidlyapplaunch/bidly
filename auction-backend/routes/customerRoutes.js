@@ -260,6 +260,45 @@ router.post('/temp-login', async (req, res, next) => {
   }
 });
 
+// Get customer by email and shop domain (MUST be before /:id route)
+router.get('/by-email', async (req, res, next) => {
+  try {
+    const { email, shop } = req.query;
+    
+    if (!email || !shop) {
+      return next(new AppError('Email and shop domain are required', 400));
+    }
+
+    const customer = await Customer.findOne({ 
+      email: email.toLowerCase().trim(), 
+      shopDomain: shop 
+    });
+
+    if (!customer) {
+      return next(new AppError('Customer not found', 404));
+    }
+
+    res.json({
+      success: true,
+      customer: {
+        id: customer._id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        displayName: customer.displayName,
+        fullName: customer.fullName,
+        shopifyId: customer.shopifyId,
+        isTemp: customer.isTemp,
+        totalBids: customer.totalBids,
+        auctionsWon: customer.auctionsWon,
+        totalBidAmount: customer.totalBidAmount
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get customer by ID
 router.get('/:id', async (req, res, next) => {
   try {
@@ -325,45 +364,6 @@ router.post('/:id/bid', identifyStore, async (req, res, next) => {
     res.json({
       success: true,
       message: 'Bid added to customer history'
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get customer by email and shop domain
-router.get('/by-email', async (req, res, next) => {
-  try {
-    const { email, shop } = req.query;
-    
-    if (!email || !shop) {
-      return next(new AppError('Email and shop domain are required', 400));
-    }
-
-    const customer = await Customer.findOne({ 
-      email: email.toLowerCase().trim(), 
-      shopDomain: shop 
-    });
-
-    if (!customer) {
-      return next(new AppError('Customer not found', 404));
-    }
-
-    res.json({
-      success: true,
-      customer: {
-        id: customer._id,
-        email: customer.email,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        displayName: customer.displayName,
-        fullName: customer.fullName,
-        shopifyId: customer.shopifyId,
-        isTemp: customer.isTemp,
-        totalBids: customer.totalBids,
-        auctionsWon: customer.auctionsWon,
-        totalBidAmount: customer.totalBidAmount
-      }
     });
   } catch (error) {
     next(error);
