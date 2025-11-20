@@ -1888,8 +1888,9 @@
             
             const bidData = {
                 amount: parseFloat(formData.get('amount')),
-                bidder: customer.fullName,
-                bidderEmail: customer.email
+                bidder: customer.displayName || customer.fullName || 'Guest User',
+                bidderEmail: customer.email,
+                customerId: customer.id
             };
 
             try {
@@ -1984,7 +1985,7 @@
 
             const bidData = {
                 amount: bidAmount,
-                bidder: customer.fullName,
+                bidder: customer.displayName || customer.fullName || 'Guest User',
                 bidderEmail: customer.email,
                 customerId: customer.id
             };
