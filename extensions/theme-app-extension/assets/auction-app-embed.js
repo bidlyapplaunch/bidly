@@ -2353,11 +2353,18 @@
         
         if (window.BidlyHybridLogin) {
             console.log('Bidly: Shared hybrid login system loaded');
-            // Give login system a brief moment to detect customer (if not already logged in)
-            // This ensures customer state is ready before widget renders
-            if (!isUserLoggedIn()) {
-                // User not logged in yet - wait briefly for async customer detection to complete
-                await new Promise(resolve => setTimeout(resolve, 100)); // Brief wait for customer detection
+            // Give login system time to detect customer (check multiple times)
+            // This ensures customer state is ready before widget renders to prevent login flash
+            let loginCheckAttempts = 0;
+            const maxLoginChecks = 10; // Check up to 10 times (1 second total)
+            while (!isUserLoggedIn() && loginCheckAttempts < maxLoginChecks) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                loginCheckAttempts++;
+            }
+            if (isUserLoggedIn()) {
+                console.log('Bidly: Customer detected before widget render');
+            } else {
+                console.log('Bidly: No customer detected, will show login view');
             }
         } else {
             console.log('Bidly: Shared login system not available after waiting');
