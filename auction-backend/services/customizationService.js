@@ -110,15 +110,16 @@ const MARKETPLACE_TEMPLATES = {
     boxShadow: 'subtle',
     gradientEnabled: false,
     colors: {
-      accent: '#2563eb',
-      text: '#111827',
-      bg_solid: '#f9fafb',
-      bg_gradient_start: '#f9fafb',
-      bg_gradient_end: '#f9fafb',
-      button_bg: '#2563eb',
-      button_hover: '#1d4ed8',
-      button_text: '#f9fafb',
-      border: '#e5e7eb'
+      accent: '#00B894',
+      text: '#000000',
+      timer: '#00B894',
+      bg_solid: '#EDEDED',
+      bg_gradient_start: '#CEC236',
+      bg_gradient_end: '#94C5F0',
+      button_bg: '#FFFFFF',
+      button_hover: '#EDEDED',
+      button_text: '#000000',
+      border: '#324462'
     },
     layout: 'grid'
   },
