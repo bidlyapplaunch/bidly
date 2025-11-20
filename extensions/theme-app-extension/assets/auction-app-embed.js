@@ -1919,6 +1919,14 @@
             }
             
             const customer = getCurrentCustomer();
+            
+            // Validate customer has required fields
+            if (!customer.email) {
+                alert('Customer email is required to place a bid. Please log in again.');
+                console.error('Bidly: Customer missing email:', customer);
+                return;
+            }
+            
             const form = event.target;
             const formData = new FormData(form);
             
@@ -1929,13 +1937,16 @@
             const bidData = {
                 amount: parseFloat(formData.get('amount')),
                 bidder: customer.displayName || customer.fullName || 'Guest User',
-                bidderEmail: customer.email
+                bidderEmail: customer.email,
+                customerEmail: customer.email // Send both for backend compatibility
             };
             
             // Only add customerId if it's a valid MongoDB ObjectId
             if (isValidObjectId) {
                 bidData.customerId = customer.id;
             }
+
+            console.log('Bidly: Submitting bid with data:', { ...bidData, bidderEmail: '[REDACTED]', customerEmail: '[REDACTED]' });
 
             try {
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid?shop=${CONFIG.shopDomain}`, {
@@ -1945,6 +1956,13 @@
                     },
                     body: JSON.stringify(bidData)
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    console.error('Bidly: Bid failed:', response.status, errorData);
+                    alert(`Error placing bid: ${errorData.message || 'Please try again'}`);
+                    return;
+                }
 
                 const result = await response.json();
                 if (result.success) {
@@ -2018,16 +2036,26 @@
             // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
             const isValidObjectId = customer.id && /^[0-9a-fA-F]{24}$/.test(customer.id);
             
+            // Validate customer has required fields
+            if (!customer.email) {
+                alert('Customer email is required to place a bid. Please log in again.');
+                console.error('Bidly: Customer missing email:', customer);
+                return;
+            }
+
             const bidData = {
                 amount: bidAmount,
                 bidder: customer.displayName || customer.fullName || 'Guest User',
-                bidderEmail: customer.email
+                bidderEmail: customer.email,
+                customerEmail: customer.email // Send both for backend compatibility
             };
             
             // Only add customerId if it's a valid MongoDB ObjectId
             if (isValidObjectId) {
                 bidData.customerId = customer.id;
             }
+
+            console.log('Bidly: Submitting bid with data:', { ...bidData, bidderEmail: '[REDACTED]', customerEmail: '[REDACTED]' });
 
             try {
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid?shop=${CONFIG.shopDomain}`, {
@@ -2037,6 +2065,13 @@
                     },
                     body: JSON.stringify(bidData)
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    console.error('Bidly: Bid failed:', response.status, errorData);
+                    alert(`Error placing bid: ${errorData.message || 'Please try again'}`);
+                    return;
+                }
 
                 const result = await response.json();
 
