@@ -188,14 +188,14 @@
                     
                     if (response.ok) {
                         const result = await response.json();
-                        // Use backend response which has proper displayName (generated if needed)
+                        // Backend always provides displayName (generated random name if needed)
                         currentCustomer = {
                             id: customerData.id,
                             email: customerData.email,
                             firstName: result.customer?.firstName || customerData.firstName || null,
                             lastName: result.customer?.lastName || customerData.lastName || null,
                             fullName: result.customer?.fullName || null,
-                            displayName: result.customer?.displayName || result.customer?.fullName || 'Guest User',
+                            displayName: result.customer.displayName,
                             shopifyId: customerData.id,
                             isTemp: false
                         };
@@ -215,7 +215,7 @@
                                     firstName: errorData.customer.firstName || customerData.firstName || null,
                                     lastName: errorData.customer.lastName || customerData.lastName || null,
                                     fullName: errorData.customer.fullName || null,
-                                    displayName: errorData.customer.displayName || errorData.customer.fullName || 'Guest User',
+                                    displayName: errorData.customer.displayName,
                                     shopifyId: customerData.id,
                                     isTemp: false
                                 };
@@ -245,7 +245,7 @@
                                         firstName: retryResult.customer?.firstName || customerData.firstName || null,
                                         lastName: retryResult.customer?.lastName || customerData.lastName || null,
                                         fullName: retryResult.customer?.fullName || null,
-                                        displayName: retryResult.customer?.displayName || retryResult.customer?.fullName || 'Guest User',
+                                        displayName: retryResult.customer.displayName,
                                         shopifyId: customerData.id,
                                         isTemp: false
                                     };

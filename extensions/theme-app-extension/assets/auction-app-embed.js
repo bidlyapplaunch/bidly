@@ -1379,10 +1379,18 @@
                 let auctionData = null;
                 if (data.success && data.auction) {
                     auctionData = data.auction;
+                    // Ensure chatEnabled is included
+                    if (!auctionData.hasOwnProperty('chatEnabled')) {
+                        auctionData.chatEnabled = data.auction.chatEnabled !== false;
+                    }
                     console.log('Bidly: Polling update received:', auctionData);
                 } else if (data.success && data.data) {
                     // Handle different response format
                     auctionData = data.data;
+                    // Ensure chatEnabled is included
+                    if (!auctionData.hasOwnProperty('chatEnabled')) {
+                        auctionData.chatEnabled = data.data.chatEnabled !== false;
+                    }
                     console.log('Bidly: Polling update received (data format):', auctionData);
                 } else {
                     console.warn('Bidly: Polling response format unexpected:', data);
@@ -1454,6 +1462,21 @@
         }
 
         console.log('Bidly: Found widget element:', widget);
+
+        // Update chat enabled state immediately
+        if (auctionData.hasOwnProperty('chatEnabled')) {
+            const chatEnabled = auctionData.chatEnabled !== false;
+            const chatEnabledAttr = chatEnabled ? 'true' : 'false';
+            widget.setAttribute('data-chat-enabled', chatEnabledAttr);
+            
+            // Also update inner widget if it exists
+            const innerWidget = widget.querySelector(`#bidly-auction-widget-${auctionId}`);
+            if (innerWidget && innerWidget !== widget) {
+                innerWidget.setAttribute('data-chat-enabled', chatEnabledAttr);
+            }
+            
+            console.log('Bidly: Updated chat enabled state to:', chatEnabledAttr);
+        }
 
         // Update current bid - try multiple selectors
         let currentBidElement = widget.querySelector('[data-current-bid]');
@@ -2241,18 +2264,22 @@
         
         // Wait for shared login system to initialize (but don't wait too long)
         let attempts = 0;
-        const maxAttempts = 5; // Reduced attempts to prevent long waits
+        const maxAttempts = 3; // Reduced attempts to prevent long waits
         
         while (!window.BidlyHybridLogin && attempts < maxAttempts) {
             console.log('Bidly: Waiting for shared login system...', attempts + 1);
-            await new Promise(resolve => setTimeout(resolve, 200)); // Reduced wait time
+            await new Promise(resolve => setTimeout(resolve, 100)); // Reduced wait time
             attempts++;
         }
         
         if (window.BidlyHybridLogin) {
             console.log('Bidly: Shared hybrid login system loaded');
-            // Wait a bit more for customer detection to complete
-            await new Promise(resolve => setTimeout(resolve, 500)); // Reduced wait time
+            // Give login system a brief moment to detect customer (if not already logged in)
+            // This ensures customer state is ready before widget renders
+            if (!isUserLoggedIn()) {
+                // User not logged in yet - wait briefly for async customer detection to complete
+                await new Promise(resolve => setTimeout(resolve, 100)); // Brief wait for customer detection
+            }
         } else {
             console.log('Bidly: Shared login system not available after waiting');
         }
@@ -2317,10 +2344,10 @@
 
     // Listen for login status changes and refresh widget content only (not position)
     window.addEventListener('bidly-login-success', function(event) {
-        console.log('Bidly: Login success detected, refreshing widget content only...', event.detail);
+        console.log('Bidly: Login success detected, refreshing widget content immediately...', event.detail);
         
-        // Wait a moment for login state to fully update
-        setTimeout(() => {
+        // Use requestAnimationFrame for immediate update, then verify state
+        requestAnimationFrame(() => {
             // Check login state
             const loggedIn = isUserLoggedIn();
             const isShopify = isShopifyCustomer();
@@ -2347,14 +2374,14 @@
                     hasAuctionCheck: !!window.currentAuctionCheck 
                 });
             }
-        }, 300);
+        });
     });
 
     window.addEventListener('bidly-logout', function(event) {
-        console.log('Bidly: Logout detected, refreshing widget...');
+        console.log('Bidly: Logout detected, refreshing widget immediately...');
         
-        // Wait a moment for logout to complete
-        setTimeout(() => {
+        // Use requestAnimationFrame for immediate update
+        requestAnimationFrame(() => {
             // Check login state after logout
             const loggedIn = isUserLoggedIn();
             console.log('Bidly: Login state after logout event:', { loggedIn, customer: getCurrentCustomer() });
@@ -2390,7 +2417,7 @@
                     console.error('Bidly: Error refreshing widget after logout:', error);
                 });
             }
-        }, 300);
+        });
     });
 
     // ===== CHAT FUNCTIONALITY =====

@@ -50,6 +50,14 @@ const resolveDisplayName = ({ firstName, lastName, displayName, existingDisplayN
 };
 
 const customerSchema = new mongoose.Schema({
+  // Reference to global customer identity
+  globalCustomerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'GlobalCustomer',
+    required: true,
+    index: true
+  },
+  
   // Shopify customer data
   shopifyId: {
     type: String,

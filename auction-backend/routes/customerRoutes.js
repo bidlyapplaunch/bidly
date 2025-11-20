@@ -2,6 +2,7 @@ import express from 'express';
 import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { identifyStore } from '../middleware/storeMiddleware.js';
+import { ensureCustomer } from '../services/customerService.js';
 
 const router = express.Router();
 
@@ -42,15 +43,23 @@ router.post('/saveCustomer', async (req, res, next) => {
       return next(new AppError('Missing required customer data: email and shop domain are required', 400));
     }
 
-    // Find or create customer
-    const customer = await Customer.findOrCreate({
-      shopifyId,
+    // Ensure customer exists (global + per-store profile)
+    const customer = await ensureCustomer(
+      shopDomain,
       email,
-      firstName: sanitizeOptionalString(firstName),
-      lastName: sanitizeOptionalString(lastName),
-      displayName: sanitizeOptionalString(displayName),
-      isTemp: !shopifyId // If no shopifyId, it's a temp customer
-    }, shopDomain);
+      sanitizeOptionalString(firstName),
+      sanitizeOptionalString(lastName)
+    );
+
+    // Update shopifyId and isTemp if provided
+    if (shopifyId && customer.shopifyId !== shopifyId) {
+      customer.shopifyId = shopifyId;
+      customer.isTemp = false;
+      await customer.save();
+    } else if (!shopifyId && !customer.isTemp) {
+      customer.isTemp = true;
+      await customer.save();
+    }
 
     console.log('✅ Customer saved/updated successfully:', {
       id: customer._id,
@@ -85,10 +94,9 @@ router.post('/saveCustomer', async (req, res, next) => {
       name: error.name
     });
     
-    // Handle duplicate key errors (email already exists)
-    // Instead of erroring, find and return the existing customer
+    // Handle duplicate key errors (should not happen with ensureCustomer, but keep for safety)
     if (error.code === 11000) {
-      // Extract email and shopDomain from req.body (they might not be in scope)
+      // Extract email and shopDomain from req.body
       const errorEmail = req.body?.email || error.keyValue?.email;
       const errorShopDomain = req.body?.shopDomain;
       
@@ -99,37 +107,35 @@ router.post('/saveCustomer', async (req, res, next) => {
       
       console.log('⚠️ Duplicate customer detected, fetching existing customer:', { email: errorEmail, shopDomain: errorShopDomain });
       try {
-        const existingCustomer = await Customer.findOne({ 
-          email: errorEmail.toLowerCase(), 
-          shopDomain: errorShopDomain 
-        });
+        // Use ensureCustomer to get the existing customer
+        const existingCustomer = await ensureCustomer(
+          errorShopDomain,
+          errorEmail,
+          req.body?.firstName,
+          req.body?.lastName
+        );
         
-        if (existingCustomer) {
-          console.log('✅ Found existing customer, returning it');
-          return res.json({
-            success: true,
-            customer: {
-              id: existingCustomer._id,
-              email: existingCustomer.email,
-              firstName: existingCustomer.firstName,
-              lastName: existingCustomer.lastName,
-              displayName: existingCustomer.displayName,
-              fullName: existingCustomer.fullName,
-              shopifyId: existingCustomer.shopifyId,
-              isTemp: existingCustomer.isTemp,
-              totalBids: existingCustomer.totalBids,
-              auctionsWon: existingCustomer.auctionsWon,
-              totalBidAmount: existingCustomer.totalBidAmount
-            }
-          });
-        }
+        console.log('✅ Found existing customer, returning it');
+        return res.json({
+          success: true,
+          customer: {
+            id: existingCustomer._id,
+            email: existingCustomer.email,
+            firstName: existingCustomer.firstName,
+            lastName: existingCustomer.lastName,
+            displayName: existingCustomer.displayName,
+            fullName: existingCustomer.fullName,
+            shopifyId: existingCustomer.shopifyId,
+            isTemp: existingCustomer.isTemp,
+            totalBids: existingCustomer.totalBids,
+            auctionsWon: existingCustomer.auctionsWon,
+            totalBidAmount: existingCustomer.totalBidAmount
+          }
+        });
       } catch (findError) {
         console.error('❌ Error finding existing customer:', findError);
-        // Fall through to return the original error
+        return next(new AppError('Customer with this email already exists in this store', 409));
       }
-      
-      // If we couldn't find the existing customer, return the original error
-      return next(new AppError('Customer with this email already exists in this store', 409));
     }
     
     // Handle validation errors
@@ -162,15 +168,20 @@ router.post('/sync', async (req, res, next) => {
       return next(new AppError('Missing required customer data: email and shop domain are required', 400));
     }
 
-    // Find or create customer
-    const customer = await Customer.findOrCreate({
-      shopifyId,
+    // Ensure customer exists (global + per-store profile)
+    const customer = await ensureCustomer(
+      shopDomain,
       email,
-      firstName: sanitizeOptionalString(firstName),
-      lastName: sanitizeOptionalString(lastName),
-      displayName: sanitizeOptionalString(displayName),
-      isTemp: false
-    }, shopDomain);
+      sanitizeOptionalString(firstName),
+      sanitizeOptionalString(lastName)
+    );
+
+    // Update shopifyId if provided
+    if (shopifyId && customer.shopifyId !== shopifyId) {
+      customer.shopifyId = shopifyId;
+      customer.isTemp = false;
+      await customer.save();
+    }
 
     res.json({
       success: true,
@@ -208,14 +219,19 @@ router.post('/temp-login', async (req, res, next) => {
       return next(new AppError('Email and shop domain are required', 400));
     }
 
-    // Find or create temporary customer
-    const customer = await Customer.findOrCreate({
+    // Ensure customer exists (global + per-store profile)
+    const customer = await ensureCustomer(
+      shopDomain,
       email,
-      firstName: sanitizeOptionalString(firstName),
-      lastName: sanitizeOptionalString(lastName),
-      displayName: sanitizeOptionalString(displayName),
-      isTemp: true
-    }, shopDomain);
+      sanitizeOptionalString(firstName),
+      sanitizeOptionalString(lastName)
+    );
+
+    // Mark as temporary if not already a Shopify customer
+    if (!customer.shopifyId) {
+      customer.isTemp = true;
+      await customer.save();
+    }
 
     res.json({
       success: true,

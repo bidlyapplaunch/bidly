@@ -233,13 +233,18 @@ export const createAuction = async (req, res, next) => {
       throw new AppError('An active or pending auction already exists for this product. Please delete the existing auction first or use a different product.', 400);
     }
     
-    // Fetch product data from Shopify
+    // Fetch product data from Shopify with timeout to prevent long delays
     let productData = null;
     try {
-      productData = await getShopifyService().getProduct(shopDomain, shopifyProductId);
+      // Set a timeout of 1 second for product data fetch
+      productData = await Promise.race([
+        getShopifyService().getProduct(shopDomain, shopifyProductId),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Product fetch timeout')), 1000))
+      ]);
     } catch (shopifyError) {
-      console.warn(`Failed to fetch Shopify product ${shopifyProductId}:`, shopifyError.message);
+      console.warn(`Failed to fetch Shopify product ${shopifyProductId} (timeout or error):`, shopifyError.message);
       // Continue without product data - auction can still be created
+      // Product data can be refreshed later if needed
     }
     
     const auction = new Auction({
@@ -285,8 +290,11 @@ export const createAuction = async (req, res, next) => {
       }
     }
     
-    // Update product metafields for auction widget
-    await updateProductMetafields(savedAuction, shopDomain);
+    // Update product metafields for auction widget (non-blocking - don't await)
+    // This allows the auction creation to return immediately while metafields update in background
+    updateProductMetafields(savedAuction, shopDomain).catch(error => {
+      console.warn('Failed to update product metafields (non-blocking):', error.message);
+    });
     
     // Send real-time notification about new auction
     const io = req.app.get('io');
