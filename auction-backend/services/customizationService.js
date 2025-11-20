@@ -17,18 +17,18 @@ const WIDGET_TEMPLATES = {
     font: 'Poppins',
     borderRadius: 16,
     boxShadow: 'medium',
-    gradientEnabled: true,
+    gradientEnabled: false,
     colors: {
-      accent: '#38BDF8',
+      accent: '#18688B',
       text: '#EDEEF3',
-      timer: '#FBBF24',
-      bg_solid: '#36526D',
+      timer: '#B23434',
+      bg_solid: '#1F364C',
       bg_gradient_start: '#B7BDD2',
       bg_gradient_end: '#283E3B',
       button_bg: '#212736',
       button_hover: '#7FD2C1',
       button_text: '#FFFFFF',
-      border: '#FF1E05'
+      border: '#36516C'
     },
     layout: 'airy'
   },
