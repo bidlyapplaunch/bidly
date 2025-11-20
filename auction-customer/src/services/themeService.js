@@ -22,7 +22,9 @@ class ThemeService {
     try {
       const shop = shopDomain || getShopFromURL();
       const backendUrl = resolveBackendUrl(shop);
-      const response = await fetch(`${backendUrl}/api/marketplace-customization?shop=${encodeURIComponent(shop)}`);
+      // Add cache-busting parameter to ensure fresh settings after defaults update
+      const cacheBuster = `&_v=${Date.now()}`;
+      const response = await fetch(`${backendUrl}/api/marketplace-customization?shop=${encodeURIComponent(shop)}${cacheBuster}`);
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.customization) {
