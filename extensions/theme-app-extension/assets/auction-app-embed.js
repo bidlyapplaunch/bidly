@@ -1281,7 +1281,19 @@
             socket.on('auction-updated', (data) => {
                 console.log('Bidly: Real-time auction update received:', data);
                 if (data.auctionId === auctionId) {
-                    updateWidgetData(auctionId, data.auction);
+                    if (data.auction) {
+                        updateWidgetData(auctionId, data.auction);
+                    } else {
+                        // Fallback: fetch full auction data if not included
+                        fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`)
+                            .then(res => res.json())
+                            .then(result => {
+                                if (result.success && result.data) {
+                                    updateWidgetData(auctionId, result.data);
+                                }
+                            })
+                            .catch(err => console.warn('Bidly: Failed to fetch auction data for update:', err));
+                    }
                 }
             });
             
@@ -1308,6 +1320,7 @@
                     
                     // Update widget with full auction data if available
                     if (data.auction) {
+                        console.log('Bidly: Updating widget with full auction data:', data.auction);
                         updateWidgetData(auctionId, data.auction);
                         
                         // Show notification for new bids
@@ -1323,10 +1336,47 @@
                             showBidNotification(data.auction.currentBid, data.auction.bidHistory?.length || 0, latestBid.bidder || latestBid.displayName, productTitle);
                         }
                     } else if (data.currentBid) {
+                        console.log('Bidly: Updating widget with partial bid data (currentBid fallback):', data.currentBid);
                         // Fallback: update just the current bid if full auction data not available
-                        const currentBidElement = document.querySelector(`.bidly-widget[data-auction-id="${auctionId}"] .bidly-current-bid`);
-                        if (currentBidElement) {
-                            currentBidElement.textContent = `$${data.currentBid.toFixed(2)}`;
+                        const widget = document.querySelector(`#bidly-auction-widget-${auctionId}`);
+                        if (widget) {
+                            // Try multiple selectors for current bid
+                            let currentBidElement = widget.querySelector('[data-current-bid]');
+                            if (!currentBidElement) {
+                                currentBidElement = widget.querySelector('.bidly-amount');
+                            }
+                            if (!currentBidElement) {
+                                currentBidElement = widget.querySelector('.bidly-current-bid');
+                            }
+                            
+                            if (currentBidElement) {
+                                currentBidElement.textContent = `$${data.currentBid.toFixed(2)}`;
+                                currentBidElement.setAttribute('data-current-bid', data.currentBid);
+                            }
+                            
+                            // Also update bid count if available
+                            if (data.bidHistory && Array.isArray(data.bidHistory)) {
+                                const bidCountElement = widget.querySelector('[data-bid-count]') || widget.querySelector('.bidly-count');
+                                if (bidCountElement) {
+                                    bidCountElement.textContent = data.bidHistory.length;
+                                    bidCountElement.setAttribute('data-bid-count', data.bidHistory.length);
+                                }
+                            }
+                            
+                            // Update minimum bid
+                            const minBid = data.currentBid + 1;
+                            const minBidElement = widget.querySelector('[data-min-bid]') || widget.querySelector('.bidly-minimum-bid .bidly-amount');
+                            if (minBidElement) {
+                                minBidElement.textContent = `$${minBid.toFixed(2)}`;
+                                minBidElement.setAttribute('data-min-bid', minBid);
+                            }
+                            
+                            // Update bid input placeholder
+                            const bidInput = widget.querySelector('.bidly-inline-bid-form input[type="number"]');
+                            if (bidInput) {
+                                bidInput.min = minBid;
+                                bidInput.placeholder = `Min: $${minBid.toFixed(2)}`;
+                            }
                         }
                     }
                 }
@@ -1489,16 +1539,21 @@
     
     // Update widget data in real-time
     function updateWidgetData(auctionId, auctionData) {
+        console.log('Bidly: updateWidgetData called for auction:', auctionId, 'with data:', auctionData);
         const widget = document.querySelector(`#bidly-auction-widget-${auctionId}`);
         if (!widget) {
+            console.warn('Bidly: Widget not found for auction:', auctionId);
             return; // Widget not ready yet, skip silently
         }
 
         // Check if widget HTML is actually rendered by looking for a key element
         const widgetBody = widget.querySelector('.bidly-widget-body');
         if (!widgetBody) {
+            console.warn('Bidly: Widget body not found for auction:', auctionId);
             return; // Widget HTML not fully rendered yet, skip silently
         }
+        
+        console.log('Bidly: Widget found, updating elements...');
 
         // Update chat enabled state immediately
         if (auctionData.hasOwnProperty('chatEnabled')) {
