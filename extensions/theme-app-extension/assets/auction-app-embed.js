@@ -1298,9 +1298,37 @@
 
             // Some backends also include time extension in a generic bid update; be resilient
             socket.on('bid-update', (data) => {
-                if (data.auctionId === auctionId && data.timeExtended && data.newEndTime) {
-                    console.log('Bidly: Time extension via bid-update:', data.newEndTime);
-                    initializeCountdown(auctionId, data.newEndTime);
+                console.log('Bidly: Real-time bid-update received:', data);
+                if (data.auctionId === auctionId) {
+                    // Handle time extension
+                    if (data.timeExtended && data.newEndTime) {
+                        console.log('Bidly: Time extension via bid-update:', data.newEndTime);
+                        initializeCountdown(auctionId, data.newEndTime);
+                    }
+                    
+                    // Update widget with full auction data if available
+                    if (data.auction) {
+                        updateWidgetData(auctionId, data.auction);
+                        
+                        // Show notification for new bids
+                        const latestBid = data.auction.bidHistory && data.auction.bidHistory.length > 0 
+                            ? data.auction.bidHistory[data.auction.bidHistory.length - 1] 
+                            : null;
+                        if (latestBid) {
+                            let productTitle = 'this item';
+                            const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
+                            if (productTitleElement) {
+                                productTitle = productTitleElement.textContent.trim();
+                            }
+                            showBidNotification(data.auction.currentBid, data.auction.bidHistory?.length || 0, latestBid.bidder || latestBid.displayName, productTitle);
+                        }
+                    } else if (data.currentBid) {
+                        // Fallback: update just the current bid if full auction data not available
+                        const currentBidElement = document.querySelector(`.bidly-widget[data-auction-id="${auctionId}"] .bidly-current-bid`);
+                        if (currentBidElement) {
+                            currentBidElement.textContent = `$${data.currentBid.toFixed(2)}`;
+                        }
+                    }
                 }
             });
             

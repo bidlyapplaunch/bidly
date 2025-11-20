@@ -1004,11 +1004,27 @@ export const placeBid = async (req, res, next) => {
         extensionSeconds: timeExtended ? updatedAuction.popcornExtendSeconds : null
       };
 
+      // Include full auction data in the update
+      const fullBidUpdate = {
+        ...bidUpdateData,
+        auction: decoratedUpdatedAuction // Include full auction data for widget updates
+      };
+
       // Send to auction-specific room
-      io.to(`auction-${req.params.id}`).emit('bid-update', bidUpdateData);
+      io.to(`auction-${req.params.id}`).emit('bid-update', fullBidUpdate);
       
       // Also broadcast globally to ensure all clients receive updates
-      io.emit('bid-update', bidUpdateData);
+      io.emit('bid-update', fullBidUpdate);
+      
+      // Also emit bid-placed event for frontend compatibility
+      io.to(`auction-${req.params.id}`).emit('bid-placed', {
+        auctionId: req.params.id,
+        auction: decoratedUpdatedAuction
+      });
+      io.emit('bid-placed', {
+        auctionId: req.params.id,
+        auction: decoratedUpdatedAuction
+      });
 
       // Send to admin room for admin notifications
       io.to('admin-room').emit('admin-notification', {
@@ -1025,9 +1041,10 @@ export const placeBid = async (req, res, next) => {
         }
       });
 
-      // Send global auction update to all connected clients
+      // Send global auction update to all connected clients (include full auction data)
       io.emit('auction-updated', {
         auctionId: req.params.id,
+        auction: decoratedUpdatedAuction, // Include full auction data for widget updates
         status: updatedAuction.status,
         currentBid: updatedAuction.currentBid,
         productTitle: updatedAuction.productData?.title,
@@ -1038,7 +1055,9 @@ export const placeBid = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Bid placed successfully',
-      data: decoratedUpdatedAuction
+      auction: decoratedUpdatedAuction, // Frontend expects 'auction' field
+      data: decoratedUpdatedAuction, // Keep 'data' for backward compatibility
+      isWinning: true // Indicate if this bid is the winning bid
     });
   } catch (error) {
     next(error);
