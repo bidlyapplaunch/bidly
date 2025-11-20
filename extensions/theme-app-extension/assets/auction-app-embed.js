@@ -180,22 +180,22 @@
 
     const DEFAULT_WIDGET_THEME = {
         template: 'A',
-        font: 'Inter',
+        font: 'Poppins',
         colors: {
-            accent: '#384463',
+            accent: '#38BDF8',
             text: '#EDEEF3',
-            timer: '#FF0000',
-            bg_solid: '#6B7280',
+            timer: '#FBBF24',
+            bg_solid: '#36526D',
             bg_gradient_start: '#B7BDD2',
             bg_gradient_end: '#283E3B',
             button_bg: '#212736',
             button_hover: '#7FD2C1',
             button_text: '#FFFFFF',
-            border: '#36526d'
+            border: '#FF1E05'
         },
         borderRadius: 16,
         boxShadow: 'medium',
-        gradientEnabled: false
+        gradientEnabled: true
     };
 
     let widgetThemeSettingsCache = null;
