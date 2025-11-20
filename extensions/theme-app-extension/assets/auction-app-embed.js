@@ -207,8 +207,9 @@
             font: settings.font || DEFAULT_WIDGET_THEME.font,
             borderRadius: settings.borderRadius || DEFAULT_WIDGET_THEME.borderRadius,
             boxShadow: settings.boxShadow || DEFAULT_WIDGET_THEME.boxShadow,
-            // Always disable gradient for default theme (users without customization access)
-            gradientEnabled: false
+            gradientEnabled: typeof settings.gradientEnabled === 'boolean'
+                ? settings.gradientEnabled
+                : DEFAULT_WIDGET_THEME.gradientEnabled
         };
 
         normalized.colors = Object.assign({}, DEFAULT_WIDGET_THEME.colors, settings.colors || {});
