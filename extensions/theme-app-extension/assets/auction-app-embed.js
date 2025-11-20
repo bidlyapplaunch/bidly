@@ -2361,6 +2361,7 @@
             // Ignore storage errors
         }
         
+        // Wait for login system to be available
         let attempts = 0;
         const maxAttempts = 10; // Wait up to 1 second for login system
         
@@ -2371,18 +2372,35 @@
         
         if (window.BidlyHybridLogin) {
             console.log('Bidly: Shared hybrid login system loaded');
-            // Give login system time to detect customer (check multiple times)
-            // This ensures customer state is ready before widget renders to prevent login flash
+            
+            // Wait for login system initialization to complete
+            // The init() function is async and runs automatically, so we need to wait for it
             let loginCheckAttempts = 0;
-            const maxLoginChecks = 15; // Check up to 15 times (1.5 seconds total) to ensure async detection completes
-            while (!isUserLoggedIn() && loginCheckAttempts < maxLoginChecks) {
+            const maxLoginChecks = 20; // Check up to 2 seconds total
+            let lastLoginState = isUserLoggedIn();
+            
+            // Wait until login state stabilizes (stops changing) or we detect a customer
+            while (loginCheckAttempts < maxLoginChecks) {
                 await new Promise(resolve => setTimeout(resolve, 100));
-                loginCheckAttempts++;
+                const currentLoginState = isUserLoggedIn();
+                
+                // If we found a customer, break immediately
+                if (currentLoginState) {
+                    console.log('Bidly: Customer detected before widget render');
+                    break;
+                }
+                
+                // If state changed, reset counter (still initializing)
+                if (currentLoginState !== lastLoginState) {
+                    lastLoginState = currentLoginState;
+                    loginCheckAttempts = 0; // Reset counter when state changes
+                } else {
+                    loginCheckAttempts++;
+                }
             }
-            if (isUserLoggedIn()) {
-                console.log('Bidly: Customer detected before widget render');
-            } else {
-                console.log('Bidly: No customer detected, will show login view');
+            
+            if (!isUserLoggedIn()) {
+                console.log('Bidly: No customer detected after waiting, will show login view');
             }
         } else if (hasCustomerInStorage) {
             // If login system not loaded but we have customer in storage, wait a bit more
