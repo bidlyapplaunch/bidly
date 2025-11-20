@@ -1886,12 +1886,20 @@
             const form = event.target;
             const formData = new FormData(form);
             
+            // Only include customerId if it's a valid MongoDB ObjectId
+            // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
+            const isValidObjectId = customer.id && /^[0-9a-fA-F]{24}$/.test(customer.id);
+            
             const bidData = {
                 amount: parseFloat(formData.get('amount')),
                 bidder: customer.displayName || customer.fullName || 'Guest User',
-                bidderEmail: customer.email,
-                customerId: customer.id
+                bidderEmail: customer.email
             };
+            
+            // Only add customerId if it's a valid MongoDB ObjectId
+            if (isValidObjectId) {
+                bidData.customerId = customer.id;
+            }
 
             try {
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid?shop=${CONFIG.shopDomain}`, {
@@ -1983,12 +1991,20 @@
                 return;
             }
 
+            // Only include customerId if it's a valid MongoDB ObjectId
+            // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
+            const isValidObjectId = customer.id && /^[0-9a-fA-F]{24}$/.test(customer.id);
+            
             const bidData = {
                 amount: bidAmount,
                 bidder: customer.displayName || customer.fullName || 'Guest User',
-                bidderEmail: customer.email,
-                customerId: customer.id
+                bidderEmail: customer.email
             };
+            
+            // Only add customerId if it's a valid MongoDB ObjectId
+            if (isValidObjectId) {
+                bidData.customerId = customer.id;
+            }
 
             try {
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid?shop=${CONFIG.shopDomain}`, {

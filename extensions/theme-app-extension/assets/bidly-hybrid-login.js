@@ -202,8 +202,9 @@
                     if (response.ok) {
                         const result = await response.json();
                         // Backend always provides displayName (generated random name if needed)
+                        // Use MongoDB ObjectId from backend as id, fallback to Shopify ID if not available
                         currentCustomer = {
-                            id: customerData.id,
+                            id: result.customer?.id || customerData.id,
                             email: customerData.email,
                             firstName: result.customer?.firstName || customerData.firstName || null,
                             lastName: result.customer?.lastName || customerData.lastName || null,
@@ -221,8 +222,9 @@
                             const errorData = await response.json().catch(() => null);
                             if (errorData?.success && errorData?.customer) {
                                 // Backend returned the existing customer successfully
+                                // Use MongoDB ObjectId from backend as id, fallback to Shopify ID if not available
                                 currentCustomer = {
-                                    id: customerData.id,
+                                    id: errorData.customer.id || customerData.id,
                                     email: customerData.email,
                                     firstName: errorData.customer.firstName || customerData.firstName || null,
                                     lastName: errorData.customer.lastName || customerData.lastName || null,
@@ -238,8 +240,9 @@
                                 if (fetchResponse.ok) {
                                     const fetchResult = await fetchResponse.json();
                                     if (fetchResult.success && fetchResult.customer) {
+                                        // Use MongoDB ObjectId from backend as id, fallback to Shopify ID if not available
                                         currentCustomer = {
-                                            id: customerData.id,
+                                            id: fetchResult.customer.id || customerData.id,
                                             email: customerData.email,
                                             firstName: fetchResult.customer.firstName || customerData.firstName || null,
                                             lastName: fetchResult.customer.lastName || customerData.lastName || null,
