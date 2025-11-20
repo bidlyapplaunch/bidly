@@ -1315,7 +1315,15 @@
             console.warn('Bidly: Socket.IO not available, using polling only');
         }
         
-        // Always use polling as fallback/primary method
+        // Use polling only if WebSocket is not available or not connected
+        // If WebSocket is connected, skip polling to avoid redundant requests
+        if (socket && socket.connected) {
+            console.log('Bidly: WebSocket connected, skipping polling to avoid redundancy');
+            // Don't start polling if WebSocket is working
+            return; // Exit early if WebSocket is connected
+        }
+        
+        // Start polling as fallback
         if (pollingInterval) {
             clearInterval(pollingInterval);
         }
@@ -1433,7 +1441,7 @@
             } catch (error) {
                 console.warn('Bidly: Error updating auction data:', error);
             }
-        }, 2000); // Even more frequent polling for testing
+        }, 5000); // Poll every 5 seconds (reduced from 2 seconds for better performance)
         
         // Clean up polling when widget is removed
         return () => {
@@ -1912,19 +1920,6 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    // Update customer bid history
-                    await fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            auctionId,
-                            amount: bidData.amount,
-                            isWinning: result.isWinning || false
-                        })
-                    });
-                    
                     alert('Bid placed successfully!');
                     this.closeBidModal(auctionId);
                     
@@ -1940,29 +1935,29 @@
                     
                     showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
                     
-                    // Immediately fetch fresh auction data and update widget (no delay)
-                    console.log('Bidly: Fetching fresh auction data immediately after bid placement');
-                    try {
-                        const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.success && data.auction) {
-                                // Update widget with fresh data immediately
-                                updateWidgetData(auctionId, data.auction);
-                                // Also update cached auction check for future refreshes
-                                if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
-                                    window.currentAuctionCheck = { ...window.currentAuctionCheck, ...data.auction };
-                                }
-                                console.log('Bidly: Widget updated with fresh data immediately');
-                            }
-                        }
-                    } catch (error) {
-                        console.warn('Bidly: Error fetching fresh data after bid:', error);
-                        // Fallback: still update widget even if fetch fails (data might be in result)
-                        if (result.auction) {
-                            updateWidgetData(auctionId, result.auction);
+                    // Update widget with data from bid response (no additional fetch needed)
+                    if (result.auction) {
+                        updateWidgetData(auctionId, result.auction);
+                        // Also update cached auction check for future refreshes
+                        if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
+                            window.currentAuctionCheck = { ...window.currentAuctionCheck, ...result.auction };
                         }
                     }
+                    
+                    // Update customer bid history in background (non-blocking)
+                    fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            auctionId,
+                            amount: bidData.amount,
+                            isWinning: result.isWinning || false
+                        })
+                    }).catch(error => {
+                        console.warn('Bidly: Error updating customer bid history (non-blocking):', error);
+                    });
                 } else {
                     alert('Error placing bid: ' + result.message);
                 }
@@ -2018,19 +2013,6 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Update customer's bid history in your DB
-                    await fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            auctionId: auctionId,
-                            amount: bidData.amount,
-                            isWinning: result.isWinning || false
-                        })
-                    });
-                    
                     // Clear the input field
                     const inputField = document.getElementById(`bidly-bid-amount-${auctionId}`);
                     if (inputField) {
@@ -2049,29 +2031,29 @@
                     
                     showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
                     
-                    // Immediately fetch fresh auction data and update widget (no delay)
-                    console.log('Bidly: Fetching fresh auction data immediately after bid placement');
-                    try {
-                        const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.success && data.auction) {
-                                // Update widget with fresh data immediately
-                                updateWidgetData(auctionId, data.auction);
-                                // Also update cached auction check for future refreshes
-                                if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
-                                    window.currentAuctionCheck = { ...window.currentAuctionCheck, ...data.auction };
-                                }
-                                console.log('Bidly: Widget updated with fresh data immediately');
-                            }
-                        }
-                    } catch (error) {
-                        console.warn('Bidly: Error fetching fresh data after bid:', error);
-                        // Fallback: still update widget even if fetch fails (data might be in result)
-                        if (result.auction) {
-                            updateWidgetData(auctionId, result.auction);
+                    // Update widget with data from bid response (no additional fetch needed)
+                    if (result.auction) {
+                        updateWidgetData(auctionId, result.auction);
+                        // Also update cached auction check for future refreshes
+                        if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
+                            window.currentAuctionCheck = { ...window.currentAuctionCheck, ...result.auction };
                         }
                     }
+                    
+                    // Update customer's bid history in background (non-blocking)
+                    fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            auctionId: auctionId,
+                            amount: bidData.amount,
+                            isWinning: result.isWinning || false
+                        })
+                    }).catch(error => {
+                        console.warn('Bidly: Error updating customer bid history (non-blocking):', error);
+                    });
                 } else {
                     alert('Error placing bid: ' + result.message);
                 }
