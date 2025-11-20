@@ -202,6 +202,8 @@
     let resolvedProductIdCache = null;
 
     function normalizeWidgetTheme(settings = {}) {
+        // Always use DEFAULT_WIDGET_THEME as the base, then merge any provided settings
+        // This ensures new defaults are always applied first
         const normalized = {
             template: settings.template || DEFAULT_WIDGET_THEME.template,
             font: settings.font || DEFAULT_WIDGET_THEME.font,
@@ -212,6 +214,7 @@
                 : DEFAULT_WIDGET_THEME.gradientEnabled
         };
 
+        // Merge colors: start with new defaults, then apply any provided overrides
         normalized.colors = Object.assign({}, DEFAULT_WIDGET_THEME.colors, settings.colors || {});
         return normalized;
     }
@@ -299,7 +302,9 @@
 
         try {
             const previewSuffix = PREVIEW_MODE ? `&preview=true&_=${Date.now()}` : '';
-            const response = await fetch(`${CONFIG.backendUrl}/api/customization/widget?shop=${CONFIG.shopDomain}${previewSuffix}`, {
+            // Add cache-busting parameter to ensure fresh settings after defaults update
+            const cacheBuster = `&_v=${Date.now()}`;
+            const response = await fetch(`${CONFIG.backendUrl}/api/customization/widget?shop=${CONFIG.shopDomain}${previewSuffix}${cacheBuster}`, {
                 headers: PREVIEW_MODE ? { 'Cache-Control': 'no-store' } : undefined
             });
             if (response.ok) {
@@ -311,6 +316,7 @@
                     if (data.plan) {
                         CONFIG.plan = data.plan;
                     }
+                    // Normalize settings: use new defaults as base, then merge any provided settings
                     widgetThemeSettingsCache = normalizeWidgetTheme(data.settings);
                     return widgetThemeSettingsCache;
                 }
@@ -321,6 +327,7 @@
             console.warn('Bidly: Error fetching widget customization settings:', error);
         }
 
+        // Fallback to new defaults if API fails
         widgetThemeSettingsCache = normalizeWidgetTheme(DEFAULT_WIDGET_THEME);
         return widgetThemeSettingsCache;
     }
