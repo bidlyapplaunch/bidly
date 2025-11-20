@@ -1547,9 +1547,9 @@
         }
 
         // Check if widget HTML is actually rendered by looking for a key element
-        const widgetBody = widget.querySelector('.bidly-widget-body');
-        if (!widgetBody) {
-            console.warn('Bidly: Widget body not found for auction:', auctionId);
+        const widgetContainer = widget.querySelector('.bidly-widget-container');
+        if (!widgetContainer) {
+            console.warn('Bidly: Widget container not found for auction:', auctionId);
             return; // Widget HTML not fully rendered yet, skip silently
         }
         
