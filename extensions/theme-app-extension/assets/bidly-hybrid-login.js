@@ -18,7 +18,20 @@
             console.warn('⚠️ Bidly: Backend config not loaded in hybrid-login, using default backend');
             return 'https://bidly-auction-backend.onrender.com';
         })(),
-        shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname
+        shopDomain: (() => {
+            // Prefer permanent_domain (myshopify.com format) for consistency
+            if (window.Shopify?.shop?.permanent_domain) {
+                return window.Shopify.shop.permanent_domain;
+            }
+            // Fallback: if hostname is a custom domain, try to find the myshopify domain
+            const hostname = window.location.hostname;
+            // Check if it's a known custom domain and map to myshopify domain
+            if (hostname === 'true-nordic.com' || hostname === 'www.true-nordic.com') {
+                return 'true-nordic-dev.myshopify.com';
+            }
+            // Otherwise use hostname as-is
+            return hostname;
+        })()
     };
     
     console.log('Bidly: Configuration loaded:', CONFIG);

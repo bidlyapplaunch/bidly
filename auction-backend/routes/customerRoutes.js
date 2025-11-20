@@ -269,12 +269,36 @@ router.get('/by-email', async (req, res, next) => {
       return next(new AppError('Email and shop domain are required', 400));
     }
 
-    const customer = await Customer.findOne({ 
-      email: email.toLowerCase().trim(), 
-      shopDomain: shop 
-    });
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedShop = shop.toLowerCase().trim();
+    
+    // Try multiple shop domain formats to handle different formats
+    const shopDomainVariants = [
+      normalizedShop, // Exact match
+      normalizedShop.endsWith('.myshopify.com') 
+        ? normalizedShop 
+        : `${normalizedShop}.myshopify.com`, // Add .myshopify.com if missing
+      normalizedShop.replace('.myshopify.com', ''), // Remove .myshopify.com
+      normalizedShop.replace(/^https?:\/\//, '').replace(/\/$/, '') // Remove protocol and trailing slash
+    ];
+    
+    // Remove duplicates
+    const uniqueVariants = [...new Set(shopDomainVariants)];
+    
+    let customer = null;
+    for (const shopVariant of uniqueVariants) {
+      customer = await Customer.findOne({ 
+        email: normalizedEmail, 
+        shopDomain: shopVariant 
+      });
+      if (customer) {
+        console.log(`✅ Found customer with shop domain variant: ${shopVariant}`);
+        break;
+      }
+    }
 
     if (!customer) {
+      console.log(`❌ Customer not found for email: ${normalizedEmail}, tried shop variants:`, uniqueVariants);
       return next(new AppError('Customer not found', 404));
     }
 
