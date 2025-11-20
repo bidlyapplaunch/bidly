@@ -631,8 +631,11 @@ export const updateAuction = async (req, res, next) => {
       { new: true, runValidators: false } // Disable schema validators since we're doing custom validation
     );
     
-    // Update product metafields with new status
-    await updateProductMetafields(updatedAuction, shopDomain);
+    // Update product metafields for auction widget (non-blocking - don't await)
+    // This allows the auction update to return immediately while metafields update in background
+    updateProductMetafields(updatedAuction, shopDomain).catch(error => {
+      console.warn('Failed to update product metafields (non-blocking):', error.message);
+    });
     
     res.json({
       success: true,
@@ -912,8 +915,11 @@ export const placeBid = async (req, res, next) => {
       }
     }
     
-    // Update product metafields for auction widget
-    await updateProductMetafields(updatedAuction, shopDomain);
+    // Update product metafields for auction widget (non-blocking - don't await)
+    // This allows the bid response to return immediately while metafields update in background
+    updateProductMetafields(updatedAuction, shopDomain).catch(error => {
+      console.warn('Failed to update product metafields (non-blocking):', error.message);
+    });
     
     // Send email notifications
     try {
@@ -1444,8 +1450,11 @@ export const relistAuction = async (req, res, next) => {
       { new: true, runValidators: false }
     );
     
-    // Update product metafields with new status
-    await updateProductMetafields(updatedAuction, shopDomain);
+    // Update product metafields for auction widget (non-blocking - don't await)
+    // This allows the relist response to return immediately while metafields update in background
+    updateProductMetafields(updatedAuction, shopDomain).catch(error => {
+      console.warn('Failed to update product metafields (non-blocking):', error.message);
+    });
     
     res.json({
       success: true,
