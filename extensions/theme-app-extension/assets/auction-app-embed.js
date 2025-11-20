@@ -191,7 +191,7 @@
             button_bg: '#212736',
             button_hover: '#7FD2C1',
             button_text: '#FFFFFF',
-            border: '#212736'
+            border: '#36526d'
         },
         borderRadius: 16,
         boxShadow: 'medium',
