@@ -1167,7 +1167,12 @@
             initializeCountdown(auctionData.auctionId, auctionData.endTime);
         }
 
-        initializeRealTimeUpdates(auctionData.auctionId);
+        // Delay real-time updates slightly to ensure widget HTML is fully rendered
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                initializeRealTimeUpdates(auctionData.auctionId);
+            });
+        });
         createChatUI();
     }
     // Initialize countdown timer
@@ -1230,8 +1235,6 @@
     let pollingInterval = null;
     
     function initializeRealTimeUpdates(auctionId) {
-        console.log('Bidly: Initializing real-time updates for auction:', auctionId);
-        
         // Connect to WebSocket if not already connected
         if (!socket && window.io) {
             console.log('Bidly: Connecting to WebSocket for real-time updates...');
@@ -1322,9 +1325,7 @@
         
         pollingInterval = setInterval(async () => {
             try {
-                console.log('Bidly: Polling for auction updates...', auctionId);
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
-                console.log('Bidly: Polling response status:', response.status);
                 
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -1374,7 +1375,6 @@
                 }
 
                 const data = await response.json();
-                console.log('Bidly: Polling response data:', data);
                 
                 let auctionData = null;
                 if (data.success && data.auction) {
@@ -1383,7 +1383,6 @@
                     if (!auctionData.hasOwnProperty('chatEnabled')) {
                         auctionData.chatEnabled = data.auction.chatEnabled !== false;
                     }
-                    console.log('Bidly: Polling update received:', auctionData);
                 } else if (data.success && data.data) {
                     // Handle different response format
                     auctionData = data.data;
@@ -1391,10 +1390,8 @@
                     if (!auctionData.hasOwnProperty('chatEnabled')) {
                         auctionData.chatEnabled = data.data.chatEnabled !== false;
                     }
-                    console.log('Bidly: Polling update received (data format):', auctionData);
                 } else {
-                    console.warn('Bidly: Polling response format unexpected:', data);
-                    return;
+                    return; // Skip if unexpected format
                 }
                 
                 // Check for bid changes and show notification
@@ -1451,17 +1448,21 @@
         };
     }
 
+    // Track which elements we've warned about to avoid spam
+    const missingElementWarnings = new Set();
+    
     // Update widget data in real-time
     function updateWidgetData(auctionId, auctionData) {
-        console.log('Bidly: Updating widget data for auction:', auctionId, auctionData);
-        
         const widget = document.querySelector(`#bidly-auction-widget-${auctionId}`);
         if (!widget) {
-            console.warn('Bidly: Widget not found for auction:', auctionId);
-            return;
+            return; // Widget not ready yet, skip silently
         }
 
-        console.log('Bidly: Found widget element:', widget);
+        // Check if widget HTML is actually rendered by looking for a key element
+        const widgetBody = widget.querySelector('.bidly-widget-body');
+        if (!widgetBody) {
+            return; // Widget HTML not fully rendered yet, skip silently
+        }
 
         // Update chat enabled state immediately
         if (auctionData.hasOwnProperty('chatEnabled')) {
@@ -1474,8 +1475,6 @@
             if (innerWidget && innerWidget !== widget) {
                 innerWidget.setAttribute('data-chat-enabled', chatEnabledAttr);
             }
-            
-            console.log('Bidly: Updated chat enabled state to:', chatEnabledAttr);
         }
 
         // Update current bid - try multiple selectors
@@ -1490,9 +1489,6 @@
             const displayBid = bidCount > 0 ? auctionData.currentBid : auctionData.startingBid;
             currentBidElement.textContent = `$${displayBid.toFixed(2)}`;
             currentBidElement.setAttribute('data-current-bid', displayBid);
-            console.log('Bidly: Updated current bid to:', displayBid, 'Element:', currentBidElement);
-        } else {
-            console.warn('Bidly: Current bid element not found');
         }
 
         // Update the label (Starting Bid vs Current Bid)
@@ -1500,9 +1496,6 @@
         if (bidLabelElement) {
             const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
             bidLabelElement.textContent = bidCount > 0 ? 'Current Bid:' : 'Starting Bid:';
-            console.log('Bidly: Updated bid label to:', bidLabelElement.textContent);
-        } else {
-            console.warn('Bidly: Bid label element not found');
         }
 
         // Update minimum bid - try multiple selectors
@@ -1517,9 +1510,6 @@
             const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
             minBidElement.textContent = `$${minBidAmount.toFixed(2)}`;
             minBidElement.setAttribute('data-min-bid', minBidAmount);
-            console.log('Bidly: Updated minimum bid to:', minBidAmount, 'Element:', minBidElement);
-        } else {
-            console.warn('Bidly: Minimum bid element not found');
         }
 
         // Update bid count - try multiple selectors
@@ -1532,9 +1522,6 @@
             const bidCount = auctionData.bidHistory?.length || auctionData.bidCount || 0;
             bidCountElement.textContent = bidCount;
             bidCountElement.setAttribute('data-bid-count', bidCount);
-            console.log('Bidly: Updated bid count to:', bidCount, 'Element:', bidCountElement);
-        } else {
-            console.warn('Bidly: Bid count element not found');
         }
 
         // Update inline bid form if it exists (for all statuses)
@@ -1549,7 +1536,6 @@
                 const newMinBid = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
                 bidInput.min = newMinBid;
                 bidInput.placeholder = `Min: $${newMinBid.toFixed(2)}`;
-                console.log('Bidly: Updated bid input min to:', newMinBid, 'Element:', bidInput);
             }
             
             // Handle form state based on auction status
@@ -1586,7 +1572,6 @@
                 } else {
                     statusElement.innerHTML = '<span class="bidly-status-pending">PENDING</span>';
                 }
-                console.log('Bidly: Updated status to:', auctionData.status);
             }
             
             // Disable bidding if auction ended or reserve not met
@@ -1621,8 +1606,6 @@
                 // If timer is already running, it will automatically read from window.bidlyAuctionEndTimes[auctionId]
             }
         }
-
-        console.log('Bidly: Widget data update complete');
     }
 
     // Show bid notification

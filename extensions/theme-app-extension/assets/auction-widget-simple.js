@@ -130,42 +130,30 @@
                 console.log('Bidly: Customer saved successfully:', currentCustomer);
                 return true;
             } else if (response.status === 409) {
-                // 409 = Customer already exists - backend should return the existing customer
-                console.log('Bidly: Customer already exists (409), backend should return existing customer');
+                // 409 = Customer already exists - fetch the existing customer by email
+                console.log('Bidly: Customer already exists (409), fetching existing customer...');
                 try {
-                    // Retry - backend should now return the existing customer
-                    const retryResponse = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            shopifyId: customerData.id,
-                            email: customerData.email,
-                            firstName: customerData.first_name,
-                            lastName: customerData.last_name,
-                            shopDomain: CONFIG.shopDomain
-                        })
-                    });
-                    
-                    if (retryResponse.ok) {
-                        const retryResult = await retryResponse.json();
-                        currentCustomer = retryResult.customer;
-                        isLoggedIn = true;
-                        
-                        // Save guest session if it's a temporary customer
-                        if (!customerData.id) {
-                            saveGuestSession(currentCustomer);
+                    // Fetch existing customer by email
+                    const fetchResponse = await fetch(`${CONFIG.backendUrl}/api/customers/by-email?email=${encodeURIComponent(customerData.email)}&shop=${encodeURIComponent(CONFIG.shopDomain)}`);
+                    if (fetchResponse.ok) {
+                        const fetchResult = await fetchResponse.json();
+                        if (fetchResult.success && fetchResult.customer) {
+                            currentCustomer = fetchResult.customer;
+                            isLoggedIn = true;
+                            
+                            // Save guest session if it's a temporary customer
+                            if (!customerData.id) {
+                                saveGuestSession(currentCustomer);
+                            }
+                            
+                            console.log('Bidly: Fetched existing customer:', currentCustomer);
+                            return true;
                         }
-                        
-                        console.log('Bidly: Retry successful, got existing customer:', currentCustomer);
-                        return true;
-                    } else {
-                        console.error('Bidly: Retry failed after 409:', retryResponse.status);
-                        return false;
                     }
+                    console.error('Bidly: Failed to fetch existing customer after 409');
+                    return false;
                 } catch (retryError) {
-                    console.error('Bidly: Error retrying after 409:', retryError);
+                    console.error('Bidly: Error fetching existing customer after 409:', retryError);
                     return false;
                 }
             } else {

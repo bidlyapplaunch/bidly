@@ -99,15 +99,35 @@ router.post('/saveCustomer', async (req, res, next) => {
       
       console.log('⚠️ Duplicate customer detected, fetching existing customer:', { email: errorEmail, shopDomain: errorShopDomain });
       try {
-        // Use ensureCustomer to get the existing customer
-        const existingCustomer = await ensureCustomer(
-          errorShopDomain,
-          errorEmail,
-          req.body?.firstName,
-          req.body?.lastName,
-          req.body?.shopifyId || null,
-          !req.body?.shopifyId // isTemp = true if no shopifyId
-        );
+        // Find the existing customer directly (don't use ensureCustomer as it might try to create again)
+        const existingCustomer = await Customer.findOne({
+          email: errorEmail.toLowerCase().trim(),
+          shopDomain: errorShopDomain
+        });
+        
+        if (!existingCustomer) {
+          console.error('❌ Customer not found despite duplicate key error');
+          return next(new AppError('Customer with this email already exists in this store', 409));
+        }
+        
+        // Update fields if provided and different
+        let shouldUpdate = false;
+        if (req.body?.shopifyId && !existingCustomer.shopifyId) {
+          existingCustomer.shopifyId = req.body.shopifyId;
+          existingCustomer.isTemp = false;
+          shouldUpdate = true;
+        }
+        if (req.body?.firstName && !existingCustomer.firstName) {
+          existingCustomer.firstName = req.body.firstName;
+          shouldUpdate = true;
+        }
+        if (req.body?.lastName && !existingCustomer.lastName) {
+          existingCustomer.lastName = req.body.lastName;
+          shouldUpdate = true;
+        }
+        if (shouldUpdate) {
+          await existingCustomer.save();
+        }
         
         console.log('✅ Found existing customer, returning it');
         return res.json({
@@ -305,6 +325,45 @@ router.post('/:id/bid', identifyStore, async (req, res, next) => {
     res.json({
       success: true,
       message: 'Bid added to customer history'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get customer by email and shop domain
+router.get('/by-email', async (req, res, next) => {
+  try {
+    const { email, shop } = req.query;
+    
+    if (!email || !shop) {
+      return next(new AppError('Email and shop domain are required', 400));
+    }
+
+    const customer = await Customer.findOne({ 
+      email: email.toLowerCase().trim(), 
+      shopDomain: shop 
+    });
+
+    if (!customer) {
+      return next(new AppError('Customer not found', 404));
+    }
+
+    res.json({
+      success: true,
+      customer: {
+        id: customer._id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        displayName: customer.displayName,
+        fullName: customer.fullName,
+        shopifyId: customer.shopifyId,
+        isTemp: customer.isTemp,
+        totalBids: customer.totalBids,
+        auctionsWon: customer.auctionsWon,
+        totalBidAmount: customer.totalBidAmount
+      }
     });
   } catch (error) {
     next(error);

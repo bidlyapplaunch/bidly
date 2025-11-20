@@ -201,14 +201,13 @@
                         };
                         console.log('Bidly: Customer synced with backend:', currentCustomer);
                     } else if (response.status === 409) {
-                        // 409 = Customer already exists - try to fetch the existing customer
+                        // 409 = Customer already exists - backend should return the existing customer
                         console.log('Bidly: Customer already exists (409), fetching existing customer...');
                         try {
-                            // The backend should now return the existing customer, but if it doesn't,
-                            // we'll try to fetch it by email
+                            // Try to parse the response - backend might return customer data even with 409
                             const errorData = await response.json().catch(() => null);
-                            if (errorData?.customer) {
-                                // Backend returned the existing customer in the error response
+                            if (errorData?.success && errorData?.customer) {
+                                // Backend returned the existing customer successfully
                                 currentCustomer = {
                                     id: customerData.id,
                                     email: customerData.email,
@@ -221,42 +220,32 @@
                                 };
                                 console.log('Bidly: Using existing customer from 409 response:', currentCustomer);
                             } else {
-                                // Fallback: retry the request - backend should now return the existing customer
-                                const retryResponse = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        shopifyId: customerData.id,
-                                        email: customerData.email,
-                                        firstName: customerData.firstName || undefined,
-                                        lastName: customerData.lastName || undefined,
-                                        displayName: customerData.displayName || undefined,
-                                        shopDomain: CONFIG.shopDomain
-                                    })
-                                });
-                                
-                                if (retryResponse.ok) {
-                                    const retryResult = await retryResponse.json();
-                                    currentCustomer = {
-                                        id: customerData.id,
-                                        email: customerData.email,
-                                        firstName: retryResult.customer?.firstName || customerData.firstName || null,
-                                        lastName: retryResult.customer?.lastName || customerData.lastName || null,
-                                        fullName: retryResult.customer?.fullName || null,
-                                        displayName: retryResult.customer.displayName,
-                                        shopifyId: customerData.id,
-                                        isTemp: false
-                                    };
-                                    console.log('Bidly: Retry successful, got existing customer:', currentCustomer);
+                                // Backend didn't return customer in 409 response, try a GET request to fetch by email
+                                const fetchResponse = await fetch(`${CONFIG.backendUrl}/api/customers/by-email?email=${encodeURIComponent(customerData.email)}&shop=${encodeURIComponent(CONFIG.shopDomain)}`);
+                                if (fetchResponse.ok) {
+                                    const fetchResult = await fetchResponse.json();
+                                    if (fetchResult.success && fetchResult.customer) {
+                                        currentCustomer = {
+                                            id: customerData.id,
+                                            email: customerData.email,
+                                            firstName: fetchResult.customer.firstName || customerData.firstName || null,
+                                            lastName: fetchResult.customer.lastName || customerData.lastName || null,
+                                            fullName: fetchResult.customer.fullName || null,
+                                            displayName: fetchResult.customer.displayName,
+                                            shopifyId: customerData.id,
+                                            isTemp: false
+                                        };
+                                        console.log('Bidly: Fetched existing customer via GET:', currentCustomer);
+                                    } else {
+                                        throw new Error('Customer not found in GET response');
+                                    }
                                 } else {
-                                    throw new Error('Retry failed');
+                                    throw new Error('Failed to fetch existing customer');
                                 }
                             }
                         } catch (retryError) {
                             console.warn('Bidly: Failed to fetch existing customer after 409:', retryError);
-                            // Fallback: construct a temporary name, but don't use 'Customer'
+                            // Fallback: use a temporary display name until we can sync properly
                             const firstName = customerData.firstName || '';
                             const lastName = customerData.lastName || '';
                             const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Guest User';
