@@ -54,7 +54,7 @@ const customerSchema = new mongoose.Schema({
   globalCustomerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'GlobalCustomer',
-    required: true,
+    required: false, // Optional for backward compatibility with existing customers
     index: true
   },
   

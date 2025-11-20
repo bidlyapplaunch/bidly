@@ -10,9 +10,11 @@ import generateRandomName from '../utils/generateRandomName.js';
  * @param {string} email - Customer email
  * @param {string|null} firstName - Optional first name
  * @param {string|null} lastName - Optional last name
+ * @param {string|null} shopifyId - Optional Shopify customer ID
+ * @param {boolean} isTemp - Whether this is a temporary/guest customer (default: false)
  * @returns {Promise<Customer>} The per-store Customer document with displayName
  */
-export async function ensureCustomer(shopDomain, email, firstName = null, lastName = null) {
+export async function ensureCustomer(shopDomain, email, firstName = null, lastName = null, shopifyId = null, isTemp = false) {
   if (!shopDomain || !email) {
     throw new Error('shopDomain and email are required');
   }
@@ -67,13 +69,19 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
       firstName: firstName || null,
       lastName: lastName || null,
       displayName: displayName,
-      isTemp: false,
+      shopifyId: shopifyId || null,
+      isTemp: isTemp,
       lastLoginAt: new Date()
     });
     
     await customer.save();
     console.log(`✅ Created new Customer profile for ${normalizedEmail} in shop ${shopDomain} with displayName: ${displayName}`);
   } else {
+    // Ensure existing customer has globalCustomerId (migration for old customers)
+    if (!customer.globalCustomerId) {
+      customer.globalCustomerId = globalCustomer._id;
+      await customer.save();
+    }
     // Update existing customer profile if needed
     let shouldUpdate = false;
     
@@ -84,6 +92,13 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
     }
     if (lastName !== null && customer.lastName !== lastName) {
       customer.lastName = lastName;
+      shouldUpdate = true;
+    }
+    
+    // Update shopifyId if provided and different
+    if (shopifyId && customer.shopifyId !== shopifyId) {
+      customer.shopifyId = shopifyId;
+      customer.isTemp = false; // If they have a shopifyId, they're not temp
       shouldUpdate = true;
     }
     
@@ -101,12 +116,6 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
     if (shouldUpdate) {
       await customer.save();
     }
-  }
-
-  // Ensure globalCustomerId is set (for existing customers that might not have it)
-  if (!customer.globalCustomerId || customer.globalCustomerId.toString() !== globalCustomer._id.toString()) {
-    customer.globalCustomerId = globalCustomer._id;
-    await customer.save();
   }
 
   return customer;

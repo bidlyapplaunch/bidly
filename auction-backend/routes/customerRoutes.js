@@ -48,18 +48,10 @@ router.post('/saveCustomer', async (req, res, next) => {
       shopDomain,
       email,
       sanitizeOptionalString(firstName),
-      sanitizeOptionalString(lastName)
+      sanitizeOptionalString(lastName),
+      shopifyId || null,
+      !shopifyId // isTemp = true if no shopifyId
     );
-
-    // Update shopifyId and isTemp if provided
-    if (shopifyId && customer.shopifyId !== shopifyId) {
-      customer.shopifyId = shopifyId;
-      customer.isTemp = false;
-      await customer.save();
-    } else if (!shopifyId && !customer.isTemp) {
-      customer.isTemp = true;
-      await customer.save();
-    }
 
     console.log('✅ Customer saved/updated successfully:', {
       id: customer._id,
@@ -112,7 +104,9 @@ router.post('/saveCustomer', async (req, res, next) => {
           errorShopDomain,
           errorEmail,
           req.body?.firstName,
-          req.body?.lastName
+          req.body?.lastName,
+          req.body?.shopifyId || null,
+          !req.body?.shopifyId // isTemp = true if no shopifyId
         );
         
         console.log('✅ Found existing customer, returning it');
@@ -173,15 +167,10 @@ router.post('/sync', async (req, res, next) => {
       shopDomain,
       email,
       sanitizeOptionalString(firstName),
-      sanitizeOptionalString(lastName)
+      sanitizeOptionalString(lastName),
+      shopifyId || null,
+      !shopifyId // isTemp = true if no shopifyId
     );
-
-    // Update shopifyId if provided
-    if (shopifyId && customer.shopifyId !== shopifyId) {
-      customer.shopifyId = shopifyId;
-      customer.isTemp = false;
-      await customer.save();
-    }
 
     res.json({
       success: true,
@@ -220,18 +209,15 @@ router.post('/temp-login', async (req, res, next) => {
     }
 
     // Ensure customer exists (global + per-store profile)
+    // For temp-login, always mark as temp (no shopifyId)
     const customer = await ensureCustomer(
       shopDomain,
       email,
       sanitizeOptionalString(firstName),
-      sanitizeOptionalString(lastName)
+      sanitizeOptionalString(lastName),
+      null, // No shopifyId for temp login
+      true  // isTemp = true for temp login
     );
-
-    // Mark as temporary if not already a Shopify customer
-    if (!customer.shopifyId) {
-      customer.isTemp = true;
-      await customer.save();
-    }
 
     res.json({
       success: true,
