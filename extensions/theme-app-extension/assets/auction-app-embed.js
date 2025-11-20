@@ -2341,13 +2341,24 @@
             return;
         }
         
-        // Wait for shared login system to initialize (but don't wait too long)
+        // Wait for shared login system to initialize and detect customer
+        // Check sessionStorage directly first for faster detection
+        let hasCustomerInStorage = false;
+        try {
+            const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
+            if (guestCustomerStr) {
+                hasCustomerInStorage = true;
+                console.log('Bidly: Found guest customer in sessionStorage');
+            }
+        } catch (e) {
+            // Ignore storage errors
+        }
+        
         let attempts = 0;
-        const maxAttempts = 3; // Reduced attempts to prevent long waits
+        const maxAttempts = 10; // Wait up to 1 second for login system
         
         while (!window.BidlyHybridLogin && attempts < maxAttempts) {
-            console.log('Bidly: Waiting for shared login system...', attempts + 1);
-            await new Promise(resolve => setTimeout(resolve, 100)); // Reduced wait time
+            await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
         
@@ -2356,7 +2367,7 @@
             // Give login system time to detect customer (check multiple times)
             // This ensures customer state is ready before widget renders to prevent login flash
             let loginCheckAttempts = 0;
-            const maxLoginChecks = 10; // Check up to 10 times (1 second total)
+            const maxLoginChecks = 15; // Check up to 15 times (1.5 seconds total) to ensure async detection completes
             while (!isUserLoggedIn() && loginCheckAttempts < maxLoginChecks) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 loginCheckAttempts++;
@@ -2365,6 +2376,14 @@
                 console.log('Bidly: Customer detected before widget render');
             } else {
                 console.log('Bidly: No customer detected, will show login view');
+            }
+        } else if (hasCustomerInStorage) {
+            // If login system not loaded but we have customer in storage, wait a bit more
+            console.log('Bidly: Login system not loaded yet, but customer found in storage, waiting...');
+            let storageWaitAttempts = 0;
+            while (!window.BidlyHybridLogin && storageWaitAttempts < 5) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                storageWaitAttempts++;
             }
         } else {
             console.log('Bidly: Shared login system not available after waiting');
