@@ -44,19 +44,19 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
             const defaultSettings = getDefaultSettings('marketplace', 'A');
             customization = {
                 shopDomain,
-                template: defaultSettings.template || 'A',
+                template: 'Classic', // Marketplace uses Classic/Modern/Minimal/Bold, not A/B/C/D
                 font: defaultSettings.font || 'Inter',
                 gradientEnabled: defaultSettings.gradientEnabled !== undefined ? defaultSettings.gradientEnabled : false,
                 colors: {
-                    primary: defaultSettings.colors?.button_bg || '#FFFFFF',
+                    primary: defaultSettings.colors?.accent || '#00B894', // Primary buttons use accent color
                     background: defaultSettings.colors?.bg_solid || '#EDEDED',
-                    surface: '#FFFFFF',
+                    surface: '#FFFFFF', // Cards and modals - always white
                     textPrimary: defaultSettings.colors?.text || '#000000',
-                    textSecondary: '#1A2E37',
+                    textSecondary: '#1A2E37', // From customization UI
                     border: defaultSettings.colors?.border || '#324462',
                     accent: defaultSettings.colors?.accent || '#00B894',
-                    success: '#00C851',
-                    error: '#FF4444',
+                    success: '#00C851', // From customization UI
+                    error: '#FF4444', // From customization UI
                     button: defaultSettings.colors?.button_bg || '#FFFFFF',
                     buttonText: defaultSettings.colors?.button_text || '#000000',
                     gradient1: defaultSettings.colors?.bg_gradient_start || '#CEC236',
@@ -192,19 +192,19 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
             // Use default settings from customization service
             const defaultSettings = getDefaultSettings('marketplace', 'A');
             customization = {
-                template: defaultSettings.template || 'A',
+                template: 'Classic', // Marketplace uses Classic/Modern/Minimal/Bold, not A/B/C/D
                 font: defaultSettings.font || 'Inter',
                 gradientEnabled: defaultSettings.gradientEnabled !== undefined ? defaultSettings.gradientEnabled : false,
                 colors: {
-                    primary: defaultSettings.colors?.button_bg || '#FFFFFF',
+                    primary: defaultSettings.colors?.accent || '#00B894', // Primary buttons use accent color
                     background: defaultSettings.colors?.bg_solid || '#EDEDED',
-                    surface: '#FFFFFF',
+                    surface: '#FFFFFF', // Cards and modals - always white
                     textPrimary: defaultSettings.colors?.text || '#000000',
-                    textSecondary: '#1A2E37',
+                    textSecondary: '#1A2E37', // From customization UI
                     border: defaultSettings.colors?.border || '#324462',
                     accent: defaultSettings.colors?.accent || '#00B894',
-                    success: '#00C851',
-                    error: '#FF4444',
+                    success: '#00C851', // From customization UI
+                    error: '#FF4444', // From customization UI
                     button: defaultSettings.colors?.button_bg || '#FFFFFF',
                     buttonText: defaultSettings.colors?.button_text || '#000000',
                     gradient1: defaultSettings.colors?.bg_gradient_start || '#CEC236',
