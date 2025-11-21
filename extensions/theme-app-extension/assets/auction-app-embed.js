@@ -207,6 +207,7 @@
     let widgetThemeSettingsCache = null;
     let resolvedProductIdCache = null;
     let pendingLoginRefresh = false;
+    let loginStatusResolved = PREVIEW_MODE;
 
     function normalizeWidgetTheme(settings = {}) {
         // Always use DEFAULT_WIDGET_THEME as the base, then merge any provided settings
@@ -633,6 +634,38 @@
     // Expose logout handler globally so it can be called from onclick
     window.BidlyAuctionWidgetLogout = handleLogout;
 
+    function markLoginResolved(reason = 'unknown') {
+        if (!loginStatusResolved) {
+            loginStatusResolved = true;
+            console.log('Bidly: Login state resolved:', reason);
+        }
+    }
+
+    function createLoadingWidgetHTML(auctionData) {
+        const { auctionId, status } = auctionData;
+        const chatEnabled = auctionData.chatEnabled !== false;
+        return `
+            <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
+                <div class="bidly-widget-container bidly-widget-loading">
+                    <div class="bidly-widget-header">
+                        <h3 class="bidly-widget-title">Live Auction</h3>
+                        <div class="bidly-widget-status">
+                            ${status === 'active' ? '<span class="bidly-status-active">LIVE</span>' : 
+                              status === 'pending' ? '<span class="bidly-status-pending">STARTING SOON</span>' : 
+                              '<span class="bidly-status-ended">ENDED</span>'}
+                        </div>
+                    </div>
+                    <div class="bidly-loading-state" style="padding: 1.5rem; text-align: center;">
+                        <p style="font-weight:600; margin-bottom:0.35rem;">Preparing your auction...</p>
+                        <p style="opacity:0.75; font-size:0.92rem; margin:0;">
+                            Checking your account and syncing live bids.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     // Widget HTML template
     function createWidgetHTML(auctionData, settings) {
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice, startTime } = auctionData;
@@ -654,8 +687,11 @@
         const isShopify = isShopifyCustomer();
         const isGuest = loggedIn && !isShopify;
         
-        // If not logged in, show ONLY login prompt (no auction info)
+        // If not logged in, either show loading placeholder or login prompt
         if (!loggedIn) {
+            if (!loginStatusResolved && !PREVIEW_MODE) {
+                return createLoadingWidgetHTML(auctionData);
+            }
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
                     <div class="bidly-widget-container">
@@ -2411,6 +2447,7 @@
                 // If we found a customer, break immediately
                 if (currentLoginState) {
                     console.log('Bidly: Customer detected before widget render');
+                    markLoginResolved('customer-detected-before-render');
                     break;
                 }
                 
@@ -2425,6 +2462,7 @@
             
             if (!isUserLoggedIn()) {
                 console.log('Bidly: No customer detected after waiting, will show login view');
+                markLoginResolved('login-check-complete-no-customer');
             }
         } else if (hasCustomerInStorage) {
             // If login system not loaded but we have customer in storage, wait a bit more
@@ -2434,8 +2472,10 @@
                 await new Promise(resolve => setTimeout(resolve, 100));
                 storageWaitAttempts++;
             }
+            markLoginResolved('guest-customer-from-storage');
         } else {
             console.log('Bidly: Shared login system not available after waiting');
+            markLoginResolved('login-system-unavailable');
         }
 
         // Resolve product ID first
@@ -2499,6 +2539,7 @@
     // Listen for login status changes and refresh widget content only (not position)
     window.addEventListener('bidly-login-success', function(event) {
         console.log('Bidly: Login success detected, refreshing widget content immediately...', event.detail);
+        markLoginResolved('login-event');
         
         // Use requestAnimationFrame for immediate update, then verify state
         requestAnimationFrame(() => {
@@ -2515,6 +2556,7 @@
 
     window.addEventListener('bidly-logout', function(event) {
         console.log('Bidly: Logout detected, refreshing widget immediately...');
+        markLoginResolved('logout-event');
         
         // Use requestAnimationFrame for immediate update
         requestAnimationFrame(() => {
