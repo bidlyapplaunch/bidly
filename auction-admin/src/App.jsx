@@ -32,40 +32,98 @@ import ko from '../locales/ko.json';
 const translations = { en, pl, de, es, fr, it, nl, ar, ja, ko };
 
 function detectLocale(appBridge) {
+  // Try multiple sources for locale detection
+  let detectedLocale = null;
+
+  // 1. Try App Bridge localization (if available)
   try {
-    const locale = appBridge?.localization?.language;
-    if (locale) {
-      return locale.split('-')[0];
+    if (appBridge?.localization?.language) {
+      detectedLocale = appBridge.localization.language;
     }
-  } catch {
-    console.warn('App Bridge not ready yet for locale detection');
+  } catch (e) {
+    // App Bridge might not be ready
   }
 
-  const browserLocale = typeof navigator !== 'undefined' ? navigator.language : 'en';
-  return (browserLocale || 'en').split('-')[0];
+  // 2. Try App Bridge state
+  try {
+    if (!detectedLocale && appBridge?.getState) {
+      const state = appBridge.getState();
+      if (state?.localization?.language) {
+        detectedLocale = state.localization.language;
+      }
+    }
+  } catch (e) {
+    // State might not be available
+  }
+
+  // 3. Try window.Shopify.locale (Shopify admin context)
+  if (!detectedLocale && typeof window !== 'undefined') {
+    if (window.Shopify?.locale) {
+      detectedLocale = window.Shopify.locale;
+    }
+    // Also try parent window (for embedded apps in iframe)
+    try {
+      if (window.parent && window.parent !== window && window.parent.Shopify?.locale) {
+        detectedLocale = window.parent.Shopify.locale;
+      }
+    } catch (e) {
+      // Cross-origin restriction, ignore
+    }
+  }
+
+  // 3.5. Try URL parameters (Shopify might pass locale)
+  if (!detectedLocale && typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLocale = urlParams.get('locale') || urlParams.get('lang');
+    if (urlLocale) {
+      detectedLocale = urlLocale;
+    }
+  }
+
+  // 4. Try document language attribute
+  if (!detectedLocale && typeof document !== 'undefined') {
+    const docLang = document.documentElement.getAttribute('lang');
+    if (docLang) {
+      detectedLocale = docLang;
+    }
+  }
+
+  // 5. Try navigator language
+  if (!detectedLocale && typeof navigator !== 'undefined') {
+    detectedLocale = navigator.language;
+  }
+
+  // Extract base language code (e.g., 'es' from 'es-ES')
+  const baseLocale = detectedLocale ? detectedLocale.split('-')[0].toLowerCase() : 'en';
+  
+  // Normalize to supported locale
+  const supportedLocales = ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko'];
+  return supportedLocales.includes(baseLocale) ? baseLocale : 'en';
 }
 
 function LocaleAwareApp() {
   const appBridge = useAppBridge();
-  const [locale, setLocale] = useState(() => detectLocale(appBridge));
+  const initialLocale = detectLocale(appBridge);
+  const [locale, setLocale] = useState(initialLocale);
   const [i18nManager] = useState(
     () =>
       new I18nManager({
-        locale: 'en',
+        locale: initialLocale,
         fallbackLocale: 'en'
       })
   );
 
   useEffect(() => {
-    const abLocale = appBridge?.localization?.language;
-    if (abLocale) {
-      setLocale(abLocale.split('-')[0]);
-    } else {
-      setLocale(detectLocale(appBridge));
+    // Re-detect locale when App Bridge becomes available
+    const newLocale = detectLocale(appBridge);
+    if (newLocale !== locale) {
+      console.log(`🌐 Locale detected: ${newLocale} (was: ${locale})`);
+      setLocale(newLocale);
     }
-  }, [appBridge]);
+  }, [appBridge, locale]);
 
   useEffect(() => {
+    console.log(`🔄 Updating I18nManager with locale: ${locale}`);
     i18nManager.update({ locale });
 
     if (typeof document !== 'undefined') {
@@ -85,10 +143,11 @@ function LocaleAwareApp() {
   }, [appBridge]);
 
   const polarisTranslations = translations[locale] || translations.en;
+  console.log(`🎨 Using Polaris translations for locale: ${locale}`, Object.keys(polarisTranslations).length > 0 ? '✅' : '❌');
 
   return (
     <I18nContext.Provider value={i18nManager}>
-      <AppProvider i18n={polarisTranslations}>
+      <AppProvider i18n={polarisTranslations} locale={locale}>
         <AppContent />
       </AppProvider>
     </I18nContext.Provider>
