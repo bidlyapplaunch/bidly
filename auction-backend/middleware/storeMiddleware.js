@@ -27,16 +27,20 @@ const extractShopDomain = (req) => {
   
   // Clean and validate the shop domain
   const cleanDomain = shopDomain
-    .replace(/^https?:\/\//, '') // Remove protocol
-    .replace(/\/$/, '') // Remove trailing slash
-    .toLowerCase(); // Normalize case
-  
-  // Basic validation for Shopify domain format
-  if (!cleanDomain.includes('.myshopify.com')) {
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '')
+    .toLowerCase();
+
+  // ALLOW BOTH real storefront domains AND .myshopify.com
+  const isValidShopifyDomain =
+    cleanDomain.includes('.myshopify.com') ||
+    /^[a-z0-9-]+\.[a-z]{2,}$/.test(cleanDomain); // matches: true-nordic.com, example.co.uk
+
+  if (!isValidShopifyDomain) {
     console.warn('⚠️ Invalid shop domain format:', shopDomain);
     return null;
   }
-  
+
   return cleanDomain;
 };
 
