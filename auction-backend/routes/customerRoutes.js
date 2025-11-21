@@ -299,7 +299,21 @@ router.get('/by-email', async (req, res, next) => {
 
     if (!customer) {
       console.log(`❌ Customer not found for email: ${normalizedEmail}, tried shop variants:`, uniqueVariants);
-      return next(new AppError('Customer not found', 404));
+
+      const targetShopDomain = uniqueVariants[0];
+      console.log('🆕 Creating per-store customer via ensureCustomer for', {
+        email: normalizedEmail,
+        shopDomain: targetShopDomain
+      });
+
+      customer = await ensureCustomer(
+        targetShopDomain,
+        normalizedEmail,
+        null,
+        null,
+        null,
+        false
+      );
     }
 
     res.json({
