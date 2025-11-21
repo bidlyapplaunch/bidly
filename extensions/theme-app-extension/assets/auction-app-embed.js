@@ -116,6 +116,12 @@
         }
     };
 
+    const DEFAULT_WIDGET_SETTINGS = {
+        show_timer: true,
+        show_bid_history: true,
+        widget_position: 'below_price'
+    };
+
     function hideProductPrice() {
         try {
             for (const selector of CONFIG.pricingSelectors) {
@@ -200,6 +206,7 @@
 
     let widgetThemeSettingsCache = null;
     let resolvedProductIdCache = null;
+    let pendingLoginRefresh = false;
 
     function normalizeWidgetTheme(settings = {}) {
         // Always use DEFAULT_WIDGET_THEME as the base, then merge any provided settings
@@ -2330,6 +2337,23 @@
         setupChatToggleControls();
     }
 
+    function tryRefreshWidgetAfterLogin(source = 'unknown') {
+        const existingWidget = document.querySelector('.bidly-auction-app-embed');
+        const hasAuctionCheck = Boolean(window.currentAuctionCheck);
+        if (existingWidget && hasAuctionCheck) {
+            console.log(`Bidly: Processing pending login refresh (${source})`);
+            refreshWidgetContent(existingWidget, window.currentAuctionCheck, { ...DEFAULT_WIDGET_SETTINGS });
+            pendingLoginRefresh = false;
+            return true;
+        }
+
+        console.log(`Bidly: Deferring login refresh (${source})`, {
+            hasWidget: !!existingWidget,
+            hasAuctionCheck
+        });
+        return false;
+    }
+
     // Main initialization function
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
@@ -2448,19 +2472,22 @@
                 buyNowPrice: Number(data.auction.buyNowPrice) || 0,
                 chatEnabled: data.auction.chatEnabled !== false
             };
+
+            if (pendingLoginRefresh) {
+                tryRefreshWidgetAfterLogin('auction-data-ready');
+            }
         } catch (error) {
             console.warn('Bidly: Failed to check auction for product', productId, error);
             return;
         }
 
         // Get settings from block
-        const settings = {
-            show_timer: true, // Default values since we can't access block settings in external JS
-            show_bid_history: true,
-            widget_position: 'below_price'
-        };
+        const settings = { ...DEFAULT_WIDGET_SETTINGS };
         
         injectWidget(window.currentAuctionCheck, settings);
+        if (pendingLoginRefresh) {
+            tryRefreshWidgetAfterLogin('post-inject-init');
+        }
         const productForm = document.querySelector('form[action^="/cart/add"]');
         if (productForm) {
             productForm.addEventListener('submit', () => {
@@ -2480,26 +2507,8 @@
             const isShopify = isShopifyCustomer();
             console.log('Bidly: Login state after login event:', { loggedIn, isShopify, customer: getCurrentCustomer() });
             
-            // Find existing widget and refresh its content without repositioning
-            const existingWidget = document.querySelector('.bidly-auction-app-embed');
-            if (existingWidget && window.currentAuctionCheck) {
-                console.log('Bidly: Refreshing existing widget content...');
-                
-                // Get current auction data
-                const auctionCheck = window.currentAuctionCheck;
-                const settings = {
-                    show_timer: true,
-                    show_bid_history: true,
-                    widget_position: 'below_price'
-                };
-                
-                // Refresh widget content without changing position
-                refreshWidgetContent(existingWidget, auctionCheck, settings);
-            } else {
-                console.log('Bidly: Widget or auction check not found, cannot refresh', { 
-                    hasWidget: !!existingWidget, 
-                    hasAuctionCheck: !!window.currentAuctionCheck 
-                });
+            if (!tryRefreshWidgetAfterLogin('login-event')) {
+                pendingLoginRefresh = true;
             }
         });
     });
