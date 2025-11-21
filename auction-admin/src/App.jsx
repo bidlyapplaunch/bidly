@@ -17,6 +17,29 @@ import OnboardingPage from './components/OnboardingPage';
 import { onboardingAPI } from './services/api';
 import { detectLocale, DEFAULT_LOCALE, isRtlLocale } from './locales';
 import useAdminI18n from './hooks/useAdminI18n';
+import en from '../locales/en.default.json';
+import pl from '../locales/pl.json';
+import de from '../locales/de.json';
+import es from '../locales/es.json';
+import fr from '../locales/fr.json';
+import it from '../locales/it.json';
+import nl from '../locales/nl.json';
+import ar from '../locales/ar.json';
+import ja from '../locales/ja.json';
+import ko from '../locales/ko.json';
+
+const ADMIN_TRANSLATIONS = {
+  en,
+  pl,
+  de,
+  es,
+  fr,
+  it,
+  nl,
+  ar,
+  ja,
+  ko
+};
 
 function App() {
   const [locale, setLocale] = useState(detectLocale());
@@ -49,12 +72,12 @@ function App() {
 
   return (
     <I18nContext.Provider value={i18nManager}>
-      <AppContent />
+      <AppContent locale={locale} />
     </I18nContext.Provider>
   );
 }
 
-function AppContent() {
+function AppContent({ locale }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [oauthComplete, setOauthComplete] = useState(false);
@@ -176,7 +199,7 @@ function AppContent() {
 
   return (
     <AppBridgeProvider>
-      <AppProvider>
+      <AppProvider i18n={ADMIN_TRANSLATIONS[locale] || ADMIN_TRANSLATIONS.en}>
         <BrowserRouter>
           {showNavigation && <AppNavigationMenu />}
           {content}
