@@ -12,6 +12,14 @@ import {
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 import useAdminI18n from '../hooks/useAdminI18n';
 
+const TEMPLATE_METADATA = [
+  { key: 'bidConfirmation', title: 'Bid confirmation' },
+  { key: 'outbidNotification', title: 'Outbid notification' },
+  { key: 'winnerNotification', title: 'Winner notification' },
+  { key: 'auctionEndingSoon', title: 'Auction ending soon' },
+  { key: 'adminNotification', title: 'Admin notification' }
+];
+
 const TEMPLATE_DEFAULTS = {
   bidConfirmation: {
     subject: 'Your bid on {{auction_title}} has been received',
