@@ -1,28 +1,5 @@
-import React, { useMemo, useEffect } from 'react';
-import createApp from '@shopify/app-bridge';
+import React from 'react';
 
-const AppBridgeProvider = ({ children }) => {
-  const host = new URLSearchParams(window.location.search).get('host') || '';
-  const config = useMemo(
-    () => ({
-      apiKey: import.meta.env.VITE_SHOPIFY_API_KEY,
-      host,
-      forceRedirect: true
-    }),
-    [host]
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (!window.shopify) {
-      window.shopify = createApp(config);
-    }
-  }, [config]);
-
+export default function AppBridgeProvider({ children }) {
   return <>{children}</>;
-};
-
-export default AppBridgeProvider;
+}
