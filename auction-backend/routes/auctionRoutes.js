@@ -22,17 +22,14 @@ import {
   validateBuyNow,
   validateId
 } from '../middleware/validation.js';
-import { identifyStore } from '../middleware/storeMiddleware.js';
 import { checkPlan, enforceAuctionLimit } from '../middleware/planGuard.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = express.Router();
 
 // Auction listing page route (all auctions) - MUST be first to avoid conflicts
 // This route doesn't need store identification middleware
 router.get('/list', getAllAuctionsPage);
-
-// All other auction routes require store identification
-router.use(identifyStore);
 
 // Auction details page route (individual auction)
 router.get('/page/:id', validateId, getAuctionDetailsPage);
@@ -45,13 +42,13 @@ router.get('/stats', getAuctionStats);
 router.get('/with-product-data', getAuctionsWithProductData);
 
 // Get auction by Shopify product ID (for widget) - MUST be before /:id route
-router.get('/by-product/:productId', identifyStore, async (req, res, next) => {
+router.get('/by-product/:productId', async (req, res, next) => {
   try {
     const { productId } = req.params;
     const shopDomain = req.shopDomain;
     
     if (!shopDomain) {
-      return res.status(400).json({ success: false, message: 'Store domain is required' });
+      return next(new AppError('Shop domain is required (middleware)', 400));
     }
     
     // Find auction by Shopify product ID (exclude soft-deleted auctions)

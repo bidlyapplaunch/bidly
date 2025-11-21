@@ -1,7 +1,6 @@
 import express from 'express';
 import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { identifyStore } from '../middleware/storeMiddleware.js';
 import { ensureCustomer } from '../services/customerService.js';
 
 const router = express.Router();
@@ -26,9 +25,9 @@ router.post('/saveCustomer', async (req, res, next) => {
       email, 
       firstName, 
       lastName, 
-      shopDomain,
       displayName 
     } = req.body;
+    const shopDomain = req.shopDomain;
 
     console.log('📧 Customer save request:', {
       shopifyId,
@@ -38,9 +37,13 @@ router.post('/saveCustomer', async (req, res, next) => {
       shopDomain
     });
 
-    if (!email || !shopDomain) {
+    if (!shopDomain) {
+      return next(new AppError('Shop domain is required (middleware)', 400));
+    }
+
+    if (!email) {
       console.error('❌ Missing required fields:', { email: !!email, shopDomain: !!shopDomain });
-      return next(new AppError('Missing required customer data: email and shop domain are required', 400));
+      return next(new AppError('Missing required customer data: email is required', 400));
     }
 
     // Ensure customer exists (global + per-store profile)
@@ -90,7 +93,7 @@ router.post('/saveCustomer', async (req, res, next) => {
     if (error.code === 11000) {
       // Extract email and shopDomain from req.body
       const errorEmail = req.body?.email || error.keyValue?.email;
-      const errorShopDomain = req.body?.shopDomain;
+      const errorShopDomain = shopDomain;
       
       if (!errorEmail || !errorShopDomain) {
         console.error('❌ Cannot handle duplicate error: missing email or shopDomain');
@@ -174,12 +177,16 @@ router.post('/sync', async (req, res, next) => {
       email, 
       firstName, 
       lastName, 
-      shopDomain,
       displayName 
     } = req.body;
+    const shopDomain = req.shopDomain;
 
-    if (!email || !shopDomain) {
-      return next(new AppError('Missing required customer data: email and shop domain are required', 400));
+    if (!shopDomain) {
+      return next(new AppError('Shop domain is required (middleware)', 400));
+    }
+
+    if (!email) {
+      return next(new AppError('Missing required customer data: email is required', 400));
     }
 
     // Ensure customer exists (global + per-store profile)
@@ -220,12 +227,16 @@ router.post('/temp-login', async (req, res, next) => {
       firstName, 
       lastName, 
       email, 
-      shopDomain,
       displayName
     } = req.body;
+    const shopDomain = req.shopDomain;
 
-    if (!email || !shopDomain) {
-      return next(new AppError('Email and shop domain are required', 400));
+    if (!shopDomain) {
+      return next(new AppError('Shop domain is required (middleware)', 400));
+    }
+
+    if (!email) {
+      return next(new AppError('Email is required', 400));
     }
 
     // Ensure customer exists (global + per-store profile)
@@ -264,55 +275,34 @@ router.post('/temp-login', async (req, res, next) => {
 router.get('/by-email', async (req, res, next) => {
   try {
     const email = req.query.email;
-    const shopDomain =
-      req.query.shop ||
-      req.query.shopDomain ||
-      req.query.store ||
-      req.query.domain;
+    const shopDomain = req.shopDomain;
 
-    if (!email || !shopDomain) {
-      return next(new AppError('Email and shopDomain (any format) is required', 400));
+    if (!shopDomain) {
+      return next(new AppError('Shop domain is required (middleware)', 400));
+    }
+
+    if (!email) {
+      return next(new AppError('Email is required', 400));
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const normalizedShop = shopDomain.toLowerCase().trim();
+    const normalizedShopDomain = shopDomain.toLowerCase().trim();
     
-    // Try multiple shop domain formats to handle different formats
-    const shopDomainVariants = [
-      normalizedShop, // Exact match
-      normalizedShop.endsWith('.myshopify.com') 
-        ? normalizedShop 
-        : `${normalizedShop}.myshopify.com`, // Add .myshopify.com if missing
-      normalizedShop.replace('.myshopify.com', ''), // Remove .myshopify.com
-      normalizedShop.replace(/^https?:\/\//, '').replace(/\/$/, '') // Remove protocol and trailing slash
-    ];
-    
-    // Remove duplicates
-    const uniqueVariants = [...new Set(shopDomainVariants)];
-    
-    let customer = null;
-    for (const shopVariant of uniqueVariants) {
-      customer = await Customer.findOne({ 
-        email: normalizedEmail, 
-        shopDomain: shopVariant 
-      });
-      if (customer) {
-        console.log(`✅ Found customer with shop domain variant: ${shopVariant}`);
-        break;
-      }
-    }
+    let customer = await Customer.findOne({ 
+      email: normalizedEmail, 
+      shopDomain: normalizedShopDomain 
+    });
 
     if (!customer) {
-      console.log(`❌ Customer not found for email: ${normalizedEmail}, tried shop variants:`, uniqueVariants);
+      console.log(`❌ Customer not found for email: ${normalizedEmail} in shop: ${normalizedShopDomain}`);
 
-      const targetShopDomain = uniqueVariants[0];
       console.log('🆕 Creating per-store customer via ensureCustomer for', {
         email: normalizedEmail,
-        shopDomain: targetShopDomain
+        shopDomain: normalizedShopDomain
       });
 
       customer = await ensureCustomer(
-        targetShopDomain,
+        normalizedShopDomain,
         normalizedEmail,
         null,
         null,
@@ -346,10 +336,10 @@ router.get('/by-email', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { shopDomain } = req.query;
+    const shopDomain = req.shopDomain;
 
     if (!shopDomain) {
-      return next(new AppError('Shop domain is required', 400));
+      return next(new AppError('Shop domain is required (middleware)', 400));
     }
 
     const customer = await Customer.findOne({ 
@@ -383,14 +373,14 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // Update customer bid history
-router.post('/:id/bid', identifyStore, async (req, res, next) => {
+router.post('/:id/bid', async (req, res, next) => {
   try {
     const { id } = req.params;
     const { auctionId, amount, isWinning } = req.body;
-    const shopDomain = req.shopDomain || req.query.shopDomain;
+    const shopDomain = req.shopDomain;
 
     if (!shopDomain) {
-      return next(new AppError('Shop domain is required', 400));
+      return next(new AppError('Shop domain is required (middleware)', 400));
     }
 
     const customer = await Customer.findOne({ 
@@ -417,10 +407,10 @@ router.post('/:id/bid', identifyStore, async (req, res, next) => {
 router.get('/:id/stats', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { shopDomain } = req.query;
+    const shopDomain = req.shopDomain;
 
     if (!shopDomain) {
-      return next(new AppError('Shop domain is required', 400));
+      return next(new AppError('Shop domain is required (middleware)', 400));
     }
 
     const customer = await Customer.findOne({ 
