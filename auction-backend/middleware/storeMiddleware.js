@@ -247,3 +247,5 @@ export const getCurrentStore = (req) => {
 export const getCurrentShopDomain = (req) => {
   return req.shopDomain || null;
 };
+
+export default identifyStore;

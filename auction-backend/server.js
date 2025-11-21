@@ -29,6 +29,7 @@ import marketplaceCustomizationRoutes from './routes/marketplaceCustomization.js
 import emailSettingsRoutes from './routes/emailSettings.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
+import identifyStore from './middleware/storeMiddleware.js';
 
 // Load environment variables
 dotenv.config({ path: './.env' });
@@ -134,6 +135,7 @@ app.use(morgan('combined'));
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(identifyStore);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
