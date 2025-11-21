@@ -422,14 +422,14 @@
 
 {% schema %}
 {
-  "name": {{ "bidly.schema.auction_single.name" | t | json }},
+  "name": "Single Auction",
   "target": "section",
   "settings": [
     {
       "type": "text",
       "id": "auction_id",
-      "label": {{ "bidly.schema.auction_single.auction_id" | t | json }},
-      "info": {{ "bidly.schema.auction_single.auction_id_info" | t | json }}
+      "label": "Auction ID",
+      "info": "Enter the specific auction ID to display"
     }
   ]
 }

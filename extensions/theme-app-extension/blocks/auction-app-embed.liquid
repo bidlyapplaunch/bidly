@@ -6,41 +6,41 @@
 
 {% schema %}
 {
-  "name": {{ "bidly.schema.auction_app_embed.name" | t | json }},
+  "name": "Auction App Embed",
   "target": "body",
   "settings": [
     {
       "type": "header",
-      "content": {{ "bidly.schema.auction_app_embed.widget_settings" | t | json }}
+      "content": "Auction Widget Settings"
     },
     {
       "type": "checkbox",
       "id": "show_timer",
-      "label": {{ "bidly.schema.auction_app_embed.show_timer" | t | json }},
+      "label": "Show countdown timer",
       "default": true
     },
     {
       "type": "checkbox",
       "id": "show_bid_history",
-      "label": {{ "bidly.schema.auction_app_embed.show_bid_history" | t | json }},
+      "label": "Show bid history link",
       "default": true
     },
     {
       "type": "select",
       "id": "widget_position",
-      "label": {{ "bidly.schema.auction_app_embed.widget_position" | t | json }},
+      "label": "Widget position",
       "options": [
         {
           "value": "below_price",
-          "label": {{ "bidly.schema.auction_app_embed.below_price" | t | json }}
+          "label": "Below product price"
         },
         {
           "value": "above_price",
-          "label": {{ "bidly.schema.auction_app_embed.above_price" | t | json }}
+          "label": "Above product price"
         },
         {
           "value": "replace_price",
-          "label": {{ "bidly.schema.auction_app_embed.replace_price" | t | json }}
+          "label": "Replace product price"
         }
       ],
       "default": "below_price"

@@ -442,26 +442,26 @@
 
 {% schema %}
 {
-  "name": {{ "bidly.schema.auction_list.name" | t | json }},
+  "name": "Auction List",
   "target": "section",
   "settings": [
     {
       "type": "text",
       "id": "title",
-      "label": {{ "bidly.schema.auction_list.section_title" | t | json }},
+      "label": "Section Title",
       "default": "Live Auctions"
     },
     {
       "type": "number",
       "id": "max_auctions",
-      "label": {{ "bidly.schema.auction_list.max_auctions" | t | json }},
+      "label": "Max Auctions",
       "default": 6,
-      "info": {{ "bidly.schema.auction_list.max_auctions_info" | t | json }}
+      "info": "Maximum number of auctions to display"
     },
     {
       "type": "checkbox",
       "id": "show_ended",
-      "label": {{ "bidly.schema.auction_list.show_ended" | t | json }},
+      "label": "Show Ended Auctions",
       "default": false
     }
   ]

@@ -429,14 +429,14 @@
 
 {% schema %}
 {
-  "name": {{ "bidly.schema.auction_featured.name" | t | json }},
+  "name": "Featured Auction",
   "target": "section",
   "settings": [
     {
       "type": "text",
       "id": "auction_id",
-      "label": {{ "bidly.schema.auction_featured.featured_auction_id" | t | json }},
-      "info": {{ "bidly.schema.auction_featured.featured_auction_id_info" | t | json }}
+      "label": "Featured Auction ID",
+      "info": "Enter the auction ID to feature prominently"
     }
   ]
 }
