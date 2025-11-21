@@ -32,12 +32,17 @@ export function initAppBridge() {
   // 3. Try from meta tag
   if (!apiKey) {
     const metaTag = document.querySelector('meta[name="shopify-api-key"]');
-    if (metaTag) {
+    if (metaTag && metaTag.getAttribute('content')) {
       apiKey = metaTag.getAttribute('content');
     }
   }
   
-  // 4. Try environment variable (Vite injects these at build time)
+  // 4. Try from available API keys array (fallback to first available)
+  if (!apiKey && window.SHOPIFY_API_KEYS && window.SHOPIFY_API_KEYS.length > 0) {
+    apiKey = window.SHOPIFY_API_KEYS[0];
+  }
+  
+  // 5. Try environment variable (Vite injects these at build time)
   if (!apiKey) {
     apiKey = import.meta.env.VITE_SHOPIFY_API_KEY;
   }

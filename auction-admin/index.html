@@ -8,10 +8,19 @@
     <meta name="shopify-api-key" content="" />
     <title>Bidly Auction Admin</title>
     <script>
+      // API keys for both apps (will be injected by build process)
+      window.SHOPIFY_API_KEYS = ['4d6fd182c13268701d61dc45f76c735e', 'de32970476f2ecf20d98f9d9b6994c89'];
+      
       // Try to extract API key from URL (Shopify embedded apps include it)
       (function() {
         const urlParams = new URLSearchParams(window.location.search);
-        const apiKey = urlParams.get('apiKey') || urlParams.get('api_key');
+        let apiKey = urlParams.get('apiKey') || urlParams.get('api_key');
+        
+        // If not in URL, use the first available API key
+        if (!apiKey && window.SHOPIFY_API_KEYS && window.SHOPIFY_API_KEYS.length > 0) {
+          apiKey = window.SHOPIFY_API_KEYS[0];
+        }
+        
         if (apiKey) {
           window.SHOPIFY_API_KEY = apiKey;
           const metaTag = document.querySelector('meta[name="shopify-api-key"]');
