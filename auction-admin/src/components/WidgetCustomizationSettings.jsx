@@ -2,22 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Page, Layout, Card, Text, Button, Banner, Spinner, Select } from '@shopify/polaris';
 import { useCustomizationSettings } from '../hooks/useCustomizationSettings';
+import useAdminI18n from '../hooks/useAdminI18n';
 
-const COLOR_FIELDS = [
-  { key: 'accent', label: 'Accent color', description: 'Applied to prices and primary highlights.' },
-  { key: 'text', label: 'Primary text', description: 'Default text color for widget content.' },
-  { key: 'timer', label: 'Timer', description: 'Countdown digits and timer emphasis.' },
-  { key: 'button_bg', label: 'Button background', description: 'Primary button background color.' },
-  { key: 'button_hover', label: 'Button hover', description: 'Background color on hover focus.' },
-  { key: 'button_text', label: 'Button text', description: 'Text color for primary buttons.' },
-  { key: 'border', label: 'Border color', description: 'Input borders, cards, and separators.' }
-];
+const COLOR_FIELDS = ['accent', 'text', 'timer', 'button_bg', 'button_hover', 'button_text', 'border'];
 
-const GRADIENT_FIELDS = [
-  { key: 'bg_solid', label: 'Solid background', description: 'Used when gradient is disabled.' },
-  { key: 'bg_gradient_start', label: 'Gradient start', description: 'Starting color of the header gradient.' },
-  { key: 'bg_gradient_end', label: 'Gradient end', description: 'Ending color of the header gradient.' }
-];
+const GRADIENT_FIELDS = ['bg_solid', 'bg_gradient_start', 'bg_gradient_end'];
 
 const stackStyle = (gap = 12) => ({
   display: 'flex',
@@ -75,7 +64,7 @@ function ColorSwatchInput({ label, description, value, onChange }) {
   );
 }
 
-function TemplateCard({ template, selected, onSelect }) {
+function TemplateCard({ template, selected, onSelect, label, description }) {
   return (
     <button
       type="button"
@@ -101,11 +90,11 @@ function TemplateCard({ template, selected, onSelect }) {
             }}
           />
           <Text variant="bodyMd" fontWeight="semibold">
-            Template {template.id} · {template.name}
+            {label}
           </Text>
         </div>
         <Text as="p" tone="subdued" variant="bodySm">
-          {template.description}
+          {description}
         </Text>
       </div>
     </button>
@@ -161,7 +150,7 @@ function createPreviewUrl(shopDomain, previewState) {
   return `/preview/widget?${params.toString()}`;
 }
 
-function WidgetPreviewFrame({ settings, previewData, previewState, shopDomain }) {
+function WidgetPreviewFrame({ settings, previewData, previewState, shopDomain, title }) {
   const iframeRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -260,7 +249,7 @@ function WidgetPreviewFrame({ settings, previewData, previewState, shopDomain })
     <iframe
       ref={iframeRef}
       key={previewUrl}
-      title="Widget customization preview"
+      title={title}
       src={previewUrl}
       style={{
         width: '100%',
@@ -275,6 +264,7 @@ function WidgetPreviewFrame({ settings, previewData, previewState, shopDomain })
 }
 
 const WidgetCustomizationSettings = () => {
+  const i18n = useAdminI18n();
   const {
     loading,
     saving,
@@ -303,18 +293,44 @@ const WidgetCustomizationSettings = () => {
   const location = useLocation();
   const search = location.search || '';
   const goToPlans = () => navigate(`/plans${search}`);
+  const colorFields = useMemo(
+    () =>
+      COLOR_FIELDS.map((key) => ({
+        key,
+        label: i18n.translate(`admin.widget.colors.${key}.label`),
+        description: i18n.translate(`admin.widget.colors.${key}.description`)
+      })),
+    [i18n]
+  );
+  const gradientFields = useMemo(
+    () =>
+      GRADIENT_FIELDS.map((key) => ({
+        key,
+        label: i18n.translate(`admin.widget.gradient.${key}.label`),
+        description: i18n.translate(`admin.widget.gradient.${key}.description`)
+      })),
+    [i18n]
+  );
+  const previewOptions = useMemo(
+    () => [
+      { label: i18n.translate('admin.widget.previewStates.active'), value: 'active' },
+      { label: i18n.translate('admin.widget.previewStates.pending'), value: 'pending' },
+      { label: i18n.translate('admin.widget.previewStates.ended'), value: 'ended' }
+    ],
+    [i18n]
+  );
 
   if (planGate) {
     const gateMessage =
       planGate.message && !/widget customization requires the pro plan/i.test(planGate.message)
         ? planGate.message
-        : 'The widget customization requires the pro or enterprise plan.';
+        : i18n.translate('admin.widget.planGate.defaultMessage');
     return (
       <Page
-        title="Widget customization"
-        subtitle="Upgrade your Bidly plan to unlock widget styling controls."
+        title={i18n.translate('admin.widget.page.title')}
+        subtitle={i18n.translate('admin.widget.planGate.subtitle')}
         backAction={{
-          content: 'Back',
+          content: i18n.translate('admin.common.back'),
           onAction: () => navigate(-1)
         }}
       >
@@ -322,9 +338,9 @@ const WidgetCustomizationSettings = () => {
           <Layout.Section>
             <Banner
               tone="info"
-              title="Upgrade required to customize the widget"
+              title={i18n.translate('admin.widget.planGate.bannerTitle')}
               action={{
-                content: 'View plans',
+                content: i18n.translate('admin.common.viewPlans'),
                 onAction: goToPlans
               }}
             >
@@ -339,48 +355,42 @@ const WidgetCustomizationSettings = () => {
   if (loading || !meta) {
     return (
       <Page
-        title="Widget customization"
+        title={i18n.translate('admin.widget.page.title')}
         backAction={{
-          content: 'Back',
+          content: i18n.translate('admin.common.back'),
           onAction: () => navigate(-1)
         }}
       >
         <div style={{ padding: 64, display: 'flex', justifyContent: 'center' }}>
-          <Spinner accessibilityLabel="Loading customization settings" size="large" />
+          <Spinner accessibilityLabel={i18n.translate('admin.widget.status.loading')} size="large" />
         </div>
       </Page>
     );
   }
 
-  const previewOptions = [
-    { label: 'Active auction', value: 'active' },
-    { label: 'Pending auction', value: 'pending' },
-    { label: 'Ended auction', value: 'ended' }
-  ];
-
   return (
     <Page
         fullWidth
-        title="Widget customization"
-        subtitle="Control how the Bidly widget appears on your product pages without touching code."
+        title={i18n.translate('admin.widget.page.title')}
+        subtitle={i18n.translate('admin.widget.page.subtitle')}
         backAction={{
-          content: 'Back',
+          content: i18n.translate('admin.common.back'),
           onAction: () => navigate(-1)
         }}
         primaryAction={{
-          content: 'Save changes',
+          content: i18n.translate('admin.widget.actions.save'),
           onAction: save,
           loading: saving,
           disabled: saving || !dirty
         }}
         secondaryActions={[
           {
-            content: 'Reset to saved',
+            content: i18n.translate('admin.widget.actions.resetSaved'),
             onAction: resetToOriginal,
             disabled: saving || !dirty
           },
           {
-            content: 'Reset to defaults',
+            content: i18n.translate('admin.widget.actions.resetDefaults'),
             onAction: resetToDefaults,
             destructive: false,
             disabled: saving
@@ -433,7 +443,7 @@ const WidgetCustomizationSettings = () => {
         <div className="widget-customization-grid">
           <div className="widget-customization-grid__controls">
             {error && (
-              <Banner title="We couldn’t save the widget settings" tone="critical">
+              <Banner title={i18n.translate('admin.widget.errors.saveFailed')} tone="critical">
                 <p>{error}</p>
               </Banner>
             )}
@@ -441,9 +451,9 @@ const WidgetCustomizationSettings = () => {
             <Card>
               <div style={stackStyle(20)}>
                 <div style={stackStyle(6)}>
-                  <Text variant="headingMd">Templates</Text>
+                  <Text variant="headingMd">{i18n.translate('admin.widget.sections.templates.title')}</Text>
                   <Text tone="subdued">
-                    Start from a professionally designed preset. You can still adjust individual settings after selecting a template.
+                    {i18n.translate('admin.widget.sections.templates.description')}
                   </Text>
                 </div>
                 <div
@@ -453,38 +463,46 @@ const WidgetCustomizationSettings = () => {
                     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'
                   }}
                 >
-                  {meta.templates.map((template) => (
-                    <TemplateCard
-                      key={template.id}
-                      template={template}
-                      selected={settings.template === template.id}
-                      onSelect={applyTemplate}
-                    />
-                  ))}
+                  {meta.templates.map((template) => {
+                    const label = i18n.translate('admin.widget.sections.templates.cardLabel', {
+                      id: template.id,
+                      name: template.name
+                    });
+                    return (
+                      <TemplateCard
+                        key={template.id}
+                        template={template}
+                        label={label}
+                        description={template.description}
+                        selected={settings.template === template.id}
+                        onSelect={applyTemplate}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             </Card>
 
             <Card>
               <div style={stackStyle(16)}>
-                <Text variant="headingMd">Typography & layout</Text>
+                <Text variant="headingMd">{i18n.translate('admin.widget.sections.typography.title')}</Text>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <Select
-                    label="Font family"
+                    label={i18n.translate('admin.widget.sections.typography.fontLabel')}
                     labelHidden
                     options={meta.fonts.map((font) => ({ label: font, value: font }))}
                     value={settings.font}
                     onChange={(value) => updateField('font', value)}
                   />
                   <Select
-                    label="Border radius"
+                    label={i18n.translate('admin.widget.sections.typography.radiusLabel')}
                     labelHidden
                     options={meta.borderRadius.map((radius) => ({ label: `${radius}px`, value: radius }))}
                     value={settings.borderRadius}
                     onChange={(value) => updateField('borderRadius', Number(value))}
                   />
                   <Select
-                    label="Depth / shadow"
+                    label={i18n.translate('admin.widget.sections.typography.shadowLabel')}
                     labelHidden
                     options={meta.boxShadows.map((shadow) => ({
                       label: shadow.charAt(0).toUpperCase() + shadow.slice(1),
@@ -501,13 +519,15 @@ const WidgetCustomizationSettings = () => {
               <div style={stackStyle(16)}>
                 <div style={stackStyle(4)}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <Text variant="headingMd">Gradient & background</Text>
+                    <Text variant="headingMd">{i18n.translate('admin.widget.sections.gradient.title')}</Text>
                     <Button size="slim" onClick={toggleGradient}>
-                      {settings.gradientEnabled ? 'Disable gradient' : 'Enable gradient'}
+                      {settings.gradientEnabled
+                        ? i18n.translate('admin.widget.sections.gradient.disable')
+                        : i18n.translate('admin.widget.sections.gradient.enable')}
                     </Button>
                   </div>
                   <Text tone="subdued">
-                    Choose the gradient colors for the widget header or switch to a flat background.
+                    {i18n.translate('admin.widget.sections.gradient.description')}
                   </Text>
                 </div>
                 <div
@@ -517,7 +537,7 @@ const WidgetCustomizationSettings = () => {
                     gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
                   }}
                 >
-                  {GRADIENT_FIELDS.map((field) => (
+                  {gradientFields.map((field) => (
                     <ColorSwatchInput
                       key={field.key}
                       label={field.label}
@@ -533,9 +553,9 @@ const WidgetCustomizationSettings = () => {
             <Card>
               <div style={stackStyle(16)}>
                 <div style={stackStyle(4)}>
-                  <Text variant="headingMd">Fine tune colors</Text>
+                  <Text variant="headingMd">{i18n.translate('admin.widget.sections.colors.title')}</Text>
                   <Text tone="subdued">
-                    Adjust individual tokens for text, buttons, and borders. All colors support hex values only.
+                    {i18n.translate('admin.widget.sections.colors.description')}
                   </Text>
                 </div>
                 <div
@@ -545,7 +565,7 @@ const WidgetCustomizationSettings = () => {
                     gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
                   }}
                 >
-                  {COLOR_FIELDS.map((field) => (
+                  {colorFields.map((field) => (
                     <ColorSwatchInput
                       key={field.key}
                       label={field.label}
@@ -560,12 +580,16 @@ const WidgetCustomizationSettings = () => {
           </div>
 
           <div className="widget-customization-grid__preview">
-            <Card title="Live widget preview" sectioned className="widget-customization-grid__previewCard">
+            <Card
+              title={i18n.translate('admin.widget.previewCard.title')}
+              sectioned
+              className="widget-customization-grid__previewCard"
+            >
               <div className="widget-customization-grid__previewBody">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '1.25rem', flexWrap: 'wrap' }}>
-                  <Text variant="headingMd">Live widget preview</Text>
+                  <Text variant="headingMd">{i18n.translate('admin.widget.previewCard.title')}</Text>
                   <Select
-                    label="Preview state"
+                    label={i18n.translate('admin.widget.previewCard.stateLabel')}
                     labelHidden
                     options={previewOptions}
                     value={previewState}
@@ -574,7 +598,7 @@ const WidgetCustomizationSettings = () => {
                 </div>
                 <div style={{ padding: '0 1.5rem 1.5rem' }}>
                   <Text tone="subdued">
-                    Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.
+                    {i18n.translate('admin.widget.previewCard.description')}
                   </Text>
                 </div>
                 <div style={{ padding: '0 1.5rem 1.75rem' }}>
@@ -583,6 +607,7 @@ const WidgetCustomizationSettings = () => {
                     previewData={previewData}
                     previewState={previewState}
                     shopDomain={shopDomain}
+                    title={i18n.translate('admin.widget.previewCard.iframeTitle')}
                   />
                 </div>
               </div>

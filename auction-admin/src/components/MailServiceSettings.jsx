@@ -10,14 +10,7 @@ import {
   FormLayout
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
-
-const TEMPLATE_METADATA = [
-  { key: 'bidConfirmation', title: 'Bid confirmation' },
-  { key: 'outbidNotification', title: 'Outbid notification' },
-  { key: 'winnerNotification', title: 'Winner notification' },
-  { key: 'auctionEndingSoon', title: 'Auction ending soon' },
-  { key: 'adminNotification', title: 'Admin notification' }
-];
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const TEMPLATE_DEFAULTS = {
   bidConfirmation: {
@@ -216,6 +209,17 @@ function mergeSettings(serverSettings = {}, templateDefaults = TEMPLATE_DEFAULTS
 }
 
 function MailServiceSettings() {
+  const i18n = useAdminI18n();
+  const localizedTemplates = useMemo(
+    () =>
+      TEMPLATE_METADATA.map((template) => ({
+        ...template,
+        title: i18n.translate(`admin.mail_service.templates.${template.key}.title`, {
+          defaultValue: template.title
+        })
+      })),
+    [i18n]
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -247,7 +251,10 @@ function MailServiceSettings() {
         });
       } catch (error) {
         console.error('Failed to load mail settings', error);
-        setMessage({ tone: 'critical', content: 'Failed to load mail settings.' });
+        setMessage({
+          tone: 'critical',
+          content: i18n.translate('admin.mail_service.messages.loadError')
+        });
       } finally {
         if (mounted) {
           setLoading(false);
@@ -346,10 +353,16 @@ function MailServiceSettings() {
     try {
       setSaving(true);
       await emailSettingsAPI.saveSettings(settings);
-      setMessage({ tone: 'success', content: 'Mail settings saved successfully.' });
+      setMessage({
+        tone: 'success',
+        content: i18n.translate('admin.mail_service.messages.saveSuccess')
+      });
     } catch (error) {
       console.error('Failed to save mail settings', error);
-      setMessage({ tone: 'critical', content: 'Failed to save mail settings.' });
+      setMessage({
+        tone: 'critical',
+        content: i18n.translate('admin.mail_service.messages.saveError')
+      });
     } finally {
       setSaving(false);
     }
@@ -362,12 +375,18 @@ function MailServiceSettings() {
         smtp: settings.smtp,
         testEmail
       });
-      setMessage({ tone: 'success', content: 'Test email sent.' });
+      setMessage({
+        tone: 'success',
+        content: i18n.translate('admin.mail_service.messages.smtpTestSuccess')
+      });
     } catch (error) {
       console.error('SMTP test failed', error);
       setMessage({
         tone: 'critical',
-        content: error?.response?.data?.message || error?.message || 'SMTP test failed.'
+        content:
+          error?.response?.data?.message ||
+          error?.message ||
+          i18n.translate('admin.mail_service.messages.smtpTestError')
       });
     } finally {
       setTesting(false);
@@ -378,20 +397,26 @@ function MailServiceSettings() {
     if (disabled) {
       setMessage({
         tone: 'critical',
-        content: 'Upgrade to a Pro or Enterprise plan to send template tests.'
+        content: i18n.translate('admin.mail_service.messages.upgradeForTests')
       });
       return;
     }
 
     const recipient = templateTestEmail.trim();
     if (!recipient) {
-      setMessage({ tone: 'critical', content: 'Enter a test email recipient.' });
+      setMessage({
+        tone: 'critical',
+        content: i18n.translate('admin.mail_service.messages.recipientRequired')
+      });
       return;
     }
 
     const template = settings.templates[templateKey];
     if (!template) {
-      setMessage({ tone: 'critical', content: 'Template not found.' });
+      setMessage({
+        tone: 'critical',
+        content: i18n.translate('admin.mail_service.messages.templateMissing')
+      });
       return;
     }
 
@@ -405,12 +430,20 @@ function MailServiceSettings() {
           html: template.html
         }
       });
-      setMessage({ tone: 'success', content: `Template test sent to ${recipient}.` });
+      setMessage({
+        tone: 'success',
+        content: i18n.translate('admin.mail_service.messages.templateTestSuccess', {
+          recipient
+        })
+      });
     } catch (error) {
       console.error('Template test failed', error);
       setMessage({
         tone: 'critical',
-        content: error?.response?.data?.message || error?.message || 'Template test failed.'
+        content:
+          error?.response?.data?.message ||
+          error?.message ||
+          i18n.translate('admin.mail_service.messages.templateTestError')
       });
     } finally {
       setTemplateTestLoading(null);
@@ -423,7 +456,7 @@ function MailServiceSettings() {
     if (!templateKey || !field) {
       setMessage({
         tone: 'warning',
-        content: 'Select a template subject or HTML field to insert tokens.'
+        content: i18n.translate('admin.mail_service.messages.selectFieldForToken')
       });
       return;
     }
@@ -497,9 +530,9 @@ function MailServiceSettings() {
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <Text variant="headingMd">Available tokens</Text>
+        <Text variant="headingMd">{i18n.translate('admin.mail_service.tokens.title')}</Text>
         <Text tone="subdued" variant="bodySm">
-          Click a token to insert it into the subject or HTML field you’re editing.
+          {i18n.translate('admin.mail_service.tokens.description')}
         </Text>
         {renderTokenChips()}
       </div>
@@ -509,7 +542,7 @@ function MailServiceSettings() {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}>
-        <Spinner accessibilityLabel="Loading mail settings" />
+        <Spinner accessibilityLabel={i18n.translate('admin.mail_service.status.loading')} />
       </div>
     );
   }
@@ -518,8 +551,11 @@ function MailServiceSettings() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {renderFeedback()}
       {disabled && (
-        <Banner tone="warning" title="Upgrade required">
-          <p>Custom mail settings are available on Pro and Enterprise plans.</p>
+        <Banner
+          tone="warning"
+          title={i18n.translate('admin.mail_service.banner.upgradeTitle')}
+        >
+          <p>{i18n.translate('admin.mail_service.banner.upgradeDescription')}</p>
         </Banner>
       )}
 
@@ -534,14 +570,14 @@ function MailServiceSettings() {
           <Card sectioned>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <Text variant="headingMd">SMTP configuration</Text>
+                <Text variant="headingMd">{i18n.translate('admin.mail_service.smtp.title')}</Text>
                 <Text tone="subdued">
-                  Connect your own email server to send notifications from your domain.
+                  {i18n.translate('admin.mail_service.smtp.description')}
                 </Text>
               </div>
 
               <Checkbox
-                label="Use my own email server"
+                label={i18n.translate('admin.mail_service.smtp.useCustom')}
                 checked={settings.useCustomSmtp}
                 onChange={(value) => setSettings((prev) => ({ ...prev, useCustomSmtp: value }))}
                 disabled={disabled}
@@ -550,14 +586,14 @@ function MailServiceSettings() {
               <FormLayout>
                 <FormLayout.Group condensed>
                   <TextField
-                    label="Host"
+                    label={i18n.translate('admin.mail_service.smtp.fields.host')}
                     value={settings.smtp.host}
                     onChange={(value) => handleSmtpChange('host', value)}
                     autoComplete="off"
                     disabled={disabled || !settings.useCustomSmtp}
                   />
                   <TextField
-                    label="Port"
+                    label={i18n.translate('admin.mail_service.smtp.fields.port')}
                     type="number"
                     value={String(settings.smtp.port ?? '')}
                     onChange={(value) => handleSmtpChange('port', value)}
@@ -568,14 +604,14 @@ function MailServiceSettings() {
 
                 <FormLayout.Group condensed>
                   <TextField
-                    label="Username"
+                    label={i18n.translate('admin.mail_service.smtp.fields.username')}
                     value={settings.smtp.user}
                     onChange={(value) => handleSmtpChange('user', value)}
                     autoComplete="off"
                     disabled={disabled || !settings.useCustomSmtp}
                   />
                   <TextField
-                    label="Password / app password"
+                    label={i18n.translate('admin.mail_service.smtp.fields.password')}
                     type="password"
                     value={settings.smtp.pass}
                     onChange={(value) => handleSmtpChange('pass', value)}
@@ -586,14 +622,14 @@ function MailServiceSettings() {
 
                 <FormLayout.Group condensed>
                   <TextField
-                    label="From name"
+                    label={i18n.translate('admin.mail_service.smtp.fields.fromName')}
                     value={settings.smtp.fromName}
                     onChange={(value) => handleSmtpChange('fromName', value)}
                     autoComplete="off"
                     disabled={disabled || !settings.useCustomSmtp}
                   />
                   <TextField
-                    label="From email"
+                    label={i18n.translate('admin.mail_service.smtp.fields.fromEmail')}
                     value={settings.smtp.fromEmail}
                     onChange={(value) => handleSmtpChange('fromEmail', value)}
                     autoComplete="off"
@@ -602,7 +638,7 @@ function MailServiceSettings() {
                 </FormLayout.Group>
 
                 <Checkbox
-                  label="Use secure connection (TLS)"
+                  label={i18n.translate('admin.mail_service.smtp.secure')}
                   checked={!!settings.smtp.secure}
                   onChange={(value) => handleSmtpChange('secure', value)}
                   disabled={disabled || !settings.useCustomSmtp}
@@ -610,7 +646,7 @@ function MailServiceSettings() {
 
                 <FormLayout.Group condensed>
                   <TextField
-                    label="Test email recipient"
+                    label={i18n.translate('admin.mail_service.smtp.testRecipient')}
                     value={testEmail}
                     onChange={setTestEmail}
                     autoComplete="off"
@@ -622,7 +658,7 @@ function MailServiceSettings() {
                       disabled={disabled || !settings.useCustomSmtp}
                       loading={testing}
                     >
-                      Send test email
+                      {i18n.translate('admin.mail_service.smtp.sendTest')}
                     </Button>
                   </div>
                 </FormLayout.Group>
@@ -633,30 +669,29 @@ function MailServiceSettings() {
           <Card sectioned>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
-                <Text variant="headingMd">Email templates</Text>
+                <Text variant="headingMd">{i18n.translate('admin.mail_service.templates.title')}</Text>
                 <Text tone="subdued">
-                  Customize Bidly notification content. Use the token panel to pull in dynamic values like
-                  bidder names or auction details.
+                  {i18n.translate('admin.mail_service.templates.description')}
                 </Text>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <TextField
-                  label="Test email recipient"
+                  label={i18n.translate('admin.mail_service.templates.testRecipient')}
                   type="email"
                   value={templateTestEmail}
                   onChange={setTemplateTestEmail}
                   autoComplete="email"
-                  placeholder="name@example.com"
+                  placeholder={i18n.translate('admin.mail_service.templates.testPlaceholder')}
                   disabled={disabled}
                 />
                 <Text tone="subdued" variant="bodySm">
-                  This address is used by the “Send test using this template” buttons below.
+                  {i18n.translate('admin.mail_service.templates.testHelper')}
                 </Text>
               </div>
 
               <div>
-                {TEMPLATE_METADATA.map(({ key, title }, index) => {
+                {localizedTemplates.map(({ key, title }, index) => {
                   const template = settings.templates[key] || {
                     enabled: true,
                     subject: '',
@@ -684,7 +719,7 @@ function MailServiceSettings() {
                       >
                         <Text variant="headingMd">{title}</Text>
                         <Checkbox
-                          label="Enabled"
+                          label={i18n.translate('admin.mail_service.templates.enabled')}
                           checked={template.enabled}
                           onChange={(value) => handleTemplateChange(key, 'enabled', value)}
                           disabled={disabled}
@@ -692,7 +727,7 @@ function MailServiceSettings() {
                       </div>
                       <FormLayout>
                         <TextField
-                          label="Subject"
+                          label={i18n.translate('admin.mail_service.templates.subject')}
                           value={template.subject}
                           onChange={(value) => handleTemplateChange(key, 'subject', value)}
                           onFocus={() => handleTemplateFocus(key, 'subject')}
@@ -701,7 +736,7 @@ function MailServiceSettings() {
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <Text variant="bodySm" fontWeight="bold">
-                            Editor mode
+                            {i18n.translate('admin.mail_service.templates.editorMode')}
                           </Text>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <Button
@@ -711,7 +746,7 @@ function MailServiceSettings() {
                               onClick={() => handleTemplateChange(key, 'mode', 'text')}
                               disabled={disabled}
                             >
-                              Simple editor
+                              {i18n.translate('admin.mail_service.templates.editorSimple')}
                             </Button>
                             <Button
                               size="slim"
@@ -720,12 +755,16 @@ function MailServiceSettings() {
                               onClick={() => handleTemplateChange(key, 'mode', 'html')}
                               disabled={disabled}
                             >
-                              HTML editor
+                              {i18n.translate('admin.mail_service.templates.editorHtml')}
                             </Button>
                           </div>
                         </div>
                         <TextField
-                          label={template.mode === 'html' ? 'HTML content' : 'Message body'}
+                          label={
+                            template.mode === 'html'
+                              ? i18n.translate('admin.mail_service.templates.htmlLabel')
+                              : i18n.translate('admin.mail_service.templates.textLabel')
+                          }
                           value={template.html}
                           onChange={(value) => handleTemplateChange(key, 'html', value)}
                           onFocus={() => handleTemplateFocus(key, 'html')}
@@ -737,7 +776,7 @@ function MailServiceSettings() {
                       </FormLayout>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         <Button size="slim" onClick={() => handleResetTemplate(key)} disabled={disabled}>
-                          Reset to default
+                          {i18n.translate('admin.mail_service.templates.reset')}
                         </Button>
                         <Button
                           size="slim"
@@ -745,7 +784,7 @@ function MailServiceSettings() {
                           disabled={disabled || !templateTestEmail.trim()}
                           loading={templateTestLoading === key}
                         >
-                          Send test using this template
+                          {i18n.translate('admin.mail_service.templates.sendTestForTemplate')}
                         </Button>
                       </div>
                     </div>
@@ -757,7 +796,7 @@ function MailServiceSettings() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button primary onClick={handleSave} loading={saving} disabled={disabled}>
-              Save mail settings
+              {i18n.translate('admin.mail_service.actions.save')}
             </Button>
           </div>
         </div>

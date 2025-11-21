@@ -6,6 +6,7 @@ import { normalizeMarketplaceTheme, DEFAULT_MARKETPLACE_THEME } from '@shared/ma
 import MarketplacePreview from './MarketplacePreview.jsx';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
 import authService from '../services/auth';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const FONT_OPTIONS = [
   { label: 'Inter', value: 'Inter' },
@@ -15,26 +16,26 @@ const FONT_OPTIONS = [
 ];
 
 const TEMPLATE_OPTIONS = [
-  { label: 'Classic', value: 'Classic', description: 'Balanced spacing, subtle depth, and rounded corners.' },
-  { label: 'Modern', value: 'Modern', description: 'Softer surfaces, deeper shadows, and generous padding.' },
-  { label: 'Minimal', value: 'Minimal', description: 'Compact spacing with crisp lines and light shadows.' },
-  { label: 'Bold', value: 'Bold', description: 'Large radiuses, dramatic shadows, and pill buttons.' }
+  { value: 'Classic', key: 'classic' },
+  { value: 'Modern', key: 'modern' },
+  { value: 'Minimal', key: 'minimal' },
+  { value: 'Bold', key: 'bold' }
 ];
 
 const COLOR_FIELDS = [
-  { key: 'primary', label: 'Primary', description: 'Buttons, actions, and primary highlights.' },
-  { key: 'background', label: 'Background', description: 'Marketplace page background.' },
-  { key: 'surface', label: 'Surface', description: 'Cards, modals, and sheets.' },
-  { key: 'textPrimary', label: 'Primary text', description: 'Headings and main text.' },
-  { key: 'textSecondary', label: 'Secondary text', description: 'Muted text, helper copy, and labels.' },
-  { key: 'buttonText', label: 'Button text', description: 'Text inside secondary buttons and CTA labels.' },
-  { key: 'button', label: 'Button', description: 'Secondary button background and border.' },
-  { key: 'border', label: 'Border', description: 'Card outlines, dividers, and inputs.' },
-  { key: 'accent', label: 'Accent', description: 'Timers, stats, and pills.' },
-  { key: 'success', label: 'Success', description: 'Positive badges and buy-now confirmations.' },
-  { key: 'error', label: 'Error', description: 'Errors, ended states, and blocking toasts.' },
-  { key: 'gradient1', label: 'Gradient start', description: 'Hero gradient starting color.' },
-  { key: 'gradient2', label: 'Gradient end', description: 'Hero gradient ending color.' }
+  'primary',
+  'background',
+  'surface',
+  'textPrimary',
+  'textSecondary',
+  'buttonText',
+  'button',
+  'border',
+  'accent',
+  'success',
+  'error',
+  'gradient1',
+  'gradient2'
 ];
 
 const DEFAULT_CUSTOMIZATION = {
@@ -51,9 +52,6 @@ const createStackStyle = (gap = 12) => ({
 });
 
 const ALLOWED_MARKETPLACE_PLANS = new Set(['pro', 'enterprise']);
-const PLAN_REQUIRED_MESSAGE = 'The marketplace customization requires the pro or enterprise plan.';
-const SHOP_NAME_FALLBACK = 'your store';
-
 const formatShopName = (value) => {
   if (!value) {
     return '';
@@ -148,7 +146,7 @@ function ColorInput({ field, value, onChange, disabled = false }) {
   );
 }
 
-function TemplateSelector({ selected, onSelect }) {
+function TemplateSelector({ selected, onSelect, options }) {
   return (
     <div
       style={{
@@ -157,7 +155,7 @@ function TemplateSelector({ selected, onSelect }) {
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
       }}
     >
-      {TEMPLATE_OPTIONS.map((template) => (
+      {options.map((template) => (
         <button
           key={template.value}
           type="button"
@@ -191,9 +189,29 @@ function TemplateSelector({ selected, onSelect }) {
 }
 
 const MarketplaceCustomizationSettings = () => {
+  const i18n = useAdminI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const { getShopInfo } = useAppBridgeActions();
+  const templateOptions = useMemo(
+    () =>
+      TEMPLATE_OPTIONS.map(({ value, key }) => ({
+        value,
+        label: i18n.translate(`admin.marketplace.sections.design.templates.${key}.label`),
+        description: i18n.translate(`admin.marketplace.sections.design.templates.${key}.description`)
+      })),
+    [i18n]
+  );
+  const colorFields = useMemo(
+    () =>
+      COLOR_FIELDS.map((key) => ({
+        key,
+        label: i18n.translate(`admin.marketplace.colors.${key}.label`),
+        description: i18n.translate(`admin.marketplace.colors.${key}.description`)
+      })),
+    [i18n]
+  );
+  const shopNameFallback = i18n.translate('admin.marketplace.preview.shopNameFallback');
   const [customization, setCustomization] = useState(DEFAULT_CUSTOMIZATION);
   const [original, setOriginal] = useState(DEFAULT_CUSTOMIZATION);
   const [loading, setLoading] = useState(true);
@@ -202,6 +220,11 @@ const MarketplaceCustomizationSettings = () => {
   const [toast, setToast] = useState(null);
   const [planStatus, setPlanStatus] = useState({ loading: true, plan: 'free', allowed: false });
   const backgroundDisabled = customization.gradientEnabled;
+  const planRequiredMessage = i18n.translate('admin.marketplace.planGate.defaultMessage');
+  const spinnerLabel = i18n.translate('admin.marketplace.status.loading');
+  const saveSuccessMessage = i18n.translate('admin.marketplace.messages.saveSuccess');
+  const saveErrorMessage = i18n.translate('admin.marketplace.messages.saveError');
+  const loadErrorMessage = i18n.translate('admin.marketplace.messages.loadError');
   const [shopDomainState, setShopDomainState] = useState(() => {
     const sessionUser = authService.getUser();
     if (sessionUser?.shopDomain) {
@@ -217,34 +240,37 @@ const MarketplaceCustomizationSettings = () => {
     }
     const info = getShopInfo();
     const domain = sessionUser?.shopDomain || info?.shop || '';
-    return formatShopName(domain) || SHOP_NAME_FALLBACK;
+    return formatShopName(domain) || shopNameFallback;
   });
   const search = location.search || '';
   const goToPlans = () => navigate(`/plans${search}`);
 
-  const updateShopIdentity = useCallback((domain, label) => {
-    if (domain) {
-      setShopDomainState(domain);
-    }
-    if (label) {
-      setShopDisplayName(label);
-      return;
-    }
-    if (domain) {
-      setShopDisplayName((prev) => {
-        if (!prev || prev === SHOP_NAME_FALLBACK) {
-          return formatShopName(domain) || SHOP_NAME_FALLBACK;
-        }
-        return prev;
-      });
-    }
-  }, []);
+  const updateShopIdentity = useCallback(
+    (domain, label) => {
+      if (domain) {
+        setShopDomainState(domain);
+      }
+      if (label) {
+        setShopDisplayName(label);
+        return;
+      }
+      if (domain) {
+        setShopDisplayName((prev) => {
+          if (!prev || prev === shopNameFallback) {
+            return formatShopName(domain) || shopNameFallback;
+          }
+          return prev;
+        });
+      }
+    },
+    [shopNameFallback]
+  );
 
   useEffect(() => {
     if (!shopDisplayName && shopDomainState) {
-      setShopDisplayName(formatShopName(shopDomainState) || SHOP_NAME_FALLBACK);
+      setShopDisplayName(formatShopName(shopDomainState) || shopNameFallback);
     }
-  }, [shopDisplayName, shopDomainState]);
+  }, [shopDisplayName, shopDomainState, shopNameFallback]);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -257,15 +283,15 @@ const MarketplaceCustomizationSettings = () => {
         updateShopIdentity(response.customization.shopDomain, response.customization.storeName);
         setError('');
       } else {
-        throw new Error(response.message || 'Failed to load marketplace customization');
+        throw new Error(response.message || loadErrorMessage);
       }
     } catch (err) {
       console.error('Failed to load marketplace customization', err);
-      setError(err.message || 'Failed to load marketplace customization');
+      setError(err.message || loadErrorMessage);
     } finally {
       setLoading(false);
     }
-  }, [updateShopIdentity]);
+  }, [updateShopIdentity, loadErrorMessage]);
 
   useEffect(() => {
     let isMounted = true;
@@ -347,14 +373,15 @@ const MarketplaceCustomizationSettings = () => {
         const normalized = normalizeCustomization(response.customization);
         setCustomization(normalized);
         setOriginal(normalized);
-        setToast({ content: 'Marketplace theme saved', tone: 'success' });
+        setToast({ content: saveSuccessMessage, tone: 'success' });
       } else {
-        throw new Error(response.message || 'Failed to save marketplace customization');
+        throw new Error(response.message || saveErrorMessage);
       }
     } catch (err) {
       console.error('Failed to save marketplace customization', err);
-      setError(err.message || 'Failed to save marketplace customization');
-      setToast({ content: err.message || 'Failed to save marketplace customization', tone: 'critical' });
+      const fallbackMessage = err.message || saveErrorMessage;
+      setError(fallbackMessage);
+      setToast({ content: fallbackMessage, tone: 'critical' });
     } finally {
       setSaving(false);
     }
@@ -374,9 +401,12 @@ const MarketplaceCustomizationSettings = () => {
 
   if (showLoadingState) {
     return (
-      <Page title="Marketplace customization" backAction={{ content: 'Back', onAction: () => navigate(-1) }}>
+      <Page
+        title={i18n.translate('admin.marketplace.page.title')}
+        backAction={{ content: i18n.translate('admin.common.back'), onAction: () => navigate(-1) }}
+      >
         <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
-          <Spinner size="large" />
+          <Spinner size="large" accessibilityLabel={spinnerLabel} />
         </div>
       </Page>
     );
@@ -385,18 +415,18 @@ const MarketplaceCustomizationSettings = () => {
   if (!planStatus.loading && !planStatus.allowed) {
     return (
       <Page
-        title="Marketplace customization"
-        subtitle="Upgrade your Bidly plan to unlock marketplace styling."
-        backAction={{ content: 'Back', onAction: () => navigate(-1) }}
+        title={i18n.translate('admin.marketplace.page.title')}
+        subtitle={i18n.translate('admin.marketplace.planGate.subtitle')}
+        backAction={{ content: i18n.translate('admin.common.back'), onAction: () => navigate(-1) }}
       >
         <Layout>
           <Layout.Section>
             <Banner
               tone="info"
-              title="Upgrade required to customize the marketplace"
-              action={{ content: 'View plans', onAction: goToPlans }}
+              title={i18n.translate('admin.marketplace.planGate.bannerTitle')}
+              action={{ content: i18n.translate('admin.common.viewPlans'), onAction: goToPlans }}
             >
-              <p>{PLAN_REQUIRED_MESSAGE}</p>
+              <p>{planRequiredMessage}</p>
             </Banner>
           </Layout.Section>
         </Layout>
@@ -407,23 +437,23 @@ const MarketplaceCustomizationSettings = () => {
   return (
     <Page
       fullWidth
-      title="Marketplace customization"
-      subtitle="Control the typography, template, and color system for the public auction marketplace."
-      backAction={{ content: 'Back', onAction: () => navigate(-1) }}
+      title={i18n.translate('admin.marketplace.page.title')}
+      subtitle={i18n.translate('admin.marketplace.page.subtitle')}
+      backAction={{ content: i18n.translate('admin.common.back'), onAction: () => navigate(-1) }}
       primaryAction={{
-        content: 'Save changes',
+        content: i18n.translate('admin.marketplace.actions.save'),
         onAction: handleSave,
         loading: saving,
         disabled: !dirty || saving
       }}
       secondaryActions={[
         {
-          content: 'Reset to applied',
+          content: i18n.translate('admin.marketplace.actions.resetApplied'),
           onAction: handleReset,
           disabled: !dirty || saving
         },
         {
-          content: 'Restore defaults',
+          content: i18n.translate('admin.marketplace.actions.resetDefaults'),
           onAction: resetToDefaults,
           disabled: saving
         }
@@ -475,24 +505,28 @@ const MarketplaceCustomizationSettings = () => {
         <div className="marketplace-customization-grid">
           <div className="marketplace-customization-grid__controls">
             {error && (
-              <Banner tone="critical" title="Marketplace customization unavailable">
+              <Banner tone="critical" title={i18n.translate('admin.marketplace.errors.unavailable')}>
                 <p>{error}</p>
               </Banner>
             )}
-            <Card title="Design foundation" sectioned>
+            <Card title={i18n.translate('admin.marketplace.sections.design.title')} sectioned>
               <div style={createStackStyle(20)}>
                 <div style={createStackStyle(8)}>
                   <Text variant="headingSm" fontWeight="semibold">
-                    Choose template
+                    {i18n.translate('admin.marketplace.sections.design.heading')}
                   </Text>
                   <Text variant="bodySm" tone="subdued">
-                    Templates control spacing, radius, and depth. They apply instantly to every screen in the customer flow.
+                    {i18n.translate('admin.marketplace.sections.design.description')}
                   </Text>
                 </div>
-                <TemplateSelector selected={customization.template} onSelect={handleTemplateSelect} />
+                <TemplateSelector
+                  selected={customization.template}
+                  onSelect={handleTemplateSelect}
+                  options={templateOptions}
+                />
                 <div>
                   <Select
-                    label="Font family"
+                    label={i18n.translate('admin.marketplace.sections.design.fontLabel')}
                     options={FONT_OPTIONS}
                     value={customization.font}
                     onChange={handleFontChange}
@@ -501,24 +535,26 @@ const MarketplaceCustomizationSettings = () => {
               </div>
             </Card>
 
-            <Card title="Color palette" sectioned>
+            <Card title={i18n.translate('admin.marketplace.sections.palette.title')} sectioned>
               <div style={createStackStyle(16)}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                   <Text tone="subdued" variant="bodySm">
-                    Every UI element in the marketplace references these tokens. Update them to match your storefront.
+                    {i18n.translate('admin.marketplace.sections.palette.description')}
                   </Text>
                   <Button
                     size="slim"
                     pressed={customization.gradientEnabled}
                     onClick={toggleGradient}
-                    accessibilityLabel="Toggle gradient background"
+                    accessibilityLabel={i18n.translate('admin.marketplace.sections.palette.gradientToggleLabel')}
                   >
-                    {customization.gradientEnabled ? 'Gradient enabled' : 'Gradient disabled'}
+                    {customization.gradientEnabled
+                      ? i18n.translate('admin.marketplace.sections.palette.gradientEnabled')
+                      : i18n.translate('admin.marketplace.sections.palette.gradientDisabled')}
                   </Button>
                 </div>
                 {customization.gradientEnabled && (
                   <Banner tone="info">
-                    Background color is managed by your gradient. Disable the gradient toggle to edit the solid background color.
+                    {i18n.translate('admin.marketplace.sections.palette.gradientInfo')}
                   </Banner>
                 )}
                 <div
@@ -528,7 +564,7 @@ const MarketplaceCustomizationSettings = () => {
                     gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'
                   }}
                 >
-                  {COLOR_FIELDS.map((field) => (
+                  {colorFields.map((field) => (
                     <ColorInput
                       key={field.key}
                       field={field}
@@ -543,11 +579,15 @@ const MarketplaceCustomizationSettings = () => {
           </div>
 
           <div className="marketplace-customization-grid__preview">
-            <Card title="Live preview" sectioned className="marketplace-customization-grid__previewCard">
+            <Card
+              title={i18n.translate('admin.marketplace.previewCard.title')}
+              sectioned
+              className="marketplace-customization-grid__previewCard"
+            >
               <div className="marketplace-customization-grid__previewBody">
                 <MarketplacePreview
                   customization={customization}
-                  shopName={shopDisplayName || SHOP_NAME_FALLBACK}
+                  shopName={shopDisplayName || shopNameFallback}
                 />
               </div>
             </Card>

@@ -12,6 +12,7 @@ import {
 } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { auctionAPI, billingAPI } from '../services/api';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const PLAN_LEVELS = {
   free: 0,
@@ -20,88 +21,14 @@ const PLAN_LEVELS = {
   enterprise: 3
 };
 
-const FEATURE_LABELS = {
-  removeBranding: 'Remove Bidly branding',
-  customization: 'Widget & marketplace customization',
-  popcorn: 'Popcorn bidding',
-  chat: 'Live bidder chatbox'
-};
+// FEATURE_LABELS will be localized in the component
 
-const PLAN_CONFIG = {
-  free: {
-    key: 'free',
-    title: 'Free',
-    price: '$0/mo',
-    description: 'Get started with Bidly and run your first auction.',
-    highlights: ['1 active auction at a time', 'Preview dashboard access', 'Upgrade to unlock more auctions'],
-    limits: { auctions: 1 },
-    features: {
-      removeBranding: false,
-      customization: false,
-      popcorn: false,
-      chat: false
-    }
-  },
-  basic: {
-    key: 'basic',
-    title: 'Basic',
-    price: '$9.99/mo',
-    description: 'Start hosting auctions with the essentials.',
-    highlights: ['3 active auctions', 'Standard Bidly branding', 'Core auction workflows'],
-    limits: { auctions: 3 },
-    features: {
-      removeBranding: false,
-      customization: false,
-      popcorn: false,
-      chat: false
-    }
-  },
-  pro: {
-    key: 'pro',
-    title: 'Pro',
-    price: '$19.99/mo',
-    description: 'Unlock advanced bidding and full widget styling.',
-    highlights: [
-      '20 active auctions',
-      'Remove Bidly branding',
-      'Widget & marketplace customization',
-      'Popcorn bidding'
-    ],
-    limits: { auctions: 20 },
-    features: {
-      removeBranding: true,
-      customization: true,
-      popcorn: true,
-      chat: false
-    }
-  },
-  enterprise: {
-    key: 'enterprise',
-    title: 'Enterprise',
-    price: '$49.99/mo',
-    description: 'Unlimited auctions plus real-time bidder chat.',
-    highlights: [
-      'Unlimited auctions',
-      'Remove Bidly branding',
-      'Widget & marketplace customization',
-      'Popcorn bidding & live chatbox'
-    ],
-    limits: { auctions: null },
-    features: {
-      removeBranding: true,
-      customization: true,
-      popcorn: true,
-      chat: true
-    }
-  }
-};
+// PLAN_CONFIG will be built dynamically using i18n
 
 const PLAN_DISPLAY_ORDER = ['free', 'basic', 'pro', 'enterprise'];
 
-const trialCopy = 'Includes a 7-day free trial. You can cancel anytime from your Shopify admin.';
-
-function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) {
-  const plan = PLAN_CONFIG[planKey];
+function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i18n, planConfig }) {
+  const plan = planConfig[planKey];
   const normalizedCurrent = (currentPlan || 'free').toLowerCase();
   const isCurrent = normalizedCurrent === planKey;
   const isPending = pendingPlan === planKey && pendingPlan !== currentPlan;
@@ -110,12 +37,12 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
   const isUpgrade = PLAN_LEVELS[planKey] > PLAN_LEVELS[normalizedCurrent];
 
   const actionLabel = useMemo(() => {
-    if (isCurrent) return 'Current plan';
-    if (isPending) return 'Pending activation';
-    if (planKey === 'free') return 'Free plan';
-    if (isDowngrade) return `Downgrade to ${plan.title}`;
-    return `Upgrade to ${plan.title}`;
-  }, [isCurrent, isPending, isDowngrade, plan.title, planKey]);
+    if (isCurrent) return i18n.translate('admin.billing.plans.currentPlan');
+    if (isPending) return i18n.translate('admin.billing.plans.pendingActivation');
+    if (planKey === 'free') return i18n.translate('admin.billing.plans.free.actionLabel');
+    if (isDowngrade) return i18n.translate('admin.billing.plans.downgradeTo', { title: plan.title });
+    return i18n.translate('admin.billing.plans.upgradeTo', { title: plan.title });
+  }, [isCurrent, isPending, isDowngrade, plan.title, planKey, i18n]);
 
   const handleSelect = useCallback(() => {
     // Free plan cannot be selected (it's the default)
@@ -134,7 +61,7 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
           <Text tone="subdued">{plan.description}</Text>
           {/* Show trial message only for paid plans */}
           {planKey !== 'free' && (
-            <Text tone="subdued" variant="bodySm">{trialCopy}</Text>
+            <Text tone="subdued" variant="bodySm">{i18n.translate('admin.billing.plans.trialCopy')}</Text>
           )}
         </div>
       </LegacyCard.Section>
@@ -165,6 +92,7 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan }) 
 }
 
 const PlansPage = () => {
+  const i18n = useAdminI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -175,6 +103,83 @@ const PlansPage = () => {
   const [downgradeModal, setDowngradeModal] = useState({ open: false, targetPlan: null, info: null });
   const [cancelModal, setCancelModal] = useState({ open: false });
   const [cancelling, setCancelling] = useState(false);
+
+  const FEATURE_LABELS = useMemo(() => {
+    const proHighlights = i18n.translate('admin.billing.plans.pro.highlights');
+    const enterpriseHighlights = i18n.translate('admin.billing.plans.enterprise.highlights');
+    return {
+      removeBranding: Array.isArray(proHighlights) ? proHighlights[1] : 'Remove Bidly branding',
+      customization: Array.isArray(proHighlights) ? proHighlights[2] : 'Widget & marketplace customization',
+      popcorn: Array.isArray(proHighlights) ? proHighlights[3] : 'Popcorn bidding',
+      chat: Array.isArray(enterpriseHighlights) ? enterpriseHighlights[3] : 'Live bidder chatbox'
+    };
+  }, [i18n]);
+
+  const PLAN_CONFIG = useMemo(() => {
+    const freeHighlights = i18n.translate('admin.billing.plans.free.highlights');
+    const basicHighlights = i18n.translate('admin.billing.plans.basic.highlights');
+    const proHighlights = i18n.translate('admin.billing.plans.pro.highlights');
+    const enterpriseHighlights = i18n.translate('admin.billing.plans.enterprise.highlights');
+    
+    return {
+      free: {
+        key: 'free',
+        title: i18n.translate('admin.billing.plans.free.title'),
+        price: i18n.translate('admin.billing.plans.free.price'),
+        description: i18n.translate('admin.billing.plans.free.description'),
+        highlights: Array.isArray(freeHighlights) ? freeHighlights : [],
+        limits: { auctions: 1 },
+        features: {
+          removeBranding: false,
+          customization: false,
+          popcorn: false,
+          chat: false
+        }
+      },
+      basic: {
+        key: 'basic',
+        title: i18n.translate('admin.billing.plans.basic.title'),
+        price: i18n.translate('admin.billing.plans.basic.price'),
+        description: i18n.translate('admin.billing.plans.basic.description'),
+        highlights: Array.isArray(basicHighlights) ? basicHighlights : [],
+        limits: { auctions: 3 },
+        features: {
+          removeBranding: false,
+          customization: false,
+          popcorn: false,
+          chat: false
+        }
+      },
+      pro: {
+        key: 'pro',
+        title: i18n.translate('admin.billing.plans.pro.title'),
+        price: i18n.translate('admin.billing.plans.pro.price'),
+        description: i18n.translate('admin.billing.plans.pro.description'),
+        highlights: Array.isArray(proHighlights) ? proHighlights : [],
+        limits: { auctions: 20 },
+        features: {
+          removeBranding: true,
+          customization: true,
+          popcorn: true,
+          chat: false
+        }
+      },
+      enterprise: {
+        key: 'enterprise',
+        title: i18n.translate('admin.billing.plans.enterprise.title'),
+        price: i18n.translate('admin.billing.plans.enterprise.price'),
+        description: i18n.translate('admin.billing.plans.enterprise.description'),
+        highlights: Array.isArray(enterpriseHighlights) ? enterpriseHighlights : [],
+        limits: { auctions: null },
+        features: {
+          removeBranding: true,
+          customization: true,
+          popcorn: true,
+          chat: true
+        }
+      }
+    };
+  }, [i18n]);
 
   const billingStatus = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -209,7 +214,7 @@ const PlansPage = () => {
           trialEndsAt: planResponse.trialEndsAt
         });
       } else {
-        setError(planResponse.message || 'Unable to load plan details');
+        setError(planResponse.message || i18n.translate('admin.billing.errors.loadError'));
       }
 
       if (statsResponse) {
@@ -217,7 +222,7 @@ const PlansPage = () => {
       }
     } catch (err) {
       console.error('Plan load error', err);
-      setError(err.response?.data?.message || err.message || 'Unable to load plan details');
+      setError(err.response?.data?.message || err.message || i18n.translate('admin.billing.errors.loadError'));
     } finally {
       setLoading(false);
     }
@@ -225,13 +230,13 @@ const PlansPage = () => {
 
   const formatLimit = useCallback((limit) => {
     if (limit === null) {
-      return 'unlimited';
+      return i18n.translate('admin.billing.formatLimit.unlimited');
     }
     if (typeof limit === 'number') {
-      return `${limit} active auctions`;
+      return i18n.translate('admin.billing.formatLimit.activeAuctions', { count: limit });
     }
-    return 'unlimited';
-  }, []);
+    return i18n.translate('admin.billing.formatLimit.unlimited');
+  }, [i18n]);
 
 
   useEffect(() => {
@@ -245,15 +250,15 @@ const PlansPage = () => {
       if (response.success && response.confirmationUrl) {
         window.location.href = response.confirmationUrl;
       } else {
-        setError(response.message || 'Unable to start subscription. Please try again.');
+        setError(response.message || i18n.translate('admin.billing.errors.subscribeError'));
       }
     } catch (err) {
       console.error('Subscribe error', err);
-      setError(err.response?.data?.message || err.message || 'Unable to start subscription.');
+      setError(err.response?.data?.message || err.message || i18n.translate('admin.billing.errors.subscribeError'));
     } finally {
       setLoadingPlan(null);
     }
-  }, []);
+  }, [i18n]);
 
   const buildDowngradeInfo = useCallback(
     (targetPlanKey) => {
@@ -264,7 +269,7 @@ const PlansPage = () => {
       const targetFeatures = targetPlanConfig.features || {};
       const lostFeatures = Object.keys(FEATURE_LABELS).filter(
         (feature) => currentFeatures[feature] && !targetFeatures[feature]
-      );
+      ).map((feature) => FEATURE_LABELS[feature]);
 
       const currentLimit =
         planData.planDetails?.limits?.auctions !== undefined
@@ -282,14 +287,14 @@ const PlansPage = () => {
       return {
         currentPlanKey,
         targetPlanKey,
-        lostFeatures: lostFeatures.map((feature) => FEATURE_LABELS[feature]),
+        lostFeatures,
         currentLimit,
         targetLimit,
         totalScheduledAuctions,
         auctionsToClose
       };
     },
-    [auctionStats, planData]
+    [auctionStats, planData, FEATURE_LABELS]
   );
 
   const handlePlanSelection = useCallback(
@@ -342,31 +347,31 @@ const PlansPage = () => {
       if (response.success) {
         closeCancelModal();
         // Show success message
-        setError(response.message || 'Subscription cancelled successfully. Your plan will revert to Free when the current billing period ends.');
+        setError(response.message || i18n.translate('admin.billing.cancel.resubscribe'));
         await loadPlan(); // Reload plan data
       } else {
-        setError(response.message || 'Failed to cancel subscription');
+        setError(response.message || i18n.translate('admin.billing.errors.cancelError'));
       }
     } catch (err) {
       console.error('Cancel subscription error', err);
-      setError(err.response?.data?.message || err.message || 'Unable to cancel subscription.');
+      setError(err.response?.data?.message || err.message || i18n.translate('admin.billing.errors.cancelError'));
     } finally {
       setCancelling(false);
     }
-  }, [closeCancelModal, loadPlan]);
+  }, [closeCancelModal, loadPlan, i18n]);
 
   const banner = useMemo(() => {
     if (billingStatus.status === 'success') {
       return (
-        <Banner tone="success" title="Subscription activated">
-          <p>Your plan is now active. Thanks for upgrading!</p>
+        <Banner tone="success" title={i18n.translate('admin.billing.banners.subscriptionActivated.title')}>
+          <p>{i18n.translate('admin.billing.banners.subscriptionActivated.message')}</p>
         </Banner>
       );
     }
     if (billingStatus.status === 'pending') {
       return (
-        <Banner tone="info" title="Awaiting confirmation">
-          <p>Finish approving the subscription in Shopify to unlock premium features.</p>
+        <Banner tone="info" title={i18n.translate('admin.billing.banners.awaitingConfirmation.title')}>
+          <p>{i18n.translate('admin.billing.banners.awaitingConfirmation.message')}</p>
         </Banner>
       );
     }
@@ -379,9 +384,9 @@ const PlansPage = () => {
               return billingStatus.message;
             }
           })()
-        : 'There was a problem confirming billing.';
+        : i18n.translate('admin.billing.banners.subscriptionNotConfirmed.message');
       return (
-        <Banner tone="critical" title="Subscription not confirmed">
+        <Banner tone="critical" title={i18n.translate('admin.billing.banners.subscriptionNotConfirmed.title')}>
           <p>{errorMessage}</p>
         </Banner>
       );
@@ -390,35 +395,32 @@ const PlansPage = () => {
       // Check if it's a cancellation success message
       if (error.includes('cancelled successfully') || error.includes('revert to Free')) {
         return (
-          <Banner tone="success" title="Subscription cancelled">
-            <p>{error}</p>
+          <Banner tone="success" title={i18n.translate('admin.billing.banners.subscriptionCancelled.title')}>
+            <p>{i18n.translate('admin.billing.banners.subscriptionCancelled.message', { message: error })}</p>
           </Banner>
         );
       }
       return (
-        <Banner tone="critical" title="We couldn't load your plan">
+        <Banner tone="critical" title={i18n.translate('admin.billing.banners.loadError.title')}>
           <p>{error}</p>
-          <Button onClick={loadPlan}>Retry</Button>
+          <Button onClick={loadPlan}>{i18n.translate('admin.billing.banners.loadError.retry')}</Button>
         </Banner>
       );
     }
     return null;
-  }, [billingStatus, error, loadPlan]);
+  }, [billingStatus, error, loadPlan, i18n]);
 
   const previewModeBanner =
     !loading && !planData.plan ? (
       <Banner
         tone="warning"
-        title="Upgrade to activate Bidly"
+        title={i18n.translate('admin.billing.banners.previewMode.title')}
         action={{
-          content: 'View plans',
+          content: i18n.translate('admin.billing.banners.previewMode.action'),
           onAction: () => navigate(`/plans${location.search || ''}`)
         }}
       >
-        <p>
-          Preview mode lets you explore the admin, but auctions, customization, and live bidding are disabled until you
-          choose a paid plan.
-        </p>
+        <p>{i18n.translate('admin.billing.banners.previewMode.message')}</p>
       </Banner>
     ) : null;
 
@@ -426,10 +428,10 @@ const PlansPage = () => {
   return (
     <>
       <Page
-        title="Choose your Bidly plan"
-        subtitle="Manage your subscription and unlock premium auction features."
+        title={i18n.translate('admin.billing.page.title')}
+        subtitle={i18n.translate('admin.billing.page.subtitle')}
         backAction={{
-          content: 'Back',
+          content: i18n.translate('admin.common.back'),
           onAction: () => navigate(-1)
         }}
       >
@@ -447,20 +449,20 @@ const PlansPage = () => {
               <LegacyCard.Section>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <Text variant="headingMd">Current plan</Text>
+                    <Text variant="headingMd">{i18n.translate('admin.billing.currentPlan.title')}</Text>
                     {loading ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Spinner accessibilityLabel="Loading plan" size="small" />
-                        <Text tone="subdued">Loading…</Text>
+                        <Spinner accessibilityLabel={i18n.translate('admin.billing.currentPlan.loading')} size="small" />
+                        <Text tone="subdued">{i18n.translate('admin.billing.currentPlan.loading')}</Text>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <Text tone="subdued">Active: {planData.plan || 'free'}</Text>
+                        <Text tone="subdued">{i18n.translate('admin.billing.currentPlan.active', { plan: planData.plan || 'free' })}</Text>
                         {/* Only show Pending if there's a real pending change (cancellation or downgrade) */}
                         {planData.pendingPlan && 
                          planData.pendingPlan !== planData.plan && 
                          (planData.pendingPlan === 'free' || PLAN_LEVELS[planData.pendingPlan] < PLAN_LEVELS[planData.plan]) && (
-                          <Text tone="subdued">Pending: {planData.pendingPlan}</Text>
+                          <Text tone="subdued">{i18n.translate('admin.billing.currentPlan.pending', { plan: planData.pendingPlan })}</Text>
                         )}
                       </div>
                     )}
@@ -471,7 +473,7 @@ const PlansPage = () => {
                       onClick={handleCancelSubscription}
                       disabled={cancelling}
                     >
-                      Cancel subscription
+                      {i18n.translate('admin.billing.currentPlan.cancelSubscription')}
                     </Button>
                   )}
                 </div>
@@ -480,7 +482,7 @@ const PlansPage = () => {
           </Layout.Section>
 
           <Layout.Section>
-            <Text variant="headingMd">Plans</Text>
+            <Text variant="headingMd">{i18n.translate('admin.billing.plans.title')}</Text>
           </Layout.Section>
 
           <Layout.Section>
@@ -493,6 +495,8 @@ const PlansPage = () => {
                   pendingPlan={planData.pendingPlan}
                   onSelect={handlePlanSelection}
                   loadingPlan={loadingPlan}
+                  i18n={i18n}
+                  planConfig={PLAN_CONFIG}
                 />
               ))}
             </div>
@@ -504,56 +508,61 @@ const PlansPage = () => {
         <Modal
           open
           onClose={closeDowngradeModal}
-          title={`Downgrade to ${PLAN_CONFIG[downgradeModal.targetPlan].title}`}
+          title={i18n.translate('admin.billing.downgrade.title', { plan: PLAN_CONFIG[downgradeModal.targetPlan].title })}
           primaryAction={{
-            content: 'Confirm downgrade',
+            content: i18n.translate('admin.billing.downgrade.confirm'),
             destructive: true,
             onAction: confirmDowngrade,
             loading: loadingPlan === downgradeModal.targetPlan
           }}
           secondaryActions={[
             {
-              content: 'Cancel',
+              content: i18n.translate('admin.common.cancel'),
               onAction: closeDowngradeModal
             }
           ]}
         >
           <Modal.Section>
             <Text variant="bodyMd">
-              {`You are downgrading from ${
-                PLAN_CONFIG[downgradeModal.info.currentPlanKey].title
-              } to ${PLAN_CONFIG[downgradeModal.targetPlan].title}.`}
+              {i18n.translate('admin.billing.downgrade.message', {
+                current: PLAN_CONFIG[downgradeModal.info.currentPlanKey].title,
+                target: PLAN_CONFIG[downgradeModal.targetPlan].title
+              })}
             </Text>
             <div style={{ marginTop: '16px' }}>
               <List type="bullet">
                 {downgradeModal.info.lostFeatures.length > 0 &&
                   downgradeModal.info.lostFeatures.map((feature) => (
-                    <List.Item key={feature}>{`Feature removed: ${feature}`}</List.Item>
+                    <List.Item key={feature}>{i18n.translate('admin.billing.downgrade.featureRemoved', { feature })}</List.Item>
                   ))}
                 {downgradeModal.info.lostFeatures.length === 0 && (
-                  <List.Item key="no-features">No premium features will be removed.</List.Item>
+                  <List.Item key="no-features">{i18n.translate('admin.billing.downgrade.noFeaturesRemoved')}</List.Item>
                 )}
                 {typeof downgradeModal.info.auctionsToClose === 'number' ? (
                   downgradeModal.info.auctionsToClose > 0 ? (
                     <List.Item key="auctions">
-                      {`We will automatically close ${downgradeModal.info.auctionsToClose} scheduled auction${
-                        downgradeModal.info.auctionsToClose === 1 ? '' : 's'
-                      } to meet the ${formatLimit(downgradeModal.info.targetLimit)} limit.`}
+                      {i18n.translate('admin.billing.downgrade.auctionsToClose', {
+                        count: downgradeModal.info.auctionsToClose,
+                        plural: downgradeModal.info.auctionsToClose === 1 ? '' : 's',
+                        limit: formatLimit(downgradeModal.info.targetLimit)
+                      })}
                     </List.Item>
                   ) : (
                     <List.Item key="auctions-fit">
-                      {`Your current auction count already fits the ${formatLimit(downgradeModal.info.targetLimit)} limit.`}
+                      {i18n.translate('admin.billing.downgrade.auctionsFit', {
+                        limit: formatLimit(downgradeModal.info.targetLimit)
+                      })}
                     </List.Item>
                   )
                 ) : (
                   <List.Item key="auctions-unlimited">
-                    The new plan includes an unlimited auction limit.
+                    {i18n.translate('admin.billing.downgrade.unlimitedLimit')}
                   </List.Item>
                 )}
               </List>
             </div>
             <Text tone="critical" variant="bodySm">
-              Downgrading takes effect immediately and cannot be undone automatically.
+              {i18n.translate('admin.billing.downgrade.warning')}
             </Text>
           </Modal.Section>
         </Modal>
@@ -563,36 +572,36 @@ const PlansPage = () => {
         <Modal
           open
           onClose={closeCancelModal}
-          title="Cancel subscription"
+          title={i18n.translate('admin.billing.cancel.title')}
           primaryAction={{
-            content: 'Confirm cancellation',
+            content: i18n.translate('admin.billing.cancel.confirm'),
             destructive: true,
             onAction: confirmCancelSubscription,
             loading: cancelling
           }}
           secondaryActions={[
             {
-              content: 'Keep subscription',
+              content: i18n.translate('admin.billing.cancel.keep'),
               onAction: closeCancelModal
             }
           ]}
         >
           <Modal.Section>
             <Text variant="bodyMd">
-              Are you sure you want to cancel your subscription?
+              {i18n.translate('admin.billing.cancel.message')}
             </Text>
             <div style={{ marginTop: '16px' }}>
               <Text tone="subdued" variant="bodyMd">
-                Your subscription will remain active until the end of the current billing period. After that, your plan will automatically revert to the Free plan, which includes:
+                {i18n.translate('admin.billing.cancel.description')}
               </Text>
               <List type="bullet">
-                <List.Item>1 active auction at a time</List.Item>
-                <List.Item>Standard Bidly branding</List.Item>
-                <List.Item>Basic auction features</List.Item>
+                <List.Item>{i18n.translate('admin.billing.cancel.freeFeatures.0')}</List.Item>
+                <List.Item>{i18n.translate('admin.billing.cancel.freeFeatures.1')}</List.Item>
+                <List.Item>{i18n.translate('admin.billing.cancel.freeFeatures.2')}</List.Item>
               </List>
             </div>
             <Text tone="critical" variant="bodySm" style={{ marginTop: '16px' }}>
-              You can resubscribe at any time to regain access to premium features.
+              {i18n.translate('admin.billing.cancel.resubscribe')}
             </Text>
           </Modal.Section>
         </Modal>

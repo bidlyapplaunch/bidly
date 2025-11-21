@@ -9,8 +9,10 @@ import {
   Spinner
 } from '@shopify/polaris';
 import { useAppBridgeActions } from '../hooks/useAppBridge';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const OAuthSetup = ({ onComplete }) => {
+  const i18n = useAdminI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [needsOAuth, setNeedsOAuth] = useState(false);
@@ -98,7 +100,7 @@ const OAuthSetup = ({ onComplete }) => {
         }
         
         if (!shop) {
-          throw new Error('Unable to get shop information. Please ensure you are accessing the app through the Shopify admin.');
+          throw new Error(i18n.translate('admin.oauth.setup.errors.noShop'));
         }
         
         // Store the shop we found
@@ -145,11 +147,11 @@ const OAuthSetup = ({ onComplete }) => {
       }
     } catch (error) {
       console.error('OAuth check failed:', error);
-      setError('Failed to check OAuth status. Please try again.');
+      setError(i18n.translate('admin.oauth.setup.errors.noShop'));
     } finally {
       setLoading(false);
     }
-  }, [getShopInfo, onComplete, redirectToShopifyAdmin, shopDomain]);
+  }, [getShopInfo, onComplete, redirectToShopifyAdmin, shopDomain, i18n]);
 
   useEffect(() => {
     if (initialCheckDone.current) {
@@ -283,7 +285,7 @@ const OAuthSetup = ({ onComplete }) => {
     }
     
     if (!shop) {
-      const errorMsg = 'Unable to get shop information. Please enter your shop domain manually below.';
+      const errorMsg = i18n.translate('admin.oauth.setup.errors.noShop');
       setError(errorMsg);
       console.error('❌❌❌ CRITICAL: No shop found after trying all methods ❌❌❌');
       console.error('  - Full URL:', window.location.href);
@@ -308,7 +310,7 @@ const OAuthSetup = ({ onComplete }) => {
 
     // Validate and encode shop parameter
     if (!shop || typeof shop !== 'string' || shop.trim() === '') {
-      setError('Invalid shop parameter. Please refresh the page or access the app through Shopify admin.');
+      setError(i18n.translate('admin.oauth.setup.errors.invalidShop'));
       console.error('❌ Invalid shop value:', shop);
       return;
     }
@@ -317,7 +319,7 @@ const OAuthSetup = ({ onComplete }) => {
     const cleanedShop = shop.trim();
     const shopDomainRegex = /^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com$/;
     if (!shopDomainRegex.test(cleanedShop)) {
-      setError(`Invalid shop domain format: ${cleanedShop}. Expected format: store.myshopify.com`);
+      setError(i18n.translate('admin.oauth.setup.errors.invalidFormat', { shop: cleanedShop }));
       console.error('❌ Invalid shop format:', cleanedShop);
       return;
     }
@@ -360,7 +362,7 @@ const OAuthSetup = ({ onComplete }) => {
     
     if (!cleanedShop || typeof cleanedShop !== 'string' || !cleanedShop.includes('.myshopify.com')) {
       console.error('❌❌❌ FINAL VALIDATION FAILED - ABORTING URL GENERATION ❌❌❌');
-      setError('Shop validation failed. Please enter your shop domain manually.');
+      setError(i18n.translate('admin.oauth.setup.errors.validationFailed', { shop: JSON.stringify(cleanedShop) }));
       setNeedsOAuth(true);
       return;
     }
@@ -395,7 +397,7 @@ const OAuthSetup = ({ onComplete }) => {
       console.log('✅ URL construction verified successfully');
     } catch (e) {
       console.error('❌ URL construction verification failed:', e);
-      setError('Error constructing OAuth URL. Please try again.');
+      setError(i18n.translate('admin.oauth.setup.errors.urlConstruction'));
       setNeedsOAuth(true);
       return;
     }
@@ -483,9 +485,9 @@ const OAuthSetup = ({ onComplete }) => {
                 flexDirection: 'column',
                 gap: '1rem'
               }}>
-                <Spinner size="large" />
+                <Spinner size="large" accessibilityLabel={i18n.translate('admin.oauth.loading.title')} />
                 <Text variant="bodyMd" as="p">
-                  Checking app setup...
+                  {i18n.translate('admin.oauth.loading.message')}
                 </Text>
               </div>
             </Card>
@@ -501,14 +503,14 @@ const OAuthSetup = ({ onComplete }) => {
         <Layout>
           <Layout.Section>
             <Card>
-              <Banner status="critical">
+              <Banner status="critical" title={i18n.translate('admin.oauth.error.title')}>
                 <Text variant="bodyMd" as="p">
                   {error}
                 </Text>
               </Banner>
               <div style={{ marginTop: '1rem' }}>
                 <Button onClick={checkOAuthStatus}>
-                  Try Again
+                  {i18n.translate('admin.oauth.error.tryAgain')}
                 </Button>
               </div>
             </Card>
@@ -528,21 +530,19 @@ const OAuthSetup = ({ onComplete }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   <div>
                     <Text variant="headingMd" as="h2">
-                      Complete App Setup
+                      {i18n.translate('admin.oauth.setup.title')}
                     </Text>
                     <div style={{ marginTop: '0.5rem' }}>
                       <Text variant="bodyMd" as="p">
-                        To use the auction features, you need to complete the app setup process. 
-                        This will connect your store to the auction system and enable product search.
+                        {i18n.translate('admin.oauth.setup.description')}
                       </Text>
                     </div>
                   </div>
 
                   <Banner status="info">
                     <Text variant="bodyMd" as="p">
-                      <strong>Why is this needed?</strong><br />
-                      The app needs permission to access your store's products to create auctions. 
-                      This is a one-time setup process.
+                      <strong>{i18n.translate('admin.oauth.setup.whyNeeded.title')}</strong><br />
+                      {i18n.translate('admin.oauth.setup.whyNeeded.message')}
                     </Text>
                   </Banner>
 
@@ -550,11 +550,11 @@ const OAuthSetup = ({ onComplete }) => {
                     {error && error.includes('Unable to get shop') && (
                       <div style={{ marginBottom: '1rem' }}>
                         <Text variant="bodyMd" as="p" tone="subdued" style={{ marginBottom: '0.5rem' }}>
-                          Please enter your Shopify store domain:
+                          {i18n.translate('admin.oauth.setup.manualShop.label')}
                         </Text>
                         <input
                           type="text"
-                          placeholder="store.myshopify.com"
+                          placeholder={i18n.translate('admin.oauth.setup.manualShop.placeholder')}
                           value={manualShop}
                           onChange={(e) => setManualShop(e.target.value)}
                           style={{
@@ -573,7 +573,7 @@ const OAuthSetup = ({ onComplete }) => {
                       onClick={handleCompleteOAuth}
                       disabled={error && error.includes('Unable to get shop') && !manualShop.trim()}
                     >
-                      Complete Setup
+                      {i18n.translate('admin.oauth.setup.action')}
                     </Button>
                   </div>
                 </div>

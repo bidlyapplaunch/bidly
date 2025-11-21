@@ -8,8 +8,10 @@ import {
   Text
 } from '@shopify/polaris';
 import authService from '../services/auth';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const Login = ({ onLogin }) => {
+  const i18n = useAdminI18n();
   const [email, setEmail] = useState('test@example.com');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
@@ -26,17 +28,17 @@ const Login = ({ onLogin }) => {
       // Validate registration fields
       if (isRegistering) {
         if (!username || !username.trim()) {
-          setError('Username is required');
+          setError(i18n.translate('admin.auth.errors.usernameRequired'));
           setLoading(false);
           return;
         }
         if (!email || !email.trim()) {
-          setError('Email is required');
+          setError(i18n.translate('admin.auth.errors.emailRequired'));
           setLoading(false);
           return;
         }
         if (!password || password.length < 6) {
-          setError('Password must be at least 6 characters');
+          setError(i18n.translate('admin.auth.errors.passwordLength'));
           setLoading(false);
           return;
         }
@@ -56,7 +58,7 @@ const Login = ({ onLogin }) => {
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.errors?.map(e => e.message || e.msg).join(', ') ||
                           error.message || 
-                          'Authentication failed';
+                          i18n.translate('admin.auth.errors.generic');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -74,9 +76,11 @@ const Login = ({ onLogin }) => {
       <Card sectioned>
         <div style={{ maxWidth: '400px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <Text variant="headingLg" as="h1">🔐 Bidly Admin Login</Text>
+            <Text variant="headingLg" as="h1">{i18n.translate('admin.auth.title')}</Text>
             <Text variant="bodyMd" color="subdued">
-              {isRegistering ? 'Create a new admin account' : 'Sign in to your admin account'}
+              {isRegistering
+                ? i18n.translate('admin.auth.subtitles.register')
+                : i18n.translate('admin.auth.subtitles.login')}
             </Text>
           </div>
 
@@ -92,31 +96,31 @@ const Login = ({ onLogin }) => {
             <FormLayout>
               {isRegistering && (
                 <TextField
-                  label="Username"
+                  label={i18n.translate('admin.auth.fields.username')}
                   value={username}
                   onChange={setUsername}
-                  placeholder="Enter username"
+                  placeholder={i18n.translate('admin.auth.fields.usernamePlaceholder')}
                   required
                   disabled={loading}
                 />
               )}
 
               <TextField
-                label="Email"
+                label={i18n.translate('admin.auth.fields.email')}
                 type="email"
                 value={email}
                 onChange={setEmail}
-                placeholder="Enter email"
+                placeholder={i18n.translate('admin.auth.fields.emailPlaceholder')}
                 required
                 disabled={loading}
               />
 
               <TextField
-                label="Password"
+                label={i18n.translate('admin.auth.fields.password')}
                 type="password"
                 value={password}
                 onChange={setPassword}
-                placeholder="Enter password"
+                placeholder={i18n.translate('admin.auth.fields.passwordPlaceholder')}
                 required
                 disabled={loading}
               />
@@ -128,7 +132,11 @@ const Login = ({ onLogin }) => {
                   loading={loading}
                   disabled={!email || !password || (isRegistering && !username)}
                 >
-                  {loading ? 'Please wait...' : (isRegistering ? 'Register' : 'Login')}
+                  {loading
+                    ? i18n.translate('admin.auth.actions.loading')
+                    : isRegistering
+                      ? i18n.translate('admin.auth.actions.register')
+                      : i18n.translate('admin.auth.actions.login')}
                 </Button>
               </div>
 
@@ -141,7 +149,9 @@ const Login = ({ onLogin }) => {
                   }}
                   disabled={loading}
                 >
-                  {isRegistering ? 'Already have an account? Login' : 'Need an account? Register'}
+                  {isRegistering
+                    ? i18n.translate('admin.auth.toggle.login')
+                    : i18n.translate('admin.auth.toggle.register')}
                 </Button>
               </div>
             </FormLayout>
@@ -155,9 +165,9 @@ const Login = ({ onLogin }) => {
             fontSize: '14px'
           }}>
             <Text variant="bodySm" color="subdued">
-              <strong>Demo Credentials:</strong><br />
-              Email: test@example.com<br />
-              Password: password123
+              <strong>{i18n.translate('admin.auth.demo.title')}</strong><br />
+              {i18n.translate('admin.auth.demo.email', { value: 'test@example.com' })}<br />
+              {i18n.translate('admin.auth.demo.password', { value: 'password123' })}
             </Text>
           </div>
         </div>

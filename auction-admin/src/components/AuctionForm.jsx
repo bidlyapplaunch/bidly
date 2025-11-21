@@ -14,6 +14,7 @@ import {
 } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { shopifyAPI } from '../services/api';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 // Mock products for development
 const getMockProducts = (query) => {
@@ -49,6 +50,7 @@ const getMockProducts = (query) => {
 };
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
+  const i18n = useAdminI18n();
   const navigate = useNavigate();
   const location = useLocation();
   // Helper function to create a safe date
@@ -226,7 +228,11 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         const mockProducts = getMockProducts(value);
         console.log('🔍 Mock products found:', mockProducts);
         setSearchResults(mockProducts);
-        setSearchError(`Real API failed: ${error.message}. Using demo data.`);
+        setSearchError(
+          i18n.translate('admin.auctions.form.search.apiFallback', {
+            message: error.message
+          })
+        );
       } finally {
         setSearching(false);
       }
@@ -234,7 +240,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
       console.log('🔍 Search query too short, clearing results');
       setSearchResults([]);
     }
-  }, []);
+  }, [i18n]);
 
 
   const handleProductSelect = useCallback(async (product) => {
@@ -251,13 +257,13 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const handleSubmit = useCallback(async () => {
     const newErrors = {};
     if (!formData.shopifyProductId) {
-      newErrors.shopifyProductId = 'Shopify Product is required';
+      newErrors.shopifyProductId = i18n.translate('admin.auctions.form.errors.productRequired');
     }
     if (formData.startingBid <= 0) {
-      newErrors.startingBid = 'Starting bid must be greater than 0';
+      newErrors.startingBid = i18n.translate('admin.auctions.form.errors.startingBidPositive');
     }
     if (formData.endTime <= formData.startTime) {
-      newErrors.endTime = 'End time must be after start time';
+      newErrors.endTime = i18n.translate('admin.auctions.form.errors.endTime');
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -286,9 +292,9 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
       onClose();
     } catch (err) {
       console.error('Error saving auction:', err);
-      setErrors({ general: err.message || 'Failed to save auction' });
+      setErrors({ general: err.message || i18n.translate('admin.auctions.form.errors.save') });
     }
-  }, [formData, onSave, onClose, auctionHasBids]);
+  }, [formData, onSave, onClose, auctionHasBids, i18n]);
 
   const today = new Date();
   const { month, year } = { month: today.getMonth(), year: today.getFullYear() };
@@ -302,22 +308,21 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
       <Modal
         open={isOpen}
         onClose={onClose}
-        title="Choose a plan to create auctions"
+        title={i18n.translate('admin.auctions.form.planGate.title')}
         primaryAction={{
-          content: 'View plans',
+          content: i18n.translate('admin.common.viewPlans'),
           onAction: handleUpgradeClick
         }}
-        secondaryActions={[{ content: 'Close', onAction: onClose }]}
+        secondaryActions={[{ content: i18n.translate('admin.common.close'), onAction: onClose }]}
       >
         <Modal.Section>
           <Card sectioned>
             <Text variant="bodyMd">
-              You’re currently in preview mode. Upgrade to a paid Bidly plan to create and manage auctions, unlock widget
-              customization, and enable live bidding features.
+              {i18n.translate('admin.auctions.form.planGate.description')}
             </Text>
             <div style={{ marginTop: '16px' }}>
               <Button primary onClick={handleUpgradeClick}>
-                Explore plans
+                {i18n.translate('admin.auctions.form.planGate.explore')}
               </Button>
             </div>
           </Card>
@@ -330,42 +335,59 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     <Modal
       open={isOpen}
       onClose={onClose}
-      title={auction ? 'Edit Auction' : 'Create New Auction'}
+      title={
+        auction
+          ? i18n.translate('admin.auctions.form.titleEdit')
+          : i18n.translate('admin.auctions.form.titleCreate')
+      }
       primaryAction={{
-        content: auction ? 'Save Changes' : 'Create Auction',
-        onAction: handleSubmit,
+        content: auction ? i18n.translate('admin.common.saveChanges') : i18n.translate('admin.common.createAuction'),
+        onAction: handleSubmit
       }}
-      secondaryActions={[{ content: 'Cancel', onAction: onClose }]}
+      secondaryActions={[{ content: i18n.translate('admin.common.cancel'), onAction: onClose }]}
     >
       <Modal.Section>
         <FormLayout>
           {!shopifyConfigured && (
             <Banner status="warning">
-              Shopify API is not configured. Product search will be disabled. Please check your backend .env settings.
+              {i18n.translate('admin.auctions.form.shopifyWarning')}
             </Banner>
           )}
 
           <Card sectioned>
-            <Text variant="headingLg">🔍 Search Shopify Products</Text>
+            <Text variant="headingLg">{i18n.translate('admin.auctions.form.search.title')}</Text>
             <div style={{ marginTop: '16px' }}>
               <TextField
-                label="Search for Shopify Product"
+                label={i18n.translate('admin.auctions.form.search.label')}
                 value={productSearchQuery}
                 onChange={handleProductSearchChange}
-                connectedRight={searching ? <Spinner accessibilityLabel="Searching products" size="small" /> : null}
+                connectedRight={
+                  searching ? (
+                    <Spinner
+                      accessibilityLabel={i18n.translate('admin.auctions.form.search.loadingLabel')}
+                      size="small"
+                    />
+                  ) : null
+                }
                 autoComplete="off"
-                placeholder="Type product name to search..."
+                placeholder={i18n.translate('admin.auctions.form.search.placeholder')}
               />
               {searchError && <Text color="critical">{searchError}</Text>}
-              <Text variant="bodySm">Debug: {searchResults.length} results found</Text>
+              <Text variant="bodySm">
+                {i18n.translate('admin.auctions.form.search.debug', { count: searchResults.length })}
+              </Text>
               {searchResults.length > 0 && (
                 <Card sectioned>
-                  <Text variant="headingMd">Search Results:</Text>
+                  <Text variant="headingMd">{i18n.translate('admin.auctions.form.search.resultsTitle')}</Text>
                   <List type="bullet">
                     {searchResults.map((product) => (
                       <List.Item key={product.id}>
                         <Button plain onClick={() => handleProductSelect(product)}>
-                          {product.title} (ID: {product.id}) - {product.price}
+                          {i18n.translate('admin.auctions.form.search.resultLabel', {
+                            title: product.title,
+                            id: product.id,
+                            price: product.price
+                          })}
                         </Button>
                       </List.Item>
                     ))}
@@ -373,36 +395,48 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                 </Card>
               )}
               {formData.productData && (
-                <Card sectioned title="Selected Product Details">
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <Text variant="bodyMd">Title: {formData.productData.title}</Text>
-                          <Text variant="bodyMd">Vendor: {formData.productData.vendor}</Text>
-                          <Text variant="bodyMd">Price: {formData.productData.price}</Text>
-                          {formData.productData.images && formData.productData.images.length > 0 && (
-                            <img
-                              src={formData.productData.images[0].src}
-                              alt={formData.productData.title}
-                              style={{ maxWidth: '100px', maxHeight: '100px' }}
-                            />
-                          )}
-                        </div>
+                <Card sectioned title={i18n.translate('admin.auctions.form.selectedProduct.title')}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <Text variant="bodyMd">
+                      {i18n.translate('admin.auctions.form.selectedProduct.name', {
+                        value: formData.productData.title
+                      })}
+                    </Text>
+                    <Text variant="bodyMd">
+                      {i18n.translate('admin.auctions.form.selectedProduct.vendor', {
+                        value: formData.productData.vendor
+                      })}
+                    </Text>
+                    <Text variant="bodyMd">
+                      {i18n.translate('admin.auctions.form.selectedProduct.price', {
+                        value: formData.productData.price
+                      })}
+                    </Text>
+                    {formData.productData.images && formData.productData.images.length > 0 && (
+                      <img
+                        src={formData.productData.images[0].src}
+                        alt={formData.productData.title}
+                        style={{ maxWidth: '100px', maxHeight: '100px' }}
+                      />
+                    )}
+                  </div>
                 </Card>
               )}
             </div>
           </Card>
 
           <TextField
-            label="Shopify Product ID"
+            label={i18n.translate('admin.auctions.form.fields.productId')}
             value={formData.shopifyProductId}
             onChange={(value) => handleChange(value, 'shopifyProductId')}
             error={errors.shopifyProductId}
-            placeholder="Product ID will be filled automatically when you select a product"
+            placeholder={i18n.translate('admin.auctions.form.fields.productIdPlaceholder')}
             disabled={Boolean(auction)}
           />
 
           <FormLayout.Group>
             <TextField
-              label="Start Date"
+              label={i18n.translate('admin.auctions.form.fields.startDate')}
               type="date"
               value={formData.startTime.toISOString().split('T')[0]}
               onChange={(value) => {
@@ -413,7 +447,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               }}
             />
             <TextField
-              label="Start Time"
+              label={i18n.translate('admin.auctions.form.fields.startTime')}
               type="time"
               value={formData.startTime.toTimeString().slice(0, 5)}
               onChange={(value) => {
@@ -428,7 +462,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
 
           <FormLayout.Group>
             <TextField
-              label="End Date"
+              label={i18n.translate('admin.auctions.form.fields.endDate')}
               type="date"
               value={formData.endTime.toISOString().split('T')[0]}
               onChange={(value) => {
@@ -439,7 +473,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               }}
             />
             <TextField
-              label="End Time"
+              label={i18n.translate('admin.auctions.form.fields.endTime')}
               type="time"
               value={formData.endTime.toTimeString().slice(0, 5)}
               onChange={(value) => {
@@ -453,7 +487,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
           </FormLayout.Group>
 
           <TextField
-            label="Starting Bid"
+            label={i18n.translate('admin.auctions.form.fields.startingBid')}
             type="number"
             value={String(formData.startingBid)}
             onChange={(value) => handleChange(value, 'startingBid')}
@@ -461,62 +495,64 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
             disabled={auctionHasBids}
             helpText={
               auctionHasBids
-                ? 'Starting bid cannot be changed after a bid has been placed.'
+                ? i18n.translate('admin.auctions.form.fields.startingBidLocked')
                 : undefined
             }
           />
           <TextField
-            label="Buy Now Price (Optional)"
+            label={i18n.translate('admin.auctions.form.fields.buyNow')}
             type="number"
             value={String(formData.buyNowPrice)}
             onChange={(value) => handleChange(value, 'buyNowPrice')}
             error={errors.buyNowPrice}
           />
           <TextField
-            label="Reserve Price (Optional)"
+            label={i18n.translate('admin.auctions.form.fields.reservePrice')}
             type="number"
             value={String(formData.reservePrice)}
             onChange={(value) => handleChange(value, 'reservePrice')}
             error={errors.reservePrice}
-            helpText="Minimum bid amount required for auction to have a valid winner. Hidden from bidders."
+            helpText={i18n.translate('admin.auctions.form.fields.reserveHelp')}
             min="0"
           />
 
           <Card sectioned>
-            <Text variant="headingMd">🍿 Popcorn Auction Settings (Premium Feature)</Text>
+            <Text variant="headingMd">{i18n.translate('admin.auctions.form.popcorn.title')}</Text>
             <Text variant="bodyMd" color="subdued">
-              Enable automatic time extension when bids are placed near the end of the auction.
+              {i18n.translate('admin.auctions.form.popcorn.description')}
             </Text>
             
             <div style={{ marginTop: '16px' }}>
               <Checkbox
-                label="Enable Popcorn Bidding"
+                label={i18n.translate('admin.auctions.form.popcorn.enable')}
                 checked={formData.popcornEnabled}
                 onChange={(checked) => handleChange(checked, 'popcornEnabled')}
                 disabled={!allowPopcorn}
-                helpText={`Automatically extend auction time when bids are placed near the end${
-                  allowPopcorn ? '' : ' · Available on the Pro and Enterprise plans.'
-                }`}
+                helpText={
+                  allowPopcorn
+                    ? i18n.translate('admin.auctions.form.popcorn.help')
+                    : i18n.translate('admin.auctions.form.popcorn.upgradeHelp')
+                }
               />
             </div>
 
             {formData.popcornEnabled && (
               <FormLayout.Group>
                 <TextField
-                  label="Trigger Threshold (seconds)"
+                  label={i18n.translate('admin.auctions.form.popcorn.trigger')}
                   type="number"
                   value={String(formData.popcornTriggerSeconds)}
                   onChange={(value) => handleChange(parseInt(value) || 10, 'popcornTriggerSeconds')}
-                  helpText="Extend auction when this many seconds remain"
+                  helpText={i18n.translate('admin.auctions.form.popcorn.triggerHelp')}
                   min="1"
                   max="60"
                 />
                 <TextField
-                  label="Extension Duration (seconds)"
+                  label={i18n.translate('admin.auctions.form.popcorn.extension')}
                   type="number"
                   value={String(formData.popcornExtendSeconds)}
                   onChange={(value) => handleChange(parseInt(value) || 15, 'popcornExtendSeconds')}
-                  helpText="How many seconds to add to the auction"
+                  helpText={i18n.translate('admin.auctions.form.popcorn.extensionHelp')}
                   min="5"
                   max="300"
                 />
@@ -526,16 +562,16 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
 
           {allowChat && (
             <Card sectioned>
-              <Text variant="headingMd">💬 Chat Box Visibility</Text>
+              <Text variant="headingMd">{i18n.translate('admin.auctions.form.chat.title')}</Text>
               <Text variant="bodyMd" color="subdued">
-                Control whether the Chat Box button appears under your storefront auction widget for this auction.
+                {i18n.translate('admin.auctions.form.chat.description')}
               </Text>
               <div style={{ marginTop: '16px' }}>
                 <Checkbox
-                  label="Show Chat Box button on the widget"
+                  label={i18n.translate('admin.auctions.form.chat.toggle')}
                   checked={formData.chatEnabled}
                   onChange={(checked) => handleChange(checked, 'chatEnabled')}
-                  helpText="When disabled, bidders will only see the View Bids link centered beneath the widget."
+                  helpText={i18n.translate('admin.auctions.form.chat.help')}
                 />
               </div>
             </Card>
@@ -543,16 +579,16 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
 
           {!allowChat && (
             <Card sectioned>
-              <Text variant="headingMd">💬 Live Bidder Chat (Premium Feature)</Text>
+              <Text variant="headingMd">{i18n.translate('admin.auctions.form.chatPremium.title')}</Text>
               <Text variant="bodyMd" color="subdued">
-                Keep bidders engaged with real-time conversation during your auctions. Upgrade your plan to use this feature.
+                {i18n.translate('admin.auctions.form.chatPremium.description')}
               </Text>
               <div style={{ marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <Text variant="bodySm" color="subdued">
-                  Available on the Enterprise plan.
+                  {i18n.translate('admin.auctions.form.chatPremium.available')}
                 </Text>
                 <Button onClick={handleUpgradeClick} primary>
-                  View plans
+                  {i18n.translate('admin.common.viewPlans')}
                 </Button>
               </div>
             </Card>

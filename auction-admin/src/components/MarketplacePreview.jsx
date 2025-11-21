@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { AppProvider, Page, Layout, Text } from '@shopify/polaris';
 import { buildMarketplaceCSS, normalizeMarketplaceTheme } from '@shared/marketplaceTheme.js';
 import AuctionCard from '@customer/components/AuctionCard.jsx';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const MOCK_AUCTIONS = [
   {
@@ -49,11 +50,12 @@ const MOCK_AUCTIONS = [
   }
 ];
 
-const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
+const MarketplacePreview = ({ customization, shopName }) => {
+  const i18n = useAdminI18n();
   const theme = useMemo(() => normalizeMarketplaceTheme(customization), [customization]);
   const css = useMemo(() => buildMarketplaceCSS(theme), [theme]);
   const hasGradient = theme.gradientEnabled ? '1' : '0';
-  const resolvedShopName = shopName || 'your store';
+  const resolvedShopName = shopName || i18n.translate('admin.marketplace.preview.shopNameFallback');
 
   return (
     <div
@@ -75,11 +77,11 @@ const MarketplacePreview = ({ customization, shopName = 'your store' }) => {
       >
         <AppProvider>
             <Page
-              title="Auction Marketplace · Preview"
-              subtitle="This preview renders the exact markup used in the storefront."
+              title={i18n.translate('admin.marketplace.preview.pageTitle')}
+              subtitle={i18n.translate('admin.marketplace.preview.pageSubtitle')}
               secondaryActions={[
                 {
-                  content: 'Connected as demo customer',
+                  content: i18n.translate('admin.marketplace.preview.demoAction'),
                   onAction: () => {}
                 }
               ]}

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import createApp from '@shopify/app-bridge';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const AppBridgeProvider = ({ children }) => {
+  const i18n = useAdminI18n();
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,7 +29,7 @@ const AppBridgeProvider = ({ children }) => {
         window.location.hostname.includes('trycloudflare');
 
       if (!shop && !isDevelopment) {
-        setError('No shop parameter found in URL');
+        setError(i18n.translate('admin.common.appBridge.missingShop'));
         setLoading(false);
         return;
       }
@@ -57,10 +59,10 @@ const AppBridgeProvider = ({ children }) => {
       setLoading(false);
     } catch (err) {
       console.error('❌ App Bridge initialization error:', err);
-      setError(err.message || 'Failed to initialize Shopify App Bridge');
+      setError(err.message || i18n.translate('admin.common.appBridge.initializationFailed'));
       setLoading(false);
     }
-  }, []);
+  }, [i18n]);
 
   useEffect(() => {
     if (!config || typeof window === 'undefined') {
@@ -94,17 +96,19 @@ const AppBridgeProvider = ({ children }) => {
     }
   }, [config, ready]);
 
+  const fullHeightMessageStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    fontFamily: 'Inter, sans-serif',
+    color: '#1f2937'
+  };
+
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontFamily: 'Inter, sans-serif',
-        color: '#1f2937'
-      }}>
-        Initializing Shopify App Bridge…
+      <div style={fullHeightMessageStyle}>
+        {i18n.translate('admin.common.appBridge.initializing')}
       </div>
     );
   }
@@ -121,9 +125,9 @@ const AppBridgeProvider = ({ children }) => {
         color: '#991b1b',
         fontFamily: 'Inter, sans-serif'
       }}>
-        <h2 style={{ marginTop: 0 }}>App Initialization Error</h2>
+        <h2 style={{ marginTop: 0 }}>{i18n.translate('admin.common.appBridge.errorTitle')}</h2>
         <p>{error}</p>
-        <p>Please open this app from the Shopify admin.</p>
+        <p>{i18n.translate('admin.common.appBridge.openFromAdmin')}</p>
       </div>
     );
   }
@@ -134,15 +138,8 @@ const AppBridgeProvider = ({ children }) => {
 
   if (!ready) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontFamily: 'Inter, sans-serif',
-        color: '#1f2937'
-      }}>
-        Connecting to Shopify…
+      <div style={fullHeightMessageStyle}>
+        {i18n.translate('admin.common.appBridge.connecting')}
       </div>
     );
   }

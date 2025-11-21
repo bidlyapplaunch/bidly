@@ -2,8 +2,10 @@ import { useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppBridge } from '@shopify/app-bridge-react';
 import { NavigationMenu } from '@shopify/app-bridge/actions';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const AppNavigationMenu = () => {
+  const i18n = useAdminI18n();
   const app = useAppBridge();
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,11 +61,11 @@ const AppNavigationMenu = () => {
     const withQuery = (path) => `${path}${query}`;
 
     const items = [
-      { label: 'Dashboard', destination: withQuery('/') },
-      { label: 'Widget styles', destination: withQuery('/customization/widget') },
-      { label: 'Marketplace styles', destination: withQuery('/customization/marketplace') },
-      { label: 'Mail service', destination: withQuery('/mail-service') },
-      { label: 'Plans', destination: withQuery('/plans') }
+      { label: i18n.translate('admin.nav.dashboard'), destination: withQuery('/') },
+      { label: i18n.translate('admin.nav.widgetStyles'), destination: withQuery('/customization/widget') },
+      { label: i18n.translate('admin.nav.marketplaceStyles'), destination: withQuery('/customization/marketplace') },
+      { label: i18n.translate('admin.nav.mailService'), destination: withQuery('/mail-service') },
+      { label: i18n.translate('admin.nav.plans'), destination: withQuery('/plans') }
     ];
 
     const activeDestination = `${location.pathname}${query}`;
@@ -74,7 +76,7 @@ const AppNavigationMenu = () => {
     });
 
     console.log('🧭 Navigation menu dispatched', { items, active: activeDestination });
-  }, [app, location]);
+  }, [app, i18n, location]);
 
   return null;
 };

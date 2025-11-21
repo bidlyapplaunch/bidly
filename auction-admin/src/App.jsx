@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppProvider } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { I18nContext, I18nManager } from '@shopify/react-i18n';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import OAuthSetup from './components/OAuthSetup';
@@ -14,13 +15,52 @@ import PlansPage from './components/PlansPage';
 import AppNavigationMenu from './components/AppNavigationMenu';
 import OnboardingPage from './components/OnboardingPage';
 import { onboardingAPI } from './services/api';
+import { detectLocale, DEFAULT_LOCALE, isRtlLocale } from './locales';
+import useAdminI18n from './hooks/useAdminI18n';
 
 function App() {
+  const [locale, setLocale] = useState(detectLocale());
+  const [i18nManager] = useState(
+    () =>
+      new I18nManager({
+        locale,
+        fallbackLocale: DEFAULT_LOCALE
+      })
+  );
+
+  useEffect(() => {
+    i18nManager.update({ locale });
+
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('dir', isRtlLocale(locale) ? 'rtl' : 'ltr');
+      document.documentElement.setAttribute('lang', locale);
+    }
+  }, [locale, i18nManager]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleLanguageChange = () => setLocale(detectLocale());
+    window.addEventListener('languagechange', handleLanguageChange);
+    return () => window.removeEventListener('languagechange', handleLanguageChange);
+  }, []);
+
+  return (
+    <I18nContext.Provider value={i18nManager}>
+      <AppContent />
+    </I18nContext.Provider>
+  );
+}
+
+function AppContent() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [oauthComplete, setOauthComplete] = useState(false);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [onboardingStatus, setOnboardingStatus] = useState(null);
+  const i18n = useAdminI18n();
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -81,19 +121,19 @@ function App() {
 
   let content = null;
 
+  const loadingMarkupStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    fontFamily: 'Inter, sans-serif',
+    color: '#1f2937'
+  };
+
   if (loading) {
     content = (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontFamily: 'Inter, sans-serif',
-          color: '#1f2937'
-        }}
-      >
-        Loading Bidly…
+      <div style={loadingMarkupStyle}>
+        {i18n.translate('admin.common.loadingApp')}
       </div>
     );
   } else if (!user) {
@@ -102,17 +142,8 @@ function App() {
     content = <OAuthSetup onComplete={handleOAuthComplete} />;
   } else if (onboardingLoading || !onboardingStatus) {
     content = (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          fontFamily: 'Inter, sans-serif',
-          color: '#1f2937'
-        }}
-      >
-        Preparing your dashboard…
+      <div style={loadingMarkupStyle}>
+        {i18n.translate('admin.common.preparingDashboard')}
       </div>
     );
   } else if (!onboardingStatus.onboardingComplete) {

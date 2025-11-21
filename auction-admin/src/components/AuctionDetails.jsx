@@ -12,8 +12,10 @@ import {
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
 import AppBridgeToast from './AppBridgeToast';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
+  const i18n = useAdminI18n();
   const [auctionData, setAuctionData] = useState(auction);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -77,7 +79,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       
       if (!auctionId) {
         console.error('❌ No auction ID found. auctionData:', auctionData, 'auction:', auction);
-        setToastMessage('Error: Auction ID not found');
+        setToastMessage(i18n.translate('admin.auctions.details.errors.missingId'));
         setToastError(true);
         setShowToast(true);
         return;
@@ -85,21 +87,25 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       
       console.log('🔍 Closing auction with ID:', auctionId);
       await auctionAPI.closeAuction(auctionId);
-      setToastMessage('Auction closed successfully');
+      setToastMessage(i18n.translate('admin.auctions.details.toast.closed'));
       setToastError(false);
       setShowToast(true);
       fetchAuctionDetails();
       onRefresh?.();
     } catch (error) {
       console.error('Error closing auction:', error);
-      setToastMessage(`Error closing auction: ${error.response?.data?.message || error.message}`);
+      setToastMessage(
+        i18n.translate('admin.auctions.details.errors.close', {
+          message: error.response?.data?.message || error.message
+        })
+      );
       setToastError(true);
       setShowToast(true);
     }
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(i18n.locale || 'en', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
@@ -111,8 +117,8 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      active: { status: 'success', children: 'Active' },
-      closed: { status: 'critical', children: 'Closed' }
+      active: { status: 'success', children: i18n.translate('admin.analytics.status.active') },
+      closed: { status: 'critical', children: i18n.translate('admin.analytics.status.closed') }
     };
     return <Badge {...statusMap[status]} />;
   };
@@ -125,11 +131,11 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     const end = new Date(auctionData.endTime);
     
     if (now < start) {
-      return <Badge status="info">Not Started</Badge>;
+      return <Badge status="info">{i18n.translate('admin.auctions.details.timeStatus.notStarted')}</Badge>;
     } else if (now > end) {
-      return <Badge status="critical">Ended</Badge>;
+      return <Badge status="critical">{i18n.translate('admin.analytics.status.ended')}</Badge>;
     } else {
-      return <Badge status="success">Live</Badge>;
+      return <Badge status="success">{i18n.translate('admin.auctions.details.timeStatus.live')}</Badge>;
     }
   };
 
@@ -137,7 +143,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     const enabled = auctionData?.chatEnabled !== false;
     return (
       <Badge status={enabled ? 'success' : 'attention'}>
-        {enabled ? 'Enabled' : 'Disabled'}
+        {enabled ? i18n.translate('admin.common.enabled') : i18n.translate('admin.common.disabled')}
       </Badge>
     );
   };
@@ -152,7 +158,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       .map((bid, index) => [
         index + 1,
         bid.bidder,
-        bid.customerEmail || 'N/A', // Show customer email for admin
+        bid.customerEmail || i18n.translate('admin.common.notAvailable'), // Show customer email for admin
         formatCurrency(bid.amount),
         formatDate(bid.timestamp)
       ]);
@@ -169,9 +175,9 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       <Modal
         open={isOpen}
         onClose={onClose}
-        title="Auction Details"
+        title={i18n.translate('admin.auctions.details.title')}
         primaryAction={{
-          content: 'Close',
+          content: i18n.translate('admin.common.close'),
           onAction: onClose
         }}
         large
@@ -181,22 +187,22 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
             {/* Auction Overview */}
             <Card sectioned>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <Text variant="headingMd">Auction Overview</Text>
+                <Text variant="headingMd">{i18n.translate('admin.auctions.details.overview.title')}</Text>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Product ID</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.overview.productId')}</Text>
                     <Text variant="bodyLg">{auctionData.shopifyProductId}</Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Status</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.overview.status')}</Text>
                     <div>{getStatusBadge(auctionData.status)}</div>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Time Status</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.overview.timeStatus')}</Text>
                     <div>{getTimeStatus()}</div>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Live Chat</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.overview.chat')}</Text>
                     <div>{getChatStatus()}</div>
                   </div>
                 </div>
@@ -206,75 +212,80 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
             {/* Auction Details */}
             <Card sectioned>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <Text variant="headingMd">Auction Details</Text>
+                <Text variant="headingMd">{i18n.translate('admin.auctions.details.details.title')}</Text>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Start Time</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.startTime')}</Text>
                     <Text variant="bodyLg">{formatDate(auctionData.startTime)}</Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">End Time</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.endTime')}</Text>
                     <Text variant="bodyLg">{formatDate(auctionData.endTime)}</Text>
                   </div>
                 </div>
                 <Divider />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Starting Bid</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.startingBid')}</Text>
                     <Text variant="bodyLg">{formatCurrency(auctionData.startingBid)}</Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Current Bid</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.currentBid')}</Text>
                     <Text variant="bodyLg" fontWeight="bold">
                       {formatCurrency(auctionData.currentBid)}
                     </Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Buy Now Price</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.buyNow')}</Text>
                     <Text variant="bodyLg">
-                      {auctionData.buyNowPrice ? formatCurrency(auctionData.buyNowPrice) : 'Not set'}
+                      {auctionData.buyNowPrice ? formatCurrency(auctionData.buyNowPrice) : i18n.translate('admin.common.notSet')}
                     </Text>
                   </div>
                 </div>
                 <Divider />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Total Bids</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.totalBids')}</Text>
                     <Text variant="bodyLg">{auctionData.bidHistory?.length || 0}</Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Created</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.created')}</Text>
                     <Text variant="bodyLg">{formatDate(auctionData.createdAt)}</Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Last Updated</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.updated')}</Text>
                     <Text variant="bodyLg">{formatDate(auctionData.updatedAt)}</Text>
                   </div>
                 </div>
                 <Divider />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Reserve Price</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.reserve')}</Text>
                     <Text variant="bodyLg">
                       {auctionData.reservePrice && auctionData.reservePrice > 0
                         ? formatCurrency(auctionData.reservePrice)
-                        : 'Not set'}
+                        : i18n.translate('admin.common.notSet')}
                     </Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Popcorn Bidding</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.popcorn')}</Text>
                     <Text variant="bodyLg">
-                      {auctionData.popcornEnabled ? 'Enabled' : 'Disabled'}
+                      {auctionData.popcornEnabled
+                        ? i18n.translate('admin.common.enabled')
+                        : i18n.translate('admin.common.disabled')}
                     </Text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Popcorn Settings</Text>
+                    <Text variant="bodyMd" color="subdued">{i18n.translate('admin.auctions.details.details.popcornSettings')}</Text>
                     {auctionData.popcornEnabled ? (
                       <Text variant="bodyLg">
-                        Trigger: {auctionData.popcornTriggerSeconds || 0}s · Extend: +{auctionData.popcornExtendSeconds || 0}s
+                        {i18n.translate('admin.auctions.details.details.popcornSummary', {
+                          trigger: auctionData.popcornTriggerSeconds || 0,
+                          extend: auctionData.popcornExtendSeconds || 0
+                        })}
                       </Text>
                     ) : (
-                      <Text variant="bodyLg">Not configured</Text>
+                      <Text variant="bodyLg">{i18n.translate('admin.common.notConfigured')}</Text>
                     )}
                   </div>
                 </div>
@@ -285,10 +296,16 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
             {bidHistoryRows.length > 0 ? (
               <Card sectioned>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <Text variant="headingMd">Bid History</Text>
+                  <Text variant="headingMd">{i18n.translate('admin.auctions.details.bidHistory.title')}</Text>
                   <DataTable
                     columnContentTypes={['numeric', 'text', 'text', 'text', 'text']}
-                    headings={['#', 'Bidder', 'Email', 'Amount', 'Time']}
+                    headings={[
+                      i18n.translate('admin.auctions.details.bidHistory.columns.index'),
+                      i18n.translate('admin.auctions.details.bidHistory.columns.bidder'),
+                      i18n.translate('admin.auctions.details.bidHistory.columns.email'),
+                      i18n.translate('admin.auctions.details.bidHistory.columns.amount'),
+                      i18n.translate('admin.auctions.details.bidHistory.columns.time')
+                    ]}
                     rows={bidHistoryRows}
                   />
                 </div>
@@ -297,7 +314,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
               <Card sectioned>
                 <TextContainer>
                   <Text variant="bodyMd" color="subdued">
-                    No bids placed yet
+                    {i18n.translate('admin.auctions.details.bidHistory.empty')}
                   </Text>
                 </TextContainer>
               </Card>
@@ -308,10 +325,10 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
               <Card sectioned>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
                   <Button onClick={fetchAuctionDetails} loading={loading}>
-                    Refresh
+                    {i18n.translate('admin.common.refresh')}
                   </Button>
                   <Button onClick={handleCloseAuction} destructive>
-                    Close Auction
+                    {i18n.translate('admin.auctions.details.actions.close')}
                   </Button>
                 </div>
               </Card>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   DataTable,
@@ -16,8 +16,10 @@ import { EditMinor, DeleteMinor, ViewMinor, StoreMinor } from '@shopify/polaris-
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
 import AppBridgeToast from './AppBridgeToast';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
+  const i18n = useAdminI18n();
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +45,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   useEffect(() => {
     fetchAuctions();
-  }, [currentPage, filters, refreshTrigger]);
+  }, [currentPage, filters, refreshTrigger, i18n]);
 
   const fetchAuctions = async () => {
     try {
@@ -67,7 +69,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       setTotalPages(response.pagination?.pages || 1);
       setTotalItems(response.pagination?.total || 0);
     } catch (err) {
-      setError('Failed to fetch auctions');
+      setError(i18n.translate('admin.auctions.table.errors.fetch'));
       console.error('Error fetching auctions:', err);
     } finally {
       setLoading(false);
@@ -88,7 +90,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       }
       
       await auctionAPI.deleteAuction(auctionId);
-      setToastMessage('Auction deleted successfully');
+      setToastMessage(i18n.translate('admin.auctions.table.toast.deleted'));
       setToastError(false);
       setShowToast(true);
       setDeleteModalOpen(false);
@@ -96,7 +98,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       fetchAuctions();
       onRefresh?.();
     } catch (err) {
-      setError('Failed to delete auction');
+      setError(i18n.translate('admin.auctions.table.errors.delete'));
       console.error('Error deleting auction:', err);
     }
   };
@@ -107,13 +109,13 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       
       if (!auctionId) {
         console.error('❌ No auction ID found in selectedAuction:', selectedAuction);
-        setError('Failed to close auction: Auction ID not found');
+        setError(i18n.translate('admin.auctions.table.errors.closeMissingId'));
         return;
       }
       
       console.log('🔍 Closing auction with ID:', auctionId);
       await auctionAPI.closeAuction(auctionId);
-      setToastMessage('Auction closed successfully');
+      setToastMessage(i18n.translate('admin.auctions.table.toast.closed'));
       setToastError(false);
       setShowToast(true);
       setCloseModalOpen(false);
@@ -121,7 +123,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       fetchAuctions();
       onRefresh?.();
     } catch (err) {
-      setError('Failed to close auction');
+      setError(i18n.translate('admin.auctions.table.errors.close'));
       console.error('Error closing auction:', err);
     }
   };
@@ -129,7 +131,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const getStatusBadge = (status, auction) => {
     // Normalize legacy / special statuses into the same display rules
     if (status === 'reserve_not_met') {
-      return <Badge status="warning">Ended - Reserve not met</Badge>;
+      return <Badge status="warning">{i18n.translate('admin.auctions.table.status.reserveNotMet')}</Badge>;
     }
 
     // Reserve / winner aware statuses for ended auctions
@@ -139,28 +141,28 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       const currentBid = auction.currentBid != null ? Number(auction.currentBid) : null;
 
       if (hasBids && hasReserve && currentBid != null && currentBid < Number(auction.reservePrice)) {
-          return <Badge status="warning">Ended - Reserve not met</Badge>;
+          return <Badge status="warning">{i18n.translate('admin.auctions.table.status.reserveNotMet')}</Badge>;
       }
 
       if (!hasBids) {
-        return <Badge status="attention">Ended - No winner</Badge>;
+        return <Badge status="attention">{i18n.translate('admin.auctions.table.status.noWinner')}</Badge>;
       }
 
       // Has bids and no reserve (or reserve met)
-      return <Badge status="success">Ended</Badge>;
+      return <Badge status="success">{i18n.translate('admin.auctions.table.status.ended')}</Badge>;
     }
 
     const statusMap = {
-      pending: { status: 'warning', children: 'Pending' },
-      active: { status: 'success', children: 'Active' },
-      ended: { status: 'info', children: 'Ended' },
-      closed: { status: 'critical', children: 'Closed' }
+      pending: { status: 'warning', children: i18n.translate('admin.analytics.status.pending') },
+      active: { status: 'success', children: i18n.translate('admin.analytics.status.active') },
+      ended: { status: 'info', children: i18n.translate('admin.analytics.status.ended') },
+      closed: { status: 'critical', children: i18n.translate('admin.analytics.status.closed') }
     };
     return <Badge {...statusMap[status]} />;
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(i18n.locale || 'en', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
@@ -172,8 +174,8 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   const rows = auctions.map((auction) => [
     // Product Name - truncated for better fit
-    (auction.productData?.title || auction.shopifyProductId || 'Unknown Product').substring(0, 30) + 
-    ((auction.productData?.title || auction.shopifyProductId || 'Unknown Product').length > 30 ? '...' : ''),
+    (auction.productData?.title || auction.shopifyProductId || i18n.translate('admin.auctions.table.unknownProduct')).substring(0, 30) + 
+    ((auction.productData?.title || auction.shopifyProductId || i18n.translate('admin.auctions.table.unknownProduct')).length > 30 ? '...' : ''),
     // Start Date - more compact format
     formatDate(auction.startTime, 'dd/MM HH:mm'),
     // End Date - more compact format
@@ -195,19 +197,19 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         icon={StoreMinor}
         onClick={() => handleViewInStore(auction)}
         size="slim"
-        accessibilityLabel="View in store"
+        accessibilityLabel={i18n.translate('admin.auctions.table.actions.viewInStore')}
       />
       <Button
         icon={ViewMinor}
         onClick={() => onView(auction)}
         size="slim"
-        accessibilityLabel="View auction details"
+        accessibilityLabel={i18n.translate('admin.auctions.table.actions.viewDetails')}
       />
       <Button
         icon={EditMinor}
         onClick={() => onEdit(auction)}
         size="slim"
-        accessibilityLabel="Edit auction"
+        accessibilityLabel={i18n.translate('admin.auctions.table.actions.edit')}
       />
       <Button
         icon={DeleteMinor}
@@ -217,7 +219,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         }}
         size="slim"
         destructive
-        accessibilityLabel="Delete auction"
+        accessibilityLabel={i18n.translate('admin.auctions.table.actions.delete')}
       />
       {auction.status === 'active' && (
         <Button
@@ -226,9 +228,9 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
             setCloseModalOpen(true);
           }}
           size="slim"
-          accessibilityLabel="Close auction"
+          accessibilityLabel={i18n.translate('admin.auctions.table.actions.close')}
         >
-          Close
+          {i18n.translate('admin.common.close')}
         </Button>
       )}
     </div>
@@ -255,7 +257,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       
       if (!shop) {
         console.error('❌ No shop domain found in URL');
-        setToastMessage('Error: No shop domain found');
+        setToastMessage(i18n.translate('admin.auctions.table.errors.noShop'));
         setToastError(true);
         setShowToast(true);
         return;
@@ -265,7 +267,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       const shopifyProductId = auction.shopifyProductId;
       if (!shopifyProductId) {
         console.error('❌ No Shopify product ID found for auction:', auction.id);
-        setToastMessage('Error: No product ID found for this auction');
+        setToastMessage(i18n.translate('admin.auctions.table.errors.noProductId'));
         setToastError(true);
         setShowToast(true);
         return;
@@ -297,7 +299,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       
     } catch (error) {
       console.error('❌ Error opening product in store:', error);
-      setToastMessage('Error opening product in store');
+      setToastMessage(i18n.translate('admin.auctions.table.errors.openInStore'));
       setToastError(true);
       setShowToast(true);
     }
@@ -317,7 +319,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     return (
       <Card>
         <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <Text variant="bodyMd">Loading auctions...</Text>
+          <Text variant="bodyMd">{i18n.translate('admin.auctions.table.loading')}</Text>
         </div>
       </Card>
     );
@@ -327,15 +329,15 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     return (
       <Card>
         <EmptyState
-          heading="No auctions found"
+          heading={i18n.translate('admin.auctions.table.empty.title')}
           action={{
-            content: 'Create auction',
+            content: i18n.translate('admin.auctions.table.empty.action'),
             onAction: () => onEdit(null)
           }}
           image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
         >
           <Text variant="bodyMd">
-            Get started by creating your first auction.
+            {i18n.translate('admin.auctions.table.empty.description')}
           </Text>
         </EmptyState>
       </Card>
@@ -347,11 +349,11 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       <Card>
         <div style={{ marginBottom: '1rem' }}>
           <Button onClick={() => setFilterModalOpen(true)}>
-            Filter
+            {i18n.translate('admin.auctions.table.filters.open')}
           </Button>
           {(filters.status || filters.shopifyProductId) && (
             <Button onClick={clearFilters} style={{ marginLeft: '0.5rem' }}>
-              Clear filters
+              {i18n.translate('admin.auctions.table.filters.clear')}
             </Button>
           )}
         </div>
@@ -371,19 +373,22 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
               'text'
             ]}
             headings={[
-              'Product',
-              'Start',
-              'End',
-              'Start Bid',
-              'Current Bid',
-              'Buy Now',
-              'Reserve',
-              'Status',
-              'Bids',
-              'Actions'
+              i18n.translate('admin.auctions.table.columns.product'),
+              i18n.translate('admin.auctions.table.columns.start'),
+              i18n.translate('admin.auctions.table.columns.end'),
+              i18n.translate('admin.auctions.table.columns.startBid'),
+              i18n.translate('admin.auctions.table.columns.currentBid'),
+              i18n.translate('admin.auctions.table.columns.buyNow'),
+              i18n.translate('admin.auctions.table.columns.reserve'),
+              i18n.translate('admin.auctions.table.columns.status'),
+              i18n.translate('admin.auctions.table.columns.bids'),
+              i18n.translate('admin.auctions.table.columns.actions')
             ]}
             rows={rows}
-            footerContent={`Showing ${auctions.length} of ${totalItems} auctions`}
+            footerContent={i18n.translate('admin.auctions.table.footer', {
+              visible: auctions.length,
+              total: totalItems
+            })}
           />
         </div>
 
@@ -394,7 +399,10 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
               onPrevious={() => setCurrentPage(currentPage - 1)}
               hasNext={currentPage < totalPages}
               onNext={() => setCurrentPage(currentPage + 1)}
-              label={`Page ${currentPage} of ${totalPages}`}
+              label={i18n.translate('admin.auctions.table.pagination', {
+                current: currentPage,
+                total: totalPages
+              })}
             />
           </div>
         )}
@@ -404,25 +412,25 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       <Modal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Delete Auction"
+        title={i18n.translate('admin.auctions.table.delete.title')}
         primaryAction={{
-          content: 'Delete',
+          content: i18n.translate('admin.auctions.table.delete.confirm'),
           onAction: handleDelete,
           destructive: true
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
+            content: i18n.translate('admin.common.cancel'),
             onAction: () => setDeleteModalOpen(false)
           }
         ]}
       >
         <Modal.Section>
           <Text variant="bodyMd">
-            Are you sure you want to delete this auction? This action cannot be undone.
+            {i18n.translate('admin.auctions.table.delete.message')}
             {selectedAuction?.bidHistory?.length > 0 && (
               <Text variant="bodyMd" color="critical">
-                Note: This auction has bids and cannot be deleted.
+                {i18n.translate('admin.auctions.table.delete.hasBids')}
               </Text>
             )}
           </Text>
@@ -433,21 +441,21 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       <Modal
         open={closeModalOpen}
         onClose={() => setCloseModalOpen(false)}
-        title="Close Auction"
+        title={i18n.translate('admin.auctions.table.close.title')}
         primaryAction={{
-          content: 'Close Auction',
+          content: i18n.translate('admin.auctions.table.close.confirm'),
           onAction: handleClose
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
+            content: i18n.translate('admin.common.cancel'),
             onAction: () => setCloseModalOpen(false)
           }
         ]}
       >
         <Modal.Section>
           <Text variant="bodyMd">
-            Are you sure you want to close this auction? This will prevent new bids from being placed.
+            {i18n.translate('admin.auctions.table.close.message')}
           </Text>
         </Modal.Section>
       </Modal>
@@ -456,26 +464,26 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       <Modal
         open={filterModalOpen}
         onClose={() => setFilterModalOpen(false)}
-        title="Filter Auctions"
+        title={i18n.translate('admin.auctions.table.filters.title')}
         primaryAction={{
-          content: 'Apply Filters',
+          content: i18n.translate('admin.auctions.table.filters.apply'),
           onAction: () => handleFiltersChange(filters)
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
+            content: i18n.translate('admin.common.cancel'),
             onAction: () => setFilterModalOpen(false)
           }
         ]}
       >
         <Modal.Section>
           <div style={{ marginBottom: '1rem' }}>
-            <Text variant="headingMd">Status</Text>
+            <Text variant="headingMd">{i18n.translate('admin.auctions.table.filters.statusLabel')}</Text>
             <ChoiceList
               title=""
               choices={[
-                { label: 'Active', value: 'active' },
-                { label: 'Closed', value: 'closed' }
+                { label: i18n.translate('admin.analytics.status.active'), value: 'active' },
+                { label: i18n.translate('admin.analytics.status.closed'), value: 'closed' }
               ]}
               selected={filters.status ? [filters.status] : []}
               onChange={(value) => setFilters({ ...filters, status: value[0] || '' })}
@@ -483,10 +491,10 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
           </div>
           <div>
             <TextField
-              label="Shopify Product ID"
+              label={i18n.translate('admin.auctions.form.fields.productId')}
               value={filters.shopifyProductId}
               onChange={(value) => setFilters({ ...filters, shopifyProductId: value })}
-              placeholder="Enter product ID"
+              placeholder={i18n.translate('admin.auctions.table.filters.productPlaceholder')}
             />
           </div>
         </Modal.Section>
