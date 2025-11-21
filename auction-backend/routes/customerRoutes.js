@@ -263,14 +263,19 @@ router.post('/temp-login', async (req, res, next) => {
 // Get customer by email and shop domain (MUST be before /:id route)
 router.get('/by-email', async (req, res, next) => {
   try {
-    const { email, shop } = req.query;
-    
-    if (!email || !shop) {
-      return next(new AppError('Email and shop domain are required', 400));
+    const email = req.query.email;
+    const shopDomain =
+      req.query.shop ||
+      req.query.shopDomain ||
+      req.query.store ||
+      req.query.domain;
+
+    if (!email || !shopDomain) {
+      return next(new AppError('Email and shopDomain (any format) is required', 400));
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const normalizedShop = shop.toLowerCase().trim();
+    const normalizedShop = shopDomain.toLowerCase().trim();
     
     // Try multiple shop domain formats to handle different formats
     const shopDomainVariants = [
