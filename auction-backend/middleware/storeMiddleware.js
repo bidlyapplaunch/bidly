@@ -1,6 +1,15 @@
 import Store from '../models/Store.js';
 import { AppError } from './errorHandler.js';
 
+const STATIC_PATH_PREFIXES = [
+  '/assets/',
+  '/favicon',
+  '/manifest',
+  '/robots.txt',
+  '/shopify-test',
+  '/index.html'
+];
+
 const cleanDomain = (rawDomain) => {
   if (!rawDomain) {
     return null;
@@ -79,6 +88,13 @@ const extractShopDomain = (req) => {
 export const identifyStore = async (req, res, next) => {
   try {
     if (req.method === 'OPTIONS') {
+      return next();
+    }
+
+    if (
+      req.method === 'GET' &&
+      STATIC_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix))
+    ) {
       return next();
     }
 
