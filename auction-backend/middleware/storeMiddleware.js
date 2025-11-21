@@ -1,6 +1,23 @@
 import Store from '../models/Store.js';
 import { AppError } from './errorHandler.js';
 
+const normalizeShopDomain = (rawDomain) => {
+  if (!rawDomain) {
+    return null;
+  }
+
+  const cleanDomain = String(rawDomain)
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '')
+    .toLowerCase();
+
+  const isValidShopDomain =
+    cleanDomain.includes('.myshopify.com') ||
+    /^[a-z0-9-]+\.[a-z]{2,}$/.test(cleanDomain);
+
+  return isValidShopDomain ? cleanDomain : null;
+};
+
 /**
  * Extract shop domain from request.
  * Supports:
@@ -39,22 +56,13 @@ const extractShopDomain = (req) => {
     return null;
   }
 
-  const cleanDomain = String(rawDomain)
-    .replace(/^https?:\/\//, '')
-    .replace(/\/$/, '')
-    .toLowerCase();
+  const normalized = normalizeShopDomain(rawDomain);
 
-  // Allow both *.myshopify.com and real storefront domains (true-nordic.com, etc)
-  const isValidShopDomain =
-    cleanDomain.includes('.myshopify.com') ||
-    /^[a-z0-9-]+\.[a-z]{2,}$/.test(cleanDomain);
-
-  if (!isValidShopDomain) {
+  if (!normalized) {
     console.warn('⚠️ Invalid shop domain format:', rawDomain);
-    return null;
   }
 
-  return cleanDomain;
+  return normalized;
 };
 
 /**
@@ -65,7 +73,15 @@ const extractShopDomain = (req) => {
  */
 export const identifyStore = async (req, res, next) => {
   try {
-    const shopDomain = extractShopDomain(req);
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+
+    let shopDomain = extractShopDomain(req);
+
+    if (!shopDomain && req.headers?.origin) {
+      shopDomain = normalizeShopDomain(req.headers.origin);
+    }
 
     if (!shopDomain) {
       console.log('❌ No shop domain found in request');

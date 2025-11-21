@@ -54,6 +54,14 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 5000;
 const previewAssetsPath = path.join(__dirname, '../extensions/theme-app-extension/assets');
 
+// CORS must be first middleware so identifyStore/routes see headers
+app.use(cors({
+  origin: (origin, callback) => callback(null, true),
+  credentials: true,
+  methods: 'GET,POST,PUT,DELETE,OPTIONS',
+  allowedHeaders: 'Content-Type,Authorization,X-Shopify-Shop-Domain'
+}));
+
 // Security middleware - Configured for Shopify embedded apps
 app.use(helmet({
   contentSecurityPolicy: {
@@ -73,52 +81,6 @@ app.use(helmet({
   },
   // Disable X-Frame-Options to allow iframe embedding
   frameguard: false
-}));
-
-// CORS configuration - Allow requests from both backends and Shopify admin
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    // List of allowed origins
-    const allowedOrigins = [
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'https://bidly-auction-admin.onrender.com',
-      'https://bidly-auction-customer.onrender.com',
-      'https://bidly-auction-backend.onrender.com',
-      'https://bidly-auction-backend-2.onrender.com',
-      'https://admin.shopify.com',
-      'https://true-nordic.com',
-      'https://www.true-nordic.com'
-    ];
-
-    // Allow all *.myshopify.com domains
-    if (origin.endsWith('.myshopify.com')) {
-      return callback(null, true);
-    }
-
-    // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    // Reject other origins
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  // Development headers for iframe compatibility
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'X-Shopify-Shop-Domain',
-    'ngrok-skip-browser-warning'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 // Middleware to allow iframe embedding for Shopify admin
