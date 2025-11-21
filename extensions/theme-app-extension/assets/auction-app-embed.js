@@ -131,6 +131,182 @@
         widget_position: 'below_price'
     };
 
+    // Translation system
+    let translations = {};
+    let currentLocale = 'en';
+
+    // Detect locale
+    function detectLocale() {
+        const locale =
+            (window.Shopify && window.Shopify.locale) ||
+            document.documentElement.lang ||
+            (navigator.language || 'en').split('-')[0] ||
+            'en';
+        return locale.toLowerCase();
+    }
+
+    // Load translations
+    async function loadTranslations() {
+        const locale = detectLocale();
+        currentLocale = locale;
+        
+        // Try to load locale file, fallback to English
+        const localeFiles = ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko'];
+        const targetLocale = localeFiles.includes(locale) ? locale : 'en';
+        
+        try {
+            // Try to load from theme extension assets
+            const response = await fetch(`/apps/bidly/assets/locales/${targetLocale}.json`);
+            if (response.ok) {
+                translations = await response.json();
+                return;
+            }
+        } catch (e) {
+            console.warn('Bidly: Could not load translations from theme assets, using embedded fallback');
+        }
+        
+        // Fallback: Use embedded English translations
+        translations = {
+            widget: {
+                header: {
+                    title: "Live Auction",
+                    live: "LIVE",
+                    startingSoon: "STARTING SOON",
+                    ended: "ENDED",
+                    reserveNotMet: "RESERVE NOT MET"
+                },
+                buttons: {
+                    placeBid: "Place Bid",
+                    buyNow: "Buy Now",
+                    loginShopify: "Log in with Shopify",
+                    continueGuest: "Continue as Guest (View Only)",
+                    logout: "Logout",
+                    chatBox: "Chat Box",
+                    viewBids: "View Bids",
+                    viewBidHistory: "View Bid History"
+                },
+                countdown: {
+                    endsIn: "Ends In:",
+                    startingIn: "Starting in:",
+                    days: "d",
+                    hours: "h",
+                    minutes: "m",
+                    seconds: "s"
+                },
+                labels: {
+                    currentBid: "CURRENT BID:",
+                    startingBid: "STARTING BID:",
+                    minimumBid: "MINIMUM BID:",
+                    bids: "BIDS:",
+                    guestUser: "Guest User"
+                },
+                login: {
+                    title: "Login Required",
+                    message: "Please log in to view this auction",
+                    viewOnly: "View Only",
+                    viewOnlyMessage: "Login to Shopify to enter the auction"
+                },
+                loading: {
+                    title: "Preparing your auction...",
+                    message: "Checking your account and syncing live bids."
+                },
+                errors: {
+                    invalidBid: "Invalid bid amount",
+                    bidTooLow: "Bid must be higher than current bid",
+                    auctionEnded: "Auction Ended",
+                    reserveNotMet: "Reserve Not Met",
+                    auctionNotFound: "Auction not found",
+                    networkError: "Network error. Please try again.",
+                    bidFailed: "Failed to place bid. Please try again."
+                },
+                messages: {
+                    auctionEnded: "Auction has ended. Final bid: ${amount}",
+                    auctionEndedReserve: "Auction ended — reserve not met",
+                    bidPlaced: "Bid placed successfully!",
+                    newBid: "New bid: ${amount}",
+                    bidNotification: "New bid placed!",
+                    currentBidLabel: "Current Bid: ${amount}"
+                },
+                chat: {
+                    title: "Chat",
+                    send: "Send",
+                    placeholder: "Type a message...",
+                    empty: "No messages yet. Start the conversation!",
+                    connecting: "Connecting...",
+                    disconnected: "Disconnected",
+                    error: "Error sending message"
+                },
+                bidHistory: {
+                    title: "Bid History",
+                    noBids: "No bids yet",
+                    bidder: "Bidder",
+                    amount: "Amount",
+                    time: "Time"
+                },
+                guestLogin: {
+                    title: "Continue as Guest",
+                    fullName: "Full Name",
+                    emailAddress: "Email Address",
+                    continue: "Continue as Guest",
+                    cancel: "Cancel",
+                    errorNameEmail: "Please enter both name and email",
+                    errorFailed: "Login failed. Please try again.",
+                    errorForm: "Form error. Please try again."
+                },
+                common: {
+                    auctionItem: "Auction Item",
+                    yourName: "Your Name",
+                    yourEmail: "Your Email",
+                    loginToBid: "Login to Bid",
+                    logout: "Logout",
+                    processing: "Processing...",
+                    closeChat: "Close chat",
+                    loggedInAs: "Logged in as:",
+                    welcome: "Welcome, {name}!",
+                    pleaseLoginBid: "Please login to place a bid",
+                    pleaseLoginBuyNow: "Please login to buy now",
+                    invalidBidAmount: "Please enter a valid bid amount",
+                    bidInputNotFound: "Bid input not found. Please refresh the page.",
+                    bidButtonNotFound: "Bid button not found. Please refresh the page.",
+                    buyNowButtonNotFound: "Buy now button not found. Please refresh the page."
+                }
+            }
+        };
+    }
+
+    // Translation function
+    function t(key, params = {}) {
+        const keys = key.split('.');
+        let value = translations;
+        
+        for (const k of keys) {
+            if (value && typeof value === 'object' && k in value) {
+                value = value[k];
+            } else {
+                // Fallback to English key or return key itself
+                return key;
+            }
+        }
+        
+        if (typeof value === 'string') {
+            // Replace variables like {amount}, ${amount}, etc.
+            let result = value;
+            for (const [paramKey, paramValue] of Object.entries(params)) {
+                result = result.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), paramValue);
+                result = result.replace(new RegExp(`\\$\\{${paramKey}\\}`, 'g'), paramValue);
+            }
+            return result;
+        }
+        
+        return key;
+    }
+
+    // Initialize translations immediately (non-blocking)
+    loadTranslations();
+
+    // Make translation function globally available for other scripts
+    window.BidlyTranslate = t;
+
     function hideProductPrice() {
         try {
             for (const selector of CONFIG.pricingSelectors) {
@@ -657,17 +833,17 @@
             <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
                 <div class="bidly-widget-container bidly-widget-loading">
                     <div class="bidly-widget-header">
-                        <h3 class="bidly-widget-title">Live Auction</h3>
+                        <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
                         <div class="bidly-widget-status">
-                            ${status === 'active' ? '<span class="bidly-status-active">LIVE</span>' : 
-                              status === 'pending' ? '<span class="bidly-status-pending">STARTING SOON</span>' : 
-                              '<span class="bidly-status-ended">ENDED</span>'}
+                            ${status === 'active' ? `<span class="bidly-status-active">${t('widget.header.live')}</span>` : 
+                              status === 'pending' ? `<span class="bidly-status-pending">${t('widget.header.startingSoon')}</span>` : 
+                              `<span class="bidly-status-ended">${t('widget.header.ended')}</span>`}
                         </div>
                     </div>
                     <div class="bidly-loading-state" style="padding: 1.5rem; text-align: center;">
-                        <p style="font-weight:600; margin-bottom:0.35rem;">Preparing your auction...</p>
+                        <p style="font-weight:600; margin-bottom:0.35rem;">${t('widget.loading.title')}</p>
                         <p style="opacity:0.75; font-size:0.92rem; margin:0;">
-                            Checking your account and syncing live bids.
+                            ${t('widget.loading.message')}
                         </p>
                     </div>
                 </div>
@@ -715,19 +891,19 @@
                         
                         <div class="bidly-login-required">
                             <div class="bidly-login-message">
-                                <h4>Login Required</h4>
-                                <p>Please log in to view this auction</p>
+                                <h4>${t('widget.login.title')}</h4>
+                                <p>${t('widget.login.message')}</p>
                             </div>
                             
                             <div class="bidly-login-options">
                                 <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.location.href='/account/login'">
                                     <span class="bidly-btn-icon">🛍️</span>
-                                    Log in with Shopify
+                                    ${t('widget.buttons.loginShopify')}
                                 </button>
                                 
                                 <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
                                     <span class="bidly-btn-icon">👤</span>
-                                    Continue as Guest (View Only)
+                                    ${t('widget.buttons.continueGuest')}
                                 </button>
                             </div>
                         </div>
@@ -743,28 +919,28 @@
         <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
                 <div class="bidly-widget-container">
                     <div class="bidly-widget-header">
-                        <h3 class="bidly-widget-title">Live Auction</h3>
+                        <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
                         <div class="bidly-widget-status">
-                            ${status === 'active' ? '<span class="bidly-status-active">LIVE</span>' : 
-                              status === 'pending' ? '<span class="bidly-status-pending">STARTING SOON</span>' : 
-                              status === 'reserve_not_met' ? '<span class="bidly-status-ended">RESERVE NOT MET</span>' :
-                              '<span class="bidly-status-ended">ENDED</span>'}
+                            ${status === 'active' ? `<span class="bidly-status-active">${t('widget.header.live')}</span>` : 
+                              status === 'pending' ? `<span class="bidly-status-pending">${t('widget.header.startingSoon')}</span>` : 
+                              status === 'reserve_not_met' ? `<span class="bidly-status-ended">${t('widget.header.reserveNotMet')}</span>` :
+                              `<span class="bidly-status-ended">${t('widget.header.ended')}</span>`}
                         </div>
                         <div class="bidly-customer-info">
-                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.displayName || getCurrentCustomer()?.fullName || getCurrentCustomer()?.name || 'Guest User'}</span>
-                            <button class="bidly-logout-btn" onclick="window.BidlyAuctionWidgetLogout && window.BidlyAuctionWidgetLogout(); return false;" title="Logout">×</button>
+                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.displayName || getCurrentCustomer()?.fullName || getCurrentCustomer()?.name || t('widget.labels.guestUser')}</span>
+                            <button class="bidly-logout-btn" onclick="window.BidlyAuctionWidgetLogout && window.BidlyAuctionWidgetLogout(); return false;" title="${t('widget.buttons.logout')}">×</button>
                         </div>
                     </div>
 
                     ${show_timer && status === 'active' && endTime ? `
                         <div class="bidly-widget-timer">
                             <div class="bidly-timer-card">
-                                <div class="bidly-timer-label">Ends In:</div>
+                                <div class="bidly-timer-label">${t('widget.countdown.endsIn')}</div>
                                 <div class="bidly-countdown" data-end-time="${endTime}">
-                                    <span class="bidly-timer-days">0</span>d 
-                                    <span class="bidly-timer-hours">0</span>h 
-                                    <span class="bidly-timer-minutes">0</span>m 
-                                    <span class="bidly-timer-seconds">0</span>s
+                                    <span class="bidly-timer-days">0</span>${t('widget.countdown.days')} 
+                                    <span class="bidly-timer-hours">0</span>${t('widget.countdown.hours')} 
+                                    <span class="bidly-timer-minutes">0</span>${t('widget.countdown.minutes')} 
+                                    <span class="bidly-timer-seconds">0</span>${t('widget.countdown.seconds')}
                                 </div>
                             </div>
                         </div>
@@ -772,11 +948,11 @@
 
                     <div class="bidly-widget-pricing">
                         <div class="bidly-current-bid">
-                            <span class="bidly-label">${bidCount > 0 ? 'CURRENT BID:' : 'STARTING BID:'}</span>
+                            <span class="bidly-label">${bidCount > 0 ? t('widget.labels.currentBid') : t('widget.labels.startingBid')}</span>
                             <span class="bidly-amount" data-current-bid="${displayBid}">$${displayBid.toFixed(2)}</span>
                         </div>
                         <div class="bidly-bid-count">
-                            <span class="bidly-label">BIDS:</span>
+                            <span class="bidly-label">${t('widget.labels.bids')}</span>
                             <span class="bidly-count" data-bid-count="${bidCount}">${bidCount}</span>
                         </div>
                     </div>
@@ -786,10 +962,10 @@
                             ${isGuestViewOnly ? `
                                 <div class="bidly-guest-overlay">
                                     <div class="bidly-guest-message">
-                                        <p style="font-weight: 600; margin-bottom: 0.5rem;">View Only</p>
-                                        <p style="font-size: 0.9rem; opacity: 0.9;">Login to Shopify to enter the auction</p>
+                                        <p style="font-weight: 600; margin-bottom: 0.5rem;">${t('widget.login.viewOnly')}</p>
+                                        <p style="font-size: 0.9rem; opacity: 0.9;">${t('widget.login.viewOnlyMessage')}</p>
                                         <button class="bidly-btn bidly-btn-primary" onclick="window.location.href='/account/login'" style="margin-top: 1rem;">
-                                            Log in with Shopify
+                                            ${t('widget.buttons.loginShopify')}
                                         </button>
                                     </div>
                                 </div>
@@ -797,7 +973,7 @@
                             <div class="bidly-inline-bid-form ${isGuestViewOnly ? 'bidly-blurred' : ''}" id="bidly-bid-form-${auctionId}">
                                 <div class="bidly-bid-action-card">
                                     <div class="bidly-minimum-bid">
-                                        <span class="bidly-label">MINIMUM BID:</span>
+                                        <span class="bidly-label">${t('widget.labels.minimumBid')}</span>
                                         <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">$${minBidAmount.toFixed(2)}</span>
                                     </div>
                                     <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
@@ -810,7 +986,7 @@
                                                    min="${minBidAmount}" 
                                                    placeholder="Min: $${minBidAmount.toFixed(2)}"
                                                    ${isGuestViewOnly ? 'disabled' : 'required'}>
-                                            <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>Place Bid</button>
+                                            <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>${t('widget.buttons.placeBid')}</button>
                                         </div>
                                     </form>
                                 </div>
@@ -819,27 +995,27 @@
                                 <button class="bidly-buy-now-btn ${isGuestViewOnly ? 'bidly-blurred' : ''}" 
                                         ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})"`}
                                         ${isGuestViewOnly ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                                    Buy Now ($${buyNowPrice.toFixed(2)})
+                                    ${t('widget.buttons.buyNow')} ($${buyNowPrice.toFixed(2)})
                                 </button>
                             ` : ''}
                         </div>
                     ` : status === 'pending' ? `
                         <div class="bidly-pending-message">
                             <div class="bidly-countdown-container">
-                                <div class="bidly-countdown-label">Starting in:</div>
+                                <div class="bidly-countdown-label">${t('widget.countdown.startingIn')}</div>
                                 <div class="bidly-countdown-timer" id="bidly-countdown-${auctionId}">
-                                    <span class="bidly-countdown-days">0d</span>
-                                    <span class="bidly-countdown-hours">0h</span>
-                                    <span class="bidly-countdown-minutes">0m</span>
-                                    <span class="bidly-countdown-seconds">0s</span>
+                                    <span class="bidly-countdown-days">0${t('widget.countdown.days')}</span>
+                                    <span class="bidly-countdown-hours">0${t('widget.countdown.hours')}</span>
+                                    <span class="bidly-countdown-minutes">0${t('widget.countdown.minutes')}</span>
+                                    <span class="bidly-countdown-seconds">0${t('widget.countdown.seconds')}</span>
                                 </div>
                             </div>
                         </div>
                     ` : `
                         <div class="bidly-ended-message">
                             ${status === 'reserve_not_met' 
-                                ? 'Auction ended — reserve not met'
-                                : `Auction has ended. Final bid: $${displayBid.toFixed(2)}`}
+                                ? t('widget.messages.auctionEndedReserve')
+                                : t('widget.messages.auctionEnded', { amount: displayBid.toFixed(2) })}
                         </div>
                     `}
 
@@ -847,12 +1023,12 @@
                         <div class="${footerClassAttr}">
                             ${chatEnabled ? `
                                 <button type="button" class="bidly-chat-toggle-inline" id="bidly-chat-toggle-inline" aria-controls="bidly-chat-box">
-                                    Chat Box
+                                    ${t('widget.buttons.chatBox')}
                                 </button>
                             ` : ''}
                             ${show_bid_history ? `
                                 <a href="#" onclick="window.BidlyAuctionWidget.openBidHistory('${auctionId}')" class="bidly-history-link">
-                                    ${bidHistoryLabel}
+                                    ${chatEnabled ? t('widget.buttons.viewBidHistory') : t('widget.buttons.viewBids')}
                                 </a>
                             ` : ''}
                         </div>
@@ -1263,7 +1439,7 @@
             const distance = endTimestamp - now;
 
             if (distance < 0) {
-                countdownElement.innerHTML = '<span class="bidly-time-unit">Auction Ended</span>';
+                countdownElement.innerHTML = `<span class="bidly-time-unit">${t('widget.header.ended')}</span>`;
                 return;
             }
 
@@ -1645,7 +1821,7 @@
         const bidLabelElement = widget.querySelector('.bidly-label');
         if (bidLabelElement) {
             const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
-            bidLabelElement.textContent = bidCount > 0 ? 'Current Bid:' : 'Starting Bid:';
+            bidLabelElement.textContent = bidCount > 0 ? t('widget.labels.currentBid') : t('widget.labels.startingBid');
         }
 
         // Update minimum bid - try multiple selectors
@@ -1692,11 +1868,11 @@
             if (auctionData.status === 'ended') {
                 if (bidInput) {
                     bidInput.disabled = true;
-                    bidInput.placeholder = 'Auction Ended';
+                    bidInput.placeholder = t('widget.errors.auctionEnded');
                 }
                 if (submitButton) {
                     submitButton.disabled = true;
-                    submitButton.textContent = 'Auction Ended';
+                    submitButton.textContent = t('widget.errors.auctionEnded');
                     submitButton.style.opacity = '0.5';
                 }
             } else if (auctionData.status === 'active') {
@@ -1705,7 +1881,7 @@
                 }
                 if (submitButton) {
                     submitButton.disabled = false;
-                    submitButton.textContent = 'Place Bid';
+                    submitButton.textContent = t('widget.buttons.placeBid');
                     submitButton.style.opacity = '1';
                 }
             }
@@ -1716,11 +1892,11 @@
             const statusElement = widget.querySelector('.bidly-widget-status');
             if (statusElement) {
                 if (auctionData.status === 'reserve_not_met') {
-                    statusElement.innerHTML = '<span class="bidly-status-ended">RESERVE NOT MET</span>';
+                    statusElement.innerHTML = `<span class="bidly-status-ended">${t('widget.header.reserveNotMet')}</span>`;
                 } else if (auctionData.status === 'ended') {
-                    statusElement.innerHTML = '<span class="bidly-status-ended">ENDED</span>';
+                    statusElement.innerHTML = `<span class="bidly-status-ended">${t('widget.header.ended')}</span>`;
                 } else {
-                    statusElement.innerHTML = '<span class="bidly-status-pending">PENDING</span>';
+                    statusElement.innerHTML = `<span class="bidly-status-pending">${t('widget.header.startingSoon')}</span>`;
                 }
             }
             
@@ -1728,7 +1904,7 @@
             const bidButton = widget.querySelector('.bidly-bid-btn');
             if (bidButton && (auctionData.status === 'ended' || auctionData.status === 'reserve_not_met')) {
                 bidButton.disabled = true;
-                bidButton.textContent = auctionData.status === 'reserve_not_met' ? 'Reserve Not Met' : 'Auction Ended';
+                bidButton.textContent = auctionData.status === 'reserve_not_met' ? t('widget.errors.reserveNotMet') : t('widget.errors.auctionEnded');
                 bidButton.style.opacity = '0.5';
             }
         }
@@ -1796,7 +1972,7 @@
             // Custom message (like "New bid placed!")
             messageContent = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${bidCount}</div>
-                ${currentBid != null ? `<div>Current Bid: $${currentBid.toFixed(2)}</div>` : ''}
+                ${currentBid != null ? `<div>${t('widget.messages.currentBidLabel', { amount: currentBid.toFixed(2) })}</div>` : ''}
             `;
         } else if (bidderName && productTitle && currentBid != null) {
             // Enhanced notification with bidder name and product
@@ -1808,8 +1984,8 @@
         } else if (currentBid != null) {
             // Standard bid notification
             messageContent = `
-                <div style="font-weight: bold; margin-bottom: 5px;">New Bid Placed!</div>
-                <div>Current Bid: $${currentBid.toFixed(2)}</div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${t('widget.messages.bidNotification')}</div>
+                <div>${t('widget.messages.currentBidLabel', { amount: currentBid.toFixed(2) })}</div>
                 ${bidCount != null ? `<div>Total Bids: ${bidCount}</div>` : ''}
             `;
         } else {
@@ -1850,7 +2026,7 @@
     function createBidModal(auctionId) {
         // Check if user is logged in
         if (!isUserLoggedIn() || !getCurrentCustomer()) {
-            alert('Please log in to place a bid');
+            alert(t('widget.login.message'));
             return;
         }
         
@@ -1861,7 +2037,7 @@
         modal.innerHTML = `
             <div class="bidly-modal-content">
                 <div class="bidly-modal-header">
-                    <h3>Place Your Bid</h3>
+                    <h3>${t('widget.buttons.placeBid')}</h3>
                     <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBidModal('${auctionId}')">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
@@ -1871,12 +2047,12 @@
                     </div>
                     <form id="bidly-bid-form-${auctionId}" onsubmit="window.BidlyAuctionWidget.submitBid(event, '${auctionId}')">
                         <div class="bidly-form-group">
-                            <label for="bidly-bid-amount-${auctionId}">Bid Amount</label>
+                            <label for="bidly-bid-amount-${auctionId}">${t('widget.labels.minimumBid').replace(':', '')}</label>
                             <input type="number" id="bidly-bid-amount-${auctionId}" name="amount" step="0.01" required>
                             <small>Enter your bid amount</small>
                         </div>
                         <div class="bidly-form-actions">
-                            <button type="submit" class="bidly-submit-bid">Place Bid</button>
+                            <button type="submit" class="bidly-submit-bid">${t('widget.buttons.placeBid')}</button>
                             <button type="button" onclick="window.BidlyAuctionWidget.closeBidModal('${auctionId}')">Cancel</button>
                         </div>
                     </form>
@@ -1893,14 +2069,14 @@
         modal.innerHTML = `
             <div class="bidly-modal-content">
                 <div class="bidly-modal-header">
-                    <h3>Buy Now</h3>
+                    <h3>${t('widget.buttons.buyNow')}</h3>
                     <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
                     <p>Are you sure you want to buy this item for <strong>$${price.toFixed(2)}</strong>?</p>
                     <p>This will end the auction immediately and you will be the winner.</p>
                     <div class="bidly-form-actions">
-                        <button onclick="window.BidlyAuctionWidget.confirmBuyNow('${auctionId}', ${price})" class="bidly-confirm-buy">Yes, Buy Now</button>
+                        <button onclick="window.BidlyAuctionWidget.confirmBuyNow('${auctionId}', ${price})" class="bidly-confirm-buy">Yes, ${t('widget.buttons.buyNow')}</button>
                         <button onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">Cancel</button>
                     </div>
                 </div>
@@ -1944,13 +2120,13 @@
                 // Fetch bid history from backend
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
                 if (!response.ok) {
-                    alert('Failed to load bid history');
+                    alert(t('widget.errors.auctionNotFound'));
                     return;
                 }
                 
                 const data = await response.json();
                 if (!data.success || !data.data) {
-                    alert('No bid history available');
+                    alert(t('widget.bidHistory.noBids'));
                     return;
                 }
                 
@@ -1964,13 +2140,13 @@
                 modal.innerHTML = `
                     <div class="bidly-modal-content bidly-history-modal">
                         <div class="bidly-modal-header">
-                            <h3>Bid History</h3>
+                            <h3>${t('widget.bidHistory.title')}</h3>
                             <button class="bidly-modal-close">&times;</button>
                         </div>
                         <div class="bidly-modal-body">
                             <div class="bidly-bid-history">
                                 ${bidHistory.length === 0 ? 
-                                    '<p class="bidly-no-bids">No bids placed yet</p>' :
+                                    `<p class="bidly-no-bids">${t('widget.bidHistory.noBids')}</p>` :
                                     bidHistory.map((bid, index) => {
                                         // Find the highest bid amount to identify current bid
                                         const highestBid = Math.max(...bidHistory.map(b => b.amount));
@@ -2005,7 +2181,7 @@
                 
             } catch (error) {
                 console.error('Error loading bid history:', error);
-                alert('Failed to load bid history');
+                alert(t('widget.errors.auctionNotFound'));
             }
         },
 
@@ -2074,13 +2250,13 @@
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
                     console.error('Bidly: Bid failed:', response.status, errorData);
-                    alert(`Error placing bid: ${errorData.message || 'Please try again'}`);
+                    alert(`${t('widget.errors.bidFailed')}: ${errorData.message || ''}`);
                     return;
                 }
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Bid placed successfully!');
+                    alert(t('widget.messages.bidPlaced'));
                     this.closeBidModal(auctionId);
                     
                     // Show immediate notification for the bid just placed
@@ -2183,7 +2359,7 @@
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
                     console.error('Bidly: Bid failed:', response.status, errorData);
-                    alert(`Error placing bid: ${errorData.message || 'Please try again'}`);
+                    alert(`${t('widget.errors.bidFailed')}: ${errorData.message || ''}`);
                     return;
                 }
 
@@ -2232,11 +2408,11 @@
                         console.warn('Bidly: Error updating customer bid history (non-blocking):', error);
                     });
                 } else {
-                    alert('Error placing bid: ' + result.message);
+                    alert(`${t('widget.errors.bidFailed')}: ${result.message}`);
                 }
             } catch (error) {
                 console.error('Error placing bid:', error);
-                alert('Error placing bid. Please try again.');
+                alert(t('widget.errors.bidFailed'));
             }
         },
 
@@ -2877,12 +3053,12 @@
                 <div class="bidly-chat-header">
                     <h3>
                             <span class="online-indicator"></span>
-                            Chat Box
+                            ${t('widget.chat.title')}
                     </h3>
-                    <button class="bidly-chat-close" id="bidly-chat-close" aria-label="Close chat">✕</button>
+                    <button class="bidly-chat-close" id="bidly-chat-close" aria-label="${t('widget.common.closeChat')}">✕</button>
                 </div>
                 <div class="bidly-chat-messages" id="bidly-chat-messages">
-                    <div class="bidly-chat-empty">No messages yet. Start the conversation!</div>
+                    <div class="bidly-chat-empty">${t('widget.chat.empty')}</div>
                 </div>
                 <div class="bidly-chat-input-container">
                     <form class="bidly-chat-input-form" id="bidly-chat-form">
@@ -2890,11 +3066,11 @@
                             type="text" 
                             class="bidly-chat-input" 
                             id="bidly-chat-input" 
-                            placeholder="Type a message..." 
+                            placeholder="${t('widget.chat.placeholder')}" 
                             maxlength="500"
                             autocomplete="off"
                         />
-                        <button type="submit" class="bidly-chat-send-btn" id="bidly-chat-send">Send</button>
+                        <button type="submit" class="bidly-chat-send-btn" id="bidly-chat-send">${t('widget.chat.send')}</button>
                     </form>
                 </div>
             </div>
@@ -3046,7 +3222,7 @@
         messagesContainer.innerHTML = '';
 
         if (messages.length === 0) {
-            messagesContainer.innerHTML = '<div class="bidly-chat-empty">No messages yet. Start the conversation!</div>';
+            messagesContainer.innerHTML = `<div class="bidly-chat-empty">${t('widget.chat.empty')}</div>`;
             return;
         }
 

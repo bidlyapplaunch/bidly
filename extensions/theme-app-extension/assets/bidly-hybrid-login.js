@@ -287,7 +287,7 @@
                             // Fallback: use a temporary display name until we can sync properly
                             const firstName = customerData.firstName || '';
                             const lastName = customerData.lastName || '';
-                            const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Guest User';
+                            const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || (window.BidlyTranslate ? window.BidlyTranslate('widget.labels.guestUser') : 'Guest User');
                             currentCustomer = {
                                 id: customerData.id,
                                 email: customerData.email,
@@ -420,25 +420,37 @@
     function openGuestLogin() {
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
+        const t = window.BidlyTranslate || ((key, params) => {
+            // Fallback if translation not available
+            const fallbacks = {
+                'widget.guestLogin.title': 'Continue as Guest',
+                'widget.guestLogin.fullName': 'Full Name',
+                'widget.guestLogin.emailAddress': 'Email Address',
+                'widget.guestLogin.continue': 'Continue as Guest',
+                'widget.guestLogin.cancel': 'Cancel'
+            };
+            return fallbacks[key] || key;
+        });
+        
         modal.innerHTML = `
             <div class="bidly-modal-content">
                 <div class="bidly-modal-header">
-                    <h3>Continue as Guest</h3>
+                    <h3>${t('widget.guestLogin.title')}</h3>
                     <button class="bidly-modal-close" onclick="window.BidlyHybridLogin.closeGuestLoginModal()">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
                     <form id="bidly-guest-login-form" onsubmit="window.BidlyHybridLogin.submitGuestLogin(event)">
                         <div class="bidly-form-group">
-                            <label for="bidly-guest-name">Full Name</label>
+                            <label for="bidly-guest-name">${t('widget.guestLogin.fullName')}</label>
                             <input type="text" id="bidly-guest-name" name="name" autocomplete="name" required>
                         </div>
                         <div class="bidly-form-group">
-                            <label for="bidly-guest-email">Email Address</label>
+                            <label for="bidly-guest-email">${t('widget.guestLogin.emailAddress')}</label>
                             <input type="email" id="bidly-guest-email" name="email" autocomplete="email" required>
                         </div>
                         <div class="bidly-form-actions">
-                            <button type="submit" class="bidly-btn bidly-btn-primary">Continue as Guest</button>
-                            <button type="button" class="bidly-btn bidly-btn-secondary" onclick="window.BidlyHybridLogin.closeGuestLoginModal()">Cancel</button>
+                            <button type="submit" class="bidly-btn bidly-btn-primary">${t('widget.guestLogin.continue')}</button>
+                            <button type="button" class="bidly-btn bidly-btn-secondary" onclick="window.BidlyHybridLogin.closeGuestLoginModal()">${t('widget.guestLogin.cancel')}</button>
                         </div>
                     </form>
                 </div>
@@ -463,9 +475,18 @@
         const nameInput = document.getElementById('bidly-guest-name');
         const emailInput = document.getElementById('bidly-guest-email');
         
+        const t = window.BidlyTranslate || ((key, params) => {
+            const fallbacks = {
+                'widget.guestLogin.errorForm': 'Form error. Please try again.',
+                'widget.guestLogin.errorNameEmail': 'Please enter both name and email',
+                'widget.guestLogin.errorFailed': 'Login failed. Please try again.'
+            };
+            return fallbacks[key] || key;
+        });
+        
         if (!nameInput || !emailInput) {
             console.error('Bidly: Form inputs not found');
-            alert('Form error. Please try again.');
+            alert(t('widget.guestLogin.errorForm'));
             return;
         }
         
@@ -475,7 +496,7 @@
         console.log('Bidly: Form data:', { name, email });
 
         if (!name || !email) {
-            alert('Please enter both name and email');
+            alert(t('widget.guestLogin.errorNameEmail'));
             return;
         }
 
@@ -491,7 +512,7 @@
             console.log('Bidly: Login success event dispatched');
         } else {
             console.error('Bidly: Guest login failed');
-            alert('Login failed. Please try again.');
+            alert(t('widget.guestLogin.errorFailed'));
         }
     }
 

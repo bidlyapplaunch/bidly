@@ -1,0 +1,74 @@
+{
+  "bidly": {
+    "schema": {
+      "auction_app_embed": {
+        "name": "Inserción de App de Subasta",
+        "widget_settings": "Configuración del Widget de Subasta",
+        "show_timer": "Mostrar temporizador de cuenta regresiva",
+        "show_bid_history": "Mostrar enlace de historial de pujas",
+        "widget_position": "Posición del widget",
+        "below_price": "Debajo del precio del producto",
+        "above_price": "Encima del precio del producto",
+        "replace_price": "Reemplazar precio del producto"
+      },
+      "auction_list": {
+        "name": "Lista de Subastas",
+        "section_title": "Título de Sección",
+        "live_auctions": "Subastas en Vivo",
+        "max_auctions": "Máximo de Subastas",
+        "max_auctions_info": "Número máximo de subastas a mostrar",
+        "show_ended": "Mostrar Subastas Finalizadas"
+      },
+      "auction_single": {
+        "name": "Subasta Individual",
+        "auction_id": "ID de Subasta",
+        "auction_id_info": "Ingresa el ID de subasta específico a mostrar"
+      },
+      "auction_featured": {
+        "name": "Subasta Destacada",
+        "featured_auction_id": "ID de Subasta Destacada",
+        "featured_auction_id_info": "Ingresa el ID de subasta para destacar prominentemente"
+      }
+    },
+    "ui": {
+      "loading_auctions": "Cargando subastas...",
+      "loading_auction": "Cargando subasta...",
+      "loading_featured": "Cargando subasta destacada...",
+      "error_load_auctions": "No se pueden cargar subastas. Por favor, inténtalo más tarde.",
+      "error_load_auction": "No se puede cargar subasta. Por favor, inténtalo más tarde.",
+      "error_load_featured": "No se puede cargar subasta destacada. Por favor, inténtalo más tarde.",
+      "no_auctions": "No se encontraron subastas",
+      "auction_item": "Artículo de Subasta",
+      "current_bid": "Puja Actual",
+      "starting_bid": "Puja Inicial",
+      "time_left": "Tiempo restante:",
+      "auction_ended": "Subasta Finalizada",
+      "bid": "Puja",
+      "bids": "Pujas",
+      "view_product": "Ver Producto →",
+      "status_live": "● EN VIVO",
+      "status_ended": "● FINALIZADO",
+      "status_pending": "● PENDIENTE",
+      "starting": "Inicial:",
+      "featured_badge": "Subasta Destacada",
+      "no_image": "Sin Imagen",
+      "config_required": "⚠️ Configuración Requerida",
+      "config_required_message": "Por favor, establece un ID de Subasta en la configuración del bloque para mostrar una subasta.",
+      "not_set": "No establecido"
+    },
+    "editor": {
+      "auction_list_title": "🎯 Lista de Subastas Bidly",
+      "auction_list_message": "Este bloque mostrará subastas en vivo cuando se publique el tema.",
+      "single_auction_title": "🎯 Subasta Individual",
+      "single_auction_message": "Este bloque mostrará una subasta específica cuando se publique el tema.",
+      "featured_auction_title": "⭐ Subasta Destacada",
+      "featured_auction_message": "Este bloque mostrará una subasta destacada cuando se publique el tema.",
+      "settings": "Configuración:",
+      "title_label": "Título:",
+      "max_auctions_label": "Máximo de Subastas:",
+      "show_ended_label": "Mostrar Finalizadas:",
+      "auction_id_label": "ID de Subasta:",
+      "featured_auction_id_label": "ID de Subasta Destacada:"
+    }
+  }
+}

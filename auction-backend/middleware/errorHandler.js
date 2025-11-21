@@ -1,6 +1,10 @@
+import { t, tSync } from '../services/i18n.js';
+
 // Global error handling middleware
-export const errorHandler = (err, req, res, next) => {
+export const errorHandler = async (err, req, res, next) => {
   console.error('Error:', err);
+
+  const shopDomain = req.shopDomain || null;
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -9,9 +13,13 @@ export const errorHandler = (err, req, res, next) => {
       message: e.message
     }));
     
+    const message = shopDomain 
+      ? await t(shopDomain, 'errors.validation_failed')
+      : tSync('errors.validation_failed');
+    
     return res.status(400).json({
       success: false,
-      message: 'Validation failed',
+      message,
       errors
     });
   }
@@ -19,18 +27,26 @@ export const errorHandler = (err, req, res, next) => {
   // Mongoose duplicate key error
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
+    const message = shopDomain
+      ? await t(shopDomain, 'errors.duplicate_key', { field })
+      : tSync('errors.duplicate_key', { field });
+    
     return res.status(400).json({
       success: false,
-      message: `${field} already exists`,
+      message,
       field
     });
   }
 
   // Mongoose cast error (invalid ObjectId)
   if (err.name === 'CastError') {
+    const message = shopDomain
+      ? await t(shopDomain, 'errors.invalid_id')
+      : tSync('errors.invalid_id');
+    
     return res.status(400).json({
       success: false,
-      message: 'Invalid ID format'
+      message
     });
   }
 
@@ -43,17 +59,23 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   // Default server error
+  const message = process.env.NODE_ENV === 'production'
+    ? (shopDomain ? await t(shopDomain, 'errors.internal_server_error') : tSync('errors.internal_server_error'))
+    : err.message;
+  
   res.status(500).json({
     success: false,
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message
+    message
   });
 };
 
 // 404 handler
-export const notFound = (req, res, next) => {
-  const error = new Error(`Not found - ${req.originalUrl}`);
+export const notFound = async (req, res, next) => {
+  const shopDomain = req.shopDomain || null;
+  const message = shopDomain
+    ? await t(shopDomain, 'errors.not_found')
+    : tSync('errors.not_found');
+  const error = new Error(`${message} - ${req.originalUrl}`);
   error.statusCode = 404;
   next(error);
 };

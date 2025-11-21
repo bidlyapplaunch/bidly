@@ -18,11 +18,11 @@
      style="{% if shop.design_mode %}min-height: 200px;{% endif %}">
   <div class="bidly-loading" id="bidly-loading-{{ block_id }}">
     <div class="bidly-spinner"></div>
-    <p>Loading featured auction...</p>
+    <p>{{ 'bidly.ui.loading_featured' | t }}</p>
   </div>
   
   <div class="bidly-error" id="bidly-error-{{ block_id }}" style="display: none;">
-    <p>Unable to load featured auction. Please try again later.</p>
+    <p>{{ 'bidly.ui.error_load_featured' | t }}</p>
   </div>
   
   <div class="bidly-featured-container" id="bidly-featured-container-{{ block_id }}" style="display: none;">
@@ -32,12 +32,12 @@
   <!-- Theme Editor Placeholder -->
   <div class="bidly-theme-editor-placeholder" style="display: none;">
     <div style="padding: 2rem; text-align: center; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">
-      <h3 style="margin: 0 0 1rem 0; color: #495057;">⭐ Featured Auction</h3>
-      <p style="margin: 0; color: #6c757d;">This block will display a featured auction when the theme is published.</p>
+      <h3 style="margin: 0 0 1rem 0; color: #495057;">{{ 'bidly.editor.featured_auction_title' | t }}</h3>
+      <p style="margin: 0; color: #6c757d;">{{ 'bidly.editor.featured_auction_message' | t }}</p>
       <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 4px;">
         <p style="margin: 0; font-size: 0.9rem; color: #6c757d;">
-          <strong>Settings:</strong><br>
-          Featured Auction ID: {{ block.settings.auction_id | default: 'Not set' }}
+          <strong>{{ 'bidly.editor.settings' | t }}</strong><br>
+          {{ 'bidly.editor.featured_auction_id_label' | t }} {% if block.settings.auction_id %}{{ block.settings.auction_id }}{% else %}{{ 'bidly.ui.not_set' | t }}{% endif %}
         </p>
       </div>
     </div>
@@ -293,21 +293,21 @@
       const productHandle = auction.productData?.handle || '';
       const productUrl = productHandle ? `https://${shopDomain}/products/${productHandle}` : '#';
       const productImage = auction.productData?.images?.[0]?.src || auction.productData?.image?.src || '';
-      const productTitle = auction.productData?.title || auction.productTitle || 'Auction Item';
+      const productTitle = auction.productData?.title || auction.productTitle || '{{ "bidly.ui.auction_item" | t }}';
       
       const status = computeAuctionStatus(auction);
       const timeLeft = formatTimeLeft(auction.endTime);
       const currentBid = auction.currentBid || 0;
       const startingBid = auction.startingBid || 0;
       const displayPrice = currentBid > 0 ? currentBid : startingBid;
-      const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+      const priceLabel = currentBid > 0 ? '{{ "bidly.ui.current_bid" | t }}' : '{{ "bidly.ui.starting_bid" | t }}';
       const bidCount = auction.bidHistory?.length || 0;
       
       const statusClass = status === 'active' ? 'bidly-status-active' : status === 'ended' ? 'bidly-status-ended' : 'bidly-status-pending';
-      const statusText = status === 'active' ? '● LIVE' : status === 'ended' ? '● ENDED' : '● PENDING';
+      const statusText = status === 'active' ? '{{ "bidly.ui.status_live" | t }}' : status === 'ended' ? '{{ "bidly.ui.status_ended" | t }}' : '{{ "bidly.ui.status_pending" | t }}';
       
       container.innerHTML = `
-        <div class="bidly-featured-badge">Featured Auction</div>
+        <div class="bidly-featured-badge">{{ "bidly.ui.featured_badge" | t }}</div>
         <div class="bidly-featured-content">
           <div class="bidly-featured-image-container">
             ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-featured-image">` : ''}
@@ -317,12 +317,12 @@
             <div class="bidly-featured-price">
               <div class="bidly-price-label">${priceLabel}</div>
               <div class="bidly-price-amount">$${displayPrice.toFixed(2)}</div>
-              ${startingBid > 0 && currentBid === 0 ? `<div class="bidly-starting-bid">Starting: $${startingBid.toFixed(2)}</div>` : ''}
+              ${startingBid > 0 && currentBid === 0 ? `<div class="bidly-starting-bid">{{ "bidly.ui.starting" | t }}: $${startingBid.toFixed(2)}</div>` : ''}
             </div>
             <div class="bidly-featured-status ${statusClass}">${statusText}</div>
-            ${auction.endTime && status === 'active' ? `<div class="bidly-featured-time" data-end-time="${auction.endTime}">Time left: ${timeLeft}</div>` : ''}
-            ${bidCount > 0 ? `<div style="color: white; font-size: 1rem; margin-top: 0.5rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${bidCount} Bid${bidCount !== 1 ? 's' : ''}</div>` : ''}
-            <div class="bidly-view-product">View Product →</div>
+            ${auction.endTime && status === 'active' ? `<div class="bidly-featured-time" data-end-time="${auction.endTime}">{{ "bidly.ui.time_left" | t }} ${timeLeft}</div>` : ''}
+            ${bidCount > 0 ? `<div style="color: white; font-size: 1rem; margin-top: 0.5rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${bidCount} ${bidCount !== 1 ? '{{ "bidly.ui.bids" | t }}' : '{{ "bidly.ui.bid" | t }}'}</div>` : ''}
+            <div class="bidly-view-product">{{ "bidly.ui.view_product" | t }}</div>
           </div>
         </div>
       `;
@@ -369,8 +369,8 @@
       if (!element || !endTime) return;
       
       const timeLeft = formatTimeLeft(endTime);
-      if (timeLeft === 'Auction Ended') {
-        element.textContent = 'Time left: Auction Ended';
+      if (timeLeft === '{{ "bidly.ui.auction_ended" | t }}') {
+        element.textContent = '{{ "bidly.ui.time_left" | t }} {{ "bidly.ui.auction_ended" | t }}';
         if (window.bidlyBlockTimers) {
           const blockId = element.closest('[id*="bidly-featured"]')?.id?.replace('bidly-featured-container-', '');
           if (blockId && window.bidlyBlockTimers[blockId]) {
@@ -379,7 +379,7 @@
           }
         }
       } else {
-        element.textContent = `Time left: ${timeLeft}`;
+        element.textContent = `{{ "bidly.ui.time_left" | t }} ${timeLeft}`;
       }
     }
     
@@ -399,7 +399,7 @@
       const end = new Date(endTime);
       const distance = end - now;
       
-      if (distance < 0) return 'Auction Ended';
+      if (distance < 0) return '{{ "bidly.ui.auction_ended" | t }}';
       
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -429,14 +429,14 @@
 
 {% schema %}
 {
-  "name": "Featured Auction",
+  "name": {{ "bidly.schema.auction_featured.name" | t | json }},
   "target": "section",
   "settings": [
     {
       "type": "text",
       "id": "auction_id",
-      "label": "Featured Auction ID",
-      "info": "Enter the auction ID to feature prominently"
+      "label": {{ "bidly.schema.auction_featured.featured_auction_id" | t | json }},
+      "info": {{ "bidly.schema.auction_featured.featured_auction_id_info" | t | json }}
     }
   ]
 }

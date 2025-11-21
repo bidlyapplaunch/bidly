@@ -1,4 +1,7 @@
 import nodemailer from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Store from '../models/Store.js';
 import { planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
 import { DEFAULT_EMAIL_TEMPLATES, EMAIL_TEMPLATE_KEYS } from '../constants/emailTemplates.js';
@@ -6,6 +9,10 @@ import {
   getEmailSettingsForShop,
   normalizeEmailSettingsDomain
 } from './emailSettingsService.js';
+import { t } from './i18n.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const CUSTOMIZATION_PLAN = 'pro';
 const DEFAULT_FRONTEND_URL = process.env.FRONTEND_URL || 'https://bidly.app';
@@ -141,6 +148,55 @@ function getTimeRemaining(endTime) {
   return `${minutes}m`;
 }
 
+/**
+ * Load email template from locale-specific directory
+ */
+async function loadLocalizedTemplate(shopDomain, templateKey) {
+  try {
+    const store = await Store.findOne({ shopDomain }).lean();
+    const locale = (store?.primaryLanguage && ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko'].includes(store.primaryLanguage))
+      ? store.primaryLanguage
+      : 'en';
+    
+    const templateDir = path.join(__dirname, '..', 'email-templates', locale);
+    const templateFile = path.join(templateDir, `${templateKey}.html`);
+    const subjectFile = path.join(templateDir, 'subject.json');
+    
+    let html = null;
+    let subject = null;
+    
+    // Try to load localized template
+    if (fs.existsSync(templateFile)) {
+      html = fs.readFileSync(templateFile, 'utf8');
+    }
+    
+    // Try to load localized subject
+    if (fs.existsSync(subjectFile)) {
+      const subjects = JSON.parse(fs.readFileSync(subjectFile, 'utf8'));
+      subject = subjects[templateKey] || null;
+    }
+    
+    // Fallback to default if localized not found
+    if (!html || !subject) {
+      const defaults = DEFAULT_EMAIL_TEMPLATES[templateKey];
+      if (defaults) {
+        html = html || defaults.html;
+        subject = subject || defaults.subject;
+      }
+    }
+    
+    return { html, subject };
+  } catch (error) {
+    console.warn(`Failed to load localized template for ${templateKey} (shop: ${shopDomain}):`, error.message);
+    // Fallback to default
+    const defaults = DEFAULT_EMAIL_TEMPLATES[templateKey];
+    return {
+      html: defaults?.html || '',
+      subject: defaults?.subject || ''
+    };
+  }
+}
+
 function getDefaultTemplateConfig() {
   return EMAIL_TEMPLATE_KEYS.reduce((acc, key) => {
     const defaults = DEFAULT_EMAIL_TEMPLATES[key];
@@ -185,19 +241,29 @@ async function getEffectiveEmailConfig(rawShopDomain) {
     settings.smtp?.pass;
   baseConfig.smtp = settings.smtp || {};
 
+  // Load localized templates
+  const localizedTemplates = {};
+  for (const key of EMAIL_TEMPLATE_KEYS) {
+    const localized = await loadLocalizedTemplate(normalizedShop, key);
+    localizedTemplates[key] = localized;
+  }
+
   const mergedTemplates = {};
   EMAIL_TEMPLATE_KEYS.forEach((key) => {
     const defaults = DEFAULT_EMAIL_TEMPLATES[key];
+    const localized = localizedTemplates[key];
     const custom = settings.templates?.[key];
     const enabled = baseConfig.canCustomize ? custom?.enabled !== false : true;
+    
+    // Priority: custom > localized > default
     const subject =
       baseConfig.canCustomize && custom?.subject?.trim()
         ? custom.subject.trim()
-        : defaults.subject;
+        : (localized?.subject || defaults.subject);
     const html =
       baseConfig.canCustomize && custom?.html?.trim()
         ? custom.html
-        : defaults.html;
+        : (localized?.html || defaults.html);
     const defaultMode = defaults.mode === 'text' ? 'text' : 'html';
     const mode = baseConfig.canCustomize
       ? custom?.mode === 'text'

@@ -60,7 +60,9 @@ router.get('/by-product/:productId', async (req, res, next) => {
     });
     
     if (!auction) {
-      return res.status(404).json({ success: false, message: 'Auction not found' });
+      const { t } = await import('../services/i18n.js');
+      const message = await t(req.shopDomain || null, 'errors.auction_not_found');
+      return res.status(404).json({ success: false, message });
     }
     
     // Compute real-time status

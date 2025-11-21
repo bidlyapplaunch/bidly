@@ -1,0 +1,106 @@
+{
+  "widget": {
+    "header": {
+      "title": "Subasta en Vivo",
+      "live": "EN VIVO",
+      "startingSoon": "INICIANDO PRONTO",
+      "ended": "FINALIZADO",
+      "reserveNotMet": "RESERVA NO ALCANZADA"
+    },
+    "buttons": {
+      "placeBid": "Realizar Puja",
+      "buyNow": "Comprar Ahora",
+      "loginShopify": "Iniciar sesión con Shopify",
+      "continueGuest": "Continuar como Invitado (Solo Ver)",
+      "logout": "Cerrar sesión",
+      "chatBox": "Chat",
+      "viewBids": "Ver Pujas",
+      "viewBidHistory": "Ver Historial de Pujas"
+    },
+    "countdown": {
+      "endsIn": "Finaliza En:",
+      "startingIn": "Iniciando en:",
+      "days": "d",
+      "hours": "h",
+      "minutes": "m",
+      "seconds": "s"
+    },
+    "labels": {
+      "currentBid": "PUJA ACTUAL:",
+      "startingBid": "PUJA INICIAL:",
+      "minimumBid": "PUJA MÍNIMA:",
+      "bids": "PUJAS:",
+      "guestUser": "Usuario Invitado"
+    },
+    "login": {
+      "title": "Inicio de Sesión Requerido",
+      "message": "Por favor, inicia sesión para ver esta subasta",
+      "viewOnly": "Solo Ver",
+      "viewOnlyMessage": "Inicia sesión en Shopify para entrar a la subasta"
+    },
+    "loading": {
+      "title": "Preparando tu subasta...",
+      "message": "Verificando tu cuenta y sincronizando pujas en vivo."
+    },
+    "errors": {
+      "invalidBid": "Cantidad de puja inválida",
+      "bidTooLow": "La puja debe ser mayor que la puja actual",
+      "auctionEnded": "Subasta Finalizada",
+      "reserveNotMet": "Reserva No Alcanzada",
+      "auctionNotFound": "Subasta no encontrada",
+      "networkError": "Error de red. Por favor, inténtalo de nuevo.",
+      "bidFailed": "Error al realizar puja. Por favor, inténtalo de nuevo."
+    },
+    "messages": {
+      "auctionEnded": "La subasta ha finalizado. Puja final: ${amount}",
+      "auctionEndedReserve": "Subasta finalizada — reserva no alcanzada",
+      "bidPlaced": "¡Puja realizada exitosamente!",
+      "newBid": "Nueva puja: ${amount}",
+      "bidNotification": "¡Nueva puja realizada!",
+      "currentBidLabel": "Puja Actual: ${amount}"
+    },
+    "chat": {
+      "title": "Chat",
+      "send": "Enviar",
+      "placeholder": "Escribe un mensaje...",
+      "empty": "Aún no hay mensajes. ¡Inicia la conversación!",
+      "connecting": "Conectando...",
+      "disconnected": "Desconectado",
+      "error": "Error al enviar mensaje"
+    },
+    "bidHistory": {
+      "title": "Historial de Pujas",
+      "noBids": "Aún no hay pujas",
+      "bidder": "Postor",
+      "amount": "Cantidad",
+      "time": "Hora"
+    },
+    "guestLogin": {
+      "title": "Continuar como Invitado",
+      "fullName": "Nombre Completo",
+      "emailAddress": "Dirección de Correo",
+      "continue": "Continuar como Invitado",
+      "cancel": "Cancelar",
+      "errorNameEmail": "Por favor, ingresa nombre y correo",
+      "errorFailed": "Error al iniciar sesión. Por favor, inténtalo de nuevo.",
+      "errorForm": "Error en el formulario. Por favor, inténtalo de nuevo."
+    },
+    "common": {
+      "auctionItem": "Artículo de Subasta",
+      "yourName": "Tu Nombre",
+      "yourEmail": "Tu Correo",
+      "loginToBid": "Iniciar Sesión para Pujar",
+      "logout": "Cerrar sesión",
+      "processing": "Procesando...",
+      "closeChat": "Cerrar chat",
+      "loggedInAs": "Conectado como:",
+      "welcome": "¡Bienvenido, {name}!",
+      "pleaseLoginBid": "Por favor, inicia sesión para realizar una puja",
+      "pleaseLoginBuyNow": "Por favor, inicia sesión para comprar ahora",
+      "invalidBidAmount": "Por favor, ingresa una cantidad de puja válida",
+      "bidInputNotFound": "Campo de puja no encontrado. Por favor, actualiza la página.",
+      "bidButtonNotFound": "Botón de puja no encontrado. Por favor, actualiza la página.",
+      "buyNowButtonNotFound": "Botón de compra inmediata no encontrado. Por favor, actualiza la página."
+    }
+  }
+}

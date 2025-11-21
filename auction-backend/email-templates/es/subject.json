@@ -1,0 +1,6 @@
+{
+  "bidConfirmation": "Tu puja en {{auction_title}} ha sido recibida",
+  "outbidNotification": "Tu puja ha sido superada en {{auction_title}}",
+  "winnerNotification": "¡Ganaste la subasta por {{auction_title}}!",
+  "auctionEndingSoon": "{{auction_title}} está finalizando pronto"
+}

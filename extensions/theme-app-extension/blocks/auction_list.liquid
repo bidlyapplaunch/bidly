@@ -18,15 +18,15 @@
      style="{% if shop.design_mode %}min-height: 200px;{% endif %}">
   <div class="bidly-loading" id="bidly-loading-{{ block_id }}">
     <div class="bidly-spinner"></div>
-    <p>Loading auctions...</p>
+    <p>{{ 'bidly.ui.loading_auctions' | t }}</p>
   </div>
   
   <div class="bidly-error" id="bidly-error-{{ block_id }}" style="display: none;">
-    <p>Unable to load auctions. Please try again later.</p>
+    <p>{{ 'bidly.ui.error_load_auctions' | t }}</p>
   </div>
   
   <div class="bidly-auctions-container" id="bidly-auctions-{{ block_id }}" style="display: none;">
-    <h3 class="bidly-section-title">{{ block.settings.title | default: 'Live Auctions' }}</h3>
+    <h3 class="bidly-section-title">{% if block.settings.title %}{{ block.settings.title }}{% else %}{{ 'bidly.schema.auction_list.live_auctions' | t }}{% endif %}</h3>
     <div class="bidly-auctions-grid" id="bidly-grid-{{ block_id }}">
       <!-- Auctions will be populated by JavaScript -->
     </div>
@@ -35,14 +35,14 @@
   <!-- Theme Editor Placeholder -->
   <div class="bidly-theme-editor-placeholder" style="display: none;">
     <div style="padding: 2rem; text-align: center; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">
-      <h3 style="margin: 0 0 1rem 0; color: #495057;">🎯 Bidly Auction List</h3>
-      <p style="margin: 0; color: #6c757d;">This block will display live auctions when the theme is published.</p>
+      <h3 style="margin: 0 0 1rem 0; color: #495057;">{{ 'bidly.editor.auction_list_title' | t }}</h3>
+      <p style="margin: 0; color: #6c757d;">{{ 'bidly.editor.auction_list_message' | t }}</p>
       <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 4px;">
         <p style="margin: 0; font-size: 0.9rem; color: #6c757d;">
-          <strong>Settings:</strong><br>
-          Title: {{ block.settings.title | default: 'Live Auctions' }}<br>
-          Max Auctions: {{ max_auctions }}<br>
-          Show Ended: {{ show_ended }}
+          <strong>{{ 'bidly.editor.settings' | t }}</strong><br>
+          {{ 'bidly.editor.title_label' | t }} {% if block.settings.title %}{{ block.settings.title }}{% else %}{{ 'bidly.schema.auction_list.live_auctions' | t }}{% endif %}<br>
+          {{ 'bidly.editor.max_auctions_label' | t }} {{ max_auctions }}<br>
+          {{ 'bidly.editor.show_ended_label' | t }} {{ show_ended }}
         </p>
       </div>
     </div>
@@ -268,7 +268,7 @@
             
             renderAuctions(blockId, auctions, shopDomain);
           } else {
-            showError(blockId, 'No auctions found');
+            showError(blockId, '{{ "bidly.ui.no_auctions" | t }}');
           }
         })
         .catch(error => {
@@ -288,23 +288,23 @@
         const productHandle = auction.productData?.handle || '';
         const productUrl = productHandle ? `https://${shopDomain}/products/${productHandle}` : '#';
         const productImage = auction.productData?.images?.[0]?.src || auction.productData?.image?.src || '';
-        const productTitle = auction.productData?.title || auction.productTitle || 'Auction Item';
+        const productTitle = auction.productData?.title || auction.productTitle || '{{ "bidly.ui.auction_item" | t }}';
         
         const status = computeAuctionStatus(auction);
         const timeLeft = formatTimeLeft(auction.endTime);
         const currentBid = auction.currentBid || 0;
         const startingBid = auction.startingBid || 0;
         const displayPrice = currentBid > 0 ? currentBid : startingBid;
-        const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
+        const priceLabel = currentBid > 0 ? '{{ "bidly.ui.current_bid" | t }}' : '{{ "bidly.ui.starting_bid" | t }}';
         const bidCount = auction.bidHistory?.length || 0;
         
         const statusClass = status === 'active' ? 'bidly-status-active' : status === 'ended' ? 'bidly-status-ended' : 'bidly-status-pending';
-        const statusText = status === 'active' ? '● LIVE' : status === 'ended' ? '● ENDED' : '● PENDING';
+        const statusText = status === 'active' ? '{{ "bidly.ui.status_live" | t }}' : status === 'ended' ? '{{ "bidly.ui.status_ended" | t }}' : '{{ "bidly.ui.status_pending" | t }}';
         
         const auctionId = auction._id || auction.id || Math.random().toString(36);
         return `
           <div class="bidly-auction-card" data-product-url="${productUrl}" data-auction-id="${auctionId}" data-end-time="${auction.endTime || ''}">
-            ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-auction-card-image">` : '<div class="bidly-auction-card-image" style="display: flex; align-items: center; justify-content: center; color: #999;">No Image</div>'}
+            ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-auction-card-image">` : '<div class="bidly-auction-card-image" style="display: flex; align-items: center; justify-content: center; color: #999;">{{ "bidly.ui.no_image" | t }}</div>'}
             <div class="bidly-auction-card-content">
               <h3 class="bidly-auction-card-title">${productTitle}</h3>
               <div class="bidly-auction-card-status ${statusClass}">${statusText}</div>
@@ -312,9 +312,9 @@
                 <div class="bidly-price-label">${priceLabel}</div>
                 <div class="bidly-price-amount">$${displayPrice.toFixed(2)}</div>
               </div>
-              ${auction.endTime && status === 'active' ? `<div class="bidly-auction-card-time" data-end-time="${auction.endTime}">Time left: ${timeLeft}</div>` : ''}
-              ${bidCount > 0 ? `<div class="bidly-auction-card-bids">${bidCount} Bid${bidCount !== 1 ? 's' : ''}</div>` : ''}
-              <a href="${productUrl}" class="bidly-view-product-link" onclick="event.stopPropagation(); return true;">View Product →</a>
+              ${auction.endTime && status === 'active' ? `<div class="bidly-auction-card-time" data-end-time="${auction.endTime}">{{ "bidly.ui.time_left" | t }} ${timeLeft}</div>` : ''}
+              ${bidCount > 0 ? `<div class="bidly-auction-card-bids">${bidCount} ${bidCount !== 1 ? '{{ "bidly.ui.bids" | t }}' : '{{ "bidly.ui.bid" | t }}'}</div>` : ''}
+              <a href="${productUrl}" class="bidly-view-product-link" onclick="event.stopPropagation(); return true;">{{ "bidly.ui.view_product" | t }}</a>
             </div>
           </div>
         `;
@@ -372,8 +372,8 @@
       if (!element || !endTime) return;
       
       const timeLeft = formatTimeLeft(endTime);
-      if (timeLeft === 'Auction Ended') {
-        element.textContent = 'Time left: Auction Ended';
+      if (timeLeft === '{{ "bidly.ui.auction_ended" | t }}') {
+        element.textContent = '{{ "bidly.ui.time_left" | t }} {{ "bidly.ui.auction_ended" | t }}';
         // Find timer ID and clear it
         if (window.bidlyBlockTimers) {
           const timerId = Object.keys(window.bidlyBlockTimers).find(id => {
@@ -386,7 +386,7 @@
           }
         }
       } else {
-        element.textContent = `Time left: ${timeLeft}`;
+        element.textContent = `{{ "bidly.ui.time_left" | t }} ${timeLeft}`;
       }
     }
     
@@ -406,7 +406,7 @@
       const end = new Date(endTime);
       const distance = end - now;
       
-      if (distance < 0) return 'Auction Ended';
+      if (distance < 0) return '{{ "bidly.ui.auction_ended" | t }}';
       
       const days = Math.floor(distance / (1000 * 60 * 60 * 24));
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -442,26 +442,26 @@
 
 {% schema %}
 {
-  "name": "Auction List",
+  "name": {{ "bidly.schema.auction_list.name" | t | json }},
   "target": "section",
   "settings": [
     {
       "type": "text",
       "id": "title",
-      "label": "Section Title",
+      "label": {{ "bidly.schema.auction_list.section_title" | t | json }},
       "default": "Live Auctions"
     },
     {
       "type": "number",
       "id": "max_auctions",
-      "label": "Max Auctions",
+      "label": {{ "bidly.schema.auction_list.max_auctions" | t | json }},
       "default": 6,
-      "info": "Maximum number of auctions to display"
+      "info": {{ "bidly.schema.auction_list.max_auctions_info" | t | json }}
     },
     {
       "type": "checkbox",
       "id": "show_ended",
-      "label": "Show Ended Auctions",
+      "label": {{ "bidly.schema.auction_list.show_ended" | t | json }},
       "default": false
     }
   ]

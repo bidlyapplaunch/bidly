@@ -1,0 +1,70 @@
+{
+  "errors": {
+    "validation_failed": "Validation failed",
+    "duplicate_key": "{{field}} already exists",
+    "invalid_id": "Invalid ID format",
+    "internal_server_error": "Internal server error",
+    "not_found": "Not found",
+    "auction_not_found": "Auction not found",
+    "customer_already_exists": "Customer already exists for this store",
+    "bid_placed_successfully": "Bid placed successfully",
+    "auction_created_successfully": "Auction created successfully",
+    "auction_updated_successfully": "Auction updated successfully",
+    "auction_deleted_successfully": "Auction deleted successfully",
+    "auction_relisted_successfully": "Auction relisted successfully",
+    "invalid_product_id": "Invalid product ID for chat room"
+  },
+  "emails": {
+    "bid_confirmation": {
+      "subject": "Your bid on {{auction_title}} has been received",
+      "title": "🎯 Bid Confirmation",
+      "greeting": "Hello {{display_name}},",
+      "body": "Your bid has been successfully placed on {{auction_title}}.",
+      "auction_details": "Auction Details",
+      "item": "Item:",
+      "your_bid": "Your Bid:",
+      "auction_ends": "Auction Ends:",
+      "current_status": "Current Status:",
+      "notification_note": "We will notify you if someone outbids you or if you win the auction.",
+      "signature": "Best regards,<br>{{store_name}} Team"
+    },
+    "outbid_notification": {
+      "subject": "You have been outbid on {{auction_title}}",
+      "title": "⚠️ You've Been Outbid",
+      "greeting": "Hello {{display_name}},",
+      "body": "Someone just placed a higher bid on {{auction_title}}.",
+      "auction_update": "Auction Update",
+      "item": "Item:",
+      "new_highest_bid": "New Highest Bid:",
+      "time_remaining": "Time Remaining:",
+      "cta_text": "Place a new bid",
+      "signature": "Best regards,<br>{{store_name}} Team"
+    },
+    "winner_notification": {
+      "subject": "You won the auction for {{auction_title}}!",
+      "title": "🎉 You Won the Auction!",
+      "greeting": "Dear {{display_name}},",
+      "body": "Congratulations! You won the auction for <strong>{{auction_title}}</strong> with a winning bid of <strong>{{winning_bid}}</strong>.",
+      "winning_details": "Winning Details",
+      "product": "Product:",
+      "winning_bid": "Winning Bid:",
+      "auction_ended": "Auction Ended:",
+      "next_steps": "📧 Next Steps",
+      "next_steps_body": "An invoice with payment instructions will arrive shortly. Please follow the link in that email to claim your win.",
+      "signature": "Best regards,<br>{{store_name}} Team"
+    },
+    "auction_ending_soon": {
+      "subject": "{{auction_title}} is ending soon",
+      "title": "⏰ Auction Ending Soon!",
+      "greeting": "Hello {{display_name}},",
+      "body": "The auction for {{auction_title}} is ending soon. Don't miss your chance to win!",
+      "auction_details": "Auction Details",
+      "item": "Item:",
+      "current_bid": "Current Bid:",
+      "time_remaining": "Time Remaining:",
+      "cta_text": "Place your final bid",
+      "signature": "Best regards,<br>{{store_name}} Team"
+    }
+  }
+}
+

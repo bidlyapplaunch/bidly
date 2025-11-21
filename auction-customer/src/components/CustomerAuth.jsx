@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import './CustomerAuth.css';
+import { t } from '../i18n';
 
 const marketplaceConfig = typeof window !== 'undefined' ? (window.BidlyMarketplaceConfig || {}) : {};
 
@@ -30,15 +31,15 @@ const CustomerAuth = ({ onLogin, onClose }) => {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      setError('Name is required');
+      setError(t('marketplace.auth.nameRequired'));
       return false;
     }
     if (!formData.email.trim()) {
-      setError('Email is required');
+      setError(t('marketplace.auth.emailRequired'));
       return false;
     }
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError(t('marketplace.auth.emailInvalid'));
       return false;
     }
     return true;
@@ -66,7 +67,7 @@ const CustomerAuth = ({ onLogin, onClose }) => {
       onLogin(customerData);
       onClose();
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError(t('marketplace.auth.errorGeneric'));
       console.error('Auth error:', err);
     } finally {
       setLoading(false);
@@ -84,19 +85,19 @@ const CustomerAuth = ({ onLogin, onClose }) => {
       <div className="customer-auth-overlay">
         <div className="customer-auth-modal">
           <div className="customer-auth-header">
-            <h2>Sign in to Bid</h2>
+            <h2>{t('marketplace.auth.signInTitle')}</h2>
             <button className="close-btn" onClick={onClose}>×</button>
           </div>
 
           <div className="customer-auth-body">
             <p className="auth-description">
               {shopName
-                ? `Please sign in with your ${shopName} store account to place bids.`
-                : 'Please sign in with your store account to place bids.'}
+                ? t('marketplace.auth.shopifyLoginDescription', { shop: shopName })
+                : t('marketplace.auth.shopifyLoginDescriptionGeneric')}
             </p>
 
             <div className="shopify-login-card">
-              <p>You'll be redirected to your Shopify login page. Once you return, you can continue bidding.</p>
+              <p>{t('marketplace.auth.shopifyLoginCard')}</p>
               <button
                 type="button"
                 className="auth-submit-btn"
@@ -106,7 +107,7 @@ const CustomerAuth = ({ onLogin, onClose }) => {
                   }
                 }}
               >
-                Continue to Shopify Login
+                {t('marketplace.auth.continueShopifyLogin')}
               </button>
             </div>
           </div>
@@ -119,42 +120,42 @@ const CustomerAuth = ({ onLogin, onClose }) => {
     <div className="customer-auth-overlay">
       <div className="customer-auth-modal">
         <div className="customer-auth-header">
-          <h2>{isLogin ? 'Login to Bid' : 'Register to Bid'}</h2>
+          <h2>{isLogin ? t('marketplace.auth.loginTitle') : t('marketplace.auth.registerTitle')}</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         
         <div className="customer-auth-body">
           <p className="auth-description">
             {isLogin 
-              ? 'Enter your details to start bidding on auctions'
-              : 'Create an account to participate in auctions'
+              ? t('marketplace.auth.loginDescription')
+              : t('marketplace.auth.registerDescription')
             }
           </p>
           
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
-              <label htmlFor="name">Full Name *</label>
+              <label htmlFor="name">{t('marketplace.auth.fullName')}</label>
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Enter your full name"
+                placeholder={t('marketplace.auth.fullNamePlaceholder')}
                 required
                 disabled={loading}
               />
             </div>
             
             <div className="form-group">
-              <label htmlFor="email">Email Address *</label>
+              <label htmlFor="email">{t('marketplace.auth.email')}</label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="Enter your email address"
+                placeholder={t('marketplace.auth.emailPlaceholder')}
                 required
                 disabled={loading}
               />
@@ -171,20 +172,20 @@ const CustomerAuth = ({ onLogin, onClose }) => {
               className="auth-submit-btn"
               disabled={loading}
             >
-              {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
+              {loading ? t('marketplace.auth.processing') : (isLogin ? t('marketplace.auth.login') : t('marketplace.auth.register'))}
             </button>
           </form>
           
           <div className="auth-switch">
             <p>
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              {isLogin ? t('marketplace.auth.noAccount') + ' ' : t('marketplace.auth.hasAccount') + ' '}
               <button 
                 type="button" 
                 className="switch-btn"
                 onClick={switchMode}
                 disabled={loading}
               >
-                {isLogin ? 'Register' : 'Login'}
+                {isLogin ? t('marketplace.auth.switchToRegister') : t('marketplace.auth.switchToLogin')}
               </button>
             </p>
           </div>

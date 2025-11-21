@@ -1,0 +1,69 @@
+{
+  "errors": {
+    "validation_failed": "Error de validación",
+    "duplicate_key": "{{field}} ya existe",
+    "invalid_id": "Formato de ID inválido",
+    "internal_server_error": "Error interno del servidor",
+    "not_found": "No encontrado",
+    "auction_not_found": "Subasta no encontrada",
+    "customer_already_exists": "El cliente ya existe para esta tienda",
+    "bid_placed_successfully": "Puja realizada exitosamente",
+    "auction_created_successfully": "Subasta creada exitosamente",
+    "auction_updated_successfully": "Subasta actualizada exitosamente",
+    "auction_deleted_successfully": "Subasta eliminada exitosamente",
+    "auction_relisted_successfully": "Subasta relistada exitosamente",
+    "invalid_product_id": "ID de producto inválido para sala de chat"
+  },
+  "emails": {
+    "bid_confirmation": {
+      "subject": "Tu puja en {{auction_title}} ha sido recibida",
+      "title": "🎯 Confirmación de Puja",
+      "greeting": "Hola {{display_name}},",
+      "body": "Tu puja ha sido realizada exitosamente en {{auction_title}}.",
+      "auction_details": "Detalles de Subasta",
+      "item": "Artículo:",
+      "your_bid": "Tu Puja:",
+      "auction_ends": "Subasta Finaliza:",
+      "current_status": "Estado Actual:",
+      "notification_note": "Te notificaremos si alguien supera tu puja o si ganas la subasta.",
+      "signature": "Saludos cordiales,<br>Equipo {{store_name}}"
+    },
+    "outbid_notification": {
+      "subject": "Tu puja ha sido superada en {{auction_title}}",
+      "title": "⚠️ Tu Puja Ha Sido Superada",
+      "greeting": "Hola {{display_name}},",
+      "body": "Alguien acaba de realizar una puja más alta en {{auction_title}}.",
+      "auction_update": "Actualización de Subasta",
+      "item": "Artículo:",
+      "new_highest_bid": "Nueva Puja Más Alta:",
+      "time_remaining": "Tiempo Restante:",
+      "cta_text": "Realizar una nueva puja",
+      "signature": "Saludos cordiales,<br>Equipo {{store_name}}"
+    },
+    "winner_notification": {
+      "subject": "¡Ganaste la subasta por {{auction_title}}!",
+      "title": "🎉 ¡Ganaste la Subasta!",
+      "greeting": "Estimado {{display_name}},",
+      "body": "¡Felicidades! Ganaste la subasta por <strong>{{auction_title}}</strong> con una puja ganadora de <strong>{{winning_bid}}</strong>.",
+      "winning_details": "Detalles de Victoria",
+      "product": "Producto:",
+      "winning_bid": "Puja Ganadora:",
+      "auction_ended": "Subasta Finalizada:",
+      "next_steps": "📧 Próximos Pasos",
+      "next_steps_body": "Llegará una factura con instrucciones de pago en breve. Por favor, sigue el enlace en ese correo para reclamar tu victoria.",
+      "signature": "Saludos cordiales,<br>Equipo {{store_name}}"
+    },
+    "auction_ending_soon": {
+      "subject": "{{auction_title}} está finalizando pronto",
+      "title": "⏰ ¡Subasta Finalizando Pronto!",
+      "greeting": "Hola {{display_name}},",
+      "body": "La subasta por {{auction_title}} está finalizando pronto. ¡No pierdas tu oportunidad de ganar!",
+      "auction_details": "Detalles de Subasta",
+      "item": "Artículo:",
+      "current_bid": "Puja Actual:",
+      "time_remaining": "Tiempo Restante:",
+      "cta_text": "Realiza tu puja final",
+      "signature": "Saludos cordiales,<br>Equipo {{store_name}}"
+    }
+  }
+}

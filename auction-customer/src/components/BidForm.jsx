@@ -9,6 +9,7 @@ import {
   Spinner,
   Modal
 } from '@shopify/polaris';
+import { t } from '../i18n';
 
 const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   const [amount, setAmount] = useState('');
@@ -25,9 +26,9 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
 
     if (!amount || isNaN(amount) || parseFloat(amount) < minBid) {
       if (auction.currentBid > 0) {
-        setError(`Bid must be higher than current bid ($${auction.currentBid})`);
+        setError(t('marketplace.bid_form.errorMinBid', { amount: auction.currentBid }));
       } else {
-        setError(`Bid must be at least the starting bid ($${auction.startingBid})`);
+        setError(t('marketplace.bid_form.errorMinStarting', { amount: auction.startingBid }));
       }
       return;
     }
@@ -74,7 +75,7 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           color: 'var(--bidly-marketplace-color-text-primary, #222222)'
         }}
       >
-        Place Your Bid
+        {t('marketplace.bid_form.title')}
       </Text>
       
       {error && (
@@ -88,25 +89,25 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
       <form ref={formRef} onSubmit={handleSubmit}>
         <FormLayout>
           <TextField
-            label="Bid Amount"
+            label={t('marketplace.bid_form.bidAmount')}
             type="number"
             value={amount}
             onChange={setAmount}
-            placeholder={`Minimum: $${minBid}`}
+            placeholder={t('marketplace.bid_form.bidAmountPlaceholder', { amount: minBid })}
             min={minBid}
             step="0.01"
             prefix="$"
             required
             disabled={isLoading}
             helpText={auction.currentBid > 0 ? 
-              `Current highest bid: $${auction.currentBid}` : 
-              `Starting bid: $${auction.startingBid}`
+              t('marketplace.bid_form.currentBidHelp', { amount: auction.currentBid }) : 
+              t('marketplace.bid_form.startingBidHelp', { amount: auction.startingBid })
             }
           />
 
           {/* Quick bid buttons */}
           <div style={{ marginTop: '0.5rem' }}>
-            <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>Quick bid:</Text>
+            <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>{t('marketplace.bid_form.quickBid')}</Text>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
               <Button 
                 size="slim" 
@@ -162,16 +163,16 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
       <Modal
         open={showBuyNowModal}
         onClose={() => setShowBuyNowModal(false)}
-        title="Confirm Buy Now"
+        title={t('marketplace.bid_form.confirmBuyNow')}
         primaryAction={{
-          content: 'Yes, Buy Now',
+          content: t('marketplace.bid_form.yesBuyNow'),
           onAction: confirmBuyNow,
           loading: isLoading,
           tone: 'critical'
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
+            content: t('marketplace.bid_form.cancel'),
             onAction: () => setShowBuyNowModal(false)
           }
         ]}
@@ -179,11 +180,11 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
         <Modal.Section>
           <div style={{ fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)' }}>
             <Text variant="bodyMd" style={{ color: 'var(--bidly-marketplace-color-text-primary, #222222)' }}>
-              Are you sure you want to buy this item for <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-marketplace-color-success, #00c851)' }}>${auction.buyNowPrice}</Text>?
+              {t('marketplace.bid_form.confirmBuyNowMessage')} <Text variant="bodyMd" fontWeight="bold" style={{ color: 'var(--bidly-marketplace-color-success, #00c851)' }}>${auction.buyNowPrice}</Text>?
             </Text>
             <div style={{ marginTop: '0.5rem' }}>
               <Text variant="bodyMd" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
-                This will end the auction immediately and you will be the winner.
+                {t('marketplace.bid_form.confirmBuyNowDescription')}
               </Text>
             </div>
           </div>

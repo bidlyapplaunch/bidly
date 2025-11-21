@@ -16,6 +16,7 @@ import customerAuthService from './services/customerAuth';
 import AuctionCard from './components/AuctionCard';
 import CustomerAuth from './components/CustomerAuth';
 import themeService from './services/themeService';
+import { t } from './i18n';
 
 function App() {
   const marketplaceConfig = typeof window !== 'undefined' ? (window.BidlyMarketplaceConfig || {}) : {};
@@ -33,7 +34,7 @@ function App() {
     gradientEnabled: false
   });
 
-  const ANONYMOUS_BIDDER = 'Anonymous';
+  const ANONYMOUS_BIDDER = t('marketplace.anonymous');
 
   const getDisplayName = (entity) => {
     if (!entity) return ANONYMOUS_BIDDER;
@@ -214,11 +215,11 @@ function App() {
       
       const productName = bidData.productTitle || 'the item';
       if (bidData.buyNow) {
-        setToastMessage(`🎉 ${bidderName} bought ${productName} now! Auction ended.`);
+        setToastMessage(t('marketplace.toasts.boughtNow', { name: bidderName, product: productName }));
       } else if (bidData.auctionEnded) {
-        setToastMessage(`🏆 ${bidderName} won the auction with $${bidData.amount}!`);
+        setToastMessage(t('marketplace.toasts.wonAuction', { name: bidderName, amount: bidData.amount }));
       } else {
-        setToastMessage(`New bid: $${bidData.amount} by ${bidderName}`);
+        setToastMessage(t('marketplace.toasts.newBid', { name: bidderName, amount: bidData.amount }));
       }
       setShowToast(true);
     };
@@ -244,16 +245,16 @@ function App() {
       let statusMessage = '';
       switch (statusData.newStatus) {
         case 'active':
-          statusMessage = `🟢 Auction is now active! You can place bids.`;
+          statusMessage = t('marketplace.toasts.statusActive');
           break;
         case 'ended':
-          statusMessage = `🔴 Auction has ended.`;
+          statusMessage = t('marketplace.toasts.statusEnded');
           break;
         case 'pending':
-          statusMessage = `⏳ Auction is pending.`;
+          statusMessage = t('marketplace.toasts.statusPending');
           break;
         default:
-          statusMessage = `🔄 Auction status updated to ${statusData.newStatus}.`;
+          statusMessage = t('marketplace.toasts.statusUpdated', { status: statusData.newStatus });
       }
       
       setToastMessage(statusMessage);
@@ -277,7 +278,7 @@ function App() {
       );
       
       // Show notification for time extension
-      setToastMessage(`🍿 ${extensionData.message}`);
+      setToastMessage(t('marketplace.toasts.timeExtension', { message: extensionData.message }));
       setShowToast(true);
     };
     
@@ -333,7 +334,7 @@ function App() {
       setAuctions(visibleAuctions.map(normalizeAuction));
     } catch (err) {
       console.error('Error fetching auctions:', err);
-      setError('Failed to fetch auctions. Please try again later.');
+      setError(t('marketplace.errors.fetchFailed'));
       setAuctions([]);
     } finally {
       setLoading(false);
@@ -362,8 +363,8 @@ function App() {
     }
 
     if (!customer?.id) {
-      setError('We could not verify your bidder profile. Please log in again.');
-      setToastMessage('❌ Please log in again to place bids.');
+      setError(t('marketplace.errors.profileVerifyError'));
+      setToastMessage(t('marketplace.toasts.loginRequired'));
       setShowToast(true);
       setAuthRequired(true);
       setShowAuthModal(true);
@@ -376,9 +377,9 @@ function App() {
     }
 
     if (!activeProfile?.id) {
-      const profileError = 'We could not load your bidder profile. Please refresh and try again.';
+      const profileError = t('marketplace.errors.profileError');
       setError(profileError);
-      setToastMessage(`❌ ${profileError}`);
+      setToastMessage(t('marketplace.toasts.profileError'));
       setShowToast(true);
       setAuthRequired(true);
       setShowAuthModal(true);
@@ -396,7 +397,7 @@ function App() {
       });
       
       const bidderName = activeProfile.displayName || currentDisplayName;
-      setToastMessage(`✅ Bid placed successfully! $${bidData.amount} by ${bidderName}`);
+      setToastMessage(t('marketplace.toasts.bidPlaced', { amount: bidData.amount, name: bidderName }));
       setShowToast(true);
       
       // Refresh auctions to get updated data
@@ -406,18 +407,18 @@ function App() {
       console.error('Error placing bid:', err);
       
       // Better error handling with specific messages
-      let errorMessage = 'Failed to place bid. Please try again.';
+      let errorMessage = t('marketplace.errors.bidFailed');
       
       if (err.response?.status === 400) {
-        errorMessage = err.response?.data?.message || 'Invalid bid. Please check your bid amount.';
+        errorMessage = err.response?.data?.message || t('marketplace.errors.bidInvalid');
       } else if (err.response?.status === 404) {
-        errorMessage = 'Auction not found. It may have ended.';
+        errorMessage = t('marketplace.errors.auctionNotFound');
       } else if (err.response?.status === 409) {
-        errorMessage = 'Auction is not active. You cannot bid on this auction.';
+        errorMessage = t('marketplace.errors.auctionNotActive');
       } else if (err.response?.status === 500) {
-        errorMessage = 'Server error. Please try again in a moment.';
+        errorMessage = t('marketplace.errors.serverError');
       } else if (!navigator.onLine) {
-        errorMessage = 'No internet connection. Please check your network.';
+        errorMessage = t('marketplace.errors.noConnection');
       }
       
       setError(errorMessage);
@@ -435,8 +436,8 @@ function App() {
     }
 
     if (!customer?.id) {
-      setError('We could not verify your bidder profile. Please log in again.');
-      setToastMessage('❌ Please log in again to buy now.');
+      setError(t('marketplace.errors.profileVerifyError'));
+      setToastMessage(t('marketplace.toasts.loginRequiredBuyNow'));
       setShowToast(true);
       setAuthRequired(true);
       setShowAuthModal(true);
@@ -449,9 +450,9 @@ function App() {
     }
 
     if (!activeProfile?.id) {
-      const profileError = 'We could not load your bidder profile. Please refresh and try again.';
+      const profileError = t('marketplace.errors.profileError');
       setError(profileError);
-      setToastMessage(`❌ ${profileError}`);
+      setToastMessage(t('marketplace.toasts.profileError'));
       setShowToast(true);
       setAuthRequired(true);
       setShowAuthModal(true);
@@ -470,7 +471,7 @@ function App() {
       const auction = auctions.find(a => (a._id || a.id) === auctionId);
       const productName = auction?.productData?.title || 'the item';
       const bidderName = activeProfile.displayName || currentDisplayName;
-      setToastMessage(`🎉 Buy now successful! ${bidderName} won ${productName}!`);
+      setToastMessage(t('marketplace.toasts.buyNowSuccess', { name: bidderName, product: productName }));
       setShowToast(true);
       
       // Refresh auctions to get updated data
@@ -480,18 +481,18 @@ function App() {
       console.error('Error buying now:', err);
       
       // Better error handling for buy now
-      let errorMessage = 'Failed to buy now. Please try again.';
+      let errorMessage = t('marketplace.errors.buyNowFailed');
       
       if (err.response?.status === 400) {
-        errorMessage = err.response?.data?.message || 'Invalid buy now request.';
+        errorMessage = err.response?.data?.message || t('marketplace.errors.buyNowInvalid');
       } else if (err.response?.status === 404) {
-        errorMessage = 'Auction not found or already ended.';
+        errorMessage = t('marketplace.errors.buyNowNotFound');
       } else if (err.response?.status === 409) {
-        errorMessage = 'Auction is not active. Buy now is not available.';
+        errorMessage = t('marketplace.errors.buyNowNotActive');
       } else if (err.response?.status === 500) {
-        errorMessage = 'Server error. Please try again in a moment.';
+        errorMessage = t('marketplace.errors.serverError');
       } else if (!navigator.onLine) {
-        errorMessage = 'No internet connection. Please check your network.';
+        errorMessage = t('marketplace.errors.noConnection');
       }
       
       setError(errorMessage);
@@ -509,7 +510,7 @@ function App() {
     setShowAuthModal(false);
     setAuthRequired(false);
     const alias = customerData.name || customerData.fullName || customerData.email || 'your account';
-    setToastMessage(`Welcome, ${alias}! You can now place bids.`);
+    setToastMessage(t('marketplace.auth.welcome', { name: alias }));
     setShowToast(true);
   };
 
@@ -518,7 +519,7 @@ function App() {
     setCustomer(null);
     setCustomerProfile(null);
     if (!enforceShopifyLogin) {
-      setToastMessage('You have been logged out.');
+      setToastMessage(t('marketplace.auth.loggedOut'));
       setShowToast(true);
     }
   };
@@ -554,7 +555,7 @@ function App() {
       >
         <AppProvider>
           <Frame>
-            <Page title="Live Auctions">
+            <Page title={t('marketplace.header.title')}>
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
                 <Spinner size="large" />
               </div>
@@ -574,11 +575,11 @@ function App() {
       <AppProvider>
         <Frame>
         <Page
-          title={`Auction Marketplace${shopName ? ` - ${shopName}` : ''}`}
-          subtitle={shopName ? `Browse auctions from ${shopName}` : "Browse pending, active, and ended auctions"}
+          title={shopName ? t('marketplace.header.titleWithShop', { shop: shopName }) : t('marketplace.header.title')}
+          subtitle={shopName ? t('marketplace.header.subtitleWithShop', { shop: shopName }) : t('marketplace.header.subtitle')}
           secondaryActions={[
             {
-              content: customer ? `👤 ${currentDisplayName} · Logout` : 'Login to Bid',
+              content: customer ? t('marketplace.header.userMenu', { name: currentDisplayName }) : t('marketplace.header.loginButton'),
               onAction: customer ? handleCustomerLogout : handleLoginAction
             }
           ]}
@@ -594,9 +595,9 @@ function App() {
           {auctions.length === 0 ? (
             <Card sectioned>
               <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <Text variant="headingLg" as="h2">No Auctions Available</Text>
+                <Text variant="headingLg" as="h2">{t('marketplace.empty.title')}</Text>
                 <Text variant="bodyMd" color="subdued">
-                  There are currently no pending, active, or ended auctions. Check back later!
+                  {t('marketplace.empty.description')}
                 </Text>
               </div>
             </Card>

@@ -323,9 +323,11 @@ export const createAuction = async (req, res, next) => {
       });
     }
     
+    const { t } = await import('../services/i18n.js');
+    const message = await t(req.shopDomain || null, 'errors.auction_created_successfully');
     res.status(201).json({
       success: true,
-      message: 'Auction created successfully',
+      message,
       data: savedAuction
     });
   } catch (error) {
@@ -637,9 +639,11 @@ export const updateAuction = async (req, res, next) => {
       console.warn('Failed to update product metafields (non-blocking):', error.message);
     });
     
+    const { t } = await import('../services/i18n.js');
+    const message = await t(req.shopDomain || null, 'errors.auction_updated_successfully');
     res.json({
       success: true,
-      message: 'Auction updated successfully',
+      message,
       data: updatedAuction
     });
   } catch (error) {
@@ -719,9 +723,11 @@ export const deleteAuction = async (req, res, next) => {
     
     console.log('✅ Auction soft deleted successfully:', req.params.id);
     
+    const { t } = await import('../services/i18n.js');
+    const message = await t(req.shopDomain || null, 'errors.auction_deleted_successfully');
     res.json({
       success: true,
-      message: 'Auction deleted successfully'
+      message
     });
   } catch (error) {
     console.error('❌ Delete auction error:', error.message);
@@ -1052,9 +1058,11 @@ export const placeBid = async (req, res, next) => {
       });
     }
     
+    const { t } = await import('../services/i18n.js');
+    const message = await t(req.shopDomain || null, 'errors.bid_placed_successfully');
     res.json({
       success: true,
-      message: 'Bid placed successfully',
+      message,
       auction: decoratedUpdatedAuction, // Frontend expects 'auction' field
       data: decoratedUpdatedAuction, // Keep 'data' for backward compatibility
       isWinning: true // Indicate if this bid is the winning bid
@@ -1475,9 +1483,11 @@ export const relistAuction = async (req, res, next) => {
       console.warn('Failed to update product metafields (non-blocking):', error.message);
     });
     
+    const { t } = await import('../services/i18n.js');
+    const message = await t(req.shopDomain || null, 'errors.auction_relisted_successfully');
     res.json({
       success: true,
-      message: 'Auction relisted successfully',
+      message,
       data: updatedAuction
     });
     

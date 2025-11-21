@@ -4,268 +4,268 @@
       "loadingApp": "Cargando Bidly…",
       "preparingDashboard": "Preparando tu panel…",
       "appBridge": {
-        "missingShop": "No se encontró el parámetro shop en la URL.",
-        "initializationFailed": "No se pudo inicializar Shopify App Bridge.",
+        "missingShop": "No se encontró el parámetro de tienda en la URL.",
+        "initializationFailed": "Error al inicializar Shopify App Bridge.",
         "initializing": "Inicializando Shopify App Bridge…",
-        "connecting": "Conectando con Shopify…",
-        "errorTitle": "Error de inicialización de la app",
-        "openFromAdmin": "Abre esta aplicación desde el administrador de Shopify."
+        "connecting": "Conectando a Shopify…",
+        "errorTitle": "Error de Inicialización de la App",
+        "openFromAdmin": "Por favor, abre esta app desde el administrador de Shopify."
       },
       "refresh": "Actualizar",
       "logout": "Cerrar sesión",
       "viewPlans": "Ver planes",
       "back": "Atrás",
-      "createAuction": "Crear subasta",
-      "saveChanges": "Guardar cambios",
+      "createAuction": "Crear Subasta",
+      "saveChanges": "Guardar Cambios",
       "cancel": "Cancelar",
       "close": "Cerrar",
-      "enabled": "Activado",
-      "disabled": "Desactivado",
-      "notSet": "Sin definir",
-      "notConfigured": "Sin configurar",
+      "enabled": "Habilitado",
+      "disabled": "Deshabilitado",
+      "notSet": "No establecido",
+      "notConfigured": "No configurado",
       "notAvailable": "N/D"
     },
     "nav": {
       "dashboard": "Panel",
-      "marketplace": "Marketplace de subastas",
+      "marketplace": "Mercado de Subastas",
       "widgetStyles": "Estilos del widget",
-      "marketplaceStyles": "Estilos del marketplace",
+      "marketplaceStyles": "Estilos del mercado",
       "mailService": "Servicio de correo",
       "plans": "Planes"
     },
     "auth": {
-      "title": "🔐 Acceso de administrador Bidly",
+      "title": "🔐 Inicio de Sesión de Administrador de Bidly",
       "subtitles": {
-        "register": "Crea una nueva cuenta de administrador",
-        "login": "Inicia sesión con tu cuenta de administrador"
+        "register": "Crear una nueva cuenta de administrador",
+        "login": "Iniciar sesión en tu cuenta de administrador"
       },
       "fields": {
         "username": "Nombre de usuario",
-        "usernamePlaceholder": "Ingresa tu nombre de usuario",
+        "usernamePlaceholder": "Ingresa el nombre de usuario",
         "email": "Correo electrónico",
-        "emailPlaceholder": "Ingresa tu correo",
+        "emailPlaceholder": "Ingresa el correo electrónico",
         "password": "Contraseña",
-        "passwordPlaceholder": "Ingresa tu contraseña"
+        "passwordPlaceholder": "Ingresa la contraseña"
       },
       "actions": {
-        "loading": "Espera un momento…",
+        "loading": "Por favor espera...",
         "register": "Registrarse",
         "login": "Iniciar sesión"
       },
       "toggle": {
-        "login": "¿Ya tienes cuenta? Inicia sesión",
+        "login": "¿Ya tienes una cuenta? Inicia sesión",
         "register": "¿Necesitas una cuenta? Regístrate"
       },
       "errors": {
         "usernameRequired": "El nombre de usuario es obligatorio.",
         "emailRequired": "El correo electrónico es obligatorio.",
         "passwordLength": "La contraseña debe tener al menos 6 caracteres.",
-        "generic": "La autenticación falló."
+        "generic": "Error de autenticación."
       },
       "demo": {
-        "title": "Credenciales de demostración:",
+        "title": "Credenciales de Demostración:",
         "email": "Correo: {{value}}",
         "password": "Contraseña: {{value}}"
       }
     },
     "mail_service": {
       "page": {
-        "title": "Servicio de correo"
+        "title": "Servicio de Correo"
       },
       "messages": {
-        "loadError": "No se pudieron cargar los ajustes de correo.",
-        "saveSuccess": "Los ajustes de correo se guardaron correctamente.",
-        "saveError": "No se pudieron guardar los ajustes de correo.",
+        "loadError": "Error al cargar la configuración de correo.",
+        "saveSuccess": "Configuración de correo guardada exitosamente.",
+        "saveError": "Error al guardar la configuración de correo.",
         "smtpTestSuccess": "Correo de prueba enviado.",
-        "smtpTestError": "La prueba SMTP falló.",
-        "upgradeForTests": "Actualiza al plan Pro o Enterprise para enviar pruebas de plantillas.",
-        "recipientRequired": "Ingresa un destinatario para la prueba.",
+        "smtpTestError": "Error en la prueba SMTP.",
+        "upgradeForTests": "Actualiza a un plan Pro o Enterprise para enviar pruebas de plantillas.",
+        "recipientRequired": "Ingresa un destinatario de correo de prueba.",
         "templateMissing": "Plantilla no encontrada.",
-        "templateTestSuccess": "Prueba enviada a {{recipient}}.",
-        "templateTestError": "La prueba de la plantilla falló.",
-        "selectFieldForToken": "Selecciona el campo en el que deseas insertar tokens."
+        "templateTestSuccess": "Prueba de plantilla enviada a {{recipient}}.",
+        "templateTestError": "Error en la prueba de plantilla.",
+        "selectFieldForToken": "Selecciona un campo de asunto o HTML de plantilla para insertar tokens."
       },
       "tokens": {
         "title": "Tokens disponibles",
-        "description": "Haz clic en un token para insertarlo en el asunto o el HTML que estés editando."
+        "description": "Haz clic en un token para insertarlo en el campo de asunto o HTML que estás editando."
       },
       "status": {
-        "loading": "Cargando ajustes de correo"
+        "loading": "Cargando configuración de correo"
       },
       "banner": {
-        "upgradeTitle": "Se requiere actualizar",
-        "upgradeDescription": "Los ajustes de correo personalizados están disponibles en los planes Pro y Enterprise."
+        "upgradeTitle": "Actualización requerida",
+        "upgradeDescription": "La configuración personalizada de correo está disponible en los planes Pro y Enterprise."
       },
       "smtp": {
         "title": "Configuración SMTP",
         "description": "Conecta tu propio servidor de correo para enviar notificaciones desde tu dominio.",
-        "useCustom": "Usar mi servidor de correo",
+        "useCustom": "Usar mi propio servidor de correo",
         "secure": "Usar conexión segura (TLS)",
-        "testRecipient": "Destinatario de prueba",
-        "sendTest": "Enviar prueba",
+        "testRecipient": "Destinatario de correo de prueba",
+        "sendTest": "Enviar correo de prueba",
         "fields": {
           "host": "Servidor",
           "port": "Puerto",
-          "username": "Usuario",
-          "password": "Contraseña / token",
-          "fromName": "Nombre remitente",
-          "fromEmail": "Correo remitente"
+          "username": "Nombre de usuario",
+          "password": "Contraseña / contraseña de aplicación",
+          "fromName": "Nombre del remitente",
+          "fromEmail": "Correo del remitente"
         }
       },
       "templates": {
         "title": "Plantillas de correo",
-        "description": "Personaliza el contenido de las notificaciones de Bidly. Usa tokens para traer datos dinámicos.",
-        "testRecipient": "Correo de prueba",
+        "description": "Personaliza el contenido de las notificaciones de Bidly. Usa el panel de tokens para incluir valores dinámicos como nombres de postores o detalles de subastas.",
+        "testRecipient": "Destinatario de correo de prueba",
         "testPlaceholder": "nombre@ejemplo.com",
-        "testHelper": "Esta dirección se usará al enviar pruebas con las plantillas.",
-        "enabled": "Activada",
+        "testHelper": "Esta dirección se usa en los botones \"Enviar prueba usando esta plantilla\" a continuación.",
+        "enabled": "Habilitado",
         "subject": "Asunto",
         "editorMode": "Modo del editor",
         "editorSimple": "Editor simple",
         "editorHtml": "Editor HTML",
         "htmlLabel": "Contenido HTML",
         "textLabel": "Cuerpo del mensaje",
-        "reset": "Restablecer",
-        "sendTestForTemplate": "Enviar prueba con esta plantilla",
+        "reset": "Restablecer a predeterminado",
+        "sendTestForTemplate": "Enviar prueba usando esta plantilla",
         "bidConfirmation": {
           "title": "Confirmación de puja"
         },
         "outbidNotification": {
-          "title": "Notificación de sobrepuja"
+          "title": "Notificación de puja superada"
         },
         "winnerNotification": {
           "title": "Notificación de ganador"
         },
         "auctionEndingSoon": {
-          "title": "Subasta por finalizar"
+          "title": "Subasta finalizando pronto"
         },
         "adminNotification": {
-          "title": "Notificación al administrador"
+          "title": "Notificación de administrador"
         }
       },
       "actions": {
-        "save": "Guardar ajustes de correo"
+        "save": "Guardar configuración de correo"
       }
     },
     "marketplace": {
       "page": {
-        "title": "Personalización del marketplace",
-        "subtitle": "Controla tipografía, plantillas y colores del marketplace público."
+        "title": "Personalización del mercado",
+        "subtitle": "Controla la tipografía, plantilla y sistema de colores para el mercado público de subastas."
       },
       "planGate": {
-        "subtitle": "Actualiza tu plan para activar la personalización del marketplace.",
-        "bannerTitle": "Se requiere una actualización para personalizar el marketplace",
-        "defaultMessage": "Esta sección está disponible en los planes Pro y Enterprise."
+        "subtitle": "Actualiza tu plan de Bidly para desbloquear el estilo del mercado.",
+        "bannerTitle": "Actualización requerida para personalizar el mercado",
+        "defaultMessage": "La personalización del mercado requiere el plan Pro o Enterprise."
       },
       "status": {
-        "loading": "Cargando personalización del marketplace"
+        "loading": "Cargando personalización del mercado"
       },
       "actions": {
         "save": "Guardar cambios",
-        "resetApplied": "Restablecer a lo aplicado",
-        "resetDefaults": "Restaurar valores"
+        "resetApplied": "Restablecer a aplicado",
+        "resetDefaults": "Restaurar predeterminados"
       },
       "messages": {
-        "saveSuccess": "Tema del marketplace guardado.",
-        "saveError": "No se pudo guardar la personalización.",
-        "loadError": "No se pudo cargar la personalización."
+        "saveSuccess": "Tema del mercado guardado.",
+        "saveError": "Error al guardar la personalización del mercado.",
+        "loadError": "Error al cargar la personalización del mercado."
       },
       "errors": {
-        "unavailable": "Personalización del marketplace no disponible"
+        "unavailable": "Personalización del mercado no disponible"
       },
       "sections": {
         "design": {
-          "title": "Fundamentos de diseño",
-          "heading": "Elige una plantilla",
-          "description": "Las plantillas controlan espaciado, profundidad y radios en todo el recorrido del cliente.",
-          "fontLabel": "Familia tipográfica",
+          "title": "Base de diseño",
+          "heading": "Elegir plantilla",
+          "description": "Las plantillas controlan el espaciado, el radio y la profundidad. Se aplican instantáneamente a cada pantalla en el flujo del cliente.",
+          "fontLabel": "Familia de fuentes",
           "templates": {
             "classic": {
-              "label": "Clásica",
-              "description": "Equilibrio entre espaciado uniforme y bordes redondeados."
+              "label": "Clásico",
+              "description": "Espaciado equilibrado, profundidad sutil y esquinas redondeadas."
             },
             "modern": {
-              "label": "Moderna",
-              "description": "Superficies suaves, sombras generosas y rellenos amplios."
+              "label": "Moderno",
+              "description": "Superficies más suaves, sombras más profundas y relleno generoso."
             },
             "minimal": {
               "label": "Minimalista",
-              "description": "Trazos limpios, sombras ligeras y ritmo compacto."
+              "description": "Espaciado compacto con líneas nítidas y sombras ligeras."
             },
             "bold": {
               "label": "Audaz",
-              "description": "Sombras marcadas, radios amplios y botones tipo pastilla."
+              "description": "Radios grandes, sombras dramáticas y botones tipo píldora."
             }
           }
         },
         "palette": {
           "title": "Paleta de colores",
-          "description": "Todos los componentes del marketplace toman sus colores de estos tokens.",
-          "gradientToggleLabel": "Activar fondo degradado",
-          "gradientEnabled": "Degradado activado",
-          "gradientDisabled": "Degradado desactivado",
-          "gradientInfo": "Desactiva el degradado para editar el color sólido del fondo."
+          "description": "Cada elemento de la interfaz en el mercado hace referencia a estos tokens. Actualízalos para que coincidan con tu tienda.",
+          "gradientToggleLabel": "Alternar fondo degradado",
+          "gradientEnabled": "Degradado habilitado",
+          "gradientDisabled": "Degradado deshabilitado",
+          "gradientInfo": "El color de fondo está gestionado por tu degradado. Deshabilita el interruptor de degradado para editar el color de fondo sólido."
         }
       },
       "colors": {
         "primary": {
-          "label": "Principal",
-          "description": "Botones, acciones y acentos destacados."
+          "label": "Primario",
+          "description": "Botones, acciones y resaltados principales."
         },
         "background": {
           "label": "Fondo",
-          "description": "Color de fondo de las páginas del marketplace."
+          "description": "Fondo de la página del mercado."
         },
         "surface": {
           "label": "Superficie",
-          "description": "Tarjetas, modales y paneles."
+          "description": "Tarjetas, modales y hojas."
         },
         "textPrimary": {
           "label": "Texto principal",
-          "description": "Títulos y texto de mayor jerarquía."
+          "description": "Encabezados y texto principal."
         },
         "textSecondary": {
           "label": "Texto secundario",
-          "description": "Descripciones, ayudas y texto atenuado."
+          "description": "Texto atenuado, texto de ayuda y etiquetas."
         },
         "buttonText": {
-          "label": "Texto de botones",
-          "description": "Texto dentro de botones secundarios y CTAs."
+          "label": "Texto del botón",
+          "description": "Texto dentro de botones secundarios y etiquetas CTA."
         },
         "button": {
           "label": "Botón",
-          "description": "Fondo y borde de botones secundarios."
+          "description": "Fondo y borde del botón secundario."
         },
         "border": {
           "label": "Borde",
-          "description": "Divisores, contornos y campos."
+          "description": "Contornos de tarjetas, divisores y entradas."
         },
         "accent": {
           "label": "Acento",
-          "description": "Temporizadores, insignias y resaltados."
+          "description": "Temporizadores, estadísticas y píldoras."
         },
         "success": {
           "label": "Éxito",
-          "description": "Estados positivos y confirmaciones."
+          "description": "Insignias positivas y confirmaciones de compra inmediata."
         },
         "error": {
           "label": "Error",
-          "description": "Alertas críticas y estados bloqueados."
+          "description": "Errores, estados finalizados y notificaciones bloqueantes."
         },
         "gradient1": {
           "label": "Inicio del degradado",
-          "description": "Color inicial del degradado principal."
+          "description": "Color inicial del degradado del héroe."
         },
         "gradient2": {
           "label": "Fin del degradado",
-          "description": "Color final del degradado principal."
+          "description": "Color final del degradado del héroe."
         }
       },
       "preview": {
         "shopNameFallback": "tu tienda",
-        "pageTitle": "Marketplace de subastas · Vista previa",
-        "pageSubtitle": "Esta vista previa usa exactamente el mismo marcado que el storefront.",
-        "demoAction": "Conectado como cliente demo"
+        "pageTitle": "Mercado de Subastas · Vista Previa",
+        "pageSubtitle": "Esta vista previa renderiza el marcado exacto usado en la tienda.",
+        "demoAction": "Conectado como cliente de demostración"
       },
       "previewCard": {
         "title": "Vista previa en vivo"
@@ -274,45 +274,45 @@
     "widget": {
       "page": {
         "title": "Personalización del widget",
-        "subtitle": "Controla cómo se ve el widget de Bidly en tus páginas de producto."
+        "subtitle": "Controla cómo aparece el widget de Bidly en tus páginas de producto sin tocar código."
       },
       "planGate": {
-        "subtitle": "Actualiza tu plan para desbloquear los controles del widget.",
-        "bannerTitle": "Se requiere una actualización para personalizar el widget",
-        "defaultMessage": "La personalización del widget está disponible en los planes Pro y Enterprise."
+        "subtitle": "Actualiza tu plan de Bidly para desbloquear los controles de estilo del widget.",
+        "bannerTitle": "Actualización requerida para personalizar el widget",
+        "defaultMessage": "La personalización del widget requiere el plan Pro o Enterprise."
       },
       "status": {
-        "loading": "Cargando ajustes del widget"
+        "loading": "Cargando configuración de personalización"
       },
       "actions": {
         "save": "Guardar cambios",
-        "resetSaved": "Restablecer a lo guardado",
-        "resetDefaults": "Restaurar valores"
+        "resetSaved": "Restablecer a guardado",
+        "resetDefaults": "Restablecer a predeterminados"
       },
       "errors": {
-        "saveFailed": "No se pudieron guardar los ajustes del widget."
+        "saveFailed": "No pudimos guardar la configuración del widget"
       },
       "sections": {
         "templates": {
           "title": "Plantillas",
-          "description": "Empieza con un estilo profesional y luego ajusta los detalles.",
+          "description": "Comienza desde un preset diseñado profesionalmente. Aún puedes ajustar configuraciones individuales después de seleccionar una plantilla.",
           "cardLabel": "Plantilla {{id}} · {{name}}"
         },
         "typography": {
           "title": "Tipografía y diseño",
-          "fontLabel": "Tipografía",
-          "radiusLabel": "Radio de borde",
+          "fontLabel": "Familia de fuentes",
+          "radiusLabel": "Radio del borde",
           "shadowLabel": "Profundidad / sombra"
         },
         "gradient": {
           "title": "Degradado y fondo",
-          "description": "Configura los colores del encabezado o usa un fondo sólido.",
-          "enable": "Activar degradado",
-          "disable": "Desactivar degradado"
+          "description": "Elige los colores del degradado para el encabezado del widget o cambia a un fondo plano.",
+          "enable": "Habilitar degradado",
+          "disable": "Deshabilitar degradado"
         },
         "colors": {
           "title": "Ajustar colores",
-          "description": "Modifica los tokens para texto, botones y bordes."
+          "description": "Ajusta tokens individuales para texto, botones y bordes. Todos los colores solo admiten valores hexadecimales."
         }
       },
       "previewStates": {
@@ -321,64 +321,64 @@
         "ended": "Subasta finalizada"
       },
       "previewCard": {
-        "title": "Vista previa del widget",
-        "stateLabel": "Estado a mostrar",
-        "description": "La vista previa usa el mismo HTML y tokens que el widget del storefront.",
+        "title": "Vista previa del widget en vivo",
+        "stateLabel": "Estado de vista previa",
+        "description": "La vista previa se actualiza instantáneamente mientras ajustas la configuración. Este iframe usa el mismo marcado y tokens que el widget de la tienda.",
         "iframeTitle": "Vista previa de personalización del widget"
       },
       "colors": {
         "accent": {
           "label": "Color de acento",
-          "description": "Precios y llamados principales."
+          "description": "Aplicado a precios y resaltados principales."
         },
         "text": {
           "label": "Texto principal",
-          "description": "Color predeterminado del contenido."
+          "description": "Color de texto predeterminado para el contenido del widget."
         },
         "timer": {
           "label": "Temporizador",
-          "description": "Dígitos del conteo regresivo y énfasis."
+          "description": "Dígitos de cuenta regresiva y énfasis del temporizador."
         },
         "button_bg": {
           "label": "Fondo del botón",
-          "description": "Color de los botones principales."
+          "description": "Color de fondo del botón principal."
         },
         "button_hover": {
-          "label": "Botón (hover)",
-          "description": "Color al pasar el cursor."
+          "label": "Botón al pasar",
+          "description": "Color de fondo al pasar el cursor o enfocar."
         },
         "button_text": {
           "label": "Texto del botón",
-          "description": "Color del texto en botones principales."
+          "description": "Color del texto para botones principales."
         },
         "border": {
-          "label": "Borde",
-          "description": "Inputs, tarjetas y separadores."
+          "label": "Color del borde",
+          "description": "Bordes de entrada, tarjetas y separadores."
         }
       },
       "gradient": {
         "bg_solid": {
           "label": "Fondo sólido",
-          "description": "Color usado cuando el degradado está desactivado."
+          "description": "Se usa cuando el degradado está deshabilitado."
         },
         "bg_gradient_start": {
           "label": "Inicio del degradado",
-          "description": "Color inicial del encabezado."
+          "description": "Color inicial del degradado del encabezado."
         },
         "bg_gradient_end": {
           "label": "Fin del degradado",
-          "description": "Color final del encabezado."
+          "description": "Color final del degradado del encabezado."
         }
       }
     },
     "billing": {
       "page": {
-        "title": "Elige tu plan Bidly",
-        "subtitle": "Administra tu suscripción y desbloquea funciones premium."
+        "title": "Elige tu plan de Bidly",
+        "subtitle": "Gestiona tu suscripción y desbloquea funciones premium de subastas."
       },
-      "planLimitReached": "Alcanzaste el límite de subastas ({{limit}}) para tu plan actual.",
-      "planUpgradePrompt": "Actualiza tu plan para crear más subastas o espera a que terminen las actuales.",
-      "planUpgradeConfirm": "¿Quieres ver los planes disponibles para actualizar?",
+      "planLimitReached": "Has alcanzado tu límite de subastas ({{limit}} subastas) para tu plan actual.",
+      "planUpgradePrompt": "Por favor, actualiza tu plan para crear más subastas, o espera a que las subastas existentes terminen o ciérralas manualmente.",
+      "planUpgradeConfirm": "¿Te gustaría ver los planes disponibles para actualizar?",
       "currentPlan": {
         "title": "Plan actual",
         "active": "Activo: {{plan}}",
@@ -391,33 +391,33 @@
         "free": {
           "title": "Gratis",
           "price": "$0/mes",
-          "description": "Empieza con Bidly y lanza tu primera subasta.",
+          "description": "Comienza con Bidly y ejecuta tu primera subasta.",
           "highlights": [
             "1 subasta activa a la vez",
-            "Acceso al panel en modo vista previa",
+            "Acceso al panel de vista previa",
             "Actualiza para desbloquear más subastas"
           ],
           "actionLabel": "Plan gratuito"
         },
         "basic": {
-          "title": "Basic",
+          "title": "Básico",
           "price": "$9.99/mes",
-          "description": "Todo lo esencial para alojar subastas.",
+          "description": "Comienza a alojar subastas con lo esencial.",
           "highlights": [
             "3 subastas activas",
-            "Branding estándar de Bidly",
-            "Flujos básicos de subasta"
+            "Marca Bidly estándar",
+            "Flujos de trabajo de subastas principales"
           ],
-          "actionLabel": "Actualizar a Basic"
+          "actionLabel": "Actualizar a Básico"
         },
         "pro": {
           "title": "Pro",
           "price": "$19.99/mes",
-          "description": "Desbloquea pujas avanzadas y personalización completa.",
+          "description": "Desbloquea pujas avanzadas y estilo completo del widget.",
           "highlights": [
             "20 subastas activas",
-            "Sin branding de Bidly",
-            "Personalización de widget y marketplace",
+            "Eliminar marca Bidly",
+            "Personalización de widget y mercado",
             "Pujas popcorn"
           ],
           "actionLabel": "Actualizar a Pro"
@@ -425,33 +425,33 @@
         "enterprise": {
           "title": "Enterprise",
           "price": "$49.99/mes",
-          "description": "Subastas ilimitadas y chat en tiempo real.",
+          "description": "Subastas ilimitadas más chat de postores en tiempo real.",
           "highlights": [
             "Subastas ilimitadas",
-            "Sin branding de Bidly",
-            "Personalización completa",
+            "Eliminar marca Bidly",
+            "Personalización de widget y mercado",
             "Pujas popcorn y chat en vivo"
           ],
           "actionLabel": "Actualizar a Enterprise"
         },
-        "trialCopy": "Incluye prueba gratis de 7 días. Puedes cancelar en cualquier momento desde Shopify.",
+        "trialCopy": "Incluye una prueba gratuita de 7 días. Puedes cancelar en cualquier momento desde tu administrador de Shopify.",
         "currentPlan": "Plan actual",
         "pendingActivation": "Activación pendiente",
-        "downgradeTo": "Cambiar a {{title}}",
+        "downgradeTo": "Degradar a {{title}}",
         "upgradeTo": "Actualizar a {{title}}"
       },
       "banners": {
         "subscriptionActivated": {
           "title": "Suscripción activada",
-          "message": "Tu plan ya está activo. ¡Gracias por actualizar!"
+          "message": "Tu plan ahora está activo. ¡Gracias por actualizar!"
         },
         "awaitingConfirmation": {
           "title": "Esperando confirmación",
-          "message": "Aprueba la suscripción en Shopify para desbloquear las funciones premium."
+          "message": "Termina de aprobar la suscripción en Shopify para desbloquear funciones premium."
         },
         "subscriptionNotConfirmed": {
           "title": "Suscripción no confirmada",
-          "message": "Hubo un problema confirmando el cobro."
+          "message": "Hubo un problema al confirmar la facturación."
         },
         "subscriptionCancelled": {
           "title": "Suscripción cancelada",
@@ -464,81 +464,81 @@
         "previewMode": {
           "title": "Actualiza para activar Bidly",
           "action": "Ver planes",
-          "message": "El modo vista previa te permite explorar el panel, pero las subastas y personalizaciones requieren un plan pagado."
+          "message": "El modo de vista previa te permite explorar el administrador, pero las subastas, personalización y pujas en vivo están deshabilitadas hasta que elijas un plan de pago."
         }
       },
       "downgrade": {
-        "title": "Cambiar a {{plan}}",
-        "confirm": "Confirmar cambio",
+        "title": "Degradar a {{plan}}",
+        "confirm": "Confirmar degradación",
         "cancel": "Cancelar",
-        "message": "Estás cambiando de {{current}} a {{target}}.",
+        "message": "Estás degradando de {{current}} a {{target}}.",
         "featureRemoved": "Función eliminada: {{feature}}",
-        "noFeaturesRemoved": "No perderás funciones premium.",
-        "auctionsToClose": "Cerraremos automáticamente {{count}} subasta{{plural}} programada{{plural}} para cumplir el límite de {{limit}}.",
-        "auctionsFit": "Tu número de subastas ya cumple con el límite de {{limit}}.",
-        "unlimitedLimit": "El nuevo plan ofrece subastas ilimitadas.",
-        "warning": "El cambio se aplica inmediatamente y no puede revertirse automáticamente."
+        "noFeaturesRemoved": "No se eliminarán funciones premium.",
+        "auctionsToClose": "Cerraremos automáticamente {{count}} subasta{{plural}} programada{{plural}} para cumplir con el límite de {{limit}}.",
+        "auctionsFit": "Tu conteo actual de subastas ya se ajusta al límite de {{limit}}.",
+        "unlimitedLimit": "El nuevo plan incluye un límite de subastas ilimitado.",
+        "warning": "La degradación tiene efecto inmediatamente y no se puede deshacer automáticamente."
       },
       "cancel": {
         "title": "Cancelar suscripción",
         "confirm": "Confirmar cancelación",
         "keep": "Mantener suscripción",
-        "message": "¿Seguro que quieres cancelar tu suscripción?",
-        "description": "Seguirá activa hasta el final del período de facturación. Luego volverás al plan Gratis, que incluye:",
+        "message": "¿Estás seguro de que quieres cancelar tu suscripción?",
+        "description": "Tu suscripción permanecerá activa hasta el final del período de facturación actual. Después de eso, tu plan se revertirá automáticamente al plan Gratis, que incluye:",
         "freeFeatures": [
           "1 subasta activa a la vez",
-          "Branding estándar de Bidly",
-          "Funciones básicas de subasta"
+          "Marca Bidly estándar",
+          "Funciones básicas de subastas"
         ],
-        "resubscribe": "Puedes volver a suscribirte cuando quieras para recuperar las funciones premium."
+        "resubscribe": "Puedes volver a suscribirte en cualquier momento para recuperar el acceso a funciones premium."
       },
       "errors": {
-        "loadError": "No se pudieron cargar los detalles del plan.",
-        "subscribeError": "No se pudo iniciar la suscripción. Inténtalo de nuevo.",
-        "cancelError": "No se pudo cancelar la suscripción."
+        "loadError": "No se pueden cargar los detalles del plan",
+        "subscribeError": "No se puede iniciar la suscripción. Por favor, inténtalo de nuevo.",
+        "cancelError": "No se puede cancelar la suscripción."
       },
       "formatLimit": {
-        "unlimited": "ilimitadas",
+        "unlimited": "ilimitado",
         "activeAuctions": "{{count}} subastas activas"
       }
     },
     "analytics": {
-      "loadingLabel": "Cargando analíticas",
-      "loadingText": "Obteniendo datos de analíticas…",
-      "error": "No se pudieron cargar los datos de analíticas.",
-      "empty": "No hay datos disponibles.",
+      "loadingLabel": "Cargando análisis",
+      "loadingText": "Cargando datos de análisis...",
+      "error": "Error al cargar datos de análisis.",
+      "empty": "No hay datos de análisis disponibles.",
       "unknownProduct": "Producto desconocido",
-      "headerTitle": "📊 Analíticas avanzadas",
+      "headerTitle": "📊 Análisis Mejorado",
       "period": {
-        "label": "Periodo de tiempo",
+        "label": "Período de tiempo",
         "last7": "Últimos 7 días",
         "last30": "Últimos 30 días",
         "last90": "Últimos 90 días",
         "lastYear": "Último año"
       },
       "summary": {
-        "title": "📈 Resumen de subastas",
-        "total": "Subastas totales",
-        "active": "Subastas activas",
-        "ended": "Subastas finalizadas",
-        "pending": "Subastas pendientes",
-        "closed": "Subastas cerradas"
+        "title": "📈 Resumen de Subastas",
+        "total": "Total de Subastas",
+        "active": "Subastas Activas",
+        "ended": "Subastas Finalizadas",
+        "pending": "Subastas Pendientes",
+        "closed": "Subastas Cerradas"
       },
       "revenue": {
-        "title": "💰 Métricas de ingresos",
-        "total": "Ingresos totales",
-        "averageBid": "Puja promedio",
+        "title": "💰 Métricas de Ingresos",
+        "total": "Ingresos Totales",
+        "averageBid": "Cantidad Promedio de Puja",
         "currency": "Moneda",
-        "successRate": "Tasa de éxito"
+        "successRate": "Tasa de Éxito de Pujas"
       },
       "bidding": {
-        "title": "🎯 Estadísticas de pujas",
-        "total": "Total de pujas",
-        "averagePerAuction": "Promedio por subasta",
-        "successRate": "Tasa de éxito"
+        "title": "🎯 Estadísticas de Pujas",
+        "total": "Total de Pujas",
+        "averagePerAuction": "Promedio de Pujas por Subasta",
+        "successRate": "Tasa de Éxito"
       },
       "daily": {
-        "title": "📅 Estadísticas diarias (últimos 7 días)",
+        "title": "📅 Estadísticas Diarias (Últimos 7 Días)",
         "columns": {
           "date": "Fecha",
           "auctions": "Subastas",
@@ -547,335 +547,334 @@
         }
       },
       "top": {
-        "title": "🏆 Subastas destacadas",
+        "title": "🏆 Subastas con Mejor Rendimiento",
         "columns": {
           "product": "Producto",
-          "currentBid": "Puja actual",
-          "totalBids": "Total de pujas",
-          "created": "Creada"
+          "currentBid": "Puja Actual",
+          "totalBids": "Total de Pujas",
+          "created": "Creado"
         }
       },
       "activity": {
-        "title": "⚡ Actividad reciente",
+        "title": "⚡ Actividad Reciente",
         "columns": {
           "product": "Producto",
-          "currentBid": "Puja actual",
+          "currentBid": "Puja Actual",
           "status": "Estado",
-          "created": "Creada"
+          "created": "Creado"
         }
       },
       "status": {
         "pending": "Pendiente",
-        "active": "Activa",
-        "ended": "Finalizada",
-        "closed": "Cerrada"
+        "active": "Activo",
+        "ended": "Finalizado",
+        "closed": "Cerrado"
       }
     },
     "auctions": {
       "errors": {
-        "loadStats": "No se pudieron cargar las estadísticas del panel.",
-        "save": "Error al guardar la subasta: {{message}}",
-        "unknownStore": "No se pudo determinar la tienda."
+        "loadStats": "Error al cargar estadísticas del panel.",
+        "save": "Error al guardar subasta: {{message}}",
+        "unknownStore": "No se puede determinar la información de la tienda."
       },
       "toast": {
-        "statusUpdate": "🔄 Estado de la subasta actualizado: {{status}}",
-        "updated": "Subasta actualizada correctamente.",
-        "created": "Subasta creada correctamente.",
-        "marketplaceOpen": "Abriendo el marketplace de subastas en una nueva pestaña."
+        "statusUpdate": "🔄 Estado de subasta actualizado: {{status}}",
+        "updated": "Subasta actualizada exitosamente.",
+        "created": "Subasta creada exitosamente.",
+        "marketplaceOpen": "Abriendo mercado de subastas en una nueva pestaña."
       },
       "dashboard": {
-        "title": "Panel de subastas",
-        "titleWithShop": "Panel de subastas · {{shop}}",
+        "title": "Panel de Subastas",
+        "titleWithShop": "Panel de Subastas - {{shop}}",
         "subtitleStore": "Tienda: {{store}}",
-        "subtitleDefault": "Administra tus subastas y monitorea el rendimiento.",
-        "subtitleNeedPlan": "Actualiza tu plan para empezar a alojar subastas.",
-        "primaryCreate": "Crear subasta",
+        "subtitleDefault": "Gestiona tus subastas y monitorea el rendimiento.",
+        "subtitleNeedPlan": "Actualiza a un plan para comenzar a alojar subastas.",
+        "primaryCreate": "Crear Subasta",
         "primaryChoosePlan": "Elige un plan para crear subastas",
-        "previewTitle": "Modo vista previa activo",
-        "previewDescription": "Puedes explorar el panel, pero crear o gestionar subastas en vivo requiere una suscripción activa.",
-        "overviewTitle": "Resumen de subastas",
-        "totalAuctions": "Subastas totales",
-        "activeAuctions": "Subastas activas",
-        "totalBids": "Total de pujas",
+        "previewTitle": "Modo de vista previa activo",
+        "previewDescription": "Puedes explorar el panel de Bidly, pero crear o gestionar subastas en vivo requiere una suscripción activa. Elige un plan para desbloquear alojamiento, personalización y funciones de pujas en vivo.",
+        "overviewTitle": "Resumen de Subastas",
+        "totalAuctions": "Total de Subastas",
+        "activeAuctions": "Subastas Activas",
+        "totalBids": "Total de Pujas",
         "quickLinkWidget": "🎨 Estilos del widget",
-        "quickLinkMarketplace": "🎨 Estilos del marketplace",
+        "quickLinkMarketplace": "🎨 Estilos del mercado",
         "quickLinkPlans": "🧾 Planes",
         "quickLinkMail": "📧 Servicio de correo",
         "tabAuctions": "📋 Subastas",
-        "tabAnalytics": "📊 Analíticas"
+        "tabAnalytics": "📊 Análisis"
       },
       "form": {
         "planGate": {
           "title": "Elige un plan para crear subastas",
-          "description": "Estás en modo vista previa. Actualiza a un plan pagado para crear y administrar subastas, personalizar el widget y habilitar pujas en vivo.",
+          "description": "Actualmente estás en modo de vista previa. Actualiza a un plan de pago de Bidly para crear y gestionar subastas, desbloquear personalización del widget y habilitar funciones de pujas en vivo.",
           "explore": "Explorar planes"
         },
-        "titleCreate": "Crear nueva subasta",
-        "titleEdit": "Editar subasta",
-        "shopifyWarning": "La API de Shopify no está configurada. La búsqueda de productos estará desactivada. Revisa la configuración del backend.",
+        "titleCreate": "Crear Nueva Subasta",
+        "titleEdit": "Editar Subasta",
+        "shopifyWarning": "La API de Shopify no está configurada. La búsqueda de productos estará deshabilitada. Por favor, verifica tu configuración del backend.",
         "errors": {
-          "productRequired": "Se requiere un producto de Shopify.",
+          "productRequired": "El producto de Shopify es obligatorio.",
           "startingBidPositive": "La puja inicial debe ser mayor que 0.",
-          "endTime": "La hora de finalización debe ser posterior a la de inicio.",
-          "save": "No se pudo guardar la subasta."
+          "endTime": "La hora de finalización debe ser después de la hora de inicio.",
+          "save": "Error al guardar la subasta."
         },
         "search": {
-          "title": "🔍 Buscar productos de Shopify",
-          "label": "Buscar producto",
-          "placeholder": "Escribe el nombre del producto…",
+          "title": "🔍 Buscar Productos de Shopify",
+          "label": "Buscar Producto de Shopify",
+          "placeholder": "Escribe el nombre del producto para buscar...",
           "loadingLabel": "Buscando productos",
           "debug": "Depuración: {{count}} resultados encontrados",
-          "resultsTitle": "Resultados",
+          "resultsTitle": "Resultados de Búsqueda",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
           "apiFallback": "La API real falló: {{message}}. Usando datos de demostración."
         },
         "selectedProduct": {
-          "title": "Producto seleccionado",
+          "title": "Detalles del Producto Seleccionado",
           "name": "Título: {{value}}",
           "vendor": "Vendedor: {{value}}",
           "price": "Precio: {{value}}"
         },
         "fields": {
-          "productId": "ID de producto de Shopify",
-          "productIdPlaceholder": "Se completa automáticamente al seleccionar un producto.",
-          "startDate": "Fecha de inicio",
-          "startTime": "Hora de inicio",
-          "endDate": "Fecha de finalización",
-          "endTime": "Hora de finalización",
-          "startingBid": "Puja inicial",
-          "startingBidLocked": "La puja inicial no puede cambiarse después de recibir pujas.",
-          "buyNow": "Precio de compra ya (opcional)",
-          "reservePrice": "Precio de reserva (opcional)",
-          "reserveHelp": "Monto mínimo para declarar un ganador. Oculto para los postores."
+          "productId": "ID del Producto de Shopify",
+          "productIdPlaceholder": "El ID del producto se llenará automáticamente cuando selecciones un producto.",
+          "startDate": "Fecha de Inicio",
+          "startTime": "Hora de Inicio",
+          "endDate": "Fecha de Finalización",
+          "endTime": "Hora de Finalización",
+          "startingBid": "Puja Inicial",
+          "startingBidLocked": "La puja inicial no se puede cambiar después de que se haya realizado una puja.",
+          "buyNow": "Precio de Compra Inmediata (Opcional)",
+          "reservePrice": "Precio de Reserva (Opcional)",
+          "reserveHelp": "Cantidad mínima de puja requerida para que la subasta tenga un ganador válido. Oculto para los postores."
         },
         "popcorn": {
-          "title": "🍿 Ajustes de Popcorn (Función premium)",
-          "description": "Activa la extensión automática del tiempo cuando se recibe una puja al final.",
-          "enable": "Activar pujas Popcorn",
-          "help": "Extiende la subasta si llegan pujas cerca del cierre.",
-          "upgradeHelp": "Disponible en los planes Pro y Enterprise.",
-          "trigger": "Umbral de disparo (segundos)",
-          "triggerHelp": "Extiende cuando queden tantos segundos.",
-          "extension": "Duración de la extensión (segundos)",
-          "extensionHelp": "Segundos que se añaden a la subasta."
+          "title": "🍿 Configuración de Subasta Popcorn (Función Premium)",
+          "description": "Habilita la extensión automática de tiempo cuando se realizan pujas cerca del final de la subasta.",
+          "enable": "Habilitar Pujas Popcorn",
+          "help": "Extiende automáticamente el tiempo de la subasta cuando se realizan pujas cerca del final.",
+          "upgradeHelp": "Extiende automáticamente el tiempo de la subasta cuando se realizan pujas cerca del final · Disponible en los planes Pro y Enterprise.",
+          "trigger": "Umbral de Activación (segundos)",
+          "triggerHelp": "Extiende la subasta cuando queden estos segundos.",
+          "extension": "Duración de Extensión (segundos)",
+          "extensionHelp": "Cuántos segundos agregar a la subasta."
         },
         "chat": {
-          "title": "💬 Visibilidad del chat",
-          "description": "Controla si el botón del chat aparece debajo del widget.",
-          "toggle": "Mostrar botón de chat en el widget",
-          "help": "Si lo desactivas, los postores solo verán el enlace Ver pujas."
+          "title": "💬 Visibilidad del Chat",
+          "description": "Controla si el botón del Chat aparece debajo del widget de subasta de tu tienda para esta subasta.",
+          "toggle": "Mostrar botón del Chat en el widget",
+          "help": "Cuando está deshabilitado, los postores solo verán el enlace Ver Pujas centrado debajo del widget."
         },
         "chatPremium": {
-          "title": "💬 Chat en vivo (Función premium)",
-          "description": "Mantén a los postores activos con conversaciones en tiempo real. Requiere plan Enterprise.",
+          "title": "💬 Chat de Postores en Vivo (Función Premium)",
+          "description": "Mantén a los postores comprometidos con conversación en tiempo real durante tus subastas. Actualiza tu plan para usar esta función.",
           "available": "Disponible en el plan Enterprise."
         }
       },
       "table": {
-        "errors": {
-          "fetch": "No se pudieron obtener las subastas.",
-          "delete": "No se pudo eliminar la subasta.",
-          "close": "No se pudo cerrar la subasta.",
-          "closeMissingId": "No se pudo cerrar: ID de subasta no encontrado.",
-          "noShop": "Error: no se encontró el dominio de la tienda.",
-          "noProductId": "Error: no se encontró el ID de producto.",
-          "openInStore": "Error al abrir el producto en la tienda."
+          "errors": {
+            "fetch": "Error al obtener subastas.",
+            "delete": "Error al eliminar subasta.",
+            "close": "Error al cerrar subasta.",
+            "closeMissingId": "Error al cerrar subasta: ID de subasta no encontrado.",
+            "noShop": "Error: No se encontró dominio de tienda.",
+            "noProductId": "Error: No se encontró ID de producto para esta subasta.",
+            "openInStore": "Error al abrir producto en la tienda."
+          },
+          "toast": {
+            "deleted": "Subasta eliminada exitosamente.",
+            "closed": "Subasta cerrada exitosamente."
+          },
+          "status": {
+            "reserveNotMet": "Finalizado · Reserva no alcanzada",
+            "noWinner": "Finalizado · Sin ganador",
+            "ended": "Finalizado"
+          },
+          "unknownProduct": "Producto Desconocido",
+          "actions": {
+            "viewInStore": "Ver en tienda",
+            "viewDetails": "Ver detalles de subasta",
+            "edit": "Editar subasta",
+            "delete": "Eliminar subasta",
+            "close": "Cerrar subasta"
+          },
+          "loading": "Cargando subastas...",
+          "empty": {
+            "title": "No se encontraron subastas",
+            "action": "Crear subasta",
+            "description": "Comienza creando tu primera subasta."
+          },
+          "filters": {
+            "open": "Filtrar",
+            "clear": "Limpiar filtros",
+            "title": "Filtrar Subastas",
+            "apply": "Aplicar Filtros",
+            "statusLabel": "Estado",
+            "productPlaceholder": "Ingresa ID de producto"
+          },
+          "columns": {
+            "product": "Producto",
+            "start": "Inicio",
+            "end": "Fin",
+            "startBid": "Puja Inicial",
+            "currentBid": "Puja Actual",
+            "buyNow": "Compra Inmediata",
+            "reserve": "Reserva",
+            "status": "Estado",
+            "bids": "Pujas",
+            "actions": "Acciones"
+          },
+          "footer": "Mostrando {{visible}} de {{total}} subastas",
+          "pagination": "Página {{current}} de {{total}}",
+          "delete": {
+            "title": "Eliminar Subasta",
+            "confirm": "Eliminar",
+            "message": "¿Estás seguro de que quieres eliminar esta subasta? Esta acción no se puede deshacer.",
+            "hasBids": "Nota: Esta subasta tiene pujas y no se puede eliminar."
+          },
+          "close": {
+            "title": "Cerrar Subasta",
+            "confirm": "Cerrar Subasta",
+            "message": "¿Estás seguro de que quieres cerrar esta subasta? Esto impedirá que se realicen nuevas pujas."
+          }
         },
-        "toast": {
-          "deleted": "Subasta eliminada correctamente.",
-          "closed": "Subasta cerrada correctamente."
-        },
-        "status": {
-          "reserveNotMet": "Finalizada · Reserva no alcanzada",
-          "noWinner": "Finalizada · Sin ganador",
-          "ended": "Finalizada"
-        },
-        "unknownProduct": "Producto desconocido",
-        "actions": {
-          "viewInStore": "Ver en la tienda",
-          "viewDetails": "Ver detalles",
-          "edit": "Editar subasta",
-          "delete": "Eliminar subasta",
-          "close": "Cerrar subasta"
-        },
-        "loading": "Cargando subastas…",
-        "empty": {
-          "title": "No se encontraron subastas",
-          "action": "Crear subasta",
-          "description": "Comienza creando tu primera subasta."
-        },
-        "filters": {
-          "open": "Filtrar",
-          "clear": "Limpiar filtros",
-          "title": "Filtrar subastas",
-          "apply": "Aplicar filtros",
-          "statusLabel": "Estado",
-          "productPlaceholder": "Ingresa el ID de producto"
-        },
-        "columns": {
-          "product": "Producto",
-          "start": "Inicio",
-          "end": "Fin",
-          "startBid": "Puja inicial",
-          "currentBid": "Puja actual",
-          "buyNow": "Compra ya",
-          "reserve": "Reserva",
-          "status": "Estado",
-          "bids": "Pujas",
-          "actions": "Acciones"
-        },
-        "footer": "Mostrando {{visible}} de {{total}} subastas",
-        "pagination": "Página {{current}} de {{total}}",
-        "delete": {
-          "title": "Eliminar subasta",
-          "confirm": "Eliminar",
-          "message": "¿Seguro que quieres eliminar esta subasta? Esta acción no se puede deshacer.",
-          "hasBids": "Nota: esta subasta tiene pujas y no se puede eliminar."
-        },
-        "close": {
-          "title": "Cerrar subasta",
-          "confirm": "Cerrar subasta",
-          "message": "¿Seguro que quieres cerrar esta subasta? No se aceptarán nuevas pujas."
-        }
-      },
       "details": {
-        "title": "Detalles de la subasta",
+        "title": "Detalles de Subasta",
         "toast": {
-          "closed": "Subasta cerrada correctamente."
+          "closed": "Subasta cerrada exitosamente."
         },
         "errors": {
           "missingId": "Error: ID de subasta no encontrado.",
-          "close": "Error al cerrar la subasta: {{message}}"
+          "close": "Error al cerrar subasta: {{message}}"
         },
         "overview": {
-          "title": "Resumen",
-          "productId": "ID de producto",
+          "title": "Resumen de Subasta",
+          "productId": "ID del Producto",
           "status": "Estado",
-          "timeStatus": "Estado de tiempo",
-          "chat": "Chat en vivo"
+          "timeStatus": "Estado de Tiempo",
+          "chat": "Chat en Vivo"
         },
         "timeStatus": {
-          "notStarted": "Sin comenzar",
-          "live": "En vivo"
+          "notStarted": "No Iniciado",
+          "live": "En Vivo"
         },
         "details": {
-          "title": "Detalles",
-          "startTime": "Inicio",
-          "endTime": "Fin",
-          "startingBid": "Puja inicial",
-          "currentBid": "Puja actual",
-          "buyNow": "Precio de compra ya",
-          "totalBids": "Total de pujas",
-          "created": "Creada",
-          "updated": "Última actualización",
-          "reserve": "Precio de reserva",
-          "popcorn": "Pujas popcorn",
-          "popcornSettings": "Configuración",
-          "popcornSummary": "Dispara con {{trigger}} s · Extiende +{{extend}} s"
+          "title": "Detalles de Subasta",
+          "startTime": "Hora de Inicio",
+          "endTime": "Hora de Finalización",
+          "startingBid": "Puja Inicial",
+          "currentBid": "Puja Actual",
+          "buyNow": "Precio de Compra Inmediata",
+          "totalBids": "Total de Pujas",
+          "created": "Creado",
+          "updated": "Última Actualización",
+          "reserve": "Precio de Reserva",
+          "popcorn": "Pujas Popcorn",
+          "popcornSettings": "Configuración Popcorn",
+          "popcornSummary": "Activación: {{trigger}}s · Extender: +{{extend}}s"
         },
         "bidHistory": {
-          "title": "Historial de pujas",
+          "title": "Historial de Pujas",
           "columns": {
             "index": "#",
             "bidder": "Postor",
             "email": "Correo",
-            "amount": "Monto",
+            "amount": "Cantidad",
             "time": "Hora"
           },
-          "empty": "Aún no hay pujas."
+          "empty": "Aún no se han realizado pujas."
         },
         "actions": {
-          "close": "Cerrar subasta"
+          "close": "Cerrar Subasta"
         }
       }
     },
     "onboarding": {
       "page": {
         "title": "Bienvenido a Bidly",
-        "subtitle": "Completa estos pasos para finalizar la configuración."
+        "subtitle": "Completa estos pasos para terminar tu configuración."
       },
       "status": {
-        "loading": "Cargando estado de onboarding"
+        "loading": "Cargando estado de incorporación"
       },
       "step1": {
-        "title": "Paso 1 · Activa el widget de subastas",
-        "description": "Activa el widget de Bidly en tu tienda online para que aparezca en tus productos. Esto abrirá el editor de temas de Shopify.",
+        "title": "Paso 1 · Habilitar el Widget de Subasta",
+        "description": "Activa el widget de Bidly en tu Tienda Online para que pueda aparecer en tus páginas de producto. Esto abre el editor de temas de Shopify donde puedes habilitar la inserción de la app.",
         "detected": "Detectamos que el widget está habilitado en tu tema.",
-        "notDetected": "Si ya lo activaste, puedes marcar este paso como completado.",
+        "notDetected": "Si ya has habilitado el widget, puedes marcar este paso como completo manualmente.",
         "error": "No pudimos confirmar el widget automáticamente: {{error}}",
         "completed": "Completado",
         "pending": "Pendiente",
         "actions": {
           "openThemeEditor": "Abrir editor de temas",
           "refreshStatus": "Actualizar estado",
-          "markEnabled": "Marcar como habilitado"
+          "markEnabled": "Marcar widget como habilitado"
         },
         "toast": {
-          "marked": "Se marcó el widget como habilitado."
+          "marked": "Widget marcado como habilitado."
         }
       },
       "step2": {
-        "title": "Paso 2 · Agrega el marketplace a tu menú",
-        "description": "Abre la navegación de tu tienda y agrega un ítem que apunte al marketplace de subastas.",
-        "descriptionWithShop": "Agrega un nuevo enlace al marketplace. Ya generamos la URL para {{shop}}.",
+        "title": "Paso 2 · Agregar el Mercado de Subastas a tu menú",
+        "description": "Abre la navegación de tu Tienda Online y agrega un nuevo elemento de menú que enlace a tu mercado de subastas.",
+        "descriptionWithShop": "Abre la navegación de tu Tienda Online y agrega un nuevo elemento de menú que enlace al mercado. Hemos generado la URL para {{shop}}.",
         "completed": "Completado",
         "pending": "Pendiente",
-        "marketplaceUrl": "URL del marketplace",
+        "marketplaceUrl": "URL del Mercado",
         "actions": {
           "copy": "Copiar",
-          "goToMenu": "Ir a la configuración de menús",
-          "markDone": "Marcar como hecho",
+          "goToMenu": "Ir a configuración de menú",
+          "markDone": "Marcar paso como hecho",
           "markedDone": "Marcado como hecho"
         },
         "toast": {
-          "copied": "URL del marketplace copiada.",
-          "copyError": "No se pudo copiar la URL. Hazlo manualmente.",
+          "copied": "URL del mercado copiada",
+          "copyError": "No se puede copiar la URL. Por favor, cópiala manualmente.",
           "reminder": "Recuerda actualizar tu menú después de copiar la URL."
         }
       },
       "finish": {
-        "title": "Finaliza la configuración",
-        "description": "Cuando completes ambos pasos estarás listo para crear subastas.",
-        "action": "Finalizar y abrir el panel",
+        "title": "Finalizar configuración",
+        "description": "Una vez que ambos pasos estén completos, estarás listo para comenzar a crear subastas con Bidly.",
+        "action": "Finalizar configuración y abrir panel",
         "toast": {
-          "complete": "¡Onboarding completo! Redirigiendo al panel.",
-          "error": "No se pudo completar el onboarding. Intenta de nuevo."
+          "complete": "¡Incorporación completa! Redirigiendo a tu panel.",
+          "error": "Error al completar la incorporación. Por favor, inténtalo de nuevo."
         }
       },
       "errors": {
-        "loadStatus": "No se pudo cargar el estado de onboarding. Intenta nuevamente."
+        "loadStatus": "Error al cargar el estado de incorporación. Por favor, inténtalo de nuevo."
       }
     },
     "oauth": {
       "loading": {
-        "title": "Verificando configuración…",
-        "message": "Comprobando la configuración de la app…"
+        "title": "Verificando configuración de la app...",
+        "message": "Verificando configuración de la app..."
       },
       "error": {
-        "title": "Error de configuración",
-        "tryAgain": "Intentar de nuevo"
+        "title": "Error de Configuración",
+        "tryAgain": "Intentar de Nuevo"
       },
       "setup": {
-        "title": "Completa la configuración de la app",
-        "description": "Necesitamos conectar tu tienda con el sistema de subastas para habilitar la búsqueda de productos.",
+        "title": "Completar Configuración de la App",
+        "description": "Para usar las funciones de subastas, necesitas completar el proceso de configuración de la app. Esto conectará tu tienda al sistema de subastas y habilitará la búsqueda de productos.",
         "whyNeeded": {
-          "title": "¿Por qué se necesita?",
-          "message": "La app requiere permiso para acceder a los productos y crear subastas. Solo se hace una vez."
+          "title": "¿Por qué se necesita esto?",
+          "message": "La app necesita permiso para acceder a los productos de tu tienda para crear subastas. Este es un proceso de configuración único."
         },
         "manualShop": {
-          "label": "Ingresa el dominio de tu tienda Shopify:",
+          "label": "Por favor, ingresa el dominio de tu tienda de Shopify:",
           "placeholder": "tienda.myshopify.com"
         },
-        "action": "Completar configuración",
+        "action": "Completar Configuración",
         "errors": {
-          "noShop": "No pudimos obtener la tienda. Ingresa el dominio manualmente.",
-          "invalidShop": "Parámetro shop inválido. Actualiza la página o abre la app desde el administrador de Shopify.",
-          "invalidFormat": "Formato de dominio inválido: {{shop}}. Se espera: tienda.myshopify.com",
-          "validationFailed": "Falló la validación del dominio. Recibido: {{shop}}",
-          "urlConstruction": "Error construyendo la URL de OAuth. Intenta nuevamente."
+          "noShop": "No se puede obtener información de la tienda. Por favor, ingresa el dominio de tu tienda manualmente a continuación.",
+          "invalidShop": "Parámetro de tienda inválido. Por favor, actualiza la página o accede a la app a través del administrador de Shopify.",
+          "invalidFormat": "Formato de dominio de tienda inválido: {{shop}}. Formato esperado: tienda.myshopify.com",
+          "validationFailed": "Error en la validación del dominio de tienda. Recibido: {{shop}}",
+          "urlConstruction": "Error al construir la URL de OAuth. Por favor, inténtalo de nuevo."
         }
       }
     }
   }
 }
-

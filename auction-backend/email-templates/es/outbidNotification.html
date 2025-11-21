@@ -1,0 +1,21 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2 style="color: #e74c3c;">⚠️ Tu Puja Ha Sido Superada</h2>
+  <p>Hola {{display_name}},</p>
+  <p>Alguien acaba de realizar una puja más alta en {{auction_title}}.</p>
+  <div style="background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;">
+    <h3 style="color: #721c24; margin-top: 0;">Actualización de Subasta</h3>
+    <p><strong>Artículo:</strong> {{auction_title}}</p>
+    <p><strong>Nueva Puja Más Alta:</strong> {{current_bid}}</p>
+    <p><strong>Tiempo Restante:</strong> {{time_remaining}}</p>
+  </div>
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="{{cta_url}}"
+       style="background-color: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+      Realizar una nueva puja
+    </a>
+  </div>
+  <p style="color: #7f8c8d; font-size: 14px;">
+    Saludos cordiales,<br>
+    Equipo {{store_name}}
+  </p>
+</div>

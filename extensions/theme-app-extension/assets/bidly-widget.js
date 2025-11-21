@@ -318,9 +318,9 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       card.innerHTML = `
-        <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
+        <img src="${productImage}" alt="${auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item')}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         <div class="bidly-auction-content">
-          <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || 'Auction Item'}</h3>
+          <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item')}</h3>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -352,7 +352,7 @@
       
       containerEl.innerHTML = `
         <div class="bidly-auction-image-container">
-          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
+          <img src="${productImage}" alt="${auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item')}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-info">
           <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || 'Auction Item'}</h1>
@@ -441,8 +441,8 @@
       if (shopifyCustomer) {
         this.customer = shopifyCustomer;
         return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
-          <p>Logged in as: <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
-          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
+          <p>${window.BidlyTranslate ? window.BidlyTranslate('widget.common.loggedInAs') : 'Logged in as:'} <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.logout') : 'Logout'}</button>
         </div>`;
       }
       
@@ -454,9 +454,9 @@
       }
       
       return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
-        <input type="text" class="bidly-auth-input" placeholder="Your Name" id="page-customer-name">
-        <input type="email" class="bidly-auth-input" placeholder="Your Email" id="page-customer-email">
-        <button class="bidly-auth-button" onclick="BidlyAuctionWidget.loginPage()">Login to Bid</button>
+        <input type="text" class="bidly-auth-input" placeholder="${window.BidlyTranslate ? window.BidlyTranslate('widget.common.yourName') : 'Your Name'}" id="page-customer-name">
+        <input type="email" class="bidly-auth-input" placeholder="${window.BidlyTranslate ? window.BidlyTranslate('widget.common.yourEmail') : 'Your Email'}" id="page-customer-email">
+        <button class="bidly-auth-button" onclick="BidlyAuctionWidget.loginPage()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.loginToBid') : 'Login to Bid'}</button>
       </div>`;
     },
     
@@ -466,27 +466,27 @@
       
       if (!this.customer) {
         console.log('❌ No customer logged in');
-        this.showToast('Please login to place a bid', true);
+        this.showToast(window.BidlyTranslate ? window.BidlyTranslate('widget.common.pleaseLoginBid') : 'Please login to place a bid', true);
         return;
       }
       
       const bidInput = document.getElementById('page-bid-input');
       if (!bidInput) {
         console.error('❌ Bid input not found');
-        this.showToast('Bid input not found. Please refresh the page.', true);
+        this.showToast(window.BidlyTranslate ? window.BidlyTranslate('widget.common.bidInputNotFound') : 'Bid input not found. Please refresh the page.', true);
         return;
       }
       
       const bidAmount = parseFloat(bidInput.value);
       if (!bidAmount || bidAmount <= 0) {
-        this.showToast('Please enter a valid bid amount', true);
+        this.showToast(window.BidlyTranslate ? window.BidlyTranslate('widget.common.invalidBidAmount') : 'Please enter a valid bid amount', true);
         return;
       }
       
       const button = document.querySelector('.bidly-bid-button');
       if (!button) {
         console.error('❌ Bid button not found');
-        this.showToast('Bid button not found. Please refresh the page.', true);
+        this.showToast(window.BidlyTranslate ? window.BidlyTranslate('widget.common.bidButtonNotFound') : 'Bid button not found. Please refresh the page.', true);
         return;
       }
       
@@ -534,19 +534,19 @@
       console.log('🎯 buyPageNow called:', auctionId);
       
       if (!this.customer) {
-        this.showToast('Please login to buy now', true);
+        this.showToast(window.BidlyTranslate ? window.BidlyTranslate('widget.common.pleaseLoginBuyNow') : 'Please login to buy now', true);
         return;
       }
       
       const button = document.querySelector('.bidly-buy-now-button');
       if (!button) {
         console.error('❌ Buy now button not found');
-        this.showToast('Buy now button not found. Please refresh the page.', true);
+        this.showToast(window.BidlyTranslate ? window.BidlyTranslate('widget.common.buyNowButtonNotFound') : 'Buy now button not found. Please refresh the page.', true);
         return;
       }
       
       button.disabled = true;
-      button.textContent = 'Processing...';
+      button.textContent = window.BidlyTranslate ? window.BidlyTranslate('widget.common.processing') : 'Processing...';
       
       // Get shop domain from current URL
       const shopDomain = CANONICAL_SHOP_DOMAIN;
@@ -801,8 +801,8 @@
       if (shopifyCustomer) {
         this.customer = shopifyCustomer;
         return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
-          <p>Logged in as: <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
-          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
+          <p>${window.BidlyTranslate ? window.BidlyTranslate('widget.common.loggedInAs') : 'Logged in as:'} <strong>${shopifyCustomer.name}</strong> (Shopify Customer)</p>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.logout') : 'Logout'}</button>
         </div>`;
       }
       
@@ -1065,7 +1065,7 @@
       
       const button = document.querySelector(`#bidly-auction-list-${blockId} .bidly-buy-now-button, #bidly-single-auction-${blockId} .bidly-buy-now-button, #bidly-featured-auction-${blockId} .bidly-featured-buy-now-button`);
       button.disabled = true;
-      button.textContent = 'Processing...';
+      button.textContent = window.BidlyTranslate ? window.BidlyTranslate('widget.common.processing') : 'Processing...';
       
       fetch(`${instance.appProxyUrl}/api/auctions/${auctionId}/buy-now?shop=${instance.shopDomain}`, {
         method: 'POST',
@@ -2727,8 +2727,8 @@
       return `
         <div class="bidly-page-customer-auth" style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
           <div class="bidly-customer-info">
-            <span class="bidly-customer-name">Welcome, ${this.customer.name}!</span>
-            <button class="bidly-logout-btn" onclick="BidlyAuctionWidget.logout()">Logout</button>
+            <span class="bidly-customer-name">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.welcome', { name: this.customer.name }) : `Welcome, ${this.customer.name}!`}</span>
+            <button class="bidly-logout-btn" onclick="BidlyAuctionWidget.logout()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.logout') : 'Logout'}</button>
           </div>
         </div>
       `;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Text, Badge } from '@shopify/polaris';
+import { t } from '../i18n';
 
 const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -52,7 +53,7 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
             fontWeight: 'bold'
           }}
         >
-          Auction Started
+          {t('marketplace.countdown.auctionStarted')}
         </div>
       );
     } else {
@@ -68,7 +69,7 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
             fontWeight: 'bold'
           }}
         >
-          Auction Ended
+          {t('marketplace.countdown.auctionEnded')}
         </div>
       );
     }
@@ -94,8 +95,8 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
       </div>
       <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
         {status === 'pending' ? 
-          (timeLeft.days > 0 ? 'until start' : 'until start') : 
-          (timeLeft.days > 0 ? 'remaining' : 'left')
+          t('marketplace.countdown.untilStart') : 
+          (timeLeft.days > 0 ? t('marketplace.countdown.remaining') : t('marketplace.countdown.left'))
         }
       </Text>
     </div>

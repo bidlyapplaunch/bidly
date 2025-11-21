@@ -51,6 +51,13 @@ const storeSchema = new mongoose.Schema({
     default: 'UTC'
   },
   
+  // Store's primary language (from Shopify Admin API)
+  primaryLanguage: {
+    type: String,
+    default: 'en',
+    enum: ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko']
+  },
+  
   planName: {
     type: String,
     required: true
