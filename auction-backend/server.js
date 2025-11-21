@@ -157,7 +157,7 @@ app.get('/render-health', (req, res) => {
 });
 
 // API routes
-app.use('/api/auctions', auctionRoutes);
+app.use('/api/auctions', identifyStore, auctionRoutes);
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -169,7 +169,7 @@ app.use('/api/email-settings', emailSettingsRoutes);
 // Load customer routes synchronously to ensure availability for widget login
 try {
   const { default: customerRoutes } = await import('./routes/customerRoutes.js');
-  app.use('/api/customers', customerRoutes);
+  app.use('/api/customers', identifyStore, customerRoutes);
   console.log('✅ Customer routes loaded synchronously');
 } catch (error) {
   console.error('❌ Failed to load customer routes:', error.message);
