@@ -1,22 +1,27 @@
 import Store from '../models/Store.js';
 import { AppError } from './errorHandler.js';
 
-const normalizeShopDomain = (rawDomain) => {
+const cleanDomain = (rawDomain) => {
   if (!rawDomain) {
     return null;
   }
 
-  const cleanDomain = String(rawDomain)
+  const normalized = String(rawDomain)
     .replace(/^https?:\/\//, '')
     .replace(/\/$/, '')
     .toLowerCase();
 
-  const isValidShopDomain =
-    cleanDomain.includes('.myshopify.com') ||
-    /^[a-z0-9-]+\.[a-z]{2,}$/.test(cleanDomain);
+  if (!/^[a-z0-9.-]+$/.test(normalized)) {
+    return null;
+  }
 
-  return isValidShopDomain ? cleanDomain : null;
+  return normalized;
 };
+
+const isMyshopifyDomain = (domain) =>
+  typeof domain === 'string' && domain.endsWith('.myshopify.com');
+
+const normalizeShopDomain = (rawDomain) => cleanDomain(rawDomain);
 
 /**
  * Extract shop domain from request.
@@ -77,53 +82,80 @@ export const identifyStore = async (req, res, next) => {
       return next();
     }
 
-    let shopDomain = extractShopDomain(req);
+    const requestedDomain = normalizeShopDomain(extractShopDomain(req));
+    const originDomain = cleanDomain(req.headers?.origin);
+    let store = null;
 
-    if (!shopDomain && req.headers?.origin) {
-      shopDomain = normalizeShopDomain(req.headers.origin);
+    const tryResolveStore = async (domain) => {
+      if (!domain) {
+        return null;
+      }
+      if (isMyshopifyDomain(domain)) {
+        const byCanonical = await Store.findByDomain(domain);
+        if (byCanonical) {
+          return byCanonical;
+        }
+      }
+      return Store.findOne({ knownDomains: domain }).select('+accessToken');
+    };
+
+    if (requestedDomain) {
+      store = await tryResolveStore(requestedDomain);
     }
 
-    if (!shopDomain) {
-      console.log('❌ No shop domain found in request');
-      console.log('🔍 Request details:', {
-        query: req.query,
-        headers: req.headers,
-        body: req.body,
-        url: req.url
-      });
-      return next(new AppError('Shop domain is required', 400));
+    if (!store && originDomain) {
+      store = await tryResolveStore(originDomain);
     }
-
-    console.log('🏪 Identifying store:', shopDomain);
-
-    const store = await Store.findByDomain(shopDomain);
 
     if (!store) {
-      console.log('❌ Store not found:', shopDomain);
+      console.log('❌ Store not found for domains:', {
+        requestedDomain,
+        originDomain
+      });
       return next(
         new AppError(
-          `Store ${shopDomain} not found. Please install the app first.`,
-          404
+          'Shop domain is required and must match an installed store',
+          400
         )
       );
     }
 
     if (!store.isInstalled) {
-      console.log('❌ Store not installed:', shopDomain);
+      console.log('❌ Store not installed:', store.shopDomain);
       return next(
         new AppError(
-          `Store ${shopDomain} is not installed. Please reinstall the app.`,
+          `Store ${store.shopDomain} is not installed. Please reinstall the app.`,
           403
         )
       );
     }
 
     await store.updateLastAccess();
-
     req.store = store;
-    req.shopDomain = shopDomain;
+    req.shopDomain = store.shopDomain;
 
-    console.log('✅ Store identified:', store.storeName, `(${shopDomain})`);
+    const candidateDomains = [requestedDomain, originDomain]
+      .filter(Boolean)
+      .filter((domain) => domain !== store.shopDomain);
+
+    if (candidateDomains.length) {
+      let changed = false;
+      for (const domain of candidateDomains) {
+        if (domain && !store.knownDomains.includes(domain)) {
+          store.knownDomains.push(domain);
+          changed = true;
+        }
+      }
+      if (changed) {
+        await store.save();
+        console.log('🔗 Stored additional custom domains for store:', {
+          store: store.shopDomain,
+          knownDomains: store.knownDomains
+        });
+      }
+    }
+
+    console.log('✅ Store identified:', store.storeName, `(${store.shopDomain})`);
 
     next();
   } catch (error) {

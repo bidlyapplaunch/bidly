@@ -177,6 +177,12 @@ const storeSchema = new mongoose.Schema({
     
     lastAuctionCreated: Date,
     lastBidPlaced: Date
+  },
+
+  // Known custom domains for storefront access (e.g., true-nordic.com)
+  knownDomains: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true, // Adds createdAt and updatedAt automatically
