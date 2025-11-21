@@ -3,6 +3,7 @@ import { AppProvider } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { I18nContext, I18nManager } from '@shopify/react-i18n';
+import { useAppBridge } from '@shopify/app-bridge-react';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import OAuthSetup from './components/OAuthSetup';
@@ -15,7 +16,7 @@ import PlansPage from './components/PlansPage';
 import AppNavigationMenu from './components/AppNavigationMenu';
 import OnboardingPage from './components/OnboardingPage';
 import { onboardingAPI } from './services/api';
-import { detectLocale, DEFAULT_LOCALE, isRtlLocale } from './locales';
+import { isRtlLocale } from './locales';
 import useAdminI18n from './hooks/useAdminI18n';
 import en from '../locales/en.default.json';
 import pl from '../locales/pl.json';
@@ -28,28 +29,41 @@ import ar from '../locales/ar.json';
 import ja from '../locales/ja.json';
 import ko from '../locales/ko.json';
 
-const ADMIN_TRANSLATIONS = {
-  en,
-  pl,
-  de,
-  es,
-  fr,
-  it,
-  nl,
-  ar,
-  ja,
-  ko
-};
+const translations = { en, pl, de, es, fr, it, nl, ar, ja, ko };
 
-function App() {
-  const [locale, setLocale] = useState(detectLocale());
+function detectLocale(appBridge) {
+  try {
+    const locale = appBridge?.localization?.language;
+    if (locale) {
+      return locale.split('-')[0];
+    }
+  } catch {
+    console.warn('App Bridge not ready yet for locale detection');
+  }
+
+  const browserLocale = typeof navigator !== 'undefined' ? navigator.language : 'en';
+  return (browserLocale || 'en').split('-')[0];
+}
+
+function LocaleAwareApp() {
+  const appBridge = useAppBridge();
+  const [locale, setLocale] = useState(() => detectLocale(appBridge));
   const [i18nManager] = useState(
     () =>
       new I18nManager({
-        locale,
-        fallbackLocale: DEFAULT_LOCALE
+        locale: 'en',
+        fallbackLocale: 'en'
       })
   );
+
+  useEffect(() => {
+    const abLocale = appBridge?.localization?.language;
+    if (abLocale) {
+      setLocale(abLocale.split('-')[0]);
+    } else {
+      setLocale(detectLocale(appBridge));
+    }
+  }, [appBridge]);
 
   useEffect(() => {
     i18nManager.update({ locale });
@@ -65,19 +79,23 @@ function App() {
       return undefined;
     }
 
-    const handleLanguageChange = () => setLocale(detectLocale());
+    const handleLanguageChange = () => setLocale(detectLocale(appBridge));
     window.addEventListener('languagechange', handleLanguageChange);
     return () => window.removeEventListener('languagechange', handleLanguageChange);
-  }, []);
+  }, [appBridge]);
+
+  const polarisTranslations = translations[locale] || translations.en;
 
   return (
     <I18nContext.Provider value={i18nManager}>
-      <AppContent locale={locale} />
+      <AppProvider i18n={polarisTranslations}>
+        <AppContent />
+      </AppProvider>
     </I18nContext.Provider>
   );
 }
 
-function AppContent({ locale }) {
+function AppContent() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [oauthComplete, setOauthComplete] = useState(false);
@@ -198,15 +216,17 @@ function AppContent({ locale }) {
     !loading && !!user && oauthComplete && onboardingStatus?.onboardingComplete;
 
   return (
-    <AppBridgeProvider>
-      <AppProvider i18n={ADMIN_TRANSLATIONS[locale] || ADMIN_TRANSLATIONS.en}>
-        <BrowserRouter>
-          {showNavigation && <AppNavigationMenu />}
-          {content}
-        </BrowserRouter>
-      </AppProvider>
-    </AppBridgeProvider>
+    <BrowserRouter>
+      {showNavigation && <AppNavigationMenu />}
+      {content}
+    </BrowserRouter>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AppBridgeProvider>
+      <LocaleAwareApp />
+    </AppBridgeProvider>
+  );
+}
