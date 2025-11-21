@@ -10,6 +10,8 @@ const STATIC_PATH_PREFIXES = [
   '/index.html'
 ];
 
+const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth'];
+
 const cleanDomain = (rawDomain) => {
   if (!rawDomain) {
     return null;
@@ -95,6 +97,10 @@ export const identifyStore = async (req, res, next) => {
       req.method === 'GET' &&
       STATIC_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix))
     ) {
+      return next();
+    }
+
+    if (DOMAIN_OPTIONAL_PREFIXES.some((prefix) => req.path.startsWith(prefix))) {
       return next();
     }
 
