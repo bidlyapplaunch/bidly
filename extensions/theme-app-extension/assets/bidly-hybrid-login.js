@@ -7,31 +7,54 @@
     'use strict';
 
     // Configuration
+    const resolveShopDomain = () => {
+        const candidates = [
+            window.Shopify?.shop?.permanent_domain,
+            window.Shopify?.shop,
+            window.Shopify?.config?.shop,
+            window.location.hostname
+        ];
+
+        let detected = '';
+        for (const candidate of candidates) {
+            if (!candidate) {
+                continue;
+            }
+            const cleaned = window.BidlyBackendConfig?.cleanDomain
+                ? window.BidlyBackendConfig.cleanDomain(candidate)
+                : candidate.toString().toLowerCase();
+            if (!cleaned) {
+                continue;
+            }
+            detected = cleaned;
+            if (cleaned.endsWith('.myshopify.com')) {
+                break;
+            }
+        }
+
+        if (window.BidlyBackendConfig?.getCanonicalShopDomain) {
+            const canonical = window.BidlyBackendConfig.getCanonicalShopDomain(detected || window.location.hostname);
+            if (canonical) {
+                return canonical;
+            }
+        }
+
+        return detected || window.location.hostname;
+    };
+
+    const SHOP_DOMAIN = resolveShopDomain();
+
     const CONFIG = {
         backendUrl: (function() {
             // Use backend config if available, otherwise default
             if (window.BidlyBackendConfig) {
-                const shopDomain = window.Shopify?.shop?.permanent_domain || window.location.hostname;
-                return window.BidlyBackendConfig.getBackendUrl(shopDomain);
+                return window.BidlyBackendConfig.getBackendUrl(SHOP_DOMAIN);
             }
             // Fallback to default if backend config not loaded
             console.warn('⚠️ Bidly: Backend config not loaded in hybrid-login, using default backend');
             return 'https://bidly-auction-backend.onrender.com';
         })(),
-        shopDomain: (() => {
-            // Prefer permanent_domain (myshopify.com format) for consistency
-            if (window.Shopify?.shop?.permanent_domain) {
-                return window.Shopify.shop.permanent_domain;
-            }
-            // Fallback: if hostname is a custom domain, try to find the myshopify domain
-            const hostname = window.location.hostname;
-            // Check if it's a known custom domain and map to myshopify domain
-            if (hostname === 'true-nordic.com' || hostname === 'www.true-nordic.com') {
-                return 'true-nordic-dev.myshopify.com';
-            }
-            // Otherwise use hostname as-is
-            return hostname;
-        })()
+        shopDomain: SHOP_DOMAIN
     };
     
     console.log('Bidly: Configuration loaded:', CONFIG);

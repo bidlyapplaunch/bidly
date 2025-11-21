@@ -9,6 +9,18 @@
 (function() {
     'use strict';
 
+    const cleanDomain = (value) => {
+        if (!value) {
+            return '';
+        }
+        return value
+            .toString()
+            .replace(/^https?:\/\//, '')
+            .replace(/\/$/, '')
+            .toLowerCase()
+            .trim();
+    };
+
     // Store-to-backend mapping
     const STORE_BACKEND_MAP = {
         // Default store
@@ -21,6 +33,15 @@
         // Custom domains that map to the second backend store
         'true-nordic.com': 'https://bidly-auction-backend-2.onrender.com',
         'www.true-nordic.com': 'https://bidly-auction-backend-2.onrender.com',
+    };
+
+    // Canonical domain mapping (custom domains -> myshopify domain)
+    const CANONICAL_DOMAIN_MAP = {
+        'bidly-2.myshopify.com': 'bidly-2.myshopify.com',
+        '6sb15z-k1.myshopify.com': '6sb15z-k1.myshopify.com',
+        'true-nordic-dev.myshopify.com': '6sb15z-k1.myshopify.com',
+        'true-nordic.com': '6sb15z-k1.myshopify.com',
+        'www.true-nordic.com': '6sb15z-k1.myshopify.com'
     };
 
     // Default backend URL (fallback for stores not in the map)
@@ -38,11 +59,7 @@
         }
         
         // Clean the shop domain (remove protocol, trailing slashes)
-        const cleanShop = shopDomain
-            .replace(/^https?:\/\//, '')
-            .replace(/\/$/, '')
-            .toLowerCase()
-            .trim();
+        const cleanShop = cleanDomain(shopDomain);
         
         // Check if we have a mapping for this shop
         const backendUrl = STORE_BACKEND_MAP[cleanShop];
@@ -57,10 +74,30 @@
         return DEFAULT_BACKEND;
     }
 
+    /**
+     * Resolve the canonical (myshopify.com) domain for a given host.
+     * Falls back to the cleaned input if no mapping is available.
+     */
+	 function getCanonicalShopDomain(domain) {
+        const cleanShop = cleanDomain(domain);
+        if (!cleanShop) {
+            return '';
+        }
+
+        if (cleanShop.endsWith('.myshopify.com')) {
+            return cleanShop;
+        }
+
+        return CANONICAL_DOMAIN_MAP[cleanShop] || cleanShop;
+    }
+
     // Expose globally for use in auction-app-embed.js
     window.BidlyBackendConfig = {
         getBackendUrl: getBackendUrl,
+        getCanonicalShopDomain: getCanonicalShopDomain,
+        cleanDomain: cleanDomain,
         STORE_BACKEND_MAP: STORE_BACKEND_MAP,
+        CANONICAL_DOMAIN_MAP: CANONICAL_DOMAIN_MAP,
         DEFAULT_BACKEND: DEFAULT_BACKEND
     };
 

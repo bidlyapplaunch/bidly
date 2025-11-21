@@ -69,7 +69,16 @@
         return firstValid || cleanDomain(window.location.hostname);
     }
 
-    const SHOP_DOMAIN = detectShopDomain();
+    let SHOP_DOMAIN = detectShopDomain();
+    if (window.BidlyBackendConfig?.getCanonicalShopDomain) {
+        const canonical = window.BidlyBackendConfig.getCanonicalShopDomain(SHOP_DOMAIN);
+        if (canonical) {
+            if (canonical !== SHOP_DOMAIN) {
+                console.log(`🔁 Bidly: Canonical shop domain resolved ${SHOP_DOMAIN} -> ${canonical}`);
+            }
+            SHOP_DOMAIN = canonical;
+        }
+    }
     if (SHOP_DOMAIN) {
         console.log(`🔍 Bidly: Detected shop domain ${SHOP_DOMAIN}`);
     } else {

@@ -8,6 +8,45 @@
   
   console.log('🚀 Bidly Widget v2000 - Loading with all fixes!');
 
+  const resolveShopDomain = () => {
+    const candidates = [
+      window.Shopify?.shop?.permanent_domain,
+      window.Shopify?.shop,
+      window.Shopify?.config?.shop,
+      window.Shopify?.Analytics?.meta?.shopDomain,
+      window.location.hostname
+    ];
+
+    for (const candidate of candidates) {
+      if (!candidate) {
+        continue;
+      }
+      const cleaned = window.BidlyBackendConfig?.cleanDomain
+        ? window.BidlyBackendConfig.cleanDomain(candidate)
+        : candidate.toString().toLowerCase();
+      if (!cleaned) {
+        continue;
+      }
+      if (cleaned.endsWith('.myshopify.com')) {
+        return window.BidlyBackendConfig?.getCanonicalShopDomain
+          ? window.BidlyBackendConfig.getCanonicalShopDomain(cleaned)
+          : cleaned;
+      }
+      if (window.BidlyBackendConfig?.getCanonicalShopDomain) {
+        const canonical = window.BidlyBackendConfig.getCanonicalShopDomain(cleaned);
+        if (canonical) {
+          return canonical;
+        }
+      } else {
+        return cleaned;
+      }
+    }
+
+    return window.location.hostname;
+  };
+
+  const CANONICAL_SHOP_DOMAIN = resolveShopDomain();
+
   // Global widget object
   window.BidlyAuctionWidget = {
     instances: {},
@@ -455,7 +494,7 @@
       button.textContent = 'Placing Bid...';
       
       // Get shop domain from current URL
-      const shopDomain = window.location.hostname;
+      const shopDomain = CANONICAL_SHOP_DOMAIN;
       
       fetch(`/apps/bidly/api/auctions/${auctionId}/bid?shop=${shopDomain}`, {
         method: 'POST',
@@ -510,7 +549,7 @@
       button.textContent = 'Processing...';
       
       // Get shop domain from current URL
-      const shopDomain = window.location.hostname;
+      const shopDomain = CANONICAL_SHOP_DOMAIN;
       
       fetch(`/apps/bidly/api/auctions/${auctionId}/buy-now?shop=${shopDomain}`, {
         method: 'POST',

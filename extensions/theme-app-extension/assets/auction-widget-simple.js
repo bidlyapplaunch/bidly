@@ -7,19 +7,55 @@
 (function() {
     'use strict';
 
+    const resolveShopDomain = () => {
+        const candidates = [
+            window.Shopify?.shop?.permanent_domain,
+            window.Shopify?.shop,
+            window.Shopify?.config?.shop,
+            window.location.hostname
+        ];
+
+        for (const candidate of candidates) {
+            if (!candidate) {
+                continue;
+            }
+            const cleaned = window.BidlyBackendConfig?.cleanDomain
+                ? window.BidlyBackendConfig.cleanDomain(candidate)
+                : candidate.toString().toLowerCase();
+            if (!cleaned) {
+                continue;
+            }
+            if (cleaned.endsWith('.myshopify.com')) {
+                return window.BidlyBackendConfig?.getCanonicalShopDomain
+                    ? window.BidlyBackendConfig.getCanonicalShopDomain(cleaned)
+                    : cleaned;
+            }
+            if (!window.BidlyBackendConfig?.getCanonicalShopDomain) {
+                return cleaned;
+            }
+            const canonical = window.BidlyBackendConfig.getCanonicalShopDomain(cleaned);
+            if (canonical) {
+                return canonical;
+            }
+        }
+
+        return window.location.hostname;
+    };
+
+    const SHOP_DOMAIN = resolveShopDomain();
+
     // Configuration
     const CONFIG = {
         backendUrl: (function() {
             // Use backend config if available, otherwise default
             if (window.BidlyBackendConfig) {
-                const shopDomain = window.Shopify?.shop?.permanent_domain || window.location.hostname;
-                return window.BidlyBackendConfig.getBackendUrl(shopDomain);
+                return window.BidlyBackendConfig.getBackendUrl(SHOP_DOMAIN);
             }
             // Fallback to default if backend config not loaded
             console.warn('⚠️ Bidly: Backend config not loaded in widget-simple, using default backend');
             return 'https://bidly-auction-backend.onrender.com';
         })(),
-        shopDomain: window.Shopify?.shop?.permanent_domain || window.location.hostname,
+        shopDomain: SHOP_DOMAIN,
         sessionKey: 'bidly_guest_session',
         sessionExpiryHours: 6 // Guest sessions expire after 6 hours
     };
