@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
 import connectDB from './config/database.js';
 import Auction from './models/Auction.js';
 import Store from './models/Store.js';
+import Customer from './models/Customer.js';
 import auctionRoutes from './routes/auctionRoutes.js';
 import shopifyRoutes from './routes/shopifyRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -38,10 +39,15 @@ console.log('  - EMAIL_USER:', process.env.EMAIL_USER ? 'Present' : 'Missing');
 console.log('  - EMAIL_PASS:', process.env.EMAIL_PASS ? 'Present' : 'Missing');
 
 // Connect to MongoDB (non-blocking)
-connectDB().catch(error => {
-  console.error('⚠️ MongoDB connection failed:', error.message);
-  console.log('⚠️ Server will continue without database connection');
-});
+connectDB()
+  .then(async () => {
+    console.log('✅ MongoDB connected');
+    await fixCustomerIndexes();
+  })
+  .catch(error => {
+    console.error('⚠️ MongoDB connection failed:', error.message);
+    console.log('⚠️ Server will continue without database connection');
+  });
 
 const app = express();
 const server = createServer(app);
@@ -53,6 +59,27 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5000;
 const previewAssetsPath = path.join(__dirname, '../extensions/theme-app-extension/assets');
+
+const fixCustomerIndexes = async () => {
+  try {
+    const indexes = await Customer.collection.indexes();
+
+    const legacyEmailIndex = indexes.find((idx) => idx.name === 'email_1');
+    if (legacyEmailIndex) {
+      console.log('🔧 Dropping legacy customers.email_1 index (email-only unique)...');
+      await Customer.collection.dropIndex('email_1');
+      console.log('✅ Dropped legacy email_1 index');
+    }
+
+    await Customer.collection.createIndex(
+      { email: 1, shopDomain: 1 },
+      { unique: true }
+    );
+    console.log('✅ Ensured compound { email, shopDomain } unique index on customers');
+  } catch (err) {
+    console.error('⚠️ Failed to migrate Customer indexes:', err.message);
+  }
+};
 
 // CORS must be first middleware so identifyStore/routes see headers
 app.use(cors({

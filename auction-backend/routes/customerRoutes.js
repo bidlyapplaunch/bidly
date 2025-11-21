@@ -91,29 +91,42 @@ router.post('/saveCustomer', async (req, res, next) => {
     
     // Handle duplicate key errors (should not happen with ensureCustomer, but keep for safety)
     if (error.code === 11000) {
-      // Extract email and shopDomain from req.body
-      const errorEmail = req.body?.email || error.keyValue?.email;
-      const errorShopDomain = shopDomain;
-      
+      const errorEmail = (req.body?.email || error.keyValue?.email || '').toLowerCase().trim();
+      const errorShopDomain =
+        req.shopDomain ||
+        req.body?.shopDomain ||
+        req.query?.shop ||
+        req.query?.shopDomain ||
+        req.query?.store ||
+        req.query?.domain;
+
       if (!errorEmail || !errorShopDomain) {
-        console.error('❌ Cannot handle duplicate error: missing email or shopDomain');
-        return next(new AppError('Customer with this email already exists in this store', 409));
-      }
-      
-      console.log('⚠️ Duplicate customer detected, fetching existing customer:', { email: errorEmail, shopDomain: errorShopDomain });
-      try {
-        // Find the existing customer directly (don't use ensureCustomer as it might try to create again)
-        const existingCustomer = await Customer.findOne({
-          email: errorEmail.toLowerCase().trim(),
-          shopDomain: errorShopDomain
+        console.error('❌ Cannot handle duplicate error: missing email or shopDomain', {
+          emailPresent: !!errorEmail,
+          shopDomainPresent: !!errorShopDomain
         });
-        
+        return next(new AppError('Duplicate customer already exists and cannot be resolved', 409));
+      }
+
+      console.log('⚠️ Duplicate customer detected, fetching existing customer:', {
+        email: errorEmail,
+        shopDomain: errorShopDomain
+      });
+
+      try {
+        const existingCustomer = await Customer.findOne({
+          email: errorEmail,
+          shopDomain: errorShopDomain.toLowerCase().trim()
+        });
+
         if (!existingCustomer) {
-          console.error('❌ Customer not found despite duplicate key error');
+          console.error('❌ Customer not found despite duplicate key error', {
+            email: errorEmail,
+            shopDomain: errorShopDomain
+          });
           return next(new AppError('Customer with this email already exists in this store', 409));
         }
-        
-        // Update fields if provided and different
+
         let shouldUpdate = false;
         if (req.body?.shopifyId && !existingCustomer.shopifyId) {
           existingCustomer.shopifyId = req.body.shopifyId;
@@ -131,11 +144,12 @@ router.post('/saveCustomer', async (req, res, next) => {
         if (shouldUpdate) {
           await existingCustomer.save();
         }
-        
+
         console.log('✅ Found existing customer, returning it');
-        return res.json({
-          success: true,
-          customer: {
+        return res.status(409).json({
+          success: false,
+          message: 'Customer already exists for this store',
+          existingCustomer: {
             id: existingCustomer._id,
             email: existingCustomer.email,
             firstName: existingCustomer.firstName,
@@ -144,9 +158,7 @@ router.post('/saveCustomer', async (req, res, next) => {
             fullName: existingCustomer.fullName,
             shopifyId: existingCustomer.shopifyId,
             isTemp: existingCustomer.isTemp,
-            totalBids: existingCustomer.totalBids,
-            auctionsWon: existingCustomer.auctionsWon,
-            totalBidAmount: existingCustomer.totalBidAmount
+            shopDomain: existingCustomer.shopDomain
           }
         });
       } catch (findError) {
