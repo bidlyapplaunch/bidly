@@ -4,7 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- API key will be injected by Shopify or read from URL -->
+    <meta name="shopify-api-key" content="" />
     <title>Bidly Auction Admin</title>
+    <script>
+      // Try to extract API key from URL (Shopify embedded apps include it)
+      (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const apiKey = urlParams.get('apiKey') || urlParams.get('api_key');
+        if (apiKey) {
+          window.SHOPIFY_API_KEY = apiKey;
+          const metaTag = document.querySelector('meta[name="shopify-api-key"]');
+          if (metaTag) {
+            metaTag.setAttribute('content', apiKey);
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
