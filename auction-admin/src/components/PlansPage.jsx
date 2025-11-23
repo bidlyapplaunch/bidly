@@ -27,14 +27,7 @@ const PLAN_LEVELS = {
 
 const PLAN_DISPLAY_ORDER = ['free', 'basic', 'pro', 'enterprise'];
 
-// Helper function to translate highlight arrays
-const translateHighlights = (i18n, prefix) => {
-  const highlights = i18n.translate(`${prefix}.highlights`, { returnObjects: true });
-  if (!Array.isArray(highlights)) return [];
-  return highlights.map((line) => i18n.translate(line));
-};
-
-function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i18n, planConfig }) {
+function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i18n, planConfig, t, translateHighlights }) {
   const plan = planConfig[planKey];
   const normalizedCurrent = (currentPlan || 'free').toLowerCase();
   const isCurrent = normalizedCurrent === planKey;
@@ -44,12 +37,12 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i1
   const isUpgrade = PLAN_LEVELS[planKey] > PLAN_LEVELS[normalizedCurrent];
 
   const actionLabel = useMemo(() => {
-    if (isCurrent) return i18n.translate('admin.billing.plans.currentPlan');
-    if (isPending) return i18n.translate('admin.billing.plans.pendingActivation');
-    if (planKey === 'free') return i18n.translate('admin.billing.plans.free.actionLabel');
-    if (isDowngrade) return i18n.translate('admin.billing.plans.downgradeTo', { title: plan.title });
-    return i18n.translate('admin.billing.plans.upgradeTo', { title: plan.title });
-  }, [isCurrent, isPending, isDowngrade, plan.title, planKey, i18n]);
+    if (isCurrent) return t('admin.billing.plans.currentPlan');
+    if (isPending) return t('admin.billing.plans.pendingActivation');
+    if (planKey === 'free') return t('admin.billing.plans.free.actionLabel');
+    if (isDowngrade) return t('admin.billing.plans.downgradeTo', { title: plan.title });
+    return t('admin.billing.plans.upgradeTo', { title: plan.title });
+  }, [isCurrent, isPending, isDowngrade, plan.title, planKey, t]);
 
   const handleSelect = useCallback(() => {
     // Free plan cannot be selected (it's the default)
@@ -68,13 +61,13 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i1
           <Text tone="subdued">{plan.description}</Text>
           {/* Show trial message only for paid plans */}
           {planKey !== 'free' && (
-            <Text tone="subdued" variant="bodySm">{i18n.translate('admin.billing.plans.trialCopy')}</Text>
+            <Text tone="subdued" variant="bodySm">{t('admin.billing.plans.trialCopy')}</Text>
           )}
         </div>
       </LegacyCard.Section>
       <LegacyCard.Section>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {translateHighlights(i18n, `admin.billing.plans.${planKey}`).map((text, index) => (
+          {translateHighlights(`admin.billing.plans.${planKey}`).map((text, index) => (
             <Text as="p" key={index} tone="subdued">
               • {text}
             </Text>
@@ -111,25 +104,76 @@ const PlansPage = () => {
   const [cancelModal, setCancelModal] = useState({ open: false });
   const [cancelling, setCancelling] = useState(false);
 
+  // Block rendering until i18n is ready
+  if (!i18n || !i18n.translate) {
+    return null;
+  }
+
+  // Optional: Verify billing namespace is loaded
+  useEffect(() => {
+    if (i18n && i18n.translations) {
+      console.log('i18n translations loaded:', Object.keys(i18n.translations || {}));
+      const hasBilling = i18n.translations && (
+        i18n.translations['admin.billing.plans.pro.highlights'] !== undefined ||
+        i18n.translations['admin']?.billing?.plans?.pro?.highlights !== undefined
+      );
+      console.log('Billing namespace loaded:', hasBilling);
+    }
+  }, [i18n]);
+
+  // Safe translation helper that runs AFTER mount
+  const t = useCallback((key, opts) => {
+    if (!i18n || !i18n.translate) return key;
+    try {
+      return i18n.translate(key, opts);
+    } catch (err) {
+      console.error('Translation error for key:', key, err);
+      return key;
+    }
+  }, [i18n]);
+
+  // Helper function to translate highlight arrays (moved inside component)
+  const translateHighlights = useCallback((prefix) => {
+    if (!i18n || !i18n.translate) return [];
+    try {
+      const highlights = i18n.translate(`${prefix}.highlights`, { returnObjects: true });
+      if (!Array.isArray(highlights)) return [];
+      return highlights.map((line) => {
+        if (typeof line === 'string') {
+          // If line is already a translation key, translate it; otherwise return as-is
+          try {
+            return i18n.translate(line);
+          } catch {
+            return line;
+          }
+        }
+        return line;
+      });
+    } catch (err) {
+      console.error('Error translating highlights for:', prefix, err);
+      return [];
+    }
+  }, [i18n]);
+
   const FEATURE_LABELS = useMemo(() => {
-    const proHighlights = translateHighlights(i18n, 'admin.billing.plans.pro');
-    const enterpriseHighlights = translateHighlights(i18n, 'admin.billing.plans.enterprise');
+    const proHighlights = translateHighlights('admin.billing.plans.pro');
+    const enterpriseHighlights = translateHighlights('admin.billing.plans.enterprise');
     return {
       removeBranding: proHighlights[1] || 'Remove Bidly branding',
       customization: proHighlights[2] || 'Widget & marketplace customization',
       popcorn: proHighlights[3] || 'Popcorn bidding',
       chat: enterpriseHighlights[3] || 'Live bidder chatbox'
     };
-  }, [i18n]);
+  }, [translateHighlights]);
 
   const PLAN_CONFIG = useMemo(() => {
     return {
       free: {
         key: 'free',
-        title: i18n.translate('admin.billing.plans.free.title'),
-        price: i18n.translate('admin.billing.plans.free.price'),
-        description: i18n.translate('admin.billing.plans.free.description'),
-        highlights: translateHighlights(i18n, 'admin.billing.plans.free'),
+        title: t('admin.billing.plans.free.title'),
+        price: t('admin.billing.plans.free.price'),
+        description: t('admin.billing.plans.free.description'),
+        highlights: translateHighlights('admin.billing.plans.free'),
         limits: { auctions: 1 },
         features: {
           removeBranding: false,
@@ -140,10 +184,10 @@ const PlansPage = () => {
       },
       basic: {
         key: 'basic',
-        title: i18n.translate('admin.billing.plans.basic.title'),
-        price: i18n.translate('admin.billing.plans.basic.price'),
-        description: i18n.translate('admin.billing.plans.basic.description'),
-        highlights: translateHighlights(i18n, 'admin.billing.plans.basic'),
+        title: t('admin.billing.plans.basic.title'),
+        price: t('admin.billing.plans.basic.price'),
+        description: t('admin.billing.plans.basic.description'),
+        highlights: translateHighlights('admin.billing.plans.basic'),
         limits: { auctions: 3 },
         features: {
           removeBranding: false,
@@ -154,10 +198,10 @@ const PlansPage = () => {
       },
       pro: {
         key: 'pro',
-        title: i18n.translate('admin.billing.plans.pro.title'),
-        price: i18n.translate('admin.billing.plans.pro.price'),
-        description: i18n.translate('admin.billing.plans.pro.description'),
-        highlights: translateHighlights(i18n, 'admin.billing.plans.pro'),
+        title: t('admin.billing.plans.pro.title'),
+        price: t('admin.billing.plans.pro.price'),
+        description: t('admin.billing.plans.pro.description'),
+        highlights: translateHighlights('admin.billing.plans.pro'),
         limits: { auctions: 20 },
         features: {
           removeBranding: true,
@@ -168,10 +212,10 @@ const PlansPage = () => {
       },
       enterprise: {
         key: 'enterprise',
-        title: i18n.translate('admin.billing.plans.enterprise.title'),
-        price: i18n.translate('admin.billing.plans.enterprise.price'),
-        description: i18n.translate('admin.billing.plans.enterprise.description'),
-        highlights: translateHighlights(i18n, 'admin.billing.plans.enterprise'),
+        title: t('admin.billing.plans.enterprise.title'),
+        price: t('admin.billing.plans.enterprise.price'),
+        description: t('admin.billing.plans.enterprise.description'),
+        highlights: translateHighlights('admin.billing.plans.enterprise'),
         limits: { auctions: null },
         features: {
           removeBranding: true,
@@ -181,7 +225,7 @@ const PlansPage = () => {
         }
       }
     };
-  }, [i18n]);
+  }, [t, translateHighlights]);
 
   const billingStatus = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -192,7 +236,7 @@ const PlansPage = () => {
     };
   }, [location.search]);
 
-  const loadPlan = async () => {
+  const loadPlan = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -216,7 +260,7 @@ const PlansPage = () => {
           trialEndsAt: planResponse.trialEndsAt
         });
       } else {
-        setError(planResponse.message || i18n.translate('admin.billing.errors.loadError'));
+        setError(planResponse.message || t('admin.billing.errors.loadError'));
       }
 
       if (statsResponse) {
@@ -224,21 +268,21 @@ const PlansPage = () => {
       }
     } catch (err) {
       console.error('Plan load error', err);
-      setError(err.response?.data?.message || err.message || i18n.translate('admin.billing.errors.loadError'));
+      setError(err.response?.data?.message || err.message || t('admin.billing.errors.loadError'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   const formatLimit = useCallback((limit) => {
     if (limit === null) {
-      return i18n.translate('admin.billing.formatLimit.unlimited');
+      return t('admin.billing.formatLimit.unlimited');
     }
     if (typeof limit === 'number') {
-      return i18n.translate('admin.billing.formatLimit.activeAuctions', { count: limit });
+      return t('admin.billing.formatLimit.activeAuctions', { count: limit });
     }
-    return i18n.translate('admin.billing.formatLimit.unlimited');
-  }, [i18n]);
+    return t('admin.billing.formatLimit.unlimited');
+  }, [t]);
 
 
   useEffect(() => {
@@ -252,11 +296,11 @@ const PlansPage = () => {
       if (response.success && response.confirmationUrl) {
         window.location.href = response.confirmationUrl;
       } else {
-        setError(response.message || i18n.translate('admin.billing.errors.subscribeError'));
+        setError(response.message || t('admin.billing.errors.subscribeError'));
       }
     } catch (err) {
       console.error('Subscribe error', err);
-      setError(err.response?.data?.message || err.message || i18n.translate('admin.billing.errors.subscribeError'));
+      setError(err.response?.data?.message || err.message || t('admin.billing.errors.subscribeError'));
     } finally {
       setLoadingPlan(null);
     }
@@ -349,31 +393,31 @@ const PlansPage = () => {
       if (response.success) {
         closeCancelModal();
         // Show success message
-        setError(response.message || i18n.translate('admin.billing.cancel.resubscribe'));
+        setError(response.message || t('admin.billing.cancel.resubscribe'));
         await loadPlan(); // Reload plan data
       } else {
-        setError(response.message || i18n.translate('admin.billing.errors.cancelError'));
+        setError(response.message || t('admin.billing.errors.cancelError'));
       }
     } catch (err) {
       console.error('Cancel subscription error', err);
-      setError(err.response?.data?.message || err.message || i18n.translate('admin.billing.errors.cancelError'));
+      setError(err.response?.data?.message || err.message || t('admin.billing.errors.cancelError'));
     } finally {
       setCancelling(false);
     }
-  }, [closeCancelModal, loadPlan, i18n]);
+  }, [closeCancelModal, loadPlan, t]);
 
   const banner = useMemo(() => {
     if (billingStatus.status === 'success') {
       return (
-        <Banner tone="success" title={i18n.translate('admin.billing.banners.subscriptionActivated.title')}>
-          <p>{i18n.translate('admin.billing.banners.subscriptionActivated.message')}</p>
+        <Banner tone="success" title={t('admin.billing.banners.subscriptionActivated.title')}>
+          <p>{t('admin.billing.banners.subscriptionActivated.message')}</p>
         </Banner>
       );
     }
     if (billingStatus.status === 'pending') {
       return (
-        <Banner tone="info" title={i18n.translate('admin.billing.banners.awaitingConfirmation.title')}>
-          <p>{i18n.translate('admin.billing.banners.awaitingConfirmation.message')}</p>
+        <Banner tone="info" title={t('admin.billing.banners.awaitingConfirmation.title')}>
+          <p>{t('admin.billing.banners.awaitingConfirmation.message')}</p>
         </Banner>
       );
     }
@@ -386,9 +430,9 @@ const PlansPage = () => {
               return billingStatus.message;
             }
           })()
-        : i18n.translate('admin.billing.banners.subscriptionNotConfirmed.message');
+        : t('admin.billing.banners.subscriptionNotConfirmed.message');
       return (
-        <Banner tone="critical" title={i18n.translate('admin.billing.banners.subscriptionNotConfirmed.title')}>
+        <Banner tone="critical" title={t('admin.billing.banners.subscriptionNotConfirmed.title')}>
           <p>{errorMessage}</p>
         </Banner>
       );
@@ -397,43 +441,47 @@ const PlansPage = () => {
       // Check if it's a cancellation success message
       if (error.includes('cancelled successfully') || error.includes('revert to Free')) {
         return (
-          <Banner tone="success" title={i18n.translate('admin.billing.banners.subscriptionCancelled.title')}>
-            <p>{i18n.translate('admin.billing.banners.subscriptionCancelled.message', { message: error })}</p>
+          <Banner tone="success" title={t('admin.billing.banners.subscriptionCancelled.title')}>
+            <p>{t('admin.billing.banners.subscriptionCancelled.message', { message: error })}</p>
           </Banner>
         );
       }
       return (
-        <Banner tone="critical" title={i18n.translate('admin.billing.banners.loadError.title')}>
+        <Banner tone="critical" title={t('admin.billing.banners.loadError.title')}>
           <p>{error}</p>
-          <Button onClick={loadPlan}>{i18n.translate('admin.billing.banners.loadError.retry')}</Button>
+          <Button onClick={loadPlan}>{t('admin.billing.banners.loadError.retry')}</Button>
         </Banner>
       );
     }
     return null;
-  }, [billingStatus, error, loadPlan, i18n]);
+  }, [billingStatus, error, loadPlan, t]);
 
-  const previewModeBanner =
-    !loading && !planData.plan ? (
-      <Banner
-        tone="warning"
-        title={i18n.translate('admin.billing.banners.previewMode.title')}
-        action={{
-          content: i18n.translate('admin.billing.banners.previewMode.action'),
-          onAction: () => navigate(`/plans${location.search || ''}`)
-        }}
-      >
-        <p>{i18n.translate('admin.billing.banners.previewMode.message')}</p>
-      </Banner>
-    ) : null;
+  const previewModeBanner = useMemo(() => {
+    if (!loading && !planData.plan) {
+      return (
+        <Banner
+          tone="warning"
+          title={t('admin.billing.banners.previewMode.title')}
+          action={{
+            content: t('admin.billing.banners.previewMode.action'),
+            onAction: () => navigate(`/plans${location.search || ''}`)
+          }}
+        >
+          <p>{t('admin.billing.banners.previewMode.message')}</p>
+        </Banner>
+      );
+    }
+    return null;
+  }, [loading, planData.plan, t, navigate, location.search]);
 
 
   return (
     <>
       <Page
-        title={i18n.translate('admin.billing.page.title')}
-        subtitle={i18n.translate('admin.billing.page.subtitle')}
+        title={t('admin.billing.page.title')}
+        subtitle={t('admin.billing.page.subtitle')}
         backAction={{
-          content: i18n.translate('admin.common.back'),
+          content: t('admin.common.back'),
           onAction: () => navigate(-1)
         }}
       >
@@ -451,20 +499,20 @@ const PlansPage = () => {
               <LegacyCard.Section>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <Text variant="headingMd">{i18n.translate('admin.billing.currentPlan.title')}</Text>
+                    <Text variant="headingMd">{t('admin.billing.currentPlan.title')}</Text>
                     {loading ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Spinner accessibilityLabel={i18n.translate('admin.billing.currentPlan.loading')} size="small" />
-                        <Text tone="subdued">{i18n.translate('admin.billing.currentPlan.loading')}</Text>
+                        <Spinner accessibilityLabel={t('admin.billing.currentPlan.loading')} size="small" />
+                        <Text tone="subdued">{t('admin.billing.currentPlan.loading')}</Text>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <Text tone="subdued">{i18n.translate('admin.billing.currentPlan.active', { plan: planData.plan || 'free' })}</Text>
+                        <Text tone="subdued">{t('admin.billing.currentPlan.active', { plan: planData.plan || 'free' })}</Text>
                         {/* Only show Pending if there's a real pending change (cancellation or downgrade) */}
                         {planData.pendingPlan && 
                          planData.pendingPlan !== planData.plan && 
                          (planData.pendingPlan === 'free' || PLAN_LEVELS[planData.pendingPlan] < PLAN_LEVELS[planData.plan]) && (
-                          <Text tone="subdued">{i18n.translate('admin.billing.currentPlan.pending', { plan: planData.pendingPlan })}</Text>
+                          <Text tone="subdued">{t('admin.billing.currentPlan.pending', { plan: planData.pendingPlan })}</Text>
                         )}
                       </div>
                     )}
@@ -475,7 +523,7 @@ const PlansPage = () => {
                       onClick={handleCancelSubscription}
                       disabled={cancelling}
                     >
-                      {i18n.translate('admin.billing.currentPlan.cancelSubscription')}
+                      {t('admin.billing.currentPlan.cancelSubscription')}
                     </Button>
                   )}
                 </div>
@@ -484,7 +532,7 @@ const PlansPage = () => {
           </Layout.Section>
 
           <Layout.Section>
-            <Text variant="headingMd">{i18n.translate('admin.billing.plans.title')}</Text>
+            <Text variant="headingMd">{t('admin.billing.plans.title')}</Text>
           </Layout.Section>
 
           <Layout.Section>
@@ -499,6 +547,8 @@ const PlansPage = () => {
                   loadingPlan={loadingPlan}
                   i18n={i18n}
                   planConfig={PLAN_CONFIG}
+                  t={t}
+                  translateHighlights={translateHighlights}
                 />
               ))}
             </div>
@@ -510,23 +560,23 @@ const PlansPage = () => {
         <Modal
           open
           onClose={closeDowngradeModal}
-          title={i18n.translate('admin.billing.downgrade.title', { plan: PLAN_CONFIG[downgradeModal.targetPlan].title })}
+          title={t('admin.billing.downgrade.title', { plan: PLAN_CONFIG[downgradeModal.targetPlan].title })}
           primaryAction={{
-            content: i18n.translate('admin.billing.downgrade.confirm'),
+            content: t('admin.billing.downgrade.confirm'),
             destructive: true,
             onAction: confirmDowngrade,
             loading: loadingPlan === downgradeModal.targetPlan
           }}
           secondaryActions={[
             {
-              content: i18n.translate('admin.common.cancel'),
+              content: t('admin.common.cancel'),
               onAction: closeDowngradeModal
             }
           ]}
         >
           <Modal.Section>
             <Text variant="bodyMd">
-              {i18n.translate('admin.billing.downgrade.message', {
+              {t('admin.billing.downgrade.message', {
                 current: PLAN_CONFIG[downgradeModal.info.currentPlanKey].title,
                 target: PLAN_CONFIG[downgradeModal.targetPlan].title
               })}
@@ -535,15 +585,15 @@ const PlansPage = () => {
               <List type="bullet">
                 {downgradeModal.info.lostFeatures.length > 0 &&
                   downgradeModal.info.lostFeatures.map((feature) => (
-                    <List.Item key={feature}>{i18n.translate('admin.billing.downgrade.featureRemoved', { feature })}</List.Item>
+                    <List.Item key={feature}>{t('admin.billing.downgrade.featureRemoved', { feature })}</List.Item>
                   ))}
                 {downgradeModal.info.lostFeatures.length === 0 && (
-                  <List.Item key="no-features">{i18n.translate('admin.billing.downgrade.noFeaturesRemoved')}</List.Item>
+                  <List.Item key="no-features">{t('admin.billing.downgrade.noFeaturesRemoved')}</List.Item>
                 )}
                 {typeof downgradeModal.info.auctionsToClose === 'number' ? (
                   downgradeModal.info.auctionsToClose > 0 ? (
                     <List.Item key="auctions">
-                      {i18n.translate('admin.billing.downgrade.auctionsToClose', {
+                      {t('admin.billing.downgrade.auctionsToClose', {
                         count: downgradeModal.info.auctionsToClose,
                         plural: downgradeModal.info.auctionsToClose === 1 ? '' : 's',
                         limit: formatLimit(downgradeModal.info.targetLimit)
@@ -551,20 +601,20 @@ const PlansPage = () => {
                     </List.Item>
                   ) : (
                     <List.Item key="auctions-fit">
-                      {i18n.translate('admin.billing.downgrade.auctionsFit', {
+                      {t('admin.billing.downgrade.auctionsFit', {
                         limit: formatLimit(downgradeModal.info.targetLimit)
                       })}
                     </List.Item>
                   )
                 ) : (
                   <List.Item key="auctions-unlimited">
-                    {i18n.translate('admin.billing.downgrade.unlimitedLimit')}
+                    {t('admin.billing.downgrade.unlimitedLimit')}
                   </List.Item>
                 )}
               </List>
             </div>
             <Text tone="critical" variant="bodySm">
-              {i18n.translate('admin.billing.downgrade.warning')}
+              {t('admin.billing.downgrade.warning')}
             </Text>
           </Modal.Section>
         </Modal>
@@ -574,36 +624,36 @@ const PlansPage = () => {
         <Modal
           open
           onClose={closeCancelModal}
-          title={i18n.translate('admin.billing.cancel.title')}
+          title={t('admin.billing.cancel.title')}
           primaryAction={{
-            content: i18n.translate('admin.billing.cancel.confirm'),
+            content: t('admin.billing.cancel.confirm'),
             destructive: true,
             onAction: confirmCancelSubscription,
             loading: cancelling
           }}
           secondaryActions={[
             {
-              content: i18n.translate('admin.billing.cancel.keep'),
+              content: t('admin.billing.cancel.keep'),
               onAction: closeCancelModal
             }
           ]}
         >
           <Modal.Section>
             <Text variant="bodyMd">
-              {i18n.translate('admin.billing.cancel.message')}
+              {t('admin.billing.cancel.message')}
             </Text>
             <div style={{ marginTop: '16px' }}>
               <Text tone="subdued" variant="bodyMd">
-                {i18n.translate('admin.billing.cancel.description')}
+                {t('admin.billing.cancel.description')}
               </Text>
               <List type="bullet">
-                <List.Item>{i18n.translate('admin.billing.cancel.freeFeatures.0')}</List.Item>
-                <List.Item>{i18n.translate('admin.billing.cancel.freeFeatures.1')}</List.Item>
-                <List.Item>{i18n.translate('admin.billing.cancel.freeFeatures.2')}</List.Item>
+                <List.Item>{t('admin.billing.cancel.freeFeatures.0')}</List.Item>
+                <List.Item>{t('admin.billing.cancel.freeFeatures.1')}</List.Item>
+                <List.Item>{t('admin.billing.cancel.freeFeatures.2')}</List.Item>
               </List>
             </div>
             <Text tone="critical" variant="bodySm" style={{ marginTop: '16px' }}>
-              {i18n.translate('admin.billing.cancel.resubscribe')}
+              {t('admin.billing.cancel.resubscribe')}
             </Text>
           </Modal.Section>
         </Modal>
