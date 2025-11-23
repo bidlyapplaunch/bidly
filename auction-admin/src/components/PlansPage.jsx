@@ -27,6 +27,13 @@ const PLAN_LEVELS = {
 
 const PLAN_DISPLAY_ORDER = ['free', 'basic', 'pro', 'enterprise'];
 
+// Helper function to translate highlight arrays
+const translateHighlights = (i18n, prefix) => {
+  const highlights = i18n.translate(`${prefix}.highlights`, { returnObjects: true });
+  if (!Array.isArray(highlights)) return [];
+  return highlights.map((line) => i18n.translate(line));
+};
+
 function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i18n, planConfig }) {
   const plan = planConfig[planKey];
   const normalizedCurrent = (currentPlan || 'free').toLowerCase();
@@ -67,9 +74,9 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i1
       </LegacyCard.Section>
       <LegacyCard.Section>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {plan.highlights.map((item) => (
-            <Text as="p" key={item} tone="subdued">
-              • {item}
+          {translateHighlights(i18n, `admin.billing.plans.${planKey}`).map((text, index) => (
+            <Text as="p" key={index} tone="subdued">
+              • {text}
             </Text>
           ))}
         </div>
@@ -105,29 +112,24 @@ const PlansPage = () => {
   const [cancelling, setCancelling] = useState(false);
 
   const FEATURE_LABELS = useMemo(() => {
-    const proHighlights = i18n.translate('admin.billing.plans.pro.highlights');
-    const enterpriseHighlights = i18n.translate('admin.billing.plans.enterprise.highlights');
+    const proHighlights = translateHighlights(i18n, 'admin.billing.plans.pro');
+    const enterpriseHighlights = translateHighlights(i18n, 'admin.billing.plans.enterprise');
     return {
-      removeBranding: Array.isArray(proHighlights) ? proHighlights[1] : 'Remove Bidly branding',
-      customization: Array.isArray(proHighlights) ? proHighlights[2] : 'Widget & marketplace customization',
-      popcorn: Array.isArray(proHighlights) ? proHighlights[3] : 'Popcorn bidding',
-      chat: Array.isArray(enterpriseHighlights) ? enterpriseHighlights[3] : 'Live bidder chatbox'
+      removeBranding: proHighlights[1] || 'Remove Bidly branding',
+      customization: proHighlights[2] || 'Widget & marketplace customization',
+      popcorn: proHighlights[3] || 'Popcorn bidding',
+      chat: enterpriseHighlights[3] || 'Live bidder chatbox'
     };
   }, [i18n]);
 
   const PLAN_CONFIG = useMemo(() => {
-    const freeHighlights = i18n.translate('admin.billing.plans.free.highlights');
-    const basicHighlights = i18n.translate('admin.billing.plans.basic.highlights');
-    const proHighlights = i18n.translate('admin.billing.plans.pro.highlights');
-    const enterpriseHighlights = i18n.translate('admin.billing.plans.enterprise.highlights');
-    
     return {
       free: {
         key: 'free',
         title: i18n.translate('admin.billing.plans.free.title'),
         price: i18n.translate('admin.billing.plans.free.price'),
         description: i18n.translate('admin.billing.plans.free.description'),
-        highlights: Array.isArray(freeHighlights) ? freeHighlights : [],
+        highlights: translateHighlights(i18n, 'admin.billing.plans.free'),
         limits: { auctions: 1 },
         features: {
           removeBranding: false,
@@ -141,7 +143,7 @@ const PlansPage = () => {
         title: i18n.translate('admin.billing.plans.basic.title'),
         price: i18n.translate('admin.billing.plans.basic.price'),
         description: i18n.translate('admin.billing.plans.basic.description'),
-        highlights: Array.isArray(basicHighlights) ? basicHighlights : [],
+        highlights: translateHighlights(i18n, 'admin.billing.plans.basic'),
         limits: { auctions: 3 },
         features: {
           removeBranding: false,
@@ -155,7 +157,7 @@ const PlansPage = () => {
         title: i18n.translate('admin.billing.plans.pro.title'),
         price: i18n.translate('admin.billing.plans.pro.price'),
         description: i18n.translate('admin.billing.plans.pro.description'),
-        highlights: Array.isArray(proHighlights) ? proHighlights : [],
+        highlights: translateHighlights(i18n, 'admin.billing.plans.pro'),
         limits: { auctions: 20 },
         features: {
           removeBranding: true,
@@ -169,7 +171,7 @@ const PlansPage = () => {
         title: i18n.translate('admin.billing.plans.enterprise.title'),
         price: i18n.translate('admin.billing.plans.enterprise.price'),
         description: i18n.translate('admin.billing.plans.enterprise.description'),
-        highlights: Array.isArray(enterpriseHighlights) ? enterpriseHighlights : [],
+        highlights: translateHighlights(i18n, 'admin.billing.plans.enterprise'),
         limits: { auctions: null },
         features: {
           removeBranding: true,
