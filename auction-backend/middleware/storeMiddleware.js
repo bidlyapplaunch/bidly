@@ -7,7 +7,9 @@ const STATIC_PATH_PREFIXES = [
   '/manifest',
   '/robots.txt',
   '/shopify-test',
-  '/index.html'
+  '/index.html',
+  '/health',
+  '/render-health'
 ];
 
 const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth'];
@@ -132,7 +134,15 @@ export const identifyStore = async (req, res, next) => {
     if (!store) {
       console.log('❌ Store not found for domains:', {
         requestedDomain,
-        originDomain
+        originDomain,
+        path: req.path,
+        method: req.method,
+        query: req.query,
+        headers: {
+          origin: req.headers?.origin,
+          'x-shopify-shop-domain': req.headers?.['x-shopify-shop-domain'],
+          'x-shop-domain': req.headers?.['x-shop-domain']
+        }
       });
       return next(
         new AppError(
