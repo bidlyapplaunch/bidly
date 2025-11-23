@@ -13,6 +13,8 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import { auctionAPI, billingAPI } from '../services/api';
 import useAdminI18n from '../hooks/useAdminI18n';
+import { useI18n } from '@shopify/react-i18n';
+import { getTranslationsForLocale, resolveLocale } from '../locales';
 
 const PLAN_LEVELS = {
   free: 0,
@@ -132,22 +134,43 @@ const PlansPage = () => {
     }
   }, [i18n]);
 
+  // Get current locale from i18n context (must be called at component level)
+  const [i18nContext] = useI18n();
+  const currentLocale = i18nContext?.locale || 'en';
+  const resolvedLocale = resolveLocale(currentLocale);
+
   // Helper function to translate highlight objects (moved inside component)
   const translateHighlights = useCallback((prefix) => {
     if (!i18n || !i18n.translate) return [];
     try {
-      const highlights = i18n.translate(`${prefix}.highlights`, { returnObjects: true });
+      // Get translations directly from locale files
+      const translations = getTranslationsForLocale(resolvedLocale);
+      const keyParts = prefix.split('.');
+      
+      // Navigate through the translation object
+      let highlightsObj = translations;
+      for (const part of keyParts) {
+        if (highlightsObj && typeof highlightsObj === 'object' && highlightsObj[part] !== undefined) {
+          highlightsObj = highlightsObj[part];
+        } else {
+          highlightsObj = null;
+          break;
+        }
+      }
+      
+      // Get highlights object
+      const highlights = highlightsObj?.highlights;
+      
       // Polaris i18n returns objects with numeric string keys, not arrays
-      if (!highlights || typeof highlights !== 'object') return [];
+      if (!highlights || typeof highlights !== 'object') {
+        return [];
+      }
+      
       // Use Object.values() to get all highlight values
       return Object.values(highlights).map((value) => {
         if (typeof value === 'string') {
-          // If value is already a translation key, translate it; otherwise return as-is
-          try {
-            return i18n.translate(value);
-          } catch {
-            return value;
-          }
+          // Value is already translated, return as-is
+          return value;
         }
         return value;
       });
@@ -155,7 +178,7 @@ const PlansPage = () => {
       console.error('Error translating highlights for:', prefix, err);
       return [];
     }
-  }, [i18n]);
+  }, [i18n, resolvedLocale]);
 
   const FEATURE_LABELS = useMemo(() => {
     const proHighlights = translateHighlights('admin.billing.plans.pro');
