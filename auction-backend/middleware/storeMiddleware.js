@@ -9,7 +9,8 @@ const STATIC_PATH_PREFIXES = [
   '/shopify-test',
   '/index.html',
   '/health',
-  '/render-health'
+  '/render-health',
+  '/preview/'
 ];
 
 const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth'];

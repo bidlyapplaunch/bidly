@@ -392,46 +392,46 @@
           "title": "Free",
           "price": "$0/mo",
           "description": "Get started with Bidly and run your first auction.",
-          "highlights": [
-            "1 active auction at a time",
-            "Preview dashboard access",
-            "Upgrade to unlock more auctions"
-          ],
+          "highlights": {
+            "0": "1 active auction at a time",
+            "1": "Preview dashboard access",
+            "2": "Upgrade to unlock more auctions"
+          },
           "actionLabel": "Free plan"
         },
         "basic": {
           "title": "Basic",
           "price": "$9.99/mo",
           "description": "Start hosting auctions with the essentials.",
-          "highlights": [
-            "3 active auctions",
-            "Standard Bidly branding",
-            "Core auction workflows"
-          ],
+          "highlights": {
+            "0": "3 active auctions",
+            "1": "Standard Bidly branding",
+            "2": "Core auction workflows"
+          },
           "actionLabel": "Upgrade to Basic"
         },
         "pro": {
           "title": "Pro",
           "price": "$19.99/mo",
           "description": "Unlock advanced bidding and full widget styling.",
-          "highlights": [
-            "20 active auctions",
-            "Remove Bidly branding",
-            "Widget & marketplace customization",
-            "Popcorn bidding"
-          ],
+          "highlights": {
+            "0": "20 active auctions",
+            "1": "Remove Bidly branding",
+            "2": "Widget & marketplace customization",
+            "3": "Popcorn bidding"
+          },
           "actionLabel": "Upgrade to Pro"
         },
         "enterprise": {
           "title": "Enterprise",
           "price": "$49.99/mo",
           "description": "Unlimited auctions plus real-time bidder chat.",
-          "highlights": [
-            "Unlimited auctions",
-            "Remove Bidly branding",
-            "Widget & marketplace customization",
-            "Popcorn bidding & live chatbox"
-          ],
+          "highlights": {
+            "0": "Unlimited auctions",
+            "1": "Remove Bidly branding",
+            "2": "Widget & marketplace customization",
+            "3": "Popcorn bidding & live chatbox"
+          },
           "actionLabel": "Upgrade to Enterprise"
         },
         "trialCopy": "Includes a 7-day free trial. You can cancel anytime from your Shopify admin.",

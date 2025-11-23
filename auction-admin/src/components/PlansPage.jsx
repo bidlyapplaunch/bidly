@@ -132,23 +132,31 @@ const PlansPage = () => {
     }
   }, [i18n]);
 
-  // Helper function to translate highlight arrays (moved inside component)
+  // Helper function to translate highlight objects (moved inside component)
   const translateHighlights = useCallback((prefix) => {
     if (!i18n || !i18n.translate) return [];
     try {
       const highlights = i18n.translate(`${prefix}.highlights`, { returnObjects: true });
-      if (!Array.isArray(highlights)) return [];
-      return highlights.map((line) => {
-        if (typeof line === 'string') {
-          // If line is already a translation key, translate it; otherwise return as-is
+      // Polaris i18n returns objects with numeric string keys, not arrays
+      if (!highlights || typeof highlights !== 'object') return [];
+      // Convert object to array by iterating numeric keys
+      const result = [];
+      let index = 0;
+      while (highlights[String(index)] !== undefined) {
+        const value = highlights[String(index)];
+        if (typeof value === 'string') {
+          // If value is already a translation key, translate it; otherwise return as-is
           try {
-            return i18n.translate(line);
+            result.push(i18n.translate(value));
           } catch {
-            return line;
+            result.push(value);
           }
+        } else {
+          result.push(value);
         }
-        return line;
-      });
+        index++;
+      }
+      return result;
     } catch (err) {
       console.error('Error translating highlights for:', prefix, err);
       return [];

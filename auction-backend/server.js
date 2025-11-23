@@ -281,7 +281,27 @@ app.get('/preview/widget-assets/:asset', (req, res) => {
       return res.status(404).send('Asset not found');
     }
 
+    // Set correct MIME type based on file extension
+    const ext = path.extname(assetName).toLowerCase();
+    const mimeTypes = {
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf',
+      '.eot': 'application/vnd.ms-fontobject'
+    };
+    
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'no-store');
+    
     return res.sendFile(assetPath);
   } catch (error) {
     console.error('❌ Failed to serve preview asset:', error);

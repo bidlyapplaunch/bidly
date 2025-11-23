@@ -392,46 +392,46 @@
           "title": "Gratis",
           "price": "$0/mes",
           "description": "Comienza con Bidly y ejecuta tu primera subasta.",
-          "highlights": [
-            "1 subasta activa a la vez",
-            "Acceso al panel de vista previa",
-            "Actualiza para desbloquear más subastas"
-          ],
+          "highlights": {
+            "0": "1 subasta activa a la vez",
+            "1": "Acceso al panel de vista previa",
+            "2": "Actualiza para desbloquear más subastas"
+          },
           "actionLabel": "Plan gratuito"
         },
         "basic": {
           "title": "Básico",
           "price": "$9.99/mes",
           "description": "Comienza a alojar subastas con lo esencial.",
-          "highlights": [
-            "3 subastas activas",
-            "Marca Bidly estándar",
-            "Flujos de trabajo de subastas principales"
-          ],
+          "highlights": {
+            "0": "3 subastas activas",
+            "1": "Marca Bidly estándar",
+            "2": "Flujos de trabajo de subastas principales"
+          },
           "actionLabel": "Actualizar a Básico"
         },
         "pro": {
           "title": "Pro",
           "price": "$19.99/mes",
           "description": "Desbloquea pujas avanzadas y estilo completo del widget.",
-          "highlights": [
-            "20 subastas activas",
-            "Eliminar marca Bidly",
-            "Personalización de widget y mercado",
-            "Pujas popcorn"
-          ],
+          "highlights": {
+            "0": "20 subastas activas",
+            "1": "Eliminar marca Bidly",
+            "2": "Personalización de widget y mercado",
+            "3": "Pujas popcorn"
+          },
           "actionLabel": "Actualizar a Pro"
         },
         "enterprise": {
           "title": "Enterprise",
           "price": "$49.99/mes",
           "description": "Subastas ilimitadas más chat de postores en tiempo real.",
-          "highlights": [
-            "Subastas ilimitadas",
-            "Eliminar marca Bidly",
-            "Personalización de widget y mercado",
-            "Pujas popcorn y chat en vivo"
-          ],
+          "highlights": {
+            "0": "Subastas ilimitadas",
+            "1": "Eliminar marca Bidly",
+            "2": "Personalización de widget y mercado",
+            "3": "Pujas popcorn y chat en vivo"
+          },
           "actionLabel": "Actualizar a Enterprise"
         },
         "trialCopy": "Incluye una prueba gratuita de 7 días. Puedes cancelar en cualquier momento desde tu administrador de Shopify.",
