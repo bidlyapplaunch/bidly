@@ -139,24 +139,18 @@ const PlansPage = () => {
       const highlights = i18n.translate(`${prefix}.highlights`, { returnObjects: true });
       // Polaris i18n returns objects with numeric string keys, not arrays
       if (!highlights || typeof highlights !== 'object') return [];
-      // Convert object to array by iterating numeric keys
-      const result = [];
-      let index = 0;
-      while (highlights[String(index)] !== undefined) {
-        const value = highlights[String(index)];
+      // Use Object.values() to get all highlight values
+      return Object.values(highlights).map((value) => {
         if (typeof value === 'string') {
           // If value is already a translation key, translate it; otherwise return as-is
           try {
-            result.push(i18n.translate(value));
+            return i18n.translate(value);
           } catch {
-            result.push(value);
+            return value;
           }
-        } else {
-          result.push(value);
         }
-        index++;
-      }
-      return result;
+        return value;
+      });
     } catch (err) {
       console.error('Error translating highlights for:', prefix, err);
       return [];

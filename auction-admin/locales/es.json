@@ -393,9 +393,9 @@
           "price": "$0/mes",
           "description": "Comienza con Bidly y ejecuta tu primera subasta.",
           "highlights": {
-            "0": "1 subasta activa a la vez",
-            "1": "Acceso al panel de vista previa",
-            "2": "Actualiza para desbloquear más subastas"
+            "1": "1 subasta activa a la vez",
+            "2": "Acceso al panel de vista previa",
+            "3": "Actualiza para desbloquear más subastas"
           },
           "actionLabel": "Plan gratuito"
         },
@@ -404,9 +404,9 @@
           "price": "$9.99/mes",
           "description": "Comienza a alojar subastas con lo esencial.",
           "highlights": {
-            "0": "3 subastas activas",
-            "1": "Marca Bidly estándar",
-            "2": "Flujos de trabajo de subastas principales"
+            "1": "3 subastas activas",
+            "2": "Marca Bidly estándar",
+            "3": "Flujos de trabajo de subastas principales"
           },
           "actionLabel": "Actualizar a Básico"
         },
@@ -415,10 +415,10 @@
           "price": "$19.99/mes",
           "description": "Desbloquea pujas avanzadas y estilo completo del widget.",
           "highlights": {
-            "0": "20 subastas activas",
-            "1": "Eliminar marca Bidly",
-            "2": "Personalización de widget y mercado",
-            "3": "Pujas popcorn"
+            "1": "20 subastas activas",
+            "2": "Eliminar marca Bidly",
+            "3": "Personalización de widget y mercado",
+            "4": "Pujas popcorn"
           },
           "actionLabel": "Actualizar a Pro"
         },
@@ -427,10 +427,10 @@
           "price": "$49.99/mes",
           "description": "Subastas ilimitadas más chat de postores en tiempo real.",
           "highlights": {
-            "0": "Subastas ilimitadas",
-            "1": "Eliminar marca Bidly",
-            "2": "Personalización de widget y mercado",
-            "3": "Pujas popcorn y chat en vivo"
+            "1": "Subastas ilimitadas",
+            "2": "Eliminar marca Bidly",
+            "3": "Personalización de widget y mercado",
+            "4": "Pujas popcorn y chat en vivo"
           },
           "actionLabel": "Actualizar a Enterprise"
         },
