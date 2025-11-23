@@ -1,3 +1,4 @@
+// Admin app entry point
 import React, { useState, useEffect } from 'react';
 import { AppProvider } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
