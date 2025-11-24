@@ -9,6 +9,18 @@
 (function() {
     'use strict';
 
+    const console = (() => {
+        if (typeof window !== 'undefined' && window.BidlyDebugUtils?.createConsole) {
+            return window.BidlyDebugUtils.createConsole('Widget');
+        }
+        const fallback = (typeof window !== 'undefined' && window.console) || {};
+        return {
+            log: fallback.log ? fallback.log.bind(fallback) : () => {},
+            warn: fallback.warn ? fallback.warn.bind(fallback) : () => {},
+            error: fallback.error ? fallback.error.bind(fallback) : () => {}
+        };
+    })();
+
     const cleanDomain = (value) => {
         if (!value) {
             return '';
