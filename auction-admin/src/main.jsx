@@ -1,3 +1,4 @@
+import './utils/setupDebugConsole';
 import { initAppBridge } from './appBridgeGlobal';
 
 initAppBridge();

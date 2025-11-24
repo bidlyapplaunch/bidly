@@ -6,6 +6,79 @@
 (function() {
     'use strict';
 
+    const BIDLY_DEBUG_STORAGE_KEY = 'bidly_debug';
+
+    function isWidgetDebugEnabled() {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+        if (window.__BIDLY_DEBUG__ === true) {
+            return true;
+        }
+        if (window.__BIDLY_DEBUG__ === false) {
+            return false;
+        }
+        try {
+            return window.localStorage?.getItem(BIDLY_DEBUG_STORAGE_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    }
+
+    function setWidgetDebug(enabled, { persist = true } = {}) {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.__BIDLY_DEBUG__ = enabled;
+
+        if (!persist) {
+            return;
+        }
+
+        try {
+            if (enabled) {
+                window.localStorage?.setItem(BIDLY_DEBUG_STORAGE_KEY, 'true');
+            } else {
+                window.localStorage?.removeItem(BIDLY_DEBUG_STORAGE_KEY);
+            }
+        } catch {
+            // Ignore storage restrictions.
+        }
+    }
+
+    const console = (() => {
+        if (typeof window === 'undefined') {
+            return {
+                log: () => {},
+                warn: () => {},
+                error: () => {}
+            };
+        }
+
+        const globalConsole = window.console || {};
+        const scoped = Object.create(globalConsole);
+        scoped.log = (...args) => {
+            if (isWidgetDebugEnabled() && typeof globalConsole.log === 'function') {
+                globalConsole.log('[Bidly:Widget]', ...args);
+            }
+        };
+        return scoped;
+    })();
+
+    if (typeof window !== 'undefined') {
+        window.BidlyDebug = window.BidlyDebug || {};
+        window.BidlyDebug.widget = {
+            enable(persist = true) {
+                setWidgetDebug(true, { persist });
+            },
+            disable() {
+                setWidgetDebug(false);
+            },
+            isEnabled: isWidgetDebugEnabled
+        };
+    }
+
     const PREVIEW_DATA = window.__BIDLY_PREVIEW__ || {};
     const PREVIEW_MODE = Boolean(PREVIEW_DATA.preview) || window.location.search.includes('preview=true') || window.location.search.includes('bidly_preview=1');
 
