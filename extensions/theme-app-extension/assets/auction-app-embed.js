@@ -132,8 +132,116 @@
     };
 
     // Translation system
-    let translations = {};
+    const EMBEDDED_TRANSLATIONS = {
+        widget: {
+            header: {
+                title: "Live Auction",
+                live: "LIVE",
+                startingSoon: "STARTING SOON",
+                ended: "ENDED",
+                reserveNotMet: "RESERVE NOT MET"
+            },
+            buttons: {
+                placeBid: "Place Bid",
+                buyNow: "Buy Now",
+                loginShopify: "Log in with Shopify",
+                continueGuest: "Continue as Guest (View Only)",
+                logout: "Logout",
+                chatBox: "Chat Box",
+                viewBids: "View Bids",
+                viewBidHistory: "View Bid History"
+            },
+            countdown: {
+                endsIn: "Ends In:",
+                startingIn: "Starting in:",
+                days: "d",
+                hours: "h",
+                minutes: "m",
+                seconds: "s"
+            },
+            labels: {
+                currentBid: "CURRENT BID:",
+                startingBid: "STARTING BID:",
+                minimumBid: "MINIMUM BID:",
+                bids: "BIDS:",
+                guestUser: "Guest User"
+            },
+            login: {
+                title: "Login Required",
+                message: "Please log in to view this auction",
+                viewOnly: "View Only",
+                viewOnlyMessage: "Login to Shopify to enter the auction"
+            },
+            loading: {
+                title: "Preparing your auction...",
+                message: "Checking your account and syncing live bids."
+            },
+            errors: {
+                invalidBid: "Invalid bid amount",
+                bidTooLow: "Bid must be higher than current bid",
+                auctionEnded: "Auction Ended",
+                reserveNotMet: "Reserve Not Met",
+                auctionNotFound: "Auction not found",
+                networkError: "Network error. Please try again.",
+                bidFailed: "Failed to place bid. Please try again."
+            },
+            messages: {
+                auctionEnded: "Auction has ended. Final bid: ${amount}",
+                auctionEndedReserve: "Auction ended — reserve not met",
+                bidPlaced: "Bid placed successfully!",
+                newBid: "New bid: ${amount}",
+                bidNotification: "New bid placed!",
+                currentBidLabel: "Current Bid: ${amount}"
+            },
+            chat: {
+                title: "Chat",
+                send: "Send",
+                placeholder: "Type a message...",
+                empty: "No messages yet. Start the conversation!",
+                connecting: "Connecting...",
+                disconnected: "Disconnected",
+                error: "Error sending message"
+            },
+            bidHistory: {
+                title: "Bid History",
+                noBids: "No bids yet",
+                bidder: "Bidder",
+                amount: "Amount",
+                time: "Time"
+            },
+            guestLogin: {
+                title: "Continue as Guest",
+                fullName: "Full Name",
+                emailAddress: "Email Address",
+                continue: "Continue as Guest",
+                cancel: "Cancel",
+                errorNameEmail: "Please enter both name and email",
+                errorFailed: "Login failed. Please try again.",
+                errorForm: "Form error. Please try again."
+            },
+            common: {
+                auctionItem: "Auction Item",
+                yourName: "Your Name",
+                yourEmail: "Your Email",
+                loginToBid: "Login to Bid",
+                logout: "Logout",
+                processing: "Processing...",
+                closeChat: "Close chat",
+                loggedInAs: "Logged in as:",
+                welcome: "Welcome, {name}!",
+                pleaseLoginBid: "Please login to place a bid",
+                pleaseLoginBuyNow: "Please login to buy now",
+                invalidBidAmount: "Please enter a valid bid amount",
+                bidInputNotFound: "Bid input not found. Please refresh the page.",
+                bidButtonNotFound: "Bid button not found. Please refresh the page.",
+                buyNowButtonNotFound: "Buy now button not found. Please refresh the page."
+            }
+        }
+    };
+
+    let translations = { ...EMBEDDED_TRANSLATIONS };
     let currentLocale = 'en';
+    let translationsPromise = null;
 
     // Detect locale
     function detectLocale() {
@@ -146,134 +254,37 @@
     }
 
     // Load translations
-    async function loadTranslations() {
-        const locale = detectLocale();
-        currentLocale = locale;
-        
-        // Try to load locale file, fallback to English
-        const localeFiles = ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko'];
-        const targetLocale = localeFiles.includes(locale) ? locale : 'en';
-        
-        try {
-            // Try to load from theme extension assets
-            const response = await fetch(`/apps/bidly/assets/locales/${targetLocale}.json`);
-            if (response.ok) {
-                translations = await response.json();
-                return;
-            }
-        } catch (e) {
-            console.warn('Bidly: Could not load translations from theme assets, using embedded fallback');
+    function loadTranslations() {
+        if (translationsPromise) {
+            return translationsPromise;
         }
-        
-        // Fallback: Use embedded English translations
-        translations = {
-            widget: {
-                header: {
-                    title: "Live Auction",
-                    live: "LIVE",
-                    startingSoon: "STARTING SOON",
-                    ended: "ENDED",
-                    reserveNotMet: "RESERVE NOT MET"
-                },
-                buttons: {
-                    placeBid: "Place Bid",
-                    buyNow: "Buy Now",
-                    loginShopify: "Log in with Shopify",
-                    continueGuest: "Continue as Guest (View Only)",
-                    logout: "Logout",
-                    chatBox: "Chat Box",
-                    viewBids: "View Bids",
-                    viewBidHistory: "View Bid History"
-                },
-                countdown: {
-                    endsIn: "Ends In:",
-                    startingIn: "Starting in:",
-                    days: "d",
-                    hours: "h",
-                    minutes: "m",
-                    seconds: "s"
-                },
-                labels: {
-                    currentBid: "CURRENT BID:",
-                    startingBid: "STARTING BID:",
-                    minimumBid: "MINIMUM BID:",
-                    bids: "BIDS:",
-                    guestUser: "Guest User"
-                },
-                login: {
-                    title: "Login Required",
-                    message: "Please log in to view this auction",
-                    viewOnly: "View Only",
-                    viewOnlyMessage: "Login to Shopify to enter the auction"
-                },
-                loading: {
-                    title: "Preparing your auction...",
-                    message: "Checking your account and syncing live bids."
-                },
-                errors: {
-                    invalidBid: "Invalid bid amount",
-                    bidTooLow: "Bid must be higher than current bid",
-                    auctionEnded: "Auction Ended",
-                    reserveNotMet: "Reserve Not Met",
-                    auctionNotFound: "Auction not found",
-                    networkError: "Network error. Please try again.",
-                    bidFailed: "Failed to place bid. Please try again."
-                },
-                messages: {
-                    auctionEnded: "Auction has ended. Final bid: ${amount}",
-                    auctionEndedReserve: "Auction ended — reserve not met",
-                    bidPlaced: "Bid placed successfully!",
-                    newBid: "New bid: ${amount}",
-                    bidNotification: "New bid placed!",
-                    currentBidLabel: "Current Bid: ${amount}"
-                },
-                chat: {
-                    title: "Chat",
-                    send: "Send",
-                    placeholder: "Type a message...",
-                    empty: "No messages yet. Start the conversation!",
-                    connecting: "Connecting...",
-                    disconnected: "Disconnected",
-                    error: "Error sending message"
-                },
-                bidHistory: {
-                    title: "Bid History",
-                    noBids: "No bids yet",
-                    bidder: "Bidder",
-                    amount: "Amount",
-                    time: "Time"
-                },
-                guestLogin: {
-                    title: "Continue as Guest",
-                    fullName: "Full Name",
-                    emailAddress: "Email Address",
-                    continue: "Continue as Guest",
-                    cancel: "Cancel",
-                    errorNameEmail: "Please enter both name and email",
-                    errorFailed: "Login failed. Please try again.",
-                    errorForm: "Form error. Please try again."
-                },
-                common: {
-                    auctionItem: "Auction Item",
-                    yourName: "Your Name",
-                    yourEmail: "Your Email",
-                    loginToBid: "Login to Bid",
-                    logout: "Logout",
-                    processing: "Processing...",
-                    closeChat: "Close chat",
-                    loggedInAs: "Logged in as:",
-                    welcome: "Welcome, {name}!",
-                    pleaseLoginBid: "Please login to place a bid",
-                    pleaseLoginBuyNow: "Please login to buy now",
-                    invalidBidAmount: "Please enter a valid bid amount",
-                    bidInputNotFound: "Bid input not found. Please refresh the page.",
-                    bidButtonNotFound: "Bid button not found. Please refresh the page.",
-                    buyNowButtonNotFound: "Buy now button not found. Please refresh the page."
+
+        translationsPromise = (async () => {
+            const locale = detectLocale();
+            currentLocale = locale;
+
+            const localeFiles = ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko'];
+            const targetLocale = localeFiles.includes(locale) ? locale : 'en';
+
+            try {
+                const response = await fetch(`/apps/bidly/assets/locales/${targetLocale}.json`, { cache: 'no-store' });
+                if (response.ok) {
+                    translations = await response.json();
+                    return;
                 }
+            } catch (e) {
+                console.warn('Bidly: Could not load translations from theme assets, using embedded fallback', e);
             }
-        };
+
+            translations = { ...EMBEDDED_TRANSLATIONS };
+        })();
+
+        return translationsPromise;
     }
 
+    // Initialize translations immediately (non-blocking)
+    loadTranslations();
+    
     // Translation function
     function t(key, params = {}) {
         const keys = key.split('.');
@@ -300,9 +311,6 @@
         
         return key;
     }
-
-    // Initialize translations immediately (non-blocking)
-    loadTranslations();
 
     // Make translation function globally available for other scripts
     window.BidlyTranslate = t;
@@ -2578,7 +2586,8 @@
     // Main initialization function
     async function init() {
         console.log('Bidly: Initializing auction app embed...');
-        
+
+        await loadTranslations();
         const initialTheme = await fetchWidgetThemeSettings(PREVIEW_MODE);
 
         if (PREVIEW_MODE) {
