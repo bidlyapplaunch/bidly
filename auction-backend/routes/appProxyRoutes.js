@@ -79,6 +79,31 @@ router.get('/assets/bidly-widget.js', (req, res) => {
   }
 });
 
+// GET /apps/bidly/assets/locales/:locale.json
+router.get('/assets/locales/:locale.json', (req, res) => {
+  try {
+    const requestedLocale = (req.params.locale || '').toLowerCase();
+    const safeLocale = requestedLocale.replace(/[^a-z0-9-]/gi, '') || 'en';
+    const localePath = path.join(
+      __dirname,
+      '../../extensions/theme-app-extension/assets/locales',
+      `${safeLocale}.json`
+    );
+
+    if (!fs.existsSync(localePath)) {
+      return res.status(404).json({ error: 'Locale file not found' });
+    }
+
+    const localeContent = fs.readFileSync(localePath, 'utf8');
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=300');
+    res.send(localeContent);
+  } catch (error) {
+    console.error('Error serving locale JSON:', error);
+    res.status(404).json({ error: 'Locale file not found' });
+  }
+});
+
 if (fs.existsSync(marketplaceAssetsPath)) {
   router.use(
     '/assets',

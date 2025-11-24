@@ -267,7 +267,7 @@
             const targetLocale = localeFiles.includes(locale) ? locale : 'en';
 
             try {
-                const response = await fetch(`/apps/bidly/assets/locales/${targetLocale}.json`, { cache: 'no-store' });
+                const response = await fetch(`/apps/bidly/assets/locales/${targetLocale}.json`);
                 if (response.ok) {
                     translations = await response.json();
                     return;
