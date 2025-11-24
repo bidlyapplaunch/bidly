@@ -1,7 +1,6 @@
 {
-  "bidConfirmation": "Your bid on {{auction_title}} has been received",
-  "outbidNotification": "You have been outbid on {{auction_title}}",
-  "winnerNotification": "You won the auction for {{auction_title}}!",
-  "auctionEndingSoon": "{{auction_title}} is ending soon"
+  "bidConfirmation": "{{auction_title}}에 대한 귀하의 입찰이 접수되었습니다.",
+  "outbidNotification": "{{auction_title}}에 대해 입찰가가 초과되었습니다.",
+  "winnerNotification": "{{auction_title}} 경매에서 승리하셨습니다!",
+  "auctionEndingSoon": "{{auction_title}}이(가) 곧 종료됩니다"
 }
-

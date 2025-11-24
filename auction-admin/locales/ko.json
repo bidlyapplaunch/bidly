@@ -1,882 +1,880 @@
-﻿{
+{
   "admin": {
     "common": {
-      "loadingApp": "Loading Bidlyâ€¦",
-      "preparingDashboard": "Preparing your dashboardâ€¦",
+      "loadingApp": "입찰 로드 중…",
+      "preparingDashboard": "대시보드 준비 중…",
       "appBridge": {
-        "missingShop": "No shop parameter found in the URL.",
-        "initializationFailed": "Failed to initialize Shopify App Bridge.",
-        "initializing": "Initializing Shopify App Bridgeâ€¦",
-        "connecting": "Connecting to Shopifyâ€¦",
-        "errorTitle": "App Initialization Error",
-        "openFromAdmin": "Please open this app from the Shopify admin."
+        "missingShop": "URL에 상점 매개변수가 없습니다.",
+        "initializationFailed": "Shopify App Bridge를 초기화하지 못했습니다.",
+        "initializing": "Shopify App Bridge 초기화 중…",
+        "connecting": "Shopify에 연결하는 중…",
+        "errorTitle": "앱 초기화 오류",
+        "openFromAdmin": "Shopify 관리자에서 이 앱을 여세요."
       },
-      "refresh": "Refresh",
-      "logout": "Logout",
-      "viewPlans": "View plans",
-      "back": "Back",
-      "createAuction": "Create Auction",
-      "saveChanges": "Save Changes",
-      "cancel": "Cancel",
-      "close": "Close",
-      "enabled": "Enabled",
-      "disabled": "Disabled",
-      "notSet": "Not set",
-      "notConfigured": "Not configured",
-      "notAvailable": "N/A"
+      "refresh": "새로 고치다",
+      "logout": "로그아웃",
+      "viewPlans": "계획 보기",
+      "back": "뒤쪽에",
+      "createAuction": "경매 생성",
+      "saveChanges": "변경 사항 저장",
+      "cancel": "취소",
+      "close": "닫다",
+      "enabled": "활성화됨",
+      "disabled": "장애가 있는",
+      "notSet": "설정되지 않음",
+      "notConfigured": "구성되지 않음",
+      "notAvailable": "해당 없음"
     },
     "nav": {
-      "dashboard": "Dashboard",
-      "marketplace": "Auction Marketplace",
-      "widgetStyles": "Widget styles",
-      "marketplaceStyles": "Marketplace styles",
-      "mailService": "Mail service",
-      "plans": "Plans"
+      "dashboard": "계기반",
+      "marketplace": "경매 시장",
+      "widgetStyles": "위젯 스타일",
+      "marketplaceStyles": "마켓플레이스 스타일",
+      "mailService": "메일편",
+      "plans": "계획"
     },
     "auth": {
-      "title": "ðŸ” Bidly Admin Login",
+      "title": "🔐 Bidly 관리자 로그인",
       "subtitles": {
-        "register": "Create a new admin account",
-        "login": "Sign in to your admin account"
+        "register": "새 관리자 계정 만들기",
+        "login": "관리자 계정에 로그인하세요"
       },
       "fields": {
-        "username": "Username",
-        "usernamePlaceholder": "Enter username",
-        "email": "Email",
-        "emailPlaceholder": "Enter email",
-        "password": "Password",
-        "passwordPlaceholder": "Enter password"
+        "username": "사용자 이름",
+        "usernamePlaceholder": "사용자 이름을 입력하세요",
+        "email": "이메일",
+        "emailPlaceholder": "이메일을 입력하세요",
+        "password": "비밀번호",
+        "passwordPlaceholder": "비밀번호를 입력하세요"
       },
       "actions": {
-        "loading": "Please wait...",
-        "register": "Register",
-        "login": "Login"
+        "loading": "기다리세요...",
+        "register": "등록하다",
+        "login": "로그인"
       },
       "toggle": {
-        "login": "Already have an account? Login",
-        "register": "Need an account? Register"
+        "login": "이미 계정이 있나요? 로그인",
+        "register": "계정이 필요하세요? 등록하다"
       },
       "errors": {
-        "usernameRequired": "Username is required.",
-        "emailRequired": "Email is required.",
-        "passwordLength": "Password must be at least 6 characters.",
-        "generic": "Authentication failed."
+        "usernameRequired": "사용자 이름이 필요합니다.",
+        "emailRequired": "이메일이 필요합니다.",
+        "passwordLength": "비밀번호는 6자 이상이어야 합니다.",
+        "generic": "인증에 실패했습니다."
       },
       "demo": {
-        "title": "Demo Credentials:",
-        "email": "Email: {{value}}",
-        "password": "Password: {{value}}"
+        "title": "데모 자격 증명:",
+        "email": "이메일: {{value}}",
+        "password": "비밀번호: {{value}}"
       }
     },
     "mail_service": {
       "page": {
-        "title": "Mail Service"
+        "title": "메일 서비스"
       },
       "messages": {
-        "loadError": "Failed to load mail settings.",
-        "saveSuccess": "Mail settings saved successfully.",
-        "saveError": "Failed to save mail settings.",
-        "smtpTestSuccess": "Test email sent.",
-        "smtpTestError": "SMTP test failed.",
-        "upgradeForTests": "Upgrade to a Pro or Enterprise plan to send template tests.",
-        "recipientRequired": "Enter a test email recipient.",
-        "templateMissing": "Template not found.",
-        "templateTestSuccess": "Template test sent to {{recipient}}.",
-        "templateTestError": "Template test failed.",
-        "selectFieldForToken": "Select a template subject or HTML field to insert tokens."
+        "loadError": "메일 설정을 로드하지 못했습니다.",
+        "saveSuccess": "메일 설정이 성공적으로 저장되었습니다.",
+        "saveError": "메일 설정을 저장하지 못했습니다.",
+        "smtpTestSuccess": "테스트 이메일을 보냈습니다.",
+        "smtpTestError": "SMTP 테스트에 실패했습니다.",
+        "upgradeForTests": "템플릿 테스트를 보내려면 Pro 또는 Enterprise 플랜으로 업그레이드하세요.",
+        "recipientRequired": "테스트 이메일 수신자를 입력하세요.",
+        "templateMissing": "템플릿을 찾을 수 없습니다.",
+        "templateTestSuccess": "템플릿 테스트가 {{recipient}}로 전송되었습니다.",
+        "templateTestError": "템플릿 테스트에 실패했습니다.",
+        "selectFieldForToken": "토큰을 삽입하려면 템플릿 제목이나 HTML 필드를 선택하세요."
       },
       "tokens": {
-        "title": "Available tokens",
-        "description": "Click a token to insert it into the subject or HTML field you're editing."
+        "title": "사용 가능한 토큰",
+        "description": "토큰을 클릭하여 편집 중인 제목이나 HTML 필드에 삽입하세요."
       },
       "status": {
-        "loading": "Loading mail settings"
+        "loading": "메일 설정 로드 중"
       },
       "banner": {
-        "upgradeTitle": "Upgrade required",
-        "upgradeDescription": "Custom mail settings are available on Pro and Enterprise plans."
+        "upgradeTitle": "업그레이드 필요",
+        "upgradeDescription": "Pro 및 Enterprise 요금제에서는 사용자 정의 메일 설정을 사용할 수 있습니다."
       },
       "smtp": {
-        "title": "SMTP configuration",
-        "description": "Connect your own email server to send notifications from your domain.",
-        "useCustom": "Use my own email server",
-        "secure": "Use secure connection (TLS)",
-        "testRecipient": "Test email recipient",
-        "sendTest": "Send test email",
+        "title": "SMTP 구성",
+        "description": "자신의 이메일 서버를 연결하여 도메인에서 알림을 보내세요.",
+        "useCustom": "내 이메일 서버 사용",
+        "secure": "보안 연결(TLS) 사용",
+        "testRecipient": "테스트 이메일 수신자",
+        "sendTest": "테스트 이메일 보내기",
         "fields": {
-          "host": "Host",
-          "port": "Port",
-          "username": "Username",
-          "password": "Password / app password",
-          "fromName": "From name",
-          "fromEmail": "From email"
+          "host": "주인",
+          "port": "포트",
+          "username": "사용자 이름",
+          "password": "비밀번호/앱 비밀번호",
+          "fromName": "이름에서",
+          "fromEmail": "이메일에서"
         }
       },
       "templates": {
-        "title": "Email templates",
-        "description": "Customize Bidly notification content. Use the token panel to pull in dynamic values like bidder names or auction details.",
-        "testRecipient": "Test email recipient",
-        "testPlaceholder": "name@example.com",
-        "testHelper": "This address is used by the \"Send test using this template\" buttons below.",
-        "enabled": "Enabled",
-        "subject": "Subject",
-        "editorMode": "Editor mode",
-        "editorSimple": "Simple editor",
-        "editorHtml": "HTML editor",
-        "htmlLabel": "HTML content",
-        "textLabel": "Message body",
-        "reset": "Reset to default",
-        "sendTestForTemplate": "Send test using this template",
+        "title": "이메일 템플릿",
+        "description": "Bidly 알림 콘텐츠를 맞춤설정하세요. 토큰 패널을 사용하여 입찰자 이름이나 경매 세부정보와 같은 동적 값을 가져옵니다.",
+        "testRecipient": "테스트 이메일 수신자",
+        "testPlaceholder": "이름@example.com",
+        "testHelper": "이 주소는 아래의 \"이 템플릿을 사용하여 테스트 보내기\" 버튼에 사용됩니다.",
+        "enabled": "활성화됨",
+        "subject": "주제",
+        "editorMode": "에디터 모드",
+        "editorSimple": "간단한 편집기",
+        "editorHtml": "HTML 편집기",
+        "htmlLabel": "HTML 콘텐츠",
+        "textLabel": "메시지 본문",
+        "reset": "기본값으로 재설정",
+        "sendTestForTemplate": "이 템플릿을 사용하여 테스트 보내기",
         "bidConfirmation": {
-          "title": "Bid confirmation"
+          "title": "입찰 확인"
         },
         "outbidNotification": {
-          "title": "Outbid notification"
+          "title": "낙찰가 초과 알림"
         },
         "winnerNotification": {
-          "title": "Winner notification"
+          "title": "당첨자 알림"
         },
         "auctionEndingSoon": {
-          "title": "Auction ending soon"
+          "title": "경매가 곧 종료됩니다"
         },
         "adminNotification": {
-          "title": "Admin notification"
+          "title": "관리자 알림"
         }
       },
       "actions": {
-        "save": "Save mail settings"
+        "save": "메일 설정 저장"
       }
     },
     "marketplace": {
       "page": {
-        "title": "Marketplace customization",
-        "subtitle": "Control the typography, template, and color system for the public auction marketplace."
+        "title": "마켓플레이스 사용자 정의",
+        "subtitle": "공개 경매 시장의 타이포그래피, 템플릿, 색상 시스템을 제어합니다."
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock marketplace styling.",
-        "bannerTitle": "Upgrade required to customize the marketplace",
-        "defaultMessage": "The marketplace customization requires the Pro or Enterprise plan."
+        "subtitle": "Bidly 계획을 업그레이드하여 마켓플레이스 스타일을 잠금 해제하세요.",
+        "bannerTitle": "마켓플레이스를 사용자 정의하려면 업그레이드가 필요합니다.",
+        "defaultMessage": "마켓플레이스 사용자 정의에는 Pro 또는 Enterprise 플랜이 필요합니다."
       },
       "status": {
-        "loading": "Loading marketplace customization"
+        "loading": "마켓플레이스 사용자 정의 로드 중"
       },
       "actions": {
-        "save": "Save changes",
-        "resetApplied": "Reset to applied",
-        "resetDefaults": "Restore defaults"
+        "save": "변경사항 저장",
+        "resetApplied": "적용으로 재설정",
+        "resetDefaults": "기본값 복원"
       },
       "messages": {
-        "saveSuccess": "Marketplace theme saved.",
-        "saveError": "Failed to save marketplace customization.",
-        "loadError": "Failed to load marketplace customization."
+        "saveSuccess": "마켓플레이스 테마가 저장되었습니다.",
+        "saveError": "마켓플레이스 사용자 정의를 저장하지 못했습니다.",
+        "loadError": "마켓플레이스 사용자 정의를 로드하지 못했습니다."
       },
       "errors": {
-        "unavailable": "Marketplace customization unavailable"
+        "unavailable": "마켓플레이스 맞춤설정을 사용할 수 없습니다."
       },
       "sections": {
         "design": {
-          "title": "Design foundation",
-          "heading": "Choose template",
-          "description": "Templates control spacing, radius, and depth. They apply instantly to every screen in the customer flow.",
-          "fontLabel": "Font family",
+          "title": "디자인 기초",
+          "heading": "템플릿 선택",
+          "description": "템플릿은 간격, 반경 및 깊이를 제어합니다. 이는 고객 흐름의 모든 화면에 즉시 적용됩니다.",
+          "fontLabel": "글꼴 계열",
           "templates": {
             "classic": {
-              "label": "Classic",
-              "description": "Balanced spacing, subtle depth, and rounded corners."
+              "label": "권위 있는",
+              "description": "균형 잡힌 간격, 미묘한 깊이, 둥근 모서리."
             },
             "modern": {
-              "label": "Modern",
-              "description": "Softer surfaces, deeper shadows, and generous padding."
+              "label": "현대의",
+              "description": "더 부드러운 표면, 더 깊은 그림자, 넉넉한 패딩."
             },
             "minimal": {
-              "label": "Minimal",
-              "description": "Compact spacing with crisp lines and light shadows."
+              "label": "최소",
+              "description": "선명한 선과 밝은 그림자가 있는 컴팩트한 간격."
             },
             "bold": {
-              "label": "Bold",
-              "description": "Large radiuses, dramatic shadows, and pill buttons."
+              "label": "용감한",
+              "description": "넓은 반경, 드라마틱한 그림자, 알약 버튼."
             }
           }
         },
         "palette": {
-          "title": "Color palette",
-          "description": "Every UI element in the marketplace references these tokens. Update them to match your storefront.",
-          "gradientToggleLabel": "Toggle gradient background",
-          "gradientEnabled": "Gradient enabled",
-          "gradientDisabled": "Gradient disabled",
-          "gradientInfo": "Background color is managed by your gradient. Disable the gradient toggle to edit the solid background color."
+          "title": "색상 팔레트",
+          "description": "마켓플레이스의 모든 UI 요소는 이러한 토큰을 참조합니다. 매장 첫화면과 일치하도록 업데이트하세요.",
+          "gradientToggleLabel": "그라데이션 배경 전환",
+          "gradientEnabled": "그라데이션 활성화",
+          "gradientDisabled": "그라데이션 비활성화됨",
+          "gradientInfo": "배경색은 그라데이션으로 관리됩니다. 단색 배경색을 편집하려면 그라데이션 토글을 비활성화하세요."
         }
       },
       "colors": {
         "primary": {
-          "label": "Primary",
-          "description": "Buttons, actions, and primary highlights."
+          "label": "주요한",
+          "description": "버튼, 작업 및 주요 하이라이트."
         },
         "background": {
-          "label": "Background",
-          "description": "Marketplace page background."
+          "label": "배경",
+          "description": "마켓플레이스 페이지 배경."
         },
         "surface": {
-          "label": "Surface",
-          "description": "Cards, modals, and sheets."
+          "label": "표면",
+          "description": "카드, 모달, 시트."
         },
         "textPrimary": {
-          "label": "Primary text",
-          "description": "Headings and main text."
+          "label": "기본 텍스트",
+          "description": "제목과 본문."
         },
         "textSecondary": {
-          "label": "Secondary text",
-          "description": "Muted text, helper copy, and labels."
+          "label": "보조 텍스트",
+          "description": "음소거된 텍스트, 도우미 사본 및 라벨."
         },
         "buttonText": {
-          "label": "Button text",
-          "description": "Text inside secondary buttons and CTA labels."
+          "label": "버튼 텍스트",
+          "description": "보조 버튼 및 CTA 라벨 내부의 텍스트입니다."
         },
         "button": {
-          "label": "Button",
-          "description": "Secondary button background and border."
+          "label": "단추",
+          "description": "보조 버튼 배경 및 테두리."
         },
         "border": {
-          "label": "Border",
-          "description": "Card outlines, dividers, and inputs."
+          "label": "국경",
+          "description": "카드 개요, 구분선 및 입력."
         },
         "accent": {
-          "label": "Accent",
-          "description": "Timers, stats, and pills."
+          "label": "악센트",
+          "description": "타이머, 통계 및 알약."
         },
         "success": {
-          "label": "Success",
-          "description": "Positive badges and buy-now confirmations."
+          "label": "성공",
+          "description": "긍정적인 배지와 지금 구매 확인."
         },
         "error": {
-          "label": "Error",
-          "description": "Errors, ended states, and blocking toasts."
+          "label": "오류",
+          "description": "오류, 종료 상태 및 알림 차단."
         },
         "gradient1": {
-          "label": "Gradient start",
-          "description": "Hero gradient starting color."
+          "label": "그라데이션 시작",
+          "description": "영웅 그라데이션 시작 색상입니다."
         },
         "gradient2": {
-          "label": "Gradient end",
-          "description": "Hero gradient ending color."
+          "label": "그라데이션 끝",
+          "description": "영웅 그라데이션 엔딩 색상입니다."
         }
       },
       "preview": {
-        "shopNameFallback": "your store",
-        "pageTitle": "Auction Marketplace Â· Preview",
-        "pageSubtitle": "This preview renders the exact markup used in the storefront.",
-        "demoAction": "Connected as demo customer"
+        "shopNameFallback": "당신의 가게",
+        "pageTitle": "경매장 · 미리보기",
+        "pageSubtitle": "이 미리보기는 매장 첫화면에 사용된 정확한 마크업을 렌더링합니다.",
+        "demoAction": "데모 고객으로 연결됨"
       },
       "previewCard": {
-        "title": "Live preview"
+        "title": "실시간 미리보기"
       }
     },
     "widget": {
       "page": {
-        "title": "Widget customization",
-        "subtitle": "Control how the Bidly widget appears on your product pages without touching code."
+        "title": "위젯 사용자 정의",
+        "subtitle": "코드를 건드리지 않고도 제품 페이지에 Bidly 위젯이 표시되는 방식을 제어할 수 있습니다."
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock widget styling controls.",
-        "bannerTitle": "Upgrade required to customize the widget",
-        "defaultMessage": "The widget customization requires the Pro or Enterprise plan."
+        "subtitle": "위젯 스타일 제어 기능을 잠금 해제하려면 Bidly 계획을 업그레이드하세요.",
+        "bannerTitle": "위젯을 맞춤설정하려면 업그레이드가 필요합니다.",
+        "defaultMessage": "위젯 사용자 정의에는 Pro 또는 Enterprise 요금제가 필요합니다."
       },
       "status": {
-        "loading": "Loading customization settings"
+        "loading": "사용자 정의 설정 로드 중"
       },
       "actions": {
-        "save": "Save changes",
-        "resetSaved": "Reset to saved",
-        "resetDefaults": "Reset to defaults"
+        "save": "변경사항 저장",
+        "resetSaved": "저장된 상태로 재설정",
+        "resetDefaults": "기본값으로 재설정"
       },
       "errors": {
-        "saveFailed": "We couldn't save the widget settings"
+        "saveFailed": "위젯 설정을 저장할 수 없습니다."
       },
       "sections": {
         "templates": {
-          "title": "Templates",
-          "description": "Start from a professionally designed preset. You can still adjust individual settings after selecting a template.",
-          "cardLabel": "Template {{id}} Â· {{name}}"
+          "title": "템플릿",
+          "description": "전문적으로 디자인된 사전 설정으로 시작하세요. 템플릿을 선택한 후에도 개별 설정을 조정할 수 있습니다.",
+          "cardLabel": "템플릿 {{id}} · {{name}}"
         },
         "typography": {
-          "title": "Typography & layout",
-          "fontLabel": "Font family",
-          "radiusLabel": "Border radius",
-          "shadowLabel": "Depth / shadow"
+          "title": "타이포그래피 및 레이아웃",
+          "fontLabel": "글꼴 계열",
+          "radiusLabel": "국경 반경",
+          "shadowLabel": "깊이 / 그림자"
         },
         "gradient": {
-          "title": "Gradient & background",
-          "description": "Choose the gradient colors for the widget header or switch to a flat background.",
-          "enable": "Enable gradient",
-          "disable": "Disable gradient"
+          "title": "그라데이션 및 배경",
+          "description": "위젯 헤더의 그라데이션 색상을 선택하거나 평면 배경으로 전환하세요.",
+          "enable": "그라데이션 활성화",
+          "disable": "그라데이션 비활성화"
         },
         "colors": {
-          "title": "Fine tune colors",
-          "description": "Adjust individual tokens for text, buttons, and borders. All colors support hex values only."
+          "title": "색상 미세 조정",
+          "description": "텍스트, 버튼 및 테두리에 대한 개별 토큰을 조정합니다. 모든 색상은 16진수 값만 지원합니다."
         }
       },
       "previewStates": {
-        "active": "Active auction",
-        "pending": "Pending auction",
-        "ended": "Ended auction"
+        "active": "활성 경매",
+        "pending": "경매 대기 중",
+        "ended": "종료된 경매"
       },
       "previewCard": {
-        "title": "Live widget preview",
-        "stateLabel": "Preview state",
-        "description": "Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.",
-        "iframeTitle": "Widget customization preview"
+        "title": "라이브 위젯 미리보기",
+        "stateLabel": "미리보기 상태",
+        "description": "설정을 조정하면 즉시 업데이트를 미리 볼 수 있습니다. 이 iframe은 매장 위젯과 동일한 마크업 및 토큰을 사용합니다.",
+        "iframeTitle": "위젯 사용자 정의 미리보기"
       },
       "colors": {
         "accent": {
-          "label": "Accent color",
-          "description": "Applied to prices and primary highlights."
+          "label": "악센트 색상",
+          "description": "가격 및 주요 하이라이트에 적용됩니다."
         },
         "text": {
-          "label": "Primary text",
-          "description": "Default text color for widget content."
+          "label": "기본 텍스트",
+          "description": "위젯 콘텐츠의 기본 텍스트 색상입니다."
         },
         "timer": {
-          "label": "Timer",
-          "description": "Countdown digits and timer emphasis."
+          "label": "시간제 노동자",
+          "description": "카운트다운 숫자 및 타이머 강조."
         },
         "button_bg": {
-          "label": "Button background",
-          "description": "Primary button background color."
+          "label": "버튼 배경",
+          "description": "기본 버튼 배경색입니다."
         },
         "button_hover": {
-          "label": "Button hover",
-          "description": "Background color on hover focus."
+          "label": "버튼 호버",
+          "description": "호버 포커스의 배경색입니다."
         },
         "button_text": {
-          "label": "Button text",
-          "description": "Text color for primary buttons."
+          "label": "버튼 텍스트",
+          "description": "기본 버튼의 텍스트 색상입니다."
         },
         "border": {
-          "label": "Border color",
-          "description": "Input borders, cards, and separators."
+          "label": "테두리 색상",
+          "description": "테두리, 카드 및 구분 기호를 입력합니다."
         }
       },
       "gradient": {
         "bg_solid": {
-          "label": "Solid background",
-          "description": "Used when gradient is disabled."
+          "label": "단색 배경",
+          "description": "그라데이션이 비활성화된 경우 사용됩니다."
         },
         "bg_gradient_start": {
-          "label": "Gradient start",
-          "description": "Starting color of the header gradient."
+          "label": "그라데이션 시작",
+          "description": "헤더 그라데이션의 시작 색상입니다."
         },
         "bg_gradient_end": {
-          "label": "Gradient end",
-          "description": "Ending color of the header gradient."
+          "label": "그라데이션 끝",
+          "description": "헤더 그라데이션의 끝 색상입니다."
         }
       }
     },
     "billing": {
       "page": {
-        "title": "Choose your Bidly plan",
-        "subtitle": "Manage your subscription and unlock premium auction features."
+        "title": "Bidly 플랜을 선택하세요",
+        "subtitle": "구독을 관리하고 프리미엄 경매 기능을 잠금 해제하세요."
       },
-      "planLimitReached": "You've reached your auction limit ({{limit}} auctions) for your current plan.",
-      "planUpgradePrompt": "Please upgrade your plan to create more auctions, or wait for existing auctions to end or close them manually.",
-      "planUpgradeConfirm": "Would you like to view available plans to upgrade?",
+      "planLimitReached": "현재 계획의 경매 한도({{limit}} 경매)에 도달했습니다.",
+      "planUpgradePrompt": "더 많은 경매를 생성하려면 계획을 업그레이드하거나 기존 경매가 수동으로 종료되거나 종료될 때까지 기다리십시오.",
+      "planUpgradeConfirm": "업그레이드 가능한 계획을 보시겠습니까?",
       "currentPlan": {
-        "title": "Current plan",
-        "active": "Active: {{plan}}",
-        "pending": "Pending: {{plan}}",
-        "loading": "Loadingâ€¦",
-        "cancelSubscription": "Cancel subscription"
+        "title": "현재 계획",
+        "active": "활성: {{plan}}",
+        "pending": "보류 중: {{plan}}",
+        "loading": "로드 중…",
+        "cancelSubscription": "구독 취소"
       },
       "plans": {
-        "title": "Plans",
+        "title": "계획",
         "free": {
-          "title": "Free",
-          "price": "$0/mo",
-          "description": "Get started with Bidly and run your first auction.",
+          "title": "무료",
+          "price": "$0/월",
+          "description": "Bidly를 시작하고 첫 경매를 진행해보세요.",
           "highlights": {
-            "1": "1 active auction at a time",
-            "2": "Preview dashboard access",
-            "3": "Upgrade to unlock more auctions"
+            "1": "한 번에 1개의 활성 경매",
+            "2": "대시보드 액세스 미리보기",
+            "3": "더 많은 경매를 잠금 해제하려면 업그레이드하세요."
           },
-          "actionLabel": "Free plan"
+          "actionLabel": "무료 플랜"
         },
         "basic": {
-          "title": "Basic",
-          "price": "$9.99/mo",
-          "description": "Start hosting auctions with the essentials.",
+          "title": "기초적인",
+          "price": "$9.99/월",
+          "description": "필수품으로 경매 호스팅을 시작하세요.",
           "highlights": {
-            "1": "3 active auctions",
-            "2": "Standard Bidly branding",
-            "3": "Core auction workflows"
+            "1": "3개의 활성 경매",
+            "2": "표준 Bidly 브랜딩",
+            "3": "핵심 경매 작업 흐름"
           },
-          "actionLabel": "Upgrade to Basic"
+          "actionLabel": "기본으로 업그레이드"
         },
         "pro": {
-          "title": "Pro",
-          "price": "$19.99/mo",
-          "description": "Unlock advanced bidding and full widget styling.",
+          "title": "찬성",
+          "price": "$19.99/월",
+          "description": "고급 입찰 및 전체 위젯 스타일을 잠금 해제하세요.",
           "highlights": {
-            "1": "20 active auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding"
+            "1": "20개의 활성 경매",
+            "2": "Bidly 브랜드 제거",
+            "3": "위젯 및 마켓플레이스 사용자 정의",
+            "4": "팝콘 입찰"
           },
-          "actionLabel": "Upgrade to Pro"
+          "actionLabel": "프로로 업그레이드"
         },
         "enterprise": {
-          "title": "Enterprise",
-          "price": "$49.99/mo",
-          "description": "Unlimited auctions plus real-time bidder chat.",
+          "title": "기업",
+          "price": "$49.99/월",
+          "description": "무제한 경매와 실시간 입찰자 채팅.",
           "highlights": {
-            "1": "Unlimited auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding & live chatbox"
+            "1": "무제한 경매",
+            "2": "Bidly 브랜드 제거",
+            "3": "위젯 및 마켓플레이스 사용자 정의",
+            "4": "팝콘 입찰 및 라이브 채팅박스"
           },
-          "actionLabel": "Upgrade to Enterprise"
+          "actionLabel": "엔터프라이즈로 업그레이드"
         },
-        "trialCopy": "Includes a 7-day free trial. You can cancel anytime from your Shopify admin.",
-        "currentPlan": "Current plan",
-        "pendingActivation": "Pending activation",
-        "downgradeTo": "Downgrade to {{title}}",
-        "upgradeTo": "Upgrade to {{title}}"
+        "trialCopy": "7일 무료 평가판이 포함되어 있습니다. Shopify 관리자에서 언제든지 취소할 수 있습니다.",
+        "currentPlan": "현재 계획",
+        "pendingActivation": "활성화 대기 중",
+        "downgradeTo": "{{title}}(으)로 다운그레이드",
+        "upgradeTo": "{{title}}(으)로 업그레이드"
       },
       "banners": {
         "subscriptionActivated": {
-          "title": "Subscription activated",
-          "message": "Your plan is now active. Thanks for upgrading!"
+          "title": "구독이 활성화되었습니다",
+          "message": "이제 귀하의 계획이 활성화되었습니다. 업그레이드해주셔서 감사합니다!"
         },
         "awaitingConfirmation": {
-          "title": "Awaiting confirmation",
-          "message": "Finish approving the subscription in Shopify to unlock premium features."
+          "title": "확인 대기 중",
+          "message": "프리미엄 기능을 잠금 해제하려면 Shopify에서 구독 승인을 완료하세요."
         },
         "subscriptionNotConfirmed": {
-          "title": "Subscription not confirmed",
-          "message": "There was a problem confirming billing."
+          "title": "구독이 확인되지 않았습니다",
+          "message": "결제를 확인하는 중에 문제가 발생했습니다."
         },
         "subscriptionCancelled": {
-          "title": "Subscription cancelled",
-          "message": "{{message}}"
+          "title": "구독이 취소되었습니다.",
+          "message": "__토큰_0__"
         },
         "loadError": {
-          "title": "We couldn't load your plan",
-          "retry": "Retry"
+          "title": "계획을 로드할 수 없습니다.",
+          "retry": "다시 해 보다"
         },
         "previewMode": {
-          "title": "Upgrade to activate Bidly",
-          "action": "View plans",
-          "message": "Preview mode lets you explore the admin, but auctions, customization, and live bidding are disabled until you choose a paid plan."
+          "title": "업그레이드하여 Bidly를 활성화하세요",
+          "action": "계획 보기",
+          "message": "미리보기 모드를 사용하면 관리자를 탐색할 수 있지만 유료 플랜을 선택할 때까지 경매, 사용자 정의 및 실시간 입찰이 비활성화됩니다."
         }
       },
       "downgrade": {
-        "title": "Downgrade to {{plan}}",
-        "confirm": "Confirm downgrade",
-        "cancel": "Cancel",
-        "message": "You are downgrading from {{current}} to {{target}}.",
-        "featureRemoved": "Feature removed: {{feature}}",
-        "noFeaturesRemoved": "No premium features will be removed.",
-        "auctionsToClose": "We will automatically close {{count}} scheduled auction{{plural}} to meet the {{limit}} limit.",
-        "auctionsFit": "Your current auction count already fits the {{limit}} limit.",
-        "unlimitedLimit": "The new plan includes an unlimited auction limit.",
-        "warning": "Downgrading takes effect immediately and cannot be undone automatically."
+        "title": "{{plan}}(으)로 다운그레이드",
+        "confirm": "다운그레이드 확인",
+        "cancel": "취소",
+        "message": "{{current}}에서 {{target}}(으)로 다운그레이드 중입니다.",
+        "featureRemoved": "제거된 기능: {{feature}}",
+        "noFeaturesRemoved": "프리미엄 기능은 제거되지 않습니다.",
+        "auctionsToClose": "{{limit}} 한도를 충족하기 위해 {{count}} 예정된 경매{{plural}}을 자동으로 종료합니다.",
+        "auctionsFit": "현재 경매 수가 이미 {{limit}} 한도에 도달했습니다.",
+        "unlimitedLimit": "새로운 계획에는 무제한 경매 한도가 포함됩니다.",
+        "warning": "다운그레이드는 즉시 적용되며 자동으로 취소할 수 없습니다."
       },
       "cancel": {
-        "title": "Cancel subscription",
-        "confirm": "Confirm cancellation",
-        "keep": "Keep subscription",
-        "message": "Are you sure you want to cancel your subscription?",
-        "description": "Your subscription will remain active until the end of the current billing period. After that, your plan will automatically revert to the Free plan, which includes:",
+        "title": "구독 취소",
+        "confirm": "취소 확인",
+        "keep": "구독 유지",
+        "message": "구독을 취소하시겠습니까?",
+        "description": "귀하의 구독은 현재 청구 기간이 끝날 때까지 활성 상태로 유지됩니다. 그 후에는 귀하의 계획이 자동으로 다음을 포함하는 무료 계획으로 되돌아갑니다.",
         "freeFeatures": [
-          "1 active auction at a time",
-          "Standard Bidly branding",
-          "Basic auction features"
+          "한 번에 1개의 활성 경매",
+          "표준 Bidly 브랜딩",
+          "기본 경매 기능"
         ],
-        "resubscribe": "You can resubscribe at any time to regain access to premium features."
+        "resubscribe": "언제든지 다시 구독하여 프리미엄 기능에 다시 액세스할 수 있습니다."
       },
       "errors": {
-        "loadError": "Unable to load plan details",
-        "subscribeError": "Unable to start subscription. Please try again.",
-        "cancelError": "Unable to cancel subscription."
+        "loadError": "계획 세부정보를 로드할 수 없습니다.",
+        "subscribeError": "구독을 시작할 수 없습니다. 다시 시도해 주세요.",
+        "cancelError": "구독을 취소할 수 없습니다."
       },
       "formatLimit": {
-        "unlimited": "unlimited",
-        "activeAuctions": "{{count}} active auctions"
+        "unlimited": "제한 없는",
+        "activeAuctions": "{{count}} 활성 경매"
       }
     },
     "analytics": {
-      "loadingLabel": "Loading analytics",
-      "loadingText": "Loading analytics data...",
-      "error": "Failed to load analytics data.",
-      "empty": "No analytics data available.",
-      "unknownProduct": "Unknown product",
-      "headerTitle": "ðŸ“Š Enhanced Analytics",
+      "loadingLabel": "분석 로드 중",
+      "loadingText": "분석 데이터 로드 중...",
+      "error": "분석 데이터를 로드하지 못했습니다.",
+      "empty": "분석 데이터가 없습니다.",
+      "unknownProduct": "알 수 없는 제품",
+      "headerTitle": "📊 향상된 분석",
       "period": {
-        "label": "Time period",
-        "last7": "Last 7 days",
-        "last30": "Last 30 days",
-        "last90": "Last 90 days",
-        "lastYear": "Last year"
+        "label": "기간",
+        "last7": "지난 7일",
+        "last30": "지난 30일",
+        "last90": "지난 90일",
+        "lastYear": "작년"
       },
       "summary": {
-        "title": "ðŸ“ˆ Auction Summary",
-        "total": "Total Auctions",
-        "active": "Active Auctions",
-        "ended": "Ended Auctions",
-        "pending": "Pending Auctions",
-        "closed": "Closed Auctions"
+        "title": "📈 경매 요약",
+        "total": "총 경매",
+        "active": "활성 경매",
+        "ended": "종료된 경매",
+        "pending": "보류 중인 경매",
+        "closed": "비공개 경매"
       },
       "revenue": {
-        "title": "ðŸ’° Revenue Metrics",
-        "total": "Total Revenue",
-        "averageBid": "Avg Bid Amount",
-        "currency": "Currency",
-        "successRate": "Bid Success Rate"
+        "title": "💰 수익 지표",
+        "total": "총 수익",
+        "averageBid": "평균 입찰 금액",
+        "currency": "통화",
+        "successRate": "입찰 성공률"
       },
       "bidding": {
-        "title": "ðŸŽ¯ Bidding Statistics",
-        "total": "Total Bids",
-        "averagePerAuction": "Avg Bids per Auction",
-        "successRate": "Success Rate"
+        "title": "🎯 입찰 통계",
+        "total": "총 입찰가",
+        "averagePerAuction": "경매당 평균 입찰가",
+        "successRate": "성공률"
       },
       "daily": {
-        "title": "ðŸ“… Daily Statistics (Last 7 Days)",
+        "title": "📅 일일 통계(지난 7일)",
         "columns": {
-          "date": "Date",
-          "auctions": "Auctions",
-          "revenue": "Revenue",
-          "bids": "Bids"
+          "date": "날짜",
+          "auctions": "경매",
+          "revenue": "수익",
+          "bids": "입찰"
         }
       },
       "top": {
-        "title": "ðŸ† Top Performing Auctions",
+        "title": "🏆 최고 실적 경매",
         "columns": {
-          "product": "Product",
-          "currentBid": "Current Bid",
-          "totalBids": "Total Bids",
-          "created": "Created"
+          "product": "제품",
+          "currentBid": "현재 입찰",
+          "totalBids": "총 입찰가",
+          "created": "생성됨"
         }
       },
       "activity": {
-        "title": "âš¡ Recent Activity",
+        "title": "⚡ 최근 활동",
         "columns": {
-          "product": "Product",
-          "currentBid": "Current Bid",
-          "status": "Status",
-          "created": "Created"
+          "product": "제품",
+          "currentBid": "현재 입찰",
+          "status": "상태",
+          "created": "생성됨"
         }
       },
       "status": {
-        "pending": "Pending",
-        "active": "Active",
-        "ended": "Ended",
-        "closed": "Closed"
+        "pending": "보류 중",
+        "active": "활동적인",
+        "ended": "종료됨",
+        "closed": "닫은"
       }
     },
     "auctions": {
       "errors": {
-        "loadStats": "Failed to load dashboard statistics.",
-        "save": "Error saving auction: {{message}}",
-        "unknownStore": "Unable to determine store information."
+        "loadStats": "대시보드 통계를 로드하지 못했습니다.",
+        "save": "경매 저장 오류: {{message}}",
+        "unknownStore": "매장정보를 확인할 수 없습니다."
       },
       "toast": {
-        "statusUpdate": "ðŸ”„ Auction status updated: {{status}}",
-        "updated": "Auction updated successfully.",
-        "created": "Auction created successfully.",
-        "marketplaceOpen": "Opening auction marketplace in a new tab."
+        "statusUpdate": "🔄 경매 상태 업데이트됨: {{status}}",
+        "updated": "경매가 성공적으로 업데이트되었습니다.",
+        "created": "경매가 성공적으로 생성되었습니다.",
+        "marketplaceOpen": "새 탭에서 경매 시장을 엽니다."
       },
       "dashboard": {
-        "title": "Auction Dashboard",
-        "titleWithShop": "Auction Dashboard - {{shop}}",
-        "subtitleStore": "Store: {{store}}",
-        "subtitleDefault": "Manage your auctions and monitor performance.",
-        "subtitleNeedPlan": "Upgrade to a plan to start hosting auctions.",
-        "primaryCreate": "Create Auction",
-        "primaryChoosePlan": "Choose a plan to create auctions",
-        "previewTitle": "Preview mode active",
-        "previewDescription": "You can explore the Bidly dashboard, but creating or managing live auctions requires an active subscription. Choose a plan to unlock hosting, customization, and live bidding features.",
-        "overviewTitle": "Auction Overview",
-        "totalAuctions": "Total Auctions",
-        "activeAuctions": "Active Auctions",
-        "totalBids": "Total Bids",
-        "quickLinkWidget": "ðŸŽ¨ Widget styles",
-        "quickLinkMarketplace": "ðŸŽ¨ Marketplace styles",
-        "quickLinkPlans": "ðŸ§¾ Plans",
-        "quickLinkMail": "ðŸ“§ Mail service",
-        "tabAuctions": "ðŸ“‹ Auctions",
-        "tabAnalytics": "ðŸ“Š Analytics"
+        "title": "경매 대시보드",
+        "titleWithShop": "경매 대시보드 - {{shop}}",
+        "subtitleStore": "상점: {{store}}",
+        "subtitleDefault": "경매를 관리하고 성과를 모니터링하세요.",
+        "subtitleNeedPlan": "경매 호스팅을 시작하려면 계획으로 업그레이드하세요.",
+        "primaryCreate": "경매 생성",
+        "primaryChoosePlan": "경매를 만들 계획을 선택하세요",
+        "previewTitle": "미리보기 모드 활성화",
+        "previewDescription": "Bidly 대시보드를 탐색할 수 있지만 실시간 경매를 생성하거나 관리하려면 활성 구독이 필요합니다. 호스팅, 맞춤 설정, 실시간 입찰 기능을 잠금 해제하려면 계획을 선택하세요.",
+        "overviewTitle": "경매개요",
+        "totalAuctions": "총 경매",
+        "activeAuctions": "활성 경매",
+        "totalBids": "총 입찰가",
+        "quickLinkWidget": "🎨 위젯 스타일",
+        "quickLinkMarketplace": "🎨 마켓플레이스 스타일",
+        "quickLinkPlans": "🧾 계획",
+        "quickLinkMail": "📧 메일 서비스",
+        "tabAuctions": "📋 경매",
+        "tabAnalytics": "📊 분석"
       },
       "form": {
         "planGate": {
-          "title": "Choose a plan to create auctions",
-          "description": "Youâ€™re currently in preview mode. Upgrade to a paid Bidly plan to create and manage auctions, unlock widget customization, and enable live bidding features.",
-          "explore": "Explore plans"
+          "title": "경매를 만들 계획을 선택하세요",
+          "description": "현재 미리보기 모드에 있습니다. 경매를 생성 및 관리하고, 위젯 사용자 정의를 잠금 해제하고, 실시간 입찰 기능을 활성화하려면 유료 Bidly 플랜으로 업그레이드하세요.",
+          "explore": "계획 살펴보기"
         },
-        "titleCreate": "Create New Auction",
-        "titleEdit": "Edit Auction",
-        "shopifyWarning": "Shopify API is not configured. Product search will be disabled. Please check your backend configuration.",
+        "titleCreate": "새 경매 만들기",
+        "titleEdit": "경매 수정",
+        "shopifyWarning": "Shopify API가 구성되지 않았습니다. 상품 검색이 비활성화됩니다. 백엔드 구성을 확인하세요.",
         "errors": {
-          "productRequired": "Shopify product is required.",
-          "startingBidPositive": "Starting bid must be greater than 0.",
-          "endTime": "End time must be after start time.",
-          "save": "Failed to save auction."
+          "productRequired": "Shopify 제품이 필요합니다.",
+          "startingBidPositive": "시작 입찰가는 0보다 커야 합니다.",
+          "endTime": "종료 시간은 시작 시간 이후여야 합니다.",
+          "save": "경매를 저장하지 못했습니다."
         },
         "search": {
-          "title": "ðŸ” Search Shopify Products",
-          "label": "Search for Shopify Product",
-          "placeholder": "Type product name to search...",
-          "loadingLabel": "Searching products",
-          "debug": "Debug: {{count}} results found",
-          "resultsTitle": "Search Results",
+          "title": "🔍 Shopify 제품 검색",
+          "label": "Shopify 제품 검색",
+          "placeholder": "검색하려면 제품 이름을 입력하세요...",
+          "loadingLabel": "제품 검색 중",
+          "debug": "디버그: {{count}} 결과가 발견되었습니다.",
+          "resultsTitle": "검색결과",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Real API failed: {{message}}. Using demo data."
+          "apiFallback": "실제 API 실패: {{message}}. 데모 데이터를 사용합니다."
         },
         "selectedProduct": {
-          "title": "Selected Product Details",
-          "name": "Title: {{value}}",
-          "vendor": "Vendor: {{value}}",
-          "price": "Price: {{value}}"
+          "title": "선택한 제품 세부정보",
+          "name": "제목: {{value}}",
+          "vendor": "공급업체: {{value}}",
+          "price": "가격: {{value}}"
         },
         "fields": {
-          "productId": "Shopify Product ID",
-          "productIdPlaceholder": "Product ID will be filled automatically when you select a product.",
-          "startDate": "Start Date",
-          "startTime": "Start Time",
-          "endDate": "End Date",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "startingBidLocked": "Starting bid cannot be changed after a bid has been placed.",
-          "buyNow": "Buy Now Price (Optional)",
-          "reservePrice": "Reserve Price (Optional)",
-          "reserveHelp": "Minimum bid amount required for auction to have a valid winner. Hidden from bidders."
+          "productId": "Shopify 제품 ID",
+          "productIdPlaceholder": "상품을 선택하시면 상품ID가 자동으로 입력됩니다.",
+          "startDate": "시작일",
+          "startTime": "시작 시간",
+          "endDate": "종료일",
+          "endTime": "종료 시간",
+          "startingBid": "입찰 시작",
+          "startingBidLocked": "입찰이 완료된 후에는 시작 입찰을 변경할 수 없습니다.",
+          "buyNow": "지금 구매 가격(선택 사항)",
+          "reservePrice": "예약 가격(선택 사항)",
+          "reserveHelp": "경매에 유효한 낙찰자가 있기 위해서는 최소 입찰 금액이 필요합니다. 입찰자에게 숨겨졌습니다."
         },
         "popcorn": {
-          "title": "ðŸ¿ Popcorn Auction Settings (Premium Feature)",
-          "description": "Enable automatic time extension when bids are placed near the end of the auction.",
-          "enable": "Enable Popcorn Bidding",
-          "help": "Automatically extend auction time when bids are placed near the end.",
-          "upgradeHelp": "Automatically extend auction time when bids are placed near the end Â· Available on the Pro and Enterprise plans.",
-          "trigger": "Trigger Threshold (seconds)",
-          "triggerHelp": "Extend auction when this many seconds remain.",
-          "extension": "Extension Duration (seconds)",
-          "extensionHelp": "How many seconds to add to the auction."
+          "title": "🍿 팝콘 경매 설정(프리미엄 기능)",
+          "description": "경매가 거의 끝나갈 무렵 입찰이 이루어지면 자동 시간 연장을 활성화합니다.",
+          "enable": "팝콘 입찰 활성화",
+          "help": "입찰이 거의 끝나가는 시점에 경매 시간을 자동으로 연장합니다.",
+          "upgradeHelp": "입찰이 거의 끝날 때 자동으로 경매 시간을 연장합니다. · Pro 및 Enterprise 요금제에서 사용 가능합니다.",
+          "trigger": "트리거 임계값(초)",
+          "triggerHelp": "이 초만큼 남았을 때 경매를 연장하세요.",
+          "extension": "연장 기간(초)",
+          "extensionHelp": "경매에 추가할 시간(초)입니다."
         },
         "chat": {
-          "title": "ðŸ’¬ Chat Box Visibility",
-          "description": "Control whether the Chat Box button appears under your storefront auction widget for this auction.",
-          "toggle": "Show Chat Box button on the widget",
-          "help": "When disabled, bidders will only see the View Bids link centered beneath the widget."
+          "title": "💬 채팅 상자 가시성",
+          "description": "이 경매에 대한 매장 경매 위젯 아래에 채팅 상자 버튼이 표시되는지 여부를 제어합니다.",
+          "toggle": "위젯에 채팅창 버튼 표시",
+          "help": "비활성화되면 입찰자는 위젯 아래 중앙에 있는 입찰 보기 링크만 볼 수 있습니다."
         },
         "chatPremium": {
-          "title": "ðŸ’¬ Live Bidder Chat (Premium Feature)",
-          "description": "Keep bidders engaged with real-time conversation during your auctions. Upgrade your plan to use this feature.",
-          "available": "Available on the Enterprise plan."
+          "title": "💬 실시간 입찰자 채팅(프리미엄 기능)",
+          "description": "경매가 진행되는 동안 실시간 대화를 통해 입찰자들의 참여를 유지하세요. 이 기능을 사용하려면 계획을 업그레이드하세요.",
+          "available": "Enterprise 요금제에서 사용 가능합니다."
         }
       },
       "table": {
-          "errors": {
-            "fetch": "Failed to fetch auctions.",
-            "delete": "Failed to delete auction.",
-            "close": "Failed to close auction.",
-            "closeMissingId": "Failed to close auction: Auction ID not found.",
-            "noShop": "Error: No shop domain found.",
-            "noProductId": "Error: No product ID found for this auction.",
-            "openInStore": "Error opening product in store."
-          },
-          "toast": {
-            "deleted": "Auction deleted successfully.",
-            "closed": "Auction closed successfully."
-          },
-          "status": {
-            "reserveNotMet": "Ended Â· Reserve not met",
-            "noWinner": "Ended Â· No winner",
-            "ended": "Ended"
-          },
-          "unknownProduct": "Unknown Product",
-          "actions": {
-            "viewInStore": "View in store",
-            "viewDetails": "View auction details",
-            "edit": "Edit auction",
-            "delete": "Delete auction",
-            "close": "Close auction"
-          },
-          "loading": "Loading auctions...",
-          "empty": {
-            "title": "No auctions found",
-            "action": "Create auction",
-            "description": "Get started by creating your first auction."
-          },
-          "filters": {
-            "open": "Filter",
-            "clear": "Clear filters",
-            "title": "Filter Auctions",
-            "apply": "Apply Filters",
-            "statusLabel": "Status",
-            "productPlaceholder": "Enter product ID"
-          },
-          "columns": {
-            "product": "Product",
-            "start": "Start",
-            "end": "End",
-            "startBid": "Start Bid",
-            "currentBid": "Current Bid",
-            "buyNow": "Buy Now",
-            "reserve": "Reserve",
-            "status": "Status",
-            "bids": "Bids",
-            "actions": "Actions"
-          },
-          "footer": "Showing {{visible}} of {{total}} auctions",
-          "pagination": "Page {{current}} of {{total}}",
-          "delete": {
-            "title": "Delete Auction",
-            "confirm": "Delete",
-            "message": "Are you sure you want to delete this auction? This action cannot be undone.",
-            "hasBids": "Note: This auction has bids and cannot be deleted."
-          },
-          "close": {
-            "title": "Close Auction",
-            "confirm": "Close Auction",
-            "message": "Are you sure you want to close this auction? This will prevent new bids from being placed."
-          }
+        "errors": {
+          "fetch": "경매를 가져오지 못했습니다.",
+          "delete": "경매를 삭제하지 못했습니다.",
+          "close": "경매를 종료하지 못했습니다.",
+          "closeMissingId": "경매를 종료하지 못했습니다. 경매 ID를 찾을 수 없습니다.",
+          "noShop": "오류: 상점 도메인을 찾을 수 없습니다.",
+          "noProductId": "오류: 이 경매에 대한 제품 ID를 찾을 수 없습니다.",
+          "openInStore": "매장에서 제품을 여는 중에 오류가 발생했습니다."
         },
-      "details": {
-        "title": "Auction Details",
         "toast": {
-          "closed": "Auction closed successfully."
+          "deleted": "경매가 성공적으로 삭제되었습니다.",
+          "closed": "경매가 성공적으로 종료되었습니다."
+        },
+        "status": {
+          "reserveNotMet": "종료됨 · 예약금이 충족되지 않음",
+          "noWinner": "종료됨 · 우승자 없음",
+          "ended": "종료됨"
+        },
+        "unknownProduct": "알 수 없는 제품",
+        "actions": {
+          "viewInStore": "매장에서 보기",
+          "viewDetails": "경매 세부정보 보기",
+          "edit": "경매 수정",
+          "delete": "경매 삭제",
+          "close": "경매 종료"
+        },
+        "loading": "경매 로드 중...",
+        "empty": {
+          "title": "경매를 찾을 수 없습니다.",
+          "action": "경매 만들기",
+          "description": "첫 번째 경매를 만들어 시작해 보세요."
+        },
+        "filters": {
+          "open": "필터",
+          "clear": "필터 지우기",
+          "title": "경매 필터링",
+          "apply": "필터 적용",
+          "statusLabel": "상태",
+          "productPlaceholder": "제품 ID를 입력하세요"
+        },
+        "columns": {
+          "product": "제품",
+          "start": "시작",
+          "end": "끝",
+          "startBid": "입찰 시작",
+          "currentBid": "현재 입찰",
+          "buyNow": "지금 구매",
+          "reserve": "예약하다",
+          "status": "상태",
+          "bids": "입찰",
+          "actions": "행위"
+        },
+        "footer": "{{total}} 경매 중 {{visible}} 표시 중",
+        "pagination": "{{current}}/{{total}} 페이지",
+        "delete": {
+          "title": "경매 삭제",
+          "confirm": "삭제",
+          "message": "이 경매를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+          "hasBids": "참고: 이 경매에는 입찰이 있으므로 삭제할 수 없습니다."
+        },
+        "close": {
+          "title": "경매 종료",
+          "confirm": "경매 종료",
+          "message": "이 경매를 종료하시겠습니까? 이렇게 하면 새로운 입찰이 이루어지지 않습니다."
+        }
+      },
+      "details": {
+        "title": "경매 세부정보",
+        "toast": {
+          "closed": "경매가 성공적으로 종료되었습니다."
         },
         "errors": {
-          "missingId": "Error: Auction ID not found.",
-          "close": "Error closing auction: {{message}}"
+          "missingId": "오류: 경매 ID를 찾을 수 없습니다.",
+          "close": "경매 종료 오류: {{message}}"
         },
         "overview": {
-          "title": "Auction Overview",
-          "productId": "Product ID",
-          "status": "Status",
-          "timeStatus": "Time Status",
-          "chat": "Live Chat"
+          "title": "경매개요",
+          "productId": "제품ID",
+          "status": "상태",
+          "timeStatus": "시간 상태",
+          "chat": "라이브 채팅"
         },
         "timeStatus": {
-          "notStarted": "Not Started",
-          "live": "Live"
+          "notStarted": "시작되지 않음",
+          "live": "살다"
         },
         "details": {
-          "title": "Auction Details",
-          "startTime": "Start Time",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "currentBid": "Current Bid",
-          "buyNow": "Buy Now Price",
-          "totalBids": "Total Bids",
-          "created": "Created",
-          "updated": "Last Updated",
-          "reserve": "Reserve Price",
-          "popcorn": "Popcorn Bidding",
-          "popcornSettings": "Popcorn Settings",
-          "popcornSummary": "Trigger: {{trigger}}s Â· Extend: +{{extend}}s"
+          "title": "경매 세부정보",
+          "startTime": "시작 시간",
+          "endTime": "종료 시간",
+          "startingBid": "입찰 시작",
+          "currentBid": "현재 입찰",
+          "buyNow": "지금 구매 가격",
+          "totalBids": "총 입찰가",
+          "created": "생성됨",
+          "updated": "마지막 업데이트",
+          "reserve": "예약 가격",
+          "popcorn": "팝콘 입찰",
+          "popcornSettings": "팝콘 설정",
+          "popcornSummary": "트리거: {{trigger}}s · 확장: +{{extend}}s"
         },
         "bidHistory": {
-          "title": "Bid History",
+          "title": "입찰 내역",
           "columns": {
-            "index": "#",
-            "bidder": "Bidder",
-            "email": "Email",
-            "amount": "Amount",
-            "time": "Time"
+            "index": null,
+            "bidder": "명령자",
+            "email": "이메일",
+            "amount": "양",
+            "time": "시간"
           },
-          "empty": "No bids placed yet."
+          "empty": "아직 입찰된 입찰이 없습니다."
         },
         "actions": {
-          "close": "Close Auction"
+          "close": "경매 종료"
         }
       }
     },
     "onboarding": {
       "page": {
-        "title": "Welcome to Bidly",
-        "subtitle": "Complete these steps to finish your setup."
+        "title": "비들리에 오신 것을 환영합니다",
+        "subtitle": "설정을 완료하려면 다음 단계를 완료하세요."
       },
       "status": {
-        "loading": "Loading onboarding status"
+        "loading": "온보딩 상태 로드 중"
       },
       "step1": {
-        "title": "Step 1 Â· Enable the Auction Widget",
-        "description": "Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.",
-        "detected": "We detected the widget is enabled in your theme.",
-        "notDetected": "If you have already enabled the widget, you can mark this step as complete manually.",
-        "error": "We couldn't confirm the widget automatically: {{error}}",
-        "completed": "Completed",
-        "pending": "Pending",
+        "title": "1단계 · 경매 위젯 활성화",
+        "description": "온라인 스토어에서 Bidly 위젯을 활성화하면 제품 페이지에 표시될 수 있습니다. 그러면 앱 삽입을 활성화할 수 있는 Shopify 테마 편집기가 열립니다.",
+        "detected": "테마에서 위젯이 활성화되어 있는 것을 감지했습니다.",
+        "notDetected": "위젯을 이미 활성화한 경우 이 단계를 수동으로 완료로 표시할 수 있습니다.",
+        "error": "위젯을 자동으로 확인할 수 없습니다: {{error}}",
+        "completed": "완전한",
+        "pending": "보류 중",
         "actions": {
-          "openThemeEditor": "Open theme editor",
-          "refreshStatus": "Refresh status",
-          "markEnabled": "Mark widget as enabled"
+          "openThemeEditor": "테마 편집기 열기",
+          "refreshStatus": "새로고침 상태",
+          "markEnabled": "위젯을 활성화된 것으로 표시"
         },
         "toast": {
-          "marked": "Marked widget as enabled."
+          "marked": "위젯이 활성화된 것으로 표시되었습니다."
         }
       },
       "step2": {
-        "title": "Step 2 Â· Add the Auction Marketplace to your menu",
-        "description": "Open your Online Store navigation and add a new menu item linking to your auction marketplace.",
-        "descriptionWithShop": "Open your Online Store navigation and add a new menu item linking to the marketplace. We've generated the URL for {{shop}}.",
-        "completed": "Completed",
-        "pending": "Pending",
-        "marketplaceUrl": "Marketplace URL",
+        "title": "2단계 · 메뉴에 경매 시장을 추가하세요",
+        "description": "온라인 상점 탐색을 열고 경매 시장에 연결되는 새 메뉴 항목을 추가하십시오.",
+        "descriptionWithShop": "온라인 스토어 탐색을 열고 마켓플레이스에 연결되는 새 메뉴 항목을 추가하세요. {{shop}}에 대한 URL을 생성했습니다.",
+        "completed": "완전한",
+        "pending": "보류 중",
+        "marketplaceUrl": "마켓플레이스 URL",
         "actions": {
-          "copy": "Copy",
-          "goToMenu": "Go to menu settings",
-          "markDone": "Mark step as done",
-          "markedDone": "Marked as done"
+          "copy": "복사",
+          "goToMenu": "메뉴 설정으로 이동",
+          "markDone": "단계를 완료로 표시",
+          "markedDone": "완료로 표시됨"
         },
         "toast": {
-          "copied": "Marketplace URL copied",
-          "copyError": "Unable to copy URL. Please copy it manually.",
-          "reminder": "Remember to update your menu after copying the URL."
+          "copied": "마켓플레이스 URL이 복사되었습니다.",
+          "copyError": "URL을 복사할 수 없습니다. 수동으로 복사해 주세요.",
+          "reminder": "URL을 복사한 후 메뉴를 업데이트하는 것을 잊지 마세요."
         }
       },
       "finish": {
-        "title": "Finish setup",
-        "description": "Once both steps are complete, you're ready to start creating auctions with Bidly.",
-        "action": "Finish setup and open dashboard",
+        "title": "설정 완료",
+        "description": "두 단계가 모두 완료되면 Bidly를 사용하여 경매를 시작할 준비가 된 것입니다.",
+        "action": "설정을 완료하고 대시보드를 엽니다.",
         "toast": {
-          "complete": "Onboarding complete! Redirecting to your dashboard.",
-          "error": "Failed to complete onboarding. Please try again."
+          "complete": "온보딩 완료! 대시보드로 리디렉션 중입니다.",
+          "error": "온보딩을 완료하지 못했습니다. 다시 시도해 주세요."
         }
       },
       "errors": {
-        "loadStatus": "Failed to load onboarding status. Please try again."
+        "loadStatus": "온보딩 상태를 로드하지 못했습니다. 다시 시도해 주세요."
       }
     },
     "oauth": {
       "loading": {
-        "title": "Checking app setup...",
-        "message": "Checking app setup..."
+        "title": "앱 설정 확인 중...",
+        "message": "앱 설정 확인 중..."
       },
       "error": {
-        "title": "Setup Error",
-        "tryAgain": "Try Again"
+        "title": "설정 오류",
+        "tryAgain": "다시 시도"
       },
       "setup": {
-        "title": "Complete App Setup",
-        "description": "To use the auction features, you need to complete the app setup process. This will connect your store to the auction system and enable product search.",
+        "title": "앱 설정 완료",
+        "description": "경매 기능을 사용하려면 앱 설정 과정을 완료해야 합니다. 그러면 귀하의 매장이 경매 시스템에 연결되어 제품 검색이 가능해집니다.",
         "whyNeeded": {
-          "title": "Why is this needed?",
-          "message": "The app needs permission to access your store's products to create auctions. This is a one-time setup process."
+          "title": "이것이 왜 필요한가요?",
+          "message": "경매를 생성하려면 앱에 매장 제품에 액세스할 수 있는 권한이 필요합니다. 이는 일회성 설정 프로세스입니다."
         },
         "manualShop": {
-          "label": "Please enter your Shopify store domain:",
+          "label": "Shopify 스토어 도메인을 입력하세요.",
           "placeholder": "store.myshopify.com"
         },
-        "action": "Complete Setup",
+        "action": "설정 완료",
         "errors": {
-          "noShop": "Unable to get shop information. Please enter your shop domain manually below.",
-          "invalidShop": "Invalid shop parameter. Please refresh the page or access the app through Shopify admin.",
-          "invalidFormat": "Invalid shop domain format: {{shop}}. Expected format: store.myshopify.com",
-          "validationFailed": "Shop domain validation failed. Received: {{shop}}",
-          "urlConstruction": "Error constructing OAuth URL. Please try again."
+          "noShop": "매장정보를 가져올 수 없습니다. 아래에 매장 도메인을 직접 입력하세요.",
+          "invalidShop": "잘못된 상점 매개변수입니다. 페이지를 새로 고치거나 Shopify 관리자를 통해 앱에 액세스하십시오.",
+          "invalidFormat": "잘못된 상점 도메인 형식: {{shop}}. 예상 형식: store.myshopify.com",
+          "validationFailed": "상점 도메인 확인에 실패했습니다. 수신됨: {{shop}}",
+          "urlConstruction": "OAuth URL을 구성하는 중에 오류가 발생했습니다. 다시 시도해 주세요."
         }
       }
     }
   }
 }
-
-

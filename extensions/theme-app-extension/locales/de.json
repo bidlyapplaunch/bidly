@@ -2,73 +2,73 @@
   "bidly": {
     "schema": {
       "auction_app_embed": {
-        "name": "Auction App Embed",
-        "widget_settings": "Auction Widget Settings",
-        "show_timer": "Show countdown timer",
-        "show_bid_history": "Show bid history link",
-        "widget_position": "Widget position",
-        "below_price": "Below product price",
-        "above_price": "Above product price",
-        "replace_price": "Replace product price"
+        "name": "Auktions-App einbetten",
+        "widget_settings": "Einstellungen für das Auktions-Widget",
+        "show_timer": "Countdown-Timer anzeigen",
+        "show_bid_history": "Link zur Gebotshistorie anzeigen",
+        "widget_position": "Widget-Position",
+        "below_price": "Unterhalb des Produktpreises",
+        "above_price": "Über dem Produktpreis",
+        "replace_price": "Produktpreis ersetzen"
       },
       "auction_list": {
-        "name": "Auction List",
-        "section_title": "Section Title",
-        "live_auctions": "Live Auctions",
-        "max_auctions": "Max Auctions",
-        "max_auctions_info": "Maximum number of auctions to display",
-        "show_ended": "Show Ended Auctions"
+        "name": "Auktionsliste",
+        "section_title": "Abschnittstitel",
+        "live_auctions": "Live-Auktionen",
+        "max_auctions": "Max-Auktionen",
+        "max_auctions_info": "Maximale Anzahl anzuzeigender Auktionen",
+        "show_ended": "Beendete Auktionen anzeigen"
       },
       "auction_single": {
-        "name": "Single Auction",
-        "auction_id": "Auction ID",
-        "auction_id_info": "Enter the specific auction ID to display"
+        "name": "Einzelauktion",
+        "auction_id": "Auktions-ID",
+        "auction_id_info": "Geben Sie die spezifische Auktions-ID ein, die angezeigt werden soll"
       },
       "auction_featured": {
-        "name": "Featured Auction",
-        "featured_auction_id": "Featured Auction ID",
-        "featured_auction_id_info": "Enter the auction ID to feature prominently"
+        "name": "Besondere Auktion",
+        "featured_auction_id": "Empfohlene Auktions-ID",
+        "featured_auction_id_info": "Geben Sie die Auktions-ID ein, um sie hervorzuheben"
       }
     },
     "ui": {
-      "loading_auctions": "Loading auctions...",
-      "loading_auction": "Loading auction...",
-      "loading_featured": "Loading featured auction...",
-      "error_load_auctions": "Unable to load auctions. Please try again later.",
-      "error_load_auction": "Unable to load auction. Please try again later.",
-      "error_load_featured": "Unable to load featured auction. Please try again later.",
-      "no_auctions": "No auctions found",
-      "auction_item": "Auction Item",
-      "current_bid": "Current Bid",
-      "starting_bid": "Starting Bid",
-      "time_left": "Time left:",
-      "auction_ended": "Auction Ended",
-      "bid": "Bid",
-      "bids": "Bids",
-      "view_product": "View Product →",
+      "loading_auctions": "Auktionen werden geladen...",
+      "loading_auction": "Auktion wird geladen...",
+      "loading_featured": "Empfohlene Auktion wird geladen...",
+      "error_load_auctions": "Auktionen können nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+      "error_load_auction": "Auktion konnte nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+      "error_load_featured": "Die vorgestellte Auktion konnte nicht geladen werden. Bitte versuchen Sie es später noch einmal.",
+      "no_auctions": "Keine Auktionen gefunden",
+      "auction_item": "Auktionsgegenstand",
+      "current_bid": "Aktuelles Gebot",
+      "starting_bid": "Startgebot",
+      "time_left": "Übrige Zeit:",
+      "auction_ended": "Auktion beendet",
+      "bid": "Gebot",
+      "bids": "Gebote",
+      "view_product": "Produkt anzeigen →",
       "status_live": "● LIVE",
-      "status_ended": "● ENDED",
-      "status_pending": "● PENDING",
-      "starting": "Starting:",
-      "featured_badge": "Featured Auction",
-      "no_image": "No Image",
-      "config_required": "⚠️ Configuration Required",
-      "config_required_message": "Please set an Auction ID in the block settings to display an auction.",
-      "not_set": "Not set"
+      "status_ended": "● BEENDET",
+      "status_pending": "● AUSSTEHEND",
+      "starting": "Beginn:",
+      "featured_badge": "Besondere Auktion",
+      "no_image": "Kein Bild",
+      "config_required": "⚠️ Konfiguration erforderlich",
+      "config_required_message": "Bitte legen Sie in den Blockeinstellungen eine Auktions-ID fest, um eine Auktion anzuzeigen.",
+      "not_set": "Nicht festgelegt"
     },
     "editor": {
-      "auction_list_title": "🎯 Bidly Auction List",
-      "auction_list_message": "This block will display live auctions when the theme is published.",
-      "single_auction_title": "🎯 Single Auction",
-      "single_auction_message": "This block will display a specific auction when the theme is published.",
-      "featured_auction_title": "⭐ Featured Auction",
-      "featured_auction_message": "This block will display a featured auction when the theme is published.",
-      "settings": "Settings:",
-      "title_label": "Title:",
-      "max_auctions_label": "Max Auctions:",
-      "show_ended_label": "Show Ended:",
-      "auction_id_label": "Auction ID:",
-      "featured_auction_id_label": "Featured Auction ID:"
+      "auction_list_title": "🎯 Bidly-Auktionsliste",
+      "auction_list_message": "In diesem Block werden Live-Auktionen angezeigt, wenn das Thema veröffentlicht wird.",
+      "single_auction_title": "🎯 Einzelauktion",
+      "single_auction_message": "In diesem Block wird eine bestimmte Auktion angezeigt, wenn das Thema veröffentlicht wird.",
+      "featured_auction_title": "⭐ Besondere Auktion",
+      "featured_auction_message": "In diesem Block wird eine Sonderauktion angezeigt, wenn das Thema veröffentlicht wird.",
+      "settings": "Einstellungen:",
+      "title_label": "Titel:",
+      "max_auctions_label": "Maximale Auktionen:",
+      "show_ended_label": "Show beendet:",
+      "auction_id_label": "Auktions-ID:",
+      "featured_auction_id_label": "Empfohlene Auktions-ID:"
     }
   }
 }

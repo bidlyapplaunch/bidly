@@ -1,882 +1,880 @@
-﻿{
+{
   "admin": {
     "common": {
-      "loadingApp": "Loading Bidlyâ€¦",
-      "preparingDashboard": "Preparing your dashboardâ€¦",
+      "loadingApp": "جارٍ التحميل",
+      "preparingDashboard": "جارٍ تحضير لوحة التحكم الخاصة بك…",
       "appBridge": {
-        "missingShop": "No shop parameter found in the URL.",
-        "initializationFailed": "Failed to initialize Shopify App Bridge.",
-        "initializing": "Initializing Shopify App Bridgeâ€¦",
-        "connecting": "Connecting to Shopifyâ€¦",
-        "errorTitle": "App Initialization Error",
-        "openFromAdmin": "Please open this app from the Shopify admin."
+        "missingShop": "لم يتم العثور على معلمة متجر في عنوان URL.",
+        "initializationFailed": "فشل في تهيئة Shopify App Bridge.",
+        "initializing": "جارٍ تهيئة Shopify App Bridge...",
+        "connecting": "جارٍ الاتصال بـ Shopify…",
+        "errorTitle": "خطأ في تهيئة التطبيق",
+        "openFromAdmin": "يرجى فتح هذا التطبيق من مسؤول Shopify."
       },
-      "refresh": "Refresh",
-      "logout": "Logout",
-      "viewPlans": "View plans",
-      "back": "Back",
-      "createAuction": "Create Auction",
-      "saveChanges": "Save Changes",
-      "cancel": "Cancel",
-      "close": "Close",
-      "enabled": "Enabled",
-      "disabled": "Disabled",
-      "notSet": "Not set",
-      "notConfigured": "Not configured",
-      "notAvailable": "N/A"
+      "refresh": "ينعش",
+      "logout": "تسجيل الخروج",
+      "viewPlans": "عرض الخطط",
+      "back": "خلف",
+      "createAuction": "إنشاء مزاد",
+      "saveChanges": "حفظ التغييرات",
+      "cancel": "يلغي",
+      "close": "يغلق",
+      "enabled": "ممكّن",
+      "disabled": "عاجز",
+      "notSet": "لم يتم ضبطه",
+      "notConfigured": "لم يتم تكوينه",
+      "notAvailable": "لا يوجد"
     },
     "nav": {
-      "dashboard": "Dashboard",
-      "marketplace": "Auction Marketplace",
-      "widgetStyles": "Widget styles",
-      "marketplaceStyles": "Marketplace styles",
-      "mailService": "Mail service",
-      "plans": "Plans"
+      "dashboard": "لوحة القيادة",
+      "marketplace": "سوق المزاد",
+      "widgetStyles": "أنماط القطعة",
+      "marketplaceStyles": "أنماط السوق",
+      "mailService": "خدمة البريد",
+      "plans": "الخطط"
     },
     "auth": {
-      "title": "ðŸ” Bidly Admin Login",
+      "title": "🔐 تسجيل الدخول للمشرف Bidly",
       "subtitles": {
-        "register": "Create a new admin account",
-        "login": "Sign in to your admin account"
+        "register": "قم بإنشاء حساب مسؤول جديد",
+        "login": "قم بتسجيل الدخول إلى حساب المشرف الخاص بك"
       },
       "fields": {
-        "username": "Username",
-        "usernamePlaceholder": "Enter username",
-        "email": "Email",
-        "emailPlaceholder": "Enter email",
-        "password": "Password",
-        "passwordPlaceholder": "Enter password"
+        "username": "اسم المستخدم",
+        "usernamePlaceholder": "أدخل اسم المستخدم",
+        "email": "بريد إلكتروني",
+        "emailPlaceholder": "أدخل البريد الإلكتروني",
+        "password": "كلمة المرور",
+        "passwordPlaceholder": "أدخل كلمة المرور"
       },
       "actions": {
-        "loading": "Please wait...",
-        "register": "Register",
-        "login": "Login"
+        "loading": "انتظر من فضلك...",
+        "register": "يسجل",
+        "login": "تسجيل الدخول"
       },
       "toggle": {
-        "login": "Already have an account? Login",
-        "register": "Need an account? Register"
+        "login": "هل لديك حساب بالفعل؟ تسجيل الدخول",
+        "register": "هل تحتاج إلى حساب؟ يسجل"
       },
       "errors": {
-        "usernameRequired": "Username is required.",
-        "emailRequired": "Email is required.",
-        "passwordLength": "Password must be at least 6 characters.",
-        "generic": "Authentication failed."
+        "usernameRequired": "اسم المستخدم مطلوب.",
+        "emailRequired": "البريد الإلكتروني مطلوب.",
+        "passwordLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.",
+        "generic": "فشلت المصادقة."
       },
       "demo": {
-        "title": "Demo Credentials:",
-        "email": "Email: {{value}}",
-        "password": "Password: {{value}}"
+        "title": "بيانات الاعتماد التجريبية:",
+        "email": "البريد الإلكتروني: {{value}}",
+        "password": "كلمة المرور: {{value}}"
       }
     },
     "mail_service": {
       "page": {
-        "title": "Mail Service"
+        "title": "خدمة البريد"
       },
       "messages": {
-        "loadError": "Failed to load mail settings.",
-        "saveSuccess": "Mail settings saved successfully.",
-        "saveError": "Failed to save mail settings.",
-        "smtpTestSuccess": "Test email sent.",
-        "smtpTestError": "SMTP test failed.",
-        "upgradeForTests": "Upgrade to a Pro or Enterprise plan to send template tests.",
-        "recipientRequired": "Enter a test email recipient.",
-        "templateMissing": "Template not found.",
-        "templateTestSuccess": "Template test sent to {{recipient}}.",
-        "templateTestError": "Template test failed.",
-        "selectFieldForToken": "Select a template subject or HTML field to insert tokens."
+        "loadError": "فشل تحميل إعدادات البريد.",
+        "saveSuccess": "تم حفظ إعدادات البريد بنجاح.",
+        "saveError": "فشل في حفظ إعدادات البريد.",
+        "smtpTestSuccess": "تم إرسال البريد الإلكتروني التجريبي.",
+        "smtpTestError": "فشل اختبار SMTP.",
+        "upgradeForTests": "قم بالترقية إلى خطة Pro أو Enterprise لإرسال اختبارات القالب.",
+        "recipientRequired": "أدخل مستلم البريد الإلكتروني التجريبي.",
+        "templateMissing": "لم يتم العثور على القالب.",
+        "templateTestSuccess": "تم إرسال نموذج الاختبار إلى {{recipient}}.",
+        "templateTestError": "فشل اختبار القالب.",
+        "selectFieldForToken": "حدد موضوع القالب أو حقل HTML لإدراج الرموز المميزة."
       },
       "tokens": {
-        "title": "Available tokens",
-        "description": "Click a token to insert it into the subject or HTML field you're editing."
+        "title": "الرموز المتاحة",
+        "description": "انقر فوق الرمز المميز لإدراجه في الموضوع أو حقل HTML الذي تقوم بتحريره."
       },
       "status": {
-        "loading": "Loading mail settings"
+        "loading": "تحميل إعدادات البريد"
       },
       "banner": {
-        "upgradeTitle": "Upgrade required",
-        "upgradeDescription": "Custom mail settings are available on Pro and Enterprise plans."
+        "upgradeTitle": "الترقية مطلوبة",
+        "upgradeDescription": "تتوفر إعدادات البريد المخصصة في خطط Pro وEnterprise."
       },
       "smtp": {
-        "title": "SMTP configuration",
-        "description": "Connect your own email server to send notifications from your domain.",
-        "useCustom": "Use my own email server",
-        "secure": "Use secure connection (TLS)",
-        "testRecipient": "Test email recipient",
-        "sendTest": "Send test email",
+        "title": "تكوين SMTP",
+        "description": "قم بتوصيل خادم البريد الإلكتروني الخاص بك لإرسال إشعارات من المجال الخاص بك.",
+        "useCustom": "استخدام خادم البريد الإلكتروني الخاص بي",
+        "secure": "استخدام اتصال آمن (TLS)",
+        "testRecipient": "اختبار مستلم البريد الإلكتروني",
+        "sendTest": "أرسل بريدًا إلكترونيًا للاختبار",
         "fields": {
-          "host": "Host",
-          "port": "Port",
-          "username": "Username",
-          "password": "Password / app password",
-          "fromName": "From name",
-          "fromEmail": "From email"
+          "host": "يستضيف",
+          "port": "ميناء",
+          "username": "اسم المستخدم",
+          "password": "كلمة المرور / كلمة مرور التطبيق",
+          "fromName": "من الاسم",
+          "fromEmail": "من البريد الإلكتروني"
         }
       },
       "templates": {
-        "title": "Email templates",
-        "description": "Customize Bidly notification content. Use the token panel to pull in dynamic values like bidder names or auction details.",
-        "testRecipient": "Test email recipient",
+        "title": "قوالب البريد الإلكتروني",
+        "description": "تخصيص محتوى إشعار Bidly. استخدم لوحة الرمز المميز لسحب القيم الديناميكية مثل أسماء مقدمي العروض أو تفاصيل المزاد.",
+        "testRecipient": "اختبار مستلم البريد الإلكتروني",
         "testPlaceholder": "name@example.com",
-        "testHelper": "This address is used by the \"Send test using this template\" buttons below.",
-        "enabled": "Enabled",
-        "subject": "Subject",
-        "editorMode": "Editor mode",
-        "editorSimple": "Simple editor",
-        "editorHtml": "HTML editor",
-        "htmlLabel": "HTML content",
-        "textLabel": "Message body",
-        "reset": "Reset to default",
-        "sendTestForTemplate": "Send test using this template",
+        "testHelper": "يتم استخدام هذا العنوان بواسطة أزرار \"إرسال اختبار باستخدام هذا القالب\" أدناه.",
+        "enabled": "ممكّن",
+        "subject": "موضوع",
+        "editorMode": "وضع المحرر",
+        "editorSimple": "محرر بسيط",
+        "editorHtml": "محرر HTML",
+        "htmlLabel": "محتوى HTML",
+        "textLabel": "نص الرسالة",
+        "reset": "إعادة التعيين إلى الوضع الافتراضي",
+        "sendTestForTemplate": "إرسال الاختبار باستخدام هذا القالب",
         "bidConfirmation": {
-          "title": "Bid confirmation"
+          "title": "تأكيد العطاء"
         },
         "outbidNotification": {
-          "title": "Outbid notification"
+          "title": "إشعار المزايدة"
         },
         "winnerNotification": {
-          "title": "Winner notification"
+          "title": "إشعار الفائز"
         },
         "auctionEndingSoon": {
-          "title": "Auction ending soon"
+          "title": "المزاد ينتهي قريبا"
         },
         "adminNotification": {
-          "title": "Admin notification"
+          "title": "إشعار المشرف"
         }
       },
       "actions": {
-        "save": "Save mail settings"
+        "save": "حفظ إعدادات البريد"
       }
     },
     "marketplace": {
       "page": {
-        "title": "Marketplace customization",
-        "subtitle": "Control the typography, template, and color system for the public auction marketplace."
+        "title": "تخصيص السوق",
+        "subtitle": "التحكم في الطباعة والقالب ونظام الألوان لسوق المزادات العامة."
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock marketplace styling.",
-        "bannerTitle": "Upgrade required to customize the marketplace",
-        "defaultMessage": "The marketplace customization requires the Pro or Enterprise plan."
+        "subtitle": "قم بترقية خطة Bidly الخاصة بك لفتح تصميم السوق.",
+        "bannerTitle": "الترقية مطلوبة لتخصيص السوق",
+        "defaultMessage": "يتطلب تخصيص السوق خطة Pro أو Enterprise."
       },
       "status": {
-        "loading": "Loading marketplace customization"
+        "loading": "جارٍ تحميل تخصيص السوق"
       },
       "actions": {
-        "save": "Save changes",
-        "resetApplied": "Reset to applied",
-        "resetDefaults": "Restore defaults"
+        "save": "حفظ التغييرات",
+        "resetApplied": "إعادة تعيين إلى تطبيقها",
+        "resetDefaults": "استعادة الإعدادات الافتراضية"
       },
       "messages": {
-        "saveSuccess": "Marketplace theme saved.",
-        "saveError": "Failed to save marketplace customization.",
-        "loadError": "Failed to load marketplace customization."
+        "saveSuccess": "تم حفظ موضوع السوق.",
+        "saveError": "فشل في حفظ تخصيص السوق.",
+        "loadError": "فشل تحميل تخصيص السوق."
       },
       "errors": {
-        "unavailable": "Marketplace customization unavailable"
+        "unavailable": "تخصيص السوق غير متاح"
       },
       "sections": {
         "design": {
-          "title": "Design foundation",
-          "heading": "Choose template",
-          "description": "Templates control spacing, radius, and depth. They apply instantly to every screen in the customer flow.",
-          "fontLabel": "Font family",
+          "title": "أساس التصميم",
+          "heading": "اختر القالب",
+          "description": "تتحكم القوالب في التباعد ونصف القطر والعمق. يتم تطبيقها على الفور على كل شاشة في تدفق العملاء.",
+          "fontLabel": "عائلة الخطوط",
           "templates": {
             "classic": {
-              "label": "Classic",
-              "description": "Balanced spacing, subtle depth, and rounded corners."
+              "label": "كلاسيكي",
+              "description": "تباعد متوازن وعمق دقيق وزوايا مستديرة."
             },
             "modern": {
-              "label": "Modern",
-              "description": "Softer surfaces, deeper shadows, and generous padding."
+              "label": "حديث",
+              "description": "أسطح أكثر نعومة وظلال أعمق وحشوة سخية."
             },
             "minimal": {
-              "label": "Minimal",
-              "description": "Compact spacing with crisp lines and light shadows."
+              "label": "الحد الأدنى",
+              "description": "تباعد مدمج مع خطوط واضحة وظلال خفيفة."
             },
             "bold": {
-              "label": "Bold",
-              "description": "Large radiuses, dramatic shadows, and pill buttons."
+              "label": "عريض",
+              "description": "نصف قطر كبير، وظلال مثيرة، وأزرار حبوب منع الحمل."
             }
           }
         },
         "palette": {
-          "title": "Color palette",
-          "description": "Every UI element in the marketplace references these tokens. Update them to match your storefront.",
-          "gradientToggleLabel": "Toggle gradient background",
-          "gradientEnabled": "Gradient enabled",
-          "gradientDisabled": "Gradient disabled",
-          "gradientInfo": "Background color is managed by your gradient. Disable the gradient toggle to edit the solid background color."
+          "title": "لوحة الألوان",
+          "description": "يشير كل عنصر من عناصر واجهة المستخدم في السوق إلى هذه الرموز المميزة. قم بتحديثها لتتناسب مع واجهة متجرك.",
+          "gradientToggleLabel": "تبديل خلفية التدرج",
+          "gradientEnabled": "تم تمكين التدرج",
+          "gradientDisabled": "تم تعطيل التدرج",
+          "gradientInfo": "تتم إدارة لون الخلفية من خلال التدرج الخاص بك. قم بتعطيل تبديل التدرج لتحرير لون الخلفية الصلبة."
         }
       },
       "colors": {
         "primary": {
-          "label": "Primary",
-          "description": "Buttons, actions, and primary highlights."
+          "label": "أساسي",
+          "description": "الأزرار والإجراءات والميزات الأساسية."
         },
         "background": {
-          "label": "Background",
-          "description": "Marketplace page background."
+          "label": "خلفية",
+          "description": "خلفية صفحة السوق."
         },
         "surface": {
-          "label": "Surface",
-          "description": "Cards, modals, and sheets."
+          "label": "سطح",
+          "description": "البطاقات والوسائط والأوراق."
         },
         "textPrimary": {
-          "label": "Primary text",
-          "description": "Headings and main text."
+          "label": "النص الأساسي",
+          "description": "العناوين والنص الرئيسي."
         },
         "textSecondary": {
-          "label": "Secondary text",
-          "description": "Muted text, helper copy, and labels."
+          "label": "النص الثانوي",
+          "description": "النص الصامت والنسخ المساعد والتسميات."
         },
         "buttonText": {
-          "label": "Button text",
-          "description": "Text inside secondary buttons and CTA labels."
+          "label": "نص الزر",
+          "description": "النص داخل الأزرار الثانوية وتسميات CTA."
         },
         "button": {
-          "label": "Button",
-          "description": "Secondary button background and border."
+          "label": "زر",
+          "description": "خلفية الزر الثانوي والحدود."
         },
         "border": {
-          "label": "Border",
-          "description": "Card outlines, dividers, and inputs."
+          "label": "حدود",
+          "description": "الخطوط العريضة للبطاقة والفواصل والمدخلات."
         },
         "accent": {
-          "label": "Accent",
-          "description": "Timers, stats, and pills."
+          "label": "لهجة",
+          "description": "الموقتات، والإحصائيات، والحبوب."
         },
         "success": {
-          "label": "Success",
-          "description": "Positive badges and buy-now confirmations."
+          "label": "نجاح",
+          "description": "شارات إيجابية وتأكيدات الشراء الآن."
         },
         "error": {
-          "label": "Error",
-          "description": "Errors, ended states, and blocking toasts."
+          "label": "خطأ",
+          "description": "الأخطاء والحالات المنتهية وحظر الخبز المحمص."
         },
         "gradient1": {
-          "label": "Gradient start",
-          "description": "Hero gradient starting color."
+          "label": "بداية التدرج",
+          "description": "بطل التدرج لون البداية."
         },
         "gradient2": {
-          "label": "Gradient end",
-          "description": "Hero gradient ending color."
+          "label": "نهاية التدرج",
+          "description": "لون نهاية التدرج البطل."
         }
       },
       "preview": {
-        "shopNameFallback": "your store",
-        "pageTitle": "Auction Marketplace Â· Preview",
-        "pageSubtitle": "This preview renders the exact markup used in the storefront.",
-        "demoAction": "Connected as demo customer"
+        "shopNameFallback": "متجرك",
+        "pageTitle": "سوق المزاد · معاينة",
+        "pageSubtitle": "تعرض هذه المعاينة العلامات الدقيقة المستخدمة في واجهة المتجر.",
+        "demoAction": "متصل كعميل تجريبي"
       },
       "previewCard": {
-        "title": "Live preview"
+        "title": "معاينة حية"
       }
     },
     "widget": {
       "page": {
-        "title": "Widget customization",
-        "subtitle": "Control how the Bidly widget appears on your product pages without touching code."
+        "title": "تخصيص القطعة",
+        "subtitle": "تحكم في كيفية ظهور أداة Bidly على صفحات منتجك دون لمس الرمز."
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock widget styling controls.",
-        "bannerTitle": "Upgrade required to customize the widget",
-        "defaultMessage": "The widget customization requires the Pro or Enterprise plan."
+        "subtitle": "قم بترقية خطة Bidly الخاصة بك لفتح عناصر التحكم في تصميم الأداة.",
+        "bannerTitle": "الترقية مطلوبة لتخصيص القطعة",
+        "defaultMessage": "يتطلب تخصيص الأداة خطة Pro أو Enterprise."
       },
       "status": {
-        "loading": "Loading customization settings"
+        "loading": "جارٍ تحميل إعدادات التخصيص"
       },
       "actions": {
-        "save": "Save changes",
-        "resetSaved": "Reset to saved",
-        "resetDefaults": "Reset to defaults"
+        "save": "حفظ التغييرات",
+        "resetSaved": "إعادة تعيين إلى المحفوظة",
+        "resetDefaults": "إعادة التعيين إلى الإعدادات الافتراضية"
       },
       "errors": {
-        "saveFailed": "We couldn't save the widget settings"
+        "saveFailed": "لم نتمكن من حفظ إعدادات القطعة"
       },
       "sections": {
         "templates": {
-          "title": "Templates",
-          "description": "Start from a professionally designed preset. You can still adjust individual settings after selecting a template.",
-          "cardLabel": "Template {{id}} Â· {{name}}"
+          "title": "قوالب",
+          "description": "ابدأ من إعداد مسبق مصمم بشكل احترافي. لا يزال بإمكانك ضبط الإعدادات الفردية بعد تحديد القالب.",
+          "cardLabel": "القالب {{id}} · {{name}}"
         },
         "typography": {
-          "title": "Typography & layout",
-          "fontLabel": "Font family",
-          "radiusLabel": "Border radius",
-          "shadowLabel": "Depth / shadow"
+          "title": "الطباعة والتخطيط",
+          "fontLabel": "عائلة الخطوط",
+          "radiusLabel": "نصف قطر الحدود",
+          "shadowLabel": "العمق / الظل"
         },
         "gradient": {
-          "title": "Gradient & background",
-          "description": "Choose the gradient colors for the widget header or switch to a flat background.",
-          "enable": "Enable gradient",
-          "disable": "Disable gradient"
+          "title": "التدرج والخلفية",
+          "description": "اختر الألوان المتدرجة لرأس الأداة أو قم بالتبديل إلى خلفية مسطحة.",
+          "enable": "تمكين التدرج",
+          "disable": "تعطيل التدرج"
         },
         "colors": {
-          "title": "Fine tune colors",
-          "description": "Adjust individual tokens for text, buttons, and borders. All colors support hex values only."
+          "title": "ضبط الألوان الدقيقة",
+          "description": "اضبط الرموز الفردية للنص والأزرار والحدود. تدعم جميع الألوان القيم السداسية فقط."
         }
       },
       "previewStates": {
-        "active": "Active auction",
-        "pending": "Pending auction",
-        "ended": "Ended auction"
+        "active": "مزاد نشط",
+        "pending": "في انتظار المزاد",
+        "ended": "انتهى المزاد"
       },
       "previewCard": {
-        "title": "Live widget preview",
-        "stateLabel": "Preview state",
-        "description": "Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.",
-        "iframeTitle": "Widget customization preview"
+        "title": "معاينة القطعة الحية",
+        "stateLabel": "حالة المعاينة",
+        "description": "قم بمعاينة التحديثات على الفور أثناء ضبط الإعدادات. يستخدم إطار iframe نفس العلامات والرموز المميزة التي تستخدمها أداة واجهة المتجر.",
+        "iframeTitle": "معاينة تخصيص القطعة"
       },
       "colors": {
         "accent": {
-          "label": "Accent color",
-          "description": "Applied to prices and primary highlights."
+          "label": "لون مميز",
+          "description": "يتم تطبيقه على الأسعار والميزات الأساسية."
         },
         "text": {
-          "label": "Primary text",
-          "description": "Default text color for widget content."
+          "label": "النص الأساسي",
+          "description": "لون النص الافتراضي لمحتوى القطعة."
         },
         "timer": {
-          "label": "Timer",
-          "description": "Countdown digits and timer emphasis."
+          "label": "الموقت",
+          "description": "أرقام العد التنازلي والتركيز الموقت."
         },
         "button_bg": {
-          "label": "Button background",
-          "description": "Primary button background color."
+          "label": "خلفية الزر",
+          "description": "لون خلفية الزر الأساسي."
         },
         "button_hover": {
-          "label": "Button hover",
-          "description": "Background color on hover focus."
+          "label": "تحوم الزر",
+          "description": "لون الخلفية عند التركيز على التمرير."
         },
         "button_text": {
-          "label": "Button text",
-          "description": "Text color for primary buttons."
+          "label": "نص الزر",
+          "description": "لون النص للأزرار الأساسية."
         },
         "border": {
-          "label": "Border color",
-          "description": "Input borders, cards, and separators."
+          "label": "لون الحدود",
+          "description": "حدود الإدخال، والبطاقات، والفواصل."
         }
       },
       "gradient": {
         "bg_solid": {
-          "label": "Solid background",
-          "description": "Used when gradient is disabled."
+          "label": "خلفية صلبة",
+          "description": "يستخدم عند تعطيل التدرج."
         },
         "bg_gradient_start": {
-          "label": "Gradient start",
-          "description": "Starting color of the header gradient."
+          "label": "بداية التدرج",
+          "description": "لون البداية لتدرج الرأس."
         },
         "bg_gradient_end": {
-          "label": "Gradient end",
-          "description": "Ending color of the header gradient."
+          "label": "نهاية التدرج",
+          "description": "لون النهاية لتدرج الرأس."
         }
       }
     },
     "billing": {
       "page": {
-        "title": "Choose your Bidly plan",
-        "subtitle": "Manage your subscription and unlock premium auction features."
+        "title": "اختر خطة Bidly الخاصة بك",
+        "subtitle": "إدارة اشتراكك وفتح ميزات المزاد المتميزة."
       },
-      "planLimitReached": "You've reached your auction limit ({{limit}} auctions) for your current plan.",
-      "planUpgradePrompt": "Please upgrade your plan to create more auctions, or wait for existing auctions to end or close them manually.",
-      "planUpgradeConfirm": "Would you like to view available plans to upgrade?",
+      "planLimitReached": "لقد وصلت إلى حد المزاد الخاص بك ({{limit}} مزادات) لخطتك الحالية.",
+      "planUpgradePrompt": "يرجى ترقية خطتك لإنشاء المزيد من المزادات، أو الانتظار حتى تنتهي المزادات الحالية أو إغلاقها يدويًا.",
+      "planUpgradeConfirm": "هل ترغب في عرض الخطط المتاحة للترقية؟",
       "currentPlan": {
-        "title": "Current plan",
-        "active": "Active: {{plan}}",
-        "pending": "Pending: {{plan}}",
-        "loading": "Loadingâ€¦",
-        "cancelSubscription": "Cancel subscription"
+        "title": "الخطة الحالية",
+        "active": "نشط: {{plan}}",
+        "pending": "في انتظار المراجعة: {{plan}}",
+        "loading": "تحميل…",
+        "cancelSubscription": "إلغاء الاشتراك"
       },
       "plans": {
-        "title": "Plans",
+        "title": "الخطط",
         "free": {
-          "title": "Free",
-          "price": "$0/mo",
-          "description": "Get started with Bidly and run your first auction.",
+          "title": "حر",
+          "price": "0 دولار/شهر",
+          "description": "ابدأ مع Bidly وقم بإجراء مزادك الأول.",
           "highlights": {
-            "1": "1 active auction at a time",
-            "2": "Preview dashboard access",
-            "3": "Upgrade to unlock more auctions"
+            "1": "1 مزاد نشط في وقت واحد",
+            "2": "معاينة الوصول إلى لوحة القيادة",
+            "3": "الترقية لفتح المزيد من المزادات"
           },
-          "actionLabel": "Free plan"
+          "actionLabel": "خطة مجانية"
         },
         "basic": {
-          "title": "Basic",
-          "price": "$9.99/mo",
-          "description": "Start hosting auctions with the essentials.",
+          "title": "أساسي",
+          "price": "9.99 دولارًا شهريًا",
+          "description": "ابدأ باستضافة المزادات باستخدام الأساسيات.",
           "highlights": {
-            "1": "3 active auctions",
-            "2": "Standard Bidly branding",
-            "3": "Core auction workflows"
+            "1": "3 مزادات نشطة",
+            "2": "العلامة التجارية Bidly القياسية",
+            "3": "سير عمل المزاد الأساسي"
           },
-          "actionLabel": "Upgrade to Basic"
+          "actionLabel": "الترقية إلى الأساسية"
         },
         "pro": {
-          "title": "Pro",
-          "price": "$19.99/mo",
-          "description": "Unlock advanced bidding and full widget styling.",
+          "title": "برو",
+          "price": "19.99 دولارًا شهريًا",
+          "description": "فتح عروض الأسعار المتقدمة وتصميم القطعة الكاملة.",
           "highlights": {
-            "1": "20 active auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding"
+            "1": "20 مزادات نشطة",
+            "2": "إزالة العلامة التجارية Bidly",
+            "3": "تخصيص القطعة والسوق",
+            "4": "عطاءات الفشار"
           },
-          "actionLabel": "Upgrade to Pro"
+          "actionLabel": "الترقية إلى برو"
         },
         "enterprise": {
-          "title": "Enterprise",
-          "price": "$49.99/mo",
-          "description": "Unlimited auctions plus real-time bidder chat.",
+          "title": "مَشرُوع",
+          "price": "49.99 دولارًا شهريًا",
+          "description": "مزادات غير محدودة بالإضافة إلى دردشة المزايد في الوقت الحقيقي.",
           "highlights": {
-            "1": "Unlimited auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding & live chatbox"
+            "1": "مزادات غير محدودة",
+            "2": "إزالة العلامة التجارية Bidly",
+            "3": "تخصيص القطعة والسوق",
+            "4": "مزايدة الفشار وصندوق الدردشة المباشر"
           },
-          "actionLabel": "Upgrade to Enterprise"
+          "actionLabel": "الترقية إلى المؤسسة"
         },
-        "trialCopy": "Includes a 7-day free trial. You can cancel anytime from your Shopify admin.",
-        "currentPlan": "Current plan",
-        "pendingActivation": "Pending activation",
-        "downgradeTo": "Downgrade to {{title}}",
-        "upgradeTo": "Upgrade to {{title}}"
+        "trialCopy": "يتضمن نسخة تجريبية مجانية لمدة 7 أيام. يمكنك الإلغاء في أي وقت من مشرف Shopify الخاص بك.",
+        "currentPlan": "الخطة الحالية",
+        "pendingActivation": "في انتظار التنشيط",
+        "downgradeTo": "الرجوع إلى {{title}}",
+        "upgradeTo": "الترقية إلى {{title}}"
       },
       "banners": {
         "subscriptionActivated": {
-          "title": "Subscription activated",
-          "message": "Your plan is now active. Thanks for upgrading!"
+          "title": "تم تفعيل الاشتراك",
+          "message": "خطتك نشطة الآن. شكرا للترقية!"
         },
         "awaitingConfirmation": {
-          "title": "Awaiting confirmation",
-          "message": "Finish approving the subscription in Shopify to unlock premium features."
+          "title": "في انتظار التأكيد",
+          "message": "أكمل الموافقة على الاشتراك في Shopify لفتح الميزات المميزة."
         },
         "subscriptionNotConfirmed": {
-          "title": "Subscription not confirmed",
-          "message": "There was a problem confirming billing."
+          "title": "لم يتم تأكيد الاشتراك",
+          "message": "حدثت مشكلة أثناء تأكيد الفاتورة."
         },
         "subscriptionCancelled": {
-          "title": "Subscription cancelled",
-          "message": "{{message}}"
+          "title": "تم إلغاء الاشتراك",
+          "message": "__الرمز_0__"
         },
         "loadError": {
-          "title": "We couldn't load your plan",
-          "retry": "Retry"
+          "title": "لم نتمكن من تحميل خطتك",
+          "retry": "أعد المحاولة"
         },
         "previewMode": {
-          "title": "Upgrade to activate Bidly",
-          "action": "View plans",
-          "message": "Preview mode lets you explore the admin, but auctions, customization, and live bidding are disabled until you choose a paid plan."
+          "title": "قم بالترقية لتفعيل Bidly",
+          "action": "عرض الخطط",
+          "message": "يتيح لك وضع المعاينة استكشاف المسؤول، ولكن يتم تعطيل المزادات والتخصيص وعروض الأسعار المباشرة حتى تختار خطة مدفوعة."
         }
       },
       "downgrade": {
-        "title": "Downgrade to {{plan}}",
-        "confirm": "Confirm downgrade",
-        "cancel": "Cancel",
-        "message": "You are downgrading from {{current}} to {{target}}.",
-        "featureRemoved": "Feature removed: {{feature}}",
-        "noFeaturesRemoved": "No premium features will be removed.",
-        "auctionsToClose": "We will automatically close {{count}} scheduled auction{{plural}} to meet the {{limit}} limit.",
-        "auctionsFit": "Your current auction count already fits the {{limit}} limit.",
-        "unlimitedLimit": "The new plan includes an unlimited auction limit.",
-        "warning": "Downgrading takes effect immediately and cannot be undone automatically."
+        "title": "الرجوع إلى {{plan}}",
+        "confirm": "تأكيد الرجوع إلى إصدار سابق",
+        "cancel": "يلغي",
+        "message": "أنت تقوم بالرجوع إلى الإصدار السابق من {{current}} إلى {{target}}.",
+        "featureRemoved": "تمت إزالة الميزة: {{feature}}",
+        "noFeaturesRemoved": "لن تتم إزالة أي ميزات مميزة.",
+        "auctionsToClose": "سنقوم تلقائيًا بإغلاق {{count}} المزاد المقرر{{plural}} للوفاء بحد {{limit}}.",
+        "auctionsFit": "عدد المزاد الحالي الخاص بك يتوافق بالفعل مع حد {{limit}}.",
+        "unlimitedLimit": "تتضمن الخطة الجديدة حدًا غير محدود للمزاد.",
+        "warning": "يسري مفعول خفض المستوى على الفور ولا يمكن التراجع عنه تلقائيًا."
       },
       "cancel": {
-        "title": "Cancel subscription",
-        "confirm": "Confirm cancellation",
-        "keep": "Keep subscription",
-        "message": "Are you sure you want to cancel your subscription?",
-        "description": "Your subscription will remain active until the end of the current billing period. After that, your plan will automatically revert to the Free plan, which includes:",
+        "title": "إلغاء الاشتراك",
+        "confirm": "تأكيد الإلغاء",
+        "keep": "استمر في الاشتراك",
+        "message": "هل أنت متأكد أنك تريد إلغاء اشتراكك؟",
+        "description": "سيظل اشتراكك نشطًا حتى نهاية فترة الفاتورة الحالية. بعد ذلك، ستعود خطتك تلقائيًا إلى الخطة المجانية، والتي تتضمن:",
         "freeFeatures": [
-          "1 active auction at a time",
-          "Standard Bidly branding",
-          "Basic auction features"
+          "1 مزاد نشط في وقت واحد",
+          "العلامة التجارية Bidly القياسية",
+          "ميزات المزاد الأساسية"
         ],
-        "resubscribe": "You can resubscribe at any time to regain access to premium features."
+        "resubscribe": "يمكنك إعادة الاشتراك في أي وقت لاستعادة الوصول إلى الميزات المتميزة."
       },
       "errors": {
-        "loadError": "Unable to load plan details",
-        "subscribeError": "Unable to start subscription. Please try again.",
-        "cancelError": "Unable to cancel subscription."
+        "loadError": "غير قادر على تحميل تفاصيل الخطة",
+        "subscribeError": "غير قادر على بدء الاشتراك. يرجى المحاولة مرة أخرى.",
+        "cancelError": "غير قادر على إلغاء الاشتراك."
       },
       "formatLimit": {
-        "unlimited": "unlimited",
-        "activeAuctions": "{{count}} active auctions"
+        "unlimited": "غير محدود",
+        "activeAuctions": "{{count}} مزادات نشطة"
       }
     },
     "analytics": {
-      "loadingLabel": "Loading analytics",
-      "loadingText": "Loading analytics data...",
-      "error": "Failed to load analytics data.",
-      "empty": "No analytics data available.",
-      "unknownProduct": "Unknown product",
-      "headerTitle": "ðŸ“Š Enhanced Analytics",
+      "loadingLabel": "جارٍ تحميل التحليلات",
+      "loadingText": "جارٍ تحميل بيانات التحليلات...",
+      "error": "فشل تحميل بيانات التحليلات.",
+      "empty": "لا توجد بيانات تحليلية متاحة.",
+      "unknownProduct": "منتج غير معروف",
+      "headerTitle": "📊 التحليلات المحسنة",
       "period": {
-        "label": "Time period",
-        "last7": "Last 7 days",
-        "last30": "Last 30 days",
-        "last90": "Last 90 days",
-        "lastYear": "Last year"
+        "label": "الفترة الزمنية",
+        "last7": "آخر 7 أيام",
+        "last30": "آخر 30 يومًا",
+        "last90": "آخر 90 يومًا",
+        "lastYear": "العام الماضي"
       },
       "summary": {
-        "title": "ðŸ“ˆ Auction Summary",
-        "total": "Total Auctions",
-        "active": "Active Auctions",
-        "ended": "Ended Auctions",
-        "pending": "Pending Auctions",
-        "closed": "Closed Auctions"
+        "title": "📈 ملخص المزاد",
+        "total": "إجمالي المزادات",
+        "active": "مزادات نشطة",
+        "ended": "المزادات المنتهية",
+        "pending": "المزادات المعلقة",
+        "closed": "المزادات المغلقة"
       },
       "revenue": {
-        "title": "ðŸ’° Revenue Metrics",
-        "total": "Total Revenue",
-        "averageBid": "Avg Bid Amount",
-        "currency": "Currency",
-        "successRate": "Bid Success Rate"
+        "title": "💰 مقاييس الإيرادات",
+        "total": "إجمالي الإيرادات",
+        "averageBid": "متوسط ​​مبلغ العرض",
+        "currency": "عملة",
+        "successRate": "معدل نجاح العطاء"
       },
       "bidding": {
-        "title": "ðŸŽ¯ Bidding Statistics",
-        "total": "Total Bids",
-        "averagePerAuction": "Avg Bids per Auction",
-        "successRate": "Success Rate"
+        "title": "🎯 إحصائيات العطاءات",
+        "total": "إجمالي العطاءات",
+        "averagePerAuction": "متوسط ​​عروض الأسعار لكل مزاد",
+        "successRate": "معدل النجاح"
       },
       "daily": {
-        "title": "ðŸ“… Daily Statistics (Last 7 Days)",
+        "title": "📅 الإحصائيات اليومية (آخر 7 أيام)",
         "columns": {
-          "date": "Date",
-          "auctions": "Auctions",
-          "revenue": "Revenue",
-          "bids": "Bids"
+          "date": "تاريخ",
+          "auctions": "مزادات",
+          "revenue": "ربح",
+          "bids": "العطاءات"
         }
       },
       "top": {
-        "title": "ðŸ† Top Performing Auctions",
+        "title": "🏆 المزادات الأعلى أداءً",
         "columns": {
-          "product": "Product",
-          "currentBid": "Current Bid",
-          "totalBids": "Total Bids",
-          "created": "Created"
+          "product": "منتج",
+          "currentBid": "العرض الحالي",
+          "totalBids": "إجمالي العطاءات",
+          "created": "مخلوق"
         }
       },
       "activity": {
-        "title": "âš¡ Recent Activity",
+        "title": "⚡ النشاط الأخير",
         "columns": {
-          "product": "Product",
-          "currentBid": "Current Bid",
-          "status": "Status",
-          "created": "Created"
+          "product": "منتج",
+          "currentBid": "العرض الحالي",
+          "status": "حالة",
+          "created": "مخلوق"
         }
       },
       "status": {
-        "pending": "Pending",
-        "active": "Active",
-        "ended": "Ended",
-        "closed": "Closed"
+        "pending": "قيد الانتظار",
+        "active": "نشيط",
+        "ended": "انتهى",
+        "closed": "مغلق"
       }
     },
     "auctions": {
       "errors": {
-        "loadStats": "Failed to load dashboard statistics.",
-        "save": "Error saving auction: {{message}}",
-        "unknownStore": "Unable to determine store information."
+        "loadStats": "فشل تحميل إحصائيات لوحة المعلومات.",
+        "save": "خطأ في حفظ المزاد: {{message}}",
+        "unknownStore": "غير قادر على تحديد معلومات المتجر."
       },
       "toast": {
-        "statusUpdate": "ðŸ”„ Auction status updated: {{status}}",
-        "updated": "Auction updated successfully.",
-        "created": "Auction created successfully.",
-        "marketplaceOpen": "Opening auction marketplace in a new tab."
+        "statusUpdate": "🔄 تم تحديث حالة المزاد: {{status}}",
+        "updated": "تم تحديث المزاد بنجاح.",
+        "created": "تم إنشاء المزاد بنجاح.",
+        "marketplaceOpen": "فتح سوق المزاد في علامة تبويب جديدة."
       },
       "dashboard": {
-        "title": "Auction Dashboard",
-        "titleWithShop": "Auction Dashboard - {{shop}}",
-        "subtitleStore": "Store: {{store}}",
-        "subtitleDefault": "Manage your auctions and monitor performance.",
-        "subtitleNeedPlan": "Upgrade to a plan to start hosting auctions.",
-        "primaryCreate": "Create Auction",
-        "primaryChoosePlan": "Choose a plan to create auctions",
-        "previewTitle": "Preview mode active",
-        "previewDescription": "You can explore the Bidly dashboard, but creating or managing live auctions requires an active subscription. Choose a plan to unlock hosting, customization, and live bidding features.",
-        "overviewTitle": "Auction Overview",
-        "totalAuctions": "Total Auctions",
-        "activeAuctions": "Active Auctions",
-        "totalBids": "Total Bids",
-        "quickLinkWidget": "ðŸŽ¨ Widget styles",
-        "quickLinkMarketplace": "ðŸŽ¨ Marketplace styles",
-        "quickLinkPlans": "ðŸ§¾ Plans",
-        "quickLinkMail": "ðŸ“§ Mail service",
-        "tabAuctions": "ðŸ“‹ Auctions",
-        "tabAnalytics": "ðŸ“Š Analytics"
+        "title": "لوحة تحكم المزاد",
+        "titleWithShop": "لوحة تحكم المزاد - {{shop}}",
+        "subtitleStore": "المتجر: {{store}}",
+        "subtitleDefault": "إدارة المزادات الخاصة بك ومراقبة الأداء.",
+        "subtitleNeedPlan": "قم بالترقية إلى خطة لبدء استضافة المزادات.",
+        "primaryCreate": "إنشاء مزاد",
+        "primaryChoosePlan": "اختر خطة لإنشاء المزادات",
+        "previewTitle": "وضع المعاينة نشط",
+        "previewDescription": "يمكنك استكشاف لوحة تحكم Bidly، لكن إنشاء المزادات المباشرة أو إدارتها يتطلب اشتراكًا نشطًا. اختر خطة لفتح ميزات الاستضافة والتخصيص وعروض الأسعار المباشرة.",
+        "overviewTitle": "نظرة عامة على المزاد",
+        "totalAuctions": "إجمالي المزادات",
+        "activeAuctions": "مزادات نشطة",
+        "totalBids": "إجمالي العطاءات",
+        "quickLinkWidget": "🎨 أنماط القطعة",
+        "quickLinkMarketplace": "🎨 أنماط السوق",
+        "quickLinkPlans": "🧾 الخطط",
+        "quickLinkMail": "📧 خدمة البريد",
+        "tabAuctions": "📋 المزادات",
+        "tabAnalytics": "📊 التحليلات"
       },
       "form": {
         "planGate": {
-          "title": "Choose a plan to create auctions",
-          "description": "Youâ€™re currently in preview mode. Upgrade to a paid Bidly plan to create and manage auctions, unlock widget customization, and enable live bidding features.",
-          "explore": "Explore plans"
+          "title": "اختر خطة لإنشاء المزادات",
+          "description": "أنت حاليًا في وضع المعاينة. قم بالترقية إلى خطة Bidly المدفوعة لإنشاء المزادات وإدارتها، وفتح تخصيص الأدوات، وتمكين ميزات عروض الأسعار المباشرة.",
+          "explore": "استكشاف الخطط"
         },
-        "titleCreate": "Create New Auction",
-        "titleEdit": "Edit Auction",
-        "shopifyWarning": "Shopify API is not configured. Product search will be disabled. Please check your backend configuration.",
+        "titleCreate": "إنشاء مزاد جديد",
+        "titleEdit": "تحرير المزاد",
+        "shopifyWarning": "لم يتم تكوين Shopify API. سيتم تعطيل البحث عن المنتج. يرجى التحقق من تكوين الواجهة الخلفية لديك.",
         "errors": {
-          "productRequired": "Shopify product is required.",
-          "startingBidPositive": "Starting bid must be greater than 0.",
-          "endTime": "End time must be after start time.",
-          "save": "Failed to save auction."
+          "productRequired": "مطلوب منتج شوبيفاي.",
+          "startingBidPositive": "يجب أن يكون عرض التسعير المبدئي أكبر من 0.",
+          "endTime": "يجب أن يكون وقت الانتهاء بعد وقت البدء.",
+          "save": "فشل حفظ المزاد."
         },
         "search": {
-          "title": "ðŸ” Search Shopify Products",
-          "label": "Search for Shopify Product",
-          "placeholder": "Type product name to search...",
-          "loadingLabel": "Searching products",
-          "debug": "Debug: {{count}} results found",
-          "resultsTitle": "Search Results",
-          "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Real API failed: {{message}}. Using demo data."
+          "title": "🔍 ابحث عن منتجات Shopify",
+          "label": "ابحث عن منتج Shopify",
+          "placeholder": "اكتب اسم المنتج للبحث...",
+          "loadingLabel": "البحث عن المنتجات",
+          "debug": "تصحيح الأخطاء: تم العثور على نتائج {{count}}",
+          "resultsTitle": "نتائج البحث",
+          "resultLabel": "{{title}} (المعرف: {{id}}) - {{price}}",
+          "apiFallback": "فشل واجهة برمجة التطبيقات الحقيقية: {{message}}. باستخدام البيانات التجريبية."
         },
         "selectedProduct": {
-          "title": "Selected Product Details",
-          "name": "Title: {{value}}",
-          "vendor": "Vendor: {{value}}",
-          "price": "Price: {{value}}"
+          "title": "تفاصيل المنتج المحدد",
+          "name": "العنوان: {{value}}",
+          "vendor": "البائع: {{value}}",
+          "price": "السعر: {{value}}"
         },
         "fields": {
-          "productId": "Shopify Product ID",
-          "productIdPlaceholder": "Product ID will be filled automatically when you select a product.",
-          "startDate": "Start Date",
-          "startTime": "Start Time",
-          "endDate": "End Date",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "startingBidLocked": "Starting bid cannot be changed after a bid has been placed.",
-          "buyNow": "Buy Now Price (Optional)",
-          "reservePrice": "Reserve Price (Optional)",
-          "reserveHelp": "Minimum bid amount required for auction to have a valid winner. Hidden from bidders."
+          "productId": "معرف المنتج في شوبيفاي",
+          "productIdPlaceholder": "سيتم ملء معرف المنتج تلقائيًا عند تحديد منتج.",
+          "startDate": "تاريخ البدء",
+          "startTime": "وقت البدء",
+          "endDate": "تاريخ الانتهاء",
+          "endTime": "وقت النهاية",
+          "startingBid": "بداية العطاء",
+          "startingBidLocked": "لا يمكن تغيير عرض السعر المبدئي بعد تقديم العرض.",
+          "buyNow": "سعر الشراء الآن (اختياري)",
+          "reservePrice": "السعر الاحتياطي (اختياري)",
+          "reserveHelp": "الحد الأدنى لمبلغ العرض المطلوب للمزاد للحصول على فائز صالح. مخفية عن المزايدين."
         },
         "popcorn": {
-          "title": "ðŸ¿ Popcorn Auction Settings (Premium Feature)",
-          "description": "Enable automatic time extension when bids are placed near the end of the auction.",
-          "enable": "Enable Popcorn Bidding",
-          "help": "Automatically extend auction time when bids are placed near the end.",
-          "upgradeHelp": "Automatically extend auction time when bids are placed near the end Â· Available on the Pro and Enterprise plans.",
-          "trigger": "Trigger Threshold (seconds)",
-          "triggerHelp": "Extend auction when this many seconds remain.",
-          "extension": "Extension Duration (seconds)",
-          "extensionHelp": "How many seconds to add to the auction."
+          "title": "🍿 إعدادات مزاد الفشار (ميزة مميزة)",
+          "description": "تمكين تمديد الوقت التلقائي عندما يتم تقديم العطاءات بالقرب من نهاية المزاد.",
+          "enable": "تمكين عروض أسعار الفشار",
+          "help": "تمديد وقت المزاد تلقائيًا عندما يتم تقديم عروض الأسعار بالقرب من النهاية.",
+          "upgradeHelp": "قم بتمديد وقت المزاد تلقائيًا عندما يتم تقديم العطاءات بالقرب من النهاية · متوفر في خطتي Pro وEnterprise.",
+          "trigger": "عتبة الزناد (ثواني)",
+          "triggerHelp": "قم بتمديد المزاد عندما تبقى هذه الثواني العديدة.",
+          "extension": "مدة التمديد (ثواني)",
+          "extensionHelp": "كم ثانية تضاف إلى المزاد."
         },
         "chat": {
-          "title": "ðŸ’¬ Chat Box Visibility",
-          "description": "Control whether the Chat Box button appears under your storefront auction widget for this auction.",
-          "toggle": "Show Chat Box button on the widget",
-          "help": "When disabled, bidders will only see the View Bids link centered beneath the widget."
+          "title": "💬 رؤية صندوق الدردشة",
+          "description": "التحكم في ما إذا كان زر Chat Box سيظهر أسفل أداة مزاد واجهة المتجر الخاصة بك لهذا المزاد.",
+          "toggle": "إظهار زر مربع الدردشة على القطعة",
+          "help": "عند التعطيل، لن يرى مقدمو العروض سوى رابط عرض عروض الأسعار الموجود في المنتصف أسفل الأداة."
         },
         "chatPremium": {
-          "title": "ðŸ’¬ Live Bidder Chat (Premium Feature)",
-          "description": "Keep bidders engaged with real-time conversation during your auctions. Upgrade your plan to use this feature.",
-          "available": "Available on the Enterprise plan."
+          "title": "💬 الدردشة المباشرة للمزايد (ميزة مميزة)",
+          "description": "اجعل مقدمي العروض منخرطين في المحادثة في الوقت الفعلي أثناء مزاداتك. قم بترقية خطتك لاستخدام هذه الميزة.",
+          "available": "متوفر في خطة المؤسسة."
         }
       },
       "table": {
-          "errors": {
-            "fetch": "Failed to fetch auctions.",
-            "delete": "Failed to delete auction.",
-            "close": "Failed to close auction.",
-            "closeMissingId": "Failed to close auction: Auction ID not found.",
-            "noShop": "Error: No shop domain found.",
-            "noProductId": "Error: No product ID found for this auction.",
-            "openInStore": "Error opening product in store."
-          },
-          "toast": {
-            "deleted": "Auction deleted successfully.",
-            "closed": "Auction closed successfully."
-          },
-          "status": {
-            "reserveNotMet": "Ended Â· Reserve not met",
-            "noWinner": "Ended Â· No winner",
-            "ended": "Ended"
-          },
-          "unknownProduct": "Unknown Product",
-          "actions": {
-            "viewInStore": "View in store",
-            "viewDetails": "View auction details",
-            "edit": "Edit auction",
-            "delete": "Delete auction",
-            "close": "Close auction"
-          },
-          "loading": "Loading auctions...",
-          "empty": {
-            "title": "No auctions found",
-            "action": "Create auction",
-            "description": "Get started by creating your first auction."
-          },
-          "filters": {
-            "open": "Filter",
-            "clear": "Clear filters",
-            "title": "Filter Auctions",
-            "apply": "Apply Filters",
-            "statusLabel": "Status",
-            "productPlaceholder": "Enter product ID"
-          },
-          "columns": {
-            "product": "Product",
-            "start": "Start",
-            "end": "End",
-            "startBid": "Start Bid",
-            "currentBid": "Current Bid",
-            "buyNow": "Buy Now",
-            "reserve": "Reserve",
-            "status": "Status",
-            "bids": "Bids",
-            "actions": "Actions"
-          },
-          "footer": "Showing {{visible}} of {{total}} auctions",
-          "pagination": "Page {{current}} of {{total}}",
-          "delete": {
-            "title": "Delete Auction",
-            "confirm": "Delete",
-            "message": "Are you sure you want to delete this auction? This action cannot be undone.",
-            "hasBids": "Note: This auction has bids and cannot be deleted."
-          },
-          "close": {
-            "title": "Close Auction",
-            "confirm": "Close Auction",
-            "message": "Are you sure you want to close this auction? This will prevent new bids from being placed."
-          }
+        "errors": {
+          "fetch": "فشل في جلب المزادات.",
+          "delete": "فشل حذف المزاد.",
+          "close": "فشل في إغلاق المزاد.",
+          "closeMissingId": "فشل في إغلاق المزاد: لم يتم العثور على معرف المزاد.",
+          "noShop": "خطأ: لم يتم العثور على مجال المتجر.",
+          "noProductId": "خطأ: لم يتم العثور على معرف منتج لهذا المزاد.",
+          "openInStore": "حدث خطأ أثناء فتح المنتج في المتجر."
         },
-      "details": {
-        "title": "Auction Details",
         "toast": {
-          "closed": "Auction closed successfully."
+          "deleted": "تم حذف المزاد بنجاح.",
+          "closed": "تم إغلاق المزاد بنجاح."
+        },
+        "status": {
+          "reserveNotMet": "انتهى · لم يتم استيفاء الاحتياطي",
+          "noWinner": "انتهت · لا يوجد فائز",
+          "ended": "انتهى"
+        },
+        "unknownProduct": "منتج غير معروف",
+        "actions": {
+          "viewInStore": "عرض في المتجر",
+          "viewDetails": "عرض تفاصيل المزاد",
+          "edit": "تحرير المزاد",
+          "delete": "حذف المزاد",
+          "close": "إغلاق المزاد"
+        },
+        "loading": "جارٍ تحميل المزادات...",
+        "empty": {
+          "title": "لم يتم العثور على مزادات",
+          "action": "إنشاء مزاد",
+          "description": "ابدأ بإنشاء مزادك الأول."
+        },
+        "filters": {
+          "open": "فلتر",
+          "clear": "مسح المرشحات",
+          "title": "مزادات التصفية",
+          "apply": "تطبيق المرشحات",
+          "statusLabel": "حالة",
+          "productPlaceholder": "أدخل معرف المنتج"
+        },
+        "columns": {
+          "product": "منتج",
+          "start": "يبدأ",
+          "end": "نهاية",
+          "startBid": "بدء المزايدة",
+          "currentBid": "العرض الحالي",
+          "buyNow": "اشتري الآن",
+          "reserve": "احتياطي",
+          "status": "حالة",
+          "bids": "العطاءات",
+          "actions": "الإجراءات"
+        },
+        "footer": "عرض {{visible}} من {{total}} مزادات",
+        "pagination": "الصفحة {{current}} من {{total}}",
+        "delete": {
+          "title": "حذف المزاد",
+          "confirm": "يمسح",
+          "message": "هل أنت متأكد أنك تريد حذف هذا المزاد؟ لا يمكن التراجع عن هذا الإجراء.",
+          "hasBids": "ملاحظة: هذا المزاد يحتوي على عروض أسعار ولا يمكن حذفه."
+        },
+        "close": {
+          "title": "إغلاق المزاد",
+          "confirm": "إغلاق المزاد",
+          "message": "هل أنت متأكد أنك تريد إغلاق هذا المزاد؟ وهذا سيمنع تقديم عطاءات جديدة."
+        }
+      },
+      "details": {
+        "title": "تفاصيل المزاد",
+        "toast": {
+          "closed": "تم إغلاق المزاد بنجاح."
         },
         "errors": {
-          "missingId": "Error: Auction ID not found.",
-          "close": "Error closing auction: {{message}}"
+          "missingId": "خطأ: لم يتم العثور على معرف المزاد.",
+          "close": "خطأ في إغلاق المزاد: {{message}}"
         },
         "overview": {
-          "title": "Auction Overview",
-          "productId": "Product ID",
-          "status": "Status",
-          "timeStatus": "Time Status",
-          "chat": "Live Chat"
+          "title": "نظرة عامة على المزاد",
+          "productId": "معرف المنتج",
+          "status": "حالة",
+          "timeStatus": "حالة الوقت",
+          "chat": "الدردشة الحية"
         },
         "timeStatus": {
-          "notStarted": "Not Started",
-          "live": "Live"
+          "notStarted": "لم يبدأ",
+          "live": "يعيش"
         },
         "details": {
-          "title": "Auction Details",
-          "startTime": "Start Time",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "currentBid": "Current Bid",
-          "buyNow": "Buy Now Price",
-          "totalBids": "Total Bids",
-          "created": "Created",
-          "updated": "Last Updated",
-          "reserve": "Reserve Price",
-          "popcorn": "Popcorn Bidding",
-          "popcornSettings": "Popcorn Settings",
-          "popcornSummary": "Trigger: {{trigger}}s Â· Extend: +{{extend}}s"
+          "title": "تفاصيل المزاد",
+          "startTime": "وقت البدء",
+          "endTime": "وقت النهاية",
+          "startingBid": "بداية العطاء",
+          "currentBid": "العرض الحالي",
+          "buyNow": "سعر الشراء الآن",
+          "totalBids": "إجمالي العطاءات",
+          "created": "مخلوق",
+          "updated": "آخر تحديث",
+          "reserve": "سعر الاحتياطي",
+          "popcorn": "مزايدة الفشار",
+          "popcornSettings": "إعدادات الفشار",
+          "popcornSummary": "المشغل: {{trigger}}s · التمديد: +{{extend}}s"
         },
         "bidHistory": {
-          "title": "Bid History",
+          "title": "تاريخ العطاء",
           "columns": {
-            "index": "#",
-            "bidder": "Bidder",
-            "email": "Email",
-            "amount": "Amount",
-            "time": "Time"
+            "index": null,
+            "bidder": "مقدم العرض",
+            "email": "بريد إلكتروني",
+            "amount": "كمية",
+            "time": "وقت"
           },
-          "empty": "No bids placed yet."
+          "empty": "لم يتم تقديم أي عطاءات حتى الآن."
         },
         "actions": {
-          "close": "Close Auction"
+          "close": "إغلاق المزاد"
         }
       }
     },
     "onboarding": {
       "page": {
-        "title": "Welcome to Bidly",
-        "subtitle": "Complete these steps to finish your setup."
+        "title": "مرحبا بكم في بيدلي",
+        "subtitle": "أكمل هذه الخطوات لإنهاء الإعداد."
       },
       "status": {
-        "loading": "Loading onboarding status"
+        "loading": "جارٍ تحميل حالة الصعود"
       },
       "step1": {
-        "title": "Step 1 Â· Enable the Auction Widget",
-        "description": "Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.",
-        "detected": "We detected the widget is enabled in your theme.",
-        "notDetected": "If you have already enabled the widget, you can mark this step as complete manually.",
-        "error": "We couldn't confirm the widget automatically: {{error}}",
-        "completed": "Completed",
-        "pending": "Pending",
+        "title": "الخطوة 1 · تمكين أداة المزاد",
+        "description": "قم بتنشيط أداة Bidly في متجرك الإلكتروني حتى تظهر على صفحات منتجك. يؤدي هذا إلى فتح محرر سمة Shopify حيث يمكنك تمكين تضمين التطبيق.",
+        "detected": "لقد اكتشفنا أن الأداة ممكّنة في المظهر الخاص بك.",
+        "notDetected": "إذا قمت بتمكين الأداة بالفعل، فيمكنك وضع علامة على هذه الخطوة على أنها مكتملة يدويًا.",
+        "error": "لم نتمكن من تأكيد الأداة تلقائيًا: {{error}}",
+        "completed": "مكتمل",
+        "pending": "قيد الانتظار",
         "actions": {
-          "openThemeEditor": "Open theme editor",
-          "refreshStatus": "Refresh status",
-          "markEnabled": "Mark widget as enabled"
+          "openThemeEditor": "افتح محرر الموضوع",
+          "refreshStatus": "تحديث الحالة",
+          "markEnabled": "وضع علامة على القطعة على أنها ممكّنة"
         },
         "toast": {
-          "marked": "Marked widget as enabled."
+          "marked": "تم وضع علامة على القطعة على أنها ممكّنة."
         }
       },
       "step2": {
-        "title": "Step 2 Â· Add the Auction Marketplace to your menu",
-        "description": "Open your Online Store navigation and add a new menu item linking to your auction marketplace.",
-        "descriptionWithShop": "Open your Online Store navigation and add a new menu item linking to the marketplace. We've generated the URL for {{shop}}.",
-        "completed": "Completed",
-        "pending": "Pending",
-        "marketplaceUrl": "Marketplace URL",
+        "title": "الخطوة 2 · أضف سوق المزادات إلى القائمة الخاصة بك",
+        "description": "افتح التنقل في المتجر عبر الإنترنت وأضف عنصر قائمة جديدًا يرتبط بسوق المزاد الخاص بك.",
+        "descriptionWithShop": "افتح التنقل في المتجر عبر الإنترنت وأضف عنصر قائمة جديدًا يرتبط بالسوق. لقد أنشأنا عنوان URL لـ {{shop}}.",
+        "completed": "مكتمل",
+        "pending": "قيد الانتظار",
+        "marketplaceUrl": "عنوان URL الخاص بالسوق",
         "actions": {
-          "copy": "Copy",
-          "goToMenu": "Go to menu settings",
-          "markDone": "Mark step as done",
-          "markedDone": "Marked as done"
+          "copy": "ينسخ",
+          "goToMenu": "انتقل إلى إعدادات القائمة",
+          "markDone": "ضع علامة على الخطوة كما تم",
+          "markedDone": "تم وضع علامة \"تم\"."
         },
         "toast": {
-          "copied": "Marketplace URL copied",
-          "copyError": "Unable to copy URL. Please copy it manually.",
-          "reminder": "Remember to update your menu after copying the URL."
+          "copied": "تم نسخ عنوان URL الخاص بالسوق",
+          "copyError": "غير قادر على نسخ URL. يرجى نسخه يدويا.",
+          "reminder": "تذكر تحديث قائمتك بعد نسخ عنوان URL."
         }
       },
       "finish": {
-        "title": "Finish setup",
-        "description": "Once both steps are complete, you're ready to start creating auctions with Bidly.",
-        "action": "Finish setup and open dashboard",
+        "title": "إنهاء الإعداد",
+        "description": "بمجرد اكتمال الخطوتين، تصبح جاهزًا لبدء إنشاء المزادات باستخدام Bidly.",
+        "action": "أكمل الإعداد وافتح لوحة القيادة",
         "toast": {
-          "complete": "Onboarding complete! Redirecting to your dashboard.",
-          "error": "Failed to complete onboarding. Please try again."
+          "complete": "اكتمل الإعداد! إعادة التوجيه إلى لوحة التحكم الخاصة بك.",
+          "error": "فشل في إكمال عملية الإعداد. يرجى المحاولة مرة أخرى."
         }
       },
       "errors": {
-        "loadStatus": "Failed to load onboarding status. Please try again."
+        "loadStatus": "فشل تحميل حالة الإعداد. يرجى المحاولة مرة أخرى."
       }
     },
     "oauth": {
       "loading": {
-        "title": "Checking app setup...",
-        "message": "Checking app setup..."
+        "title": "جارٍ التحقق من إعداد التطبيق...",
+        "message": "جارٍ التحقق من إعداد التطبيق..."
       },
       "error": {
-        "title": "Setup Error",
-        "tryAgain": "Try Again"
+        "title": "خطأ في الإعداد",
+        "tryAgain": "حاول ثانية"
       },
       "setup": {
-        "title": "Complete App Setup",
-        "description": "To use the auction features, you need to complete the app setup process. This will connect your store to the auction system and enable product search.",
+        "title": "إكمال إعداد التطبيق",
+        "description": "لاستخدام ميزات المزاد، تحتاج إلى إكمال عملية إعداد التطبيق. سيؤدي هذا إلى ربط متجرك بنظام المزاد وتمكين البحث عن المنتج.",
         "whyNeeded": {
-          "title": "Why is this needed?",
-          "message": "The app needs permission to access your store's products to create auctions. This is a one-time setup process."
+          "title": "لماذا هذا مطلوب؟",
+          "message": "يحتاج التطبيق إلى إذن للوصول إلى منتجات متجرك لإنشاء المزادات. هذه عملية إعداد لمرة واحدة."
         },
         "manualShop": {
-          "label": "Please enter your Shopify store domain:",
+          "label": "الرجاء إدخال نطاق متجر Shopify الخاص بك:",
           "placeholder": "store.myshopify.com"
         },
-        "action": "Complete Setup",
+        "action": "الإعداد الكامل",
         "errors": {
-          "noShop": "Unable to get shop information. Please enter your shop domain manually below.",
-          "invalidShop": "Invalid shop parameter. Please refresh the page or access the app through Shopify admin.",
-          "invalidFormat": "Invalid shop domain format: {{shop}}. Expected format: store.myshopify.com",
-          "validationFailed": "Shop domain validation failed. Received: {{shop}}",
-          "urlConstruction": "Error constructing OAuth URL. Please try again."
+          "noShop": "غير قادر على الحصول على معلومات المتجر. الرجاء إدخال نطاق متجرك يدويًا أدناه.",
+          "invalidShop": "معلمة المتجر غير صالحة. يرجى تحديث الصفحة أو الوصول إلى التطبيق من خلال Shopify admin.",
+          "invalidFormat": "تنسيق نطاق المتجر غير صالح: {{shop}}. التنسيق المتوقع: store.myshopify.com",
+          "validationFailed": "فشل التحقق من صحة مجال المتجر. تم الاستلام: {{shop}}",
+          "urlConstruction": "حدث خطأ أثناء إنشاء عنوان URL لـ OAuth. يرجى المحاولة مرة أخرى."
         }
       }
     }
   }
 }
-
-

@@ -1,107 +1,106 @@
 {
   "widget": {
     "header": {
-      "title": "Live Auction",
-      "live": "LIVE",
-      "startingSoon": "STARTING SOON",
-      "ended": "ENDED",
-      "reserveNotMet": "RESERVE NOT MET"
+      "title": "ライブオークション",
+      "live": "ライブ",
+      "startingSoon": "もうすぐ始まります",
+      "ended": "終了しました",
+      "reserveNotMet": "予約が満たされていません"
     },
     "buttons": {
-      "placeBid": "Place Bid",
-      "buyNow": "Buy Now",
-      "loginShopify": "Log in with Shopify",
-      "continueGuest": "Continue as Guest (View Only)",
-      "logout": "Logout",
-      "chatBox": "Chat Box",
-      "viewBids": "View Bids",
-      "viewBidHistory": "View Bid History"
+      "placeBid": "入札する",
+      "buyNow": "今すぐ購入",
+      "loginShopify": "Shopifyでログイン",
+      "continueGuest": "ゲストとして続行 (表示のみ)",
+      "logout": "ログアウト",
+      "chatBox": "チャットボックス",
+      "viewBids": "入札を見る",
+      "viewBidHistory": "入札履歴の表示"
     },
     "countdown": {
-      "endsIn": "Ends In:",
-      "startingIn": "Starting in:",
+      "endsIn": "終了日:",
+      "startingIn": "開始時期:",
       "days": "d",
       "hours": "h",
-      "minutes": "m",
+      "minutes": "メートル",
       "seconds": "s"
     },
     "labels": {
-      "currentBid": "CURRENT BID:",
-      "startingBid": "STARTING BID:",
-      "minimumBid": "MINIMUM BID:",
-      "bids": "BIDS:",
-      "guestUser": "Guest User"
+      "currentBid": "現在の入札:",
+      "startingBid": "開始入札価格:",
+      "minimumBid": "最低入札価格:",
+      "bids": "入札:",
+      "guestUser": "ゲストユーザー"
     },
     "login": {
-      "title": "Login Required",
-      "message": "Please log in to view this auction",
-      "viewOnly": "View Only",
-      "viewOnlyMessage": "Login to Shopify to enter the auction"
+      "title": "ログインが必要です",
+      "message": "このオークションを閲覧するにはログインしてください",
+      "viewOnly": "表示のみ",
+      "viewOnlyMessage": "Shopifyにログインしてオークションに参加してください"
     },
     "loading": {
-      "title": "Preparing your auction...",
-      "message": "Checking your account and syncing live bids."
+      "title": "オークションを準備しています...",
+      "message": "アカウントを確認し、ライブ入札を同期しています。"
     },
     "errors": {
-      "invalidBid": "Invalid bid amount",
-      "bidTooLow": "Bid must be higher than current bid",
-      "auctionEnded": "Auction Ended",
-      "reserveNotMet": "Reserve Not Met",
-      "auctionNotFound": "Auction not found",
-      "networkError": "Network error. Please try again.",
-      "bidFailed": "Failed to place bid. Please try again."
+      "invalidBid": "無効な入札額です",
+      "bidTooLow": "入札額は現在の入札額よりも高くなければなりません",
+      "auctionEnded": "オークション終了",
+      "reserveNotMet": "予約が満たされていません",
+      "auctionNotFound": "オークションが見つかりません",
+      "networkError": "ネットワークエラー。もう一度試してください。",
+      "bidFailed": "入札に失敗しました。もう一度試してください。"
     },
     "messages": {
-      "auctionEnded": "Auction has ended. Final bid: ${amount}",
-      "auctionEndedReserve": "Auction ended — reserve not met",
-      "bidPlaced": "Bid placed successfully!",
-      "newBid": "New bid: ${amount}",
-      "bidNotification": "New bid placed!",
-      "currentBidLabel": "Current Bid: ${amount}"
+      "auctionEnded": "オークションは終了しました。最終入札額: ${amount}",
+      "auctionEndedReserve": "オークションは終了しました — リザーブが満たされていません",
+      "bidPlaced": "無事に入札されました！",
+      "newBid": "新しい入札額: ${amount}",
+      "bidNotification": "新たに入札されました！",
+      "currentBidLabel": "現在の入札額: ${amount}"
     },
     "chat": {
-      "title": "Chat",
-      "send": "Send",
-      "placeholder": "Type a message...",
-      "empty": "No messages yet. Start the conversation!",
-      "connecting": "Connecting...",
-      "disconnected": "Disconnected",
-      "error": "Error sending message"
+      "title": "チャット",
+      "send": "送信",
+      "placeholder": "メッセージを入力してください...",
+      "empty": "まだメッセージはありません。会話を始めましょう！",
+      "connecting": "接続中...",
+      "disconnected": "切断されました",
+      "error": "メッセージ送信エラー"
     },
     "bidHistory": {
-      "title": "Bid History",
-      "noBids": "No bids yet",
-      "bidder": "Bidder",
-      "amount": "Amount",
-      "time": "Time"
+      "title": "入札履歴",
+      "noBids": "まだ入札はありません",
+      "bidder": "入札者",
+      "amount": "額",
+      "time": "時間"
     },
     "guestLogin": {
-      "title": "Continue as Guest",
-      "fullName": "Full Name",
-      "emailAddress": "Email Address",
-      "continue": "Continue as Guest",
-      "cancel": "Cancel",
-      "errorNameEmail": "Please enter both name and email",
-      "errorFailed": "Login failed. Please try again.",
-      "errorForm": "Form error. Please try again."
+      "title": "ゲストとして続行",
+      "fullName": "フルネーム",
+      "emailAddress": "電子メールアドレス",
+      "continue": "ゲストとして続行",
+      "cancel": "キャンセル",
+      "errorNameEmail": "名前とメールアドレスの両方を入力してください",
+      "errorFailed": "ログインに失敗しました。もう一度試してください。",
+      "errorForm": "フォームエラー。もう一度試してください。"
     },
     "common": {
-      "auctionItem": "Auction Item",
-      "yourName": "Your Name",
-      "yourEmail": "Your Email",
-      "loginToBid": "Login to Bid",
-      "logout": "Logout",
-      "processing": "Processing...",
-      "closeChat": "Close chat",
-      "loggedInAs": "Logged in as:",
-      "welcome": "Welcome, {name}!",
-      "pleaseLoginBid": "Please login to place a bid",
-      "pleaseLoginBuyNow": "Please login to buy now",
-      "invalidBidAmount": "Please enter a valid bid amount",
-      "bidInputNotFound": "Bid input not found. Please refresh the page.",
-      "bidButtonNotFound": "Bid button not found. Please refresh the page.",
-      "buyNowButtonNotFound": "Buy now button not found. Please refresh the page."
+      "auctionItem": "オークションアイテム",
+      "yourName": "あなたの名前",
+      "yourEmail": "あなたのメールアドレス",
+      "loginToBid": "入札にログインする",
+      "logout": "ログアウト",
+      "processing": "処理...",
+      "closeChat": "チャットを閉じる",
+      "loggedInAs": "次のようにログインしています:",
+      "welcome": "ようこそ、{name} さん!",
+      "pleaseLoginBid": "入札するにはログインしてください",
+      "pleaseLoginBuyNow": "今すぐ購入するにはログインしてください",
+      "invalidBidAmount": "有効な入札金額を入力してください",
+      "bidInputNotFound": "入札入力が見つかりません。ページを更新してください。",
+      "bidButtonNotFound": "入札ボタンが見つかりません。ページを更新してください。",
+      "buyNowButtonNotFound": "「今すぐ購入」ボタンが見つかりません。ページを更新してください。"
     }
   }
 }
-

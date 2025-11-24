@@ -1,882 +1,880 @@
-﻿{
+{
   "admin": {
     "common": {
-      "loadingApp": "Loading Bidlyâ€¦",
-      "preparingDashboard": "Preparing your dashboardâ€¦",
+      "loadingApp": "入札中…",
+      "preparingDashboard": "ダッシュボードを準備しています…",
       "appBridge": {
-        "missingShop": "No shop parameter found in the URL.",
-        "initializationFailed": "Failed to initialize Shopify App Bridge.",
-        "initializing": "Initializing Shopify App Bridgeâ€¦",
-        "connecting": "Connecting to Shopifyâ€¦",
-        "errorTitle": "App Initialization Error",
-        "openFromAdmin": "Please open this app from the Shopify admin."
+        "missingShop": "URL にショップパラメータが見つかりません。",
+        "initializationFailed": "Shopify App Bridgeの初期化に失敗しました。",
+        "initializing": "Shopify App Bridgeを初期化しています…",
+        "connecting": "Shopify に接続中…",
+        "errorTitle": "アプリの初期化エラー",
+        "openFromAdmin": "Shopify 管理者からこのアプリを開いてください。"
       },
-      "refresh": "Refresh",
-      "logout": "Logout",
-      "viewPlans": "View plans",
-      "back": "Back",
-      "createAuction": "Create Auction",
-      "saveChanges": "Save Changes",
-      "cancel": "Cancel",
-      "close": "Close",
-      "enabled": "Enabled",
-      "disabled": "Disabled",
-      "notSet": "Not set",
-      "notConfigured": "Not configured",
-      "notAvailable": "N/A"
+      "refresh": "リフレッシュ",
+      "logout": "ログアウト",
+      "viewPlans": "プランを見る",
+      "back": "戻る",
+      "createAuction": "オークションの作成",
+      "saveChanges": "変更を保存",
+      "cancel": "キャンセル",
+      "close": "近い",
+      "enabled": "有効",
+      "disabled": "無効",
+      "notSet": "未設定",
+      "notConfigured": "未設定",
+      "notAvailable": "該当なし"
     },
     "nav": {
-      "dashboard": "Dashboard",
-      "marketplace": "Auction Marketplace",
-      "widgetStyles": "Widget styles",
-      "marketplaceStyles": "Marketplace styles",
-      "mailService": "Mail service",
-      "plans": "Plans"
+      "dashboard": "ダッシュボード",
+      "marketplace": "オークション マーケットプレイス",
+      "widgetStyles": "ウィジェットのスタイル",
+      "marketplaceStyles": "マーケットプレイスのスタイル",
+      "mailService": "メールサービス",
+      "plans": "予定"
     },
     "auth": {
-      "title": "ðŸ” Bidly Admin Login",
+      "title": "🔐 Bidly 管理者ログイン",
       "subtitles": {
-        "register": "Create a new admin account",
-        "login": "Sign in to your admin account"
+        "register": "新しい管理者アカウントを作成する",
+        "login": "管理者アカウントにサインインする"
       },
       "fields": {
-        "username": "Username",
-        "usernamePlaceholder": "Enter username",
-        "email": "Email",
-        "emailPlaceholder": "Enter email",
-        "password": "Password",
-        "passwordPlaceholder": "Enter password"
+        "username": "ユーザー名",
+        "usernamePlaceholder": "ユーザー名を入力してください",
+        "email": "電子メール",
+        "emailPlaceholder": "メールアドレスを入力してください",
+        "password": "パスワード",
+        "passwordPlaceholder": "パスワードを入力してください"
       },
       "actions": {
-        "loading": "Please wait...",
-        "register": "Register",
-        "login": "Login"
+        "loading": "お待ちください...",
+        "register": "登録する",
+        "login": "ログイン"
       },
       "toggle": {
-        "login": "Already have an account? Login",
-        "register": "Need an account? Register"
+        "login": "すでにアカウントをお持ちですか?ログイン",
+        "register": "アカウントが必要ですか?登録する"
       },
       "errors": {
-        "usernameRequired": "Username is required.",
-        "emailRequired": "Email is required.",
-        "passwordLength": "Password must be at least 6 characters.",
-        "generic": "Authentication failed."
+        "usernameRequired": "ユーザー名は必須です。",
+        "emailRequired": "電子メールは必須です。",
+        "passwordLength": "パスワードは6文字以上である必要があります。",
+        "generic": "認証に失敗しました。"
       },
       "demo": {
-        "title": "Demo Credentials:",
-        "email": "Email: {{value}}",
-        "password": "Password: {{value}}"
+        "title": "デモの認証情報:",
+        "email": "電子メール: {{value}}",
+        "password": "パスワード: {{value}}"
       }
     },
     "mail_service": {
       "page": {
-        "title": "Mail Service"
+        "title": "メールサービス"
       },
       "messages": {
-        "loadError": "Failed to load mail settings.",
-        "saveSuccess": "Mail settings saved successfully.",
-        "saveError": "Failed to save mail settings.",
-        "smtpTestSuccess": "Test email sent.",
-        "smtpTestError": "SMTP test failed.",
-        "upgradeForTests": "Upgrade to a Pro or Enterprise plan to send template tests.",
-        "recipientRequired": "Enter a test email recipient.",
-        "templateMissing": "Template not found.",
-        "templateTestSuccess": "Template test sent to {{recipient}}.",
-        "templateTestError": "Template test failed.",
-        "selectFieldForToken": "Select a template subject or HTML field to insert tokens."
+        "loadError": "メール設定の読み込みに失敗しました。",
+        "saveSuccess": "メール設定が正常に保存されました。",
+        "saveError": "メール設定の保存に失敗しました。",
+        "smtpTestSuccess": "テストメールが送信されました。",
+        "smtpTestError": "SMTPテストに失敗しました。",
+        "upgradeForTests": "テンプレート テストを送信するには、Pro または Enterprise プランにアップグレードしてください。",
+        "recipientRequired": "テストメールの受信者を入力します。",
+        "templateMissing": "テンプレートが見つかりません。",
+        "templateTestSuccess": "テンプレート テストが {{recipient}} に送信されました。",
+        "templateTestError": "テンプレートのテストに失敗しました。",
+        "selectFieldForToken": "トークンを挿入するテンプレートの件名または HTML フィールドを選択します。"
       },
       "tokens": {
-        "title": "Available tokens",
-        "description": "Click a token to insert it into the subject or HTML field you're editing."
+        "title": "利用可能なトークン",
+        "description": "トークンをクリックして、編集中の件名または HTML フィールドに挿入します。"
       },
       "status": {
-        "loading": "Loading mail settings"
+        "loading": "メール設定を読み込む"
       },
       "banner": {
-        "upgradeTitle": "Upgrade required",
-        "upgradeDescription": "Custom mail settings are available on Pro and Enterprise plans."
+        "upgradeTitle": "アップグレードが必要です",
+        "upgradeDescription": "カスタムメール設定は、Pro プランと Enterprise プランで利用できます。"
       },
       "smtp": {
-        "title": "SMTP configuration",
-        "description": "Connect your own email server to send notifications from your domain.",
-        "useCustom": "Use my own email server",
-        "secure": "Use secure connection (TLS)",
-        "testRecipient": "Test email recipient",
-        "sendTest": "Send test email",
+        "title": "SMTP設定",
+        "description": "独自の電子メール サーバーに接続して、ドメインから通知を送信します。",
+        "useCustom": "自分のメールサーバーを使用する",
+        "secure": "安全な接続 (TLS) を使用する",
+        "testRecipient": "電子メールの受信者をテストする",
+        "sendTest": "テストメールを送信する",
         "fields": {
-          "host": "Host",
-          "port": "Port",
-          "username": "Username",
-          "password": "Password / app password",
-          "fromName": "From name",
-          "fromEmail": "From email"
+          "host": "ホスト",
+          "port": "ポート",
+          "username": "ユーザー名",
+          "password": "パスワード/アプリパスワード",
+          "fromName": "名前から",
+          "fromEmail": "メールから"
         }
       },
       "templates": {
-        "title": "Email templates",
-        "description": "Customize Bidly notification content. Use the token panel to pull in dynamic values like bidder names or auction details.",
-        "testRecipient": "Test email recipient",
-        "testPlaceholder": "name@example.com",
-        "testHelper": "This address is used by the \"Send test using this template\" buttons below.",
-        "enabled": "Enabled",
-        "subject": "Subject",
-        "editorMode": "Editor mode",
-        "editorSimple": "Simple editor",
-        "editorHtml": "HTML editor",
-        "htmlLabel": "HTML content",
-        "textLabel": "Message body",
-        "reset": "Reset to default",
-        "sendTestForTemplate": "Send test using this template",
+        "title": "電子メールテンプレート",
+        "description": "Bidly 通知コンテンツをカスタマイズします。トークン パネルを使用して、入札者名やオークションの詳細などの動的な値を取得します。",
+        "testRecipient": "電子メールの受信者をテストする",
+        "testPlaceholder": "名前@example.com",
+        "testHelper": "このアドレスは、下の [このテンプレートを使用してテストを送信] ボタンで使用されます。",
+        "enabled": "有効",
+        "subject": "主題",
+        "editorMode": "エディターモード",
+        "editorSimple": "シンプルなエディター",
+        "editorHtml": "HTMLエディタ",
+        "htmlLabel": "HTMLコンテンツ",
+        "textLabel": "メッセージ本文",
+        "reset": "デフォルトにリセットする",
+        "sendTestForTemplate": "このテンプレートを使用してテストを送信します",
         "bidConfirmation": {
-          "title": "Bid confirmation"
+          "title": "入札確認"
         },
         "outbidNotification": {
-          "title": "Outbid notification"
+          "title": "超過入札通知"
         },
         "winnerNotification": {
-          "title": "Winner notification"
+          "title": "当選通知"
         },
         "auctionEndingSoon": {
-          "title": "Auction ending soon"
+          "title": "オークションもうすぐ終了"
         },
         "adminNotification": {
-          "title": "Admin notification"
+          "title": "管理者の通知"
         }
       },
       "actions": {
-        "save": "Save mail settings"
+        "save": "メール設定を保存する"
       }
     },
     "marketplace": {
       "page": {
-        "title": "Marketplace customization",
-        "subtitle": "Control the typography, template, and color system for the public auction marketplace."
+        "title": "マーケットプレイスのカスタマイズ",
+        "subtitle": "パブリック オークション マーケットプレイスのタイポグラフィ、テンプレート、カラー システムを制御します。"
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock marketplace styling.",
-        "bannerTitle": "Upgrade required to customize the marketplace",
-        "defaultMessage": "The marketplace customization requires the Pro or Enterprise plan."
+        "subtitle": "Bidly プランをアップグレードして、マーケットプレイスのスタイルをロック解除します。",
+        "bannerTitle": "マーケットプレイスをカスタマイズするにはアップグレードが必要です",
+        "defaultMessage": "マーケットプレイスのカスタマイズには、Pro プランまたは Enterprise プランが必要です。"
       },
       "status": {
-        "loading": "Loading marketplace customization"
+        "loading": "マーケットプレイスのカスタマイズを読み込み中"
       },
       "actions": {
-        "save": "Save changes",
-        "resetApplied": "Reset to applied",
-        "resetDefaults": "Restore defaults"
+        "save": "変更を保存する",
+        "resetApplied": "適用済みにリセット",
+        "resetDefaults": "デフォルトに戻す"
       },
       "messages": {
-        "saveSuccess": "Marketplace theme saved.",
-        "saveError": "Failed to save marketplace customization.",
-        "loadError": "Failed to load marketplace customization."
+        "saveSuccess": "マーケットプレイスのテーマが保存されました。",
+        "saveError": "マーケットプレイスのカスタマイズを保存できませんでした。",
+        "loadError": "マーケットプレイスのカスタマイズを読み込めませんでした。"
       },
       "errors": {
-        "unavailable": "Marketplace customization unavailable"
+        "unavailable": "マーケットプレイスのカスタマイズは利用できません"
       },
       "sections": {
         "design": {
-          "title": "Design foundation",
-          "heading": "Choose template",
-          "description": "Templates control spacing, radius, and depth. They apply instantly to every screen in the customer flow.",
-          "fontLabel": "Font family",
+          "title": "設計基盤",
+          "heading": "テンプレートを選択",
+          "description": "テンプレートは間隔、半径、深さを制御します。これらは顧客フローのすべての画面に即座に適用されます。",
+          "fontLabel": "フォントファミリー",
           "templates": {
             "classic": {
-              "label": "Classic",
-              "description": "Balanced spacing, subtle depth, and rounded corners."
+              "label": "クラシック",
+              "description": "バランスの取れた間隔、微妙な奥行き、丸い角。"
             },
             "modern": {
-              "label": "Modern",
-              "description": "Softer surfaces, deeper shadows, and generous padding."
+              "label": "モダンな",
+              "description": "より柔らかい表面、より深い影、そしてたっぷりとしたパッド。"
             },
             "minimal": {
-              "label": "Minimal",
-              "description": "Compact spacing with crisp lines and light shadows."
+              "label": "最小限",
+              "description": "コンパクトな間隔で鮮明な線と明るい影を表現。"
             },
             "bold": {
-              "label": "Bold",
-              "description": "Large radiuses, dramatic shadows, and pill buttons."
+              "label": "大胆な",
+              "description": "大きな半径、劇的な影、ピル ボタン。"
             }
           }
         },
         "palette": {
-          "title": "Color palette",
-          "description": "Every UI element in the marketplace references these tokens. Update them to match your storefront.",
-          "gradientToggleLabel": "Toggle gradient background",
-          "gradientEnabled": "Gradient enabled",
-          "gradientDisabled": "Gradient disabled",
-          "gradientInfo": "Background color is managed by your gradient. Disable the gradient toggle to edit the solid background color."
+          "title": "カラーパレット",
+          "description": "マーケットプレイスのすべての UI 要素は、これらのトークンを参照します。ストアフロントに合わせて更新してください。",
+          "gradientToggleLabel": "グラデーション背景の切り替え",
+          "gradientEnabled": "グラデーション有効",
+          "gradientDisabled": "グラデーション無効",
+          "gradientInfo": "背景色はグラデーションによって管理されます。単色の背景色を編集するには、グラデーションの切り替えを無効にします。"
         }
       },
       "colors": {
         "primary": {
-          "label": "Primary",
-          "description": "Buttons, actions, and primary highlights."
+          "label": "主要な",
+          "description": "ボタン、アクション、主なハイライト。"
         },
         "background": {
-          "label": "Background",
-          "description": "Marketplace page background."
+          "label": "背景",
+          "description": "マーケットプレイスのページの背景。"
         },
         "surface": {
-          "label": "Surface",
-          "description": "Cards, modals, and sheets."
+          "label": "表面",
+          "description": "カード、モーダル、シート。"
         },
         "textPrimary": {
-          "label": "Primary text",
-          "description": "Headings and main text."
+          "label": "一次テキスト",
+          "description": "見出しと本文。"
         },
         "textSecondary": {
-          "label": "Secondary text",
-          "description": "Muted text, helper copy, and labels."
+          "label": "二次テキスト",
+          "description": "ミュートされたテキスト、ヘルパー コピー、およびラベル。"
         },
         "buttonText": {
-          "label": "Button text",
-          "description": "Text inside secondary buttons and CTA labels."
+          "label": "ボタンのテキスト",
+          "description": "二次ボタンと CTA ラベル内のテキスト。"
         },
         "button": {
-          "label": "Button",
-          "description": "Secondary button background and border."
+          "label": "ボタン",
+          "description": "二次ボタンの背景と境界線。"
         },
         "border": {
-          "label": "Border",
-          "description": "Card outlines, dividers, and inputs."
+          "label": "国境",
+          "description": "カードのアウトライン、ディバイダー、および入力。"
         },
         "accent": {
-          "label": "Accent",
-          "description": "Timers, stats, and pills."
+          "label": "アクセント",
+          "description": "タイマー、統計情報、薬。"
         },
         "success": {
-          "label": "Success",
-          "description": "Positive badges and buy-now confirmations."
+          "label": "成功",
+          "description": "肯定的なバッジと今すぐ購入の確認。"
         },
         "error": {
-          "label": "Error",
-          "description": "Errors, ended states, and blocking toasts."
+          "label": "エラー",
+          "description": "エラー、終了状態、およびトーストのブロック。"
         },
         "gradient1": {
-          "label": "Gradient start",
-          "description": "Hero gradient starting color."
+          "label": "グラデーションスタート",
+          "description": "ヒーローのグラデーションの開始色。"
         },
         "gradient2": {
-          "label": "Gradient end",
-          "description": "Hero gradient ending color."
+          "label": "グラデーションエンド",
+          "description": "ヒーローのグラデーション終了色。"
         }
       },
       "preview": {
-        "shopNameFallback": "your store",
-        "pageTitle": "Auction Marketplace Â· Preview",
-        "pageSubtitle": "This preview renders the exact markup used in the storefront.",
-        "demoAction": "Connected as demo customer"
+        "shopNameFallback": "あなたの店",
+        "pageTitle": "オークション マーケットプレイス · プレビュー",
+        "pageSubtitle": "このプレビューは、ストアフロントで使用されている正確なマークアップをレンダリングします。",
+        "demoAction": "デモ顧客として接続しました"
       },
       "previewCard": {
-        "title": "Live preview"
+        "title": "ライブプレビュー"
       }
     },
     "widget": {
       "page": {
-        "title": "Widget customization",
-        "subtitle": "Control how the Bidly widget appears on your product pages without touching code."
+        "title": "ウィジェットのカスタマイズ",
+        "subtitle": "コードに触れることなく、商品ページに Bidly ウィジェットを表示する方法を制御します。"
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock widget styling controls.",
-        "bannerTitle": "Upgrade required to customize the widget",
-        "defaultMessage": "The widget customization requires the Pro or Enterprise plan."
+        "subtitle": "Bidly プランをアップグレードして、ウィジェット スタイル コントロールのロックを解除します。",
+        "bannerTitle": "ウィジェットをカスタマイズするにはアップグレードが必要です",
+        "defaultMessage": "ウィジェットのカスタマイズには Pro または Enterprise プランが必要です。"
       },
       "status": {
-        "loading": "Loading customization settings"
+        "loading": "カスタマイズ設定をロードしています"
       },
       "actions": {
-        "save": "Save changes",
-        "resetSaved": "Reset to saved",
-        "resetDefaults": "Reset to defaults"
+        "save": "変更を保存する",
+        "resetSaved": "保存した状態にリセット",
+        "resetDefaults": "デフォルトにリセットする"
       },
       "errors": {
-        "saveFailed": "We couldn't save the widget settings"
+        "saveFailed": "ウィジェット設定を保存できませんでした"
       },
       "sections": {
         "templates": {
-          "title": "Templates",
-          "description": "Start from a professionally designed preset. You can still adjust individual settings after selecting a template.",
-          "cardLabel": "Template {{id}} Â· {{name}}"
+          "title": "テンプレート",
+          "description": "プロがデザインしたプリセットから始めましょう。テンプレートを選択した後でも、個別の設定を調整できます。",
+          "cardLabel": "テンプレート {{id}} · {{name}}"
         },
         "typography": {
-          "title": "Typography & layout",
-          "fontLabel": "Font family",
-          "radiusLabel": "Border radius",
-          "shadowLabel": "Depth / shadow"
+          "title": "タイポグラフィーとレイアウト",
+          "fontLabel": "フォントファミリー",
+          "radiusLabel": "境界半径",
+          "shadowLabel": "奥行き・影"
         },
         "gradient": {
-          "title": "Gradient & background",
-          "description": "Choose the gradient colors for the widget header or switch to a flat background.",
-          "enable": "Enable gradient",
-          "disable": "Disable gradient"
+          "title": "グラデーションと背景",
+          "description": "ウィジェット ヘッダーのグラデーション カラーを選択するか、フラットな背景に切り替えます。",
+          "enable": "グラデーションを有効にする",
+          "disable": "グラデーションを無効にする"
         },
         "colors": {
-          "title": "Fine tune colors",
-          "description": "Adjust individual tokens for text, buttons, and borders. All colors support hex values only."
+          "title": "色の微調整",
+          "description": "テキスト、ボタン、境界線の個々のトークンを調整します。すべての色は 16 進値のみをサポートします。"
         }
       },
       "previewStates": {
-        "active": "Active auction",
-        "pending": "Pending auction",
-        "ended": "Ended auction"
+        "active": "アクティブなオークション",
+        "pending": "保留中のオークション",
+        "ended": "終了したオークション"
       },
       "previewCard": {
-        "title": "Live widget preview",
-        "stateLabel": "Preview state",
-        "description": "Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.",
-        "iframeTitle": "Widget customization preview"
+        "title": "ライブウィジェットのプレビュー",
+        "stateLabel": "プレビュー状態",
+        "description": "設定を調整するとすぐに更新をプレビューできます。この iframe は、ストアフロント ウィジェットと同じマークアップとトークンを使用します。",
+        "iframeTitle": "ウィジェットのカスタマイズのプレビュー"
       },
       "colors": {
         "accent": {
-          "label": "Accent color",
-          "description": "Applied to prices and primary highlights."
+          "label": "アクセントカラー",
+          "description": "価格と主なハイライトに適用されます。"
         },
         "text": {
-          "label": "Primary text",
-          "description": "Default text color for widget content."
+          "label": "一次テキスト",
+          "description": "ウィジェット コンテンツのデフォルトのテキストの色。"
         },
         "timer": {
-          "label": "Timer",
-          "description": "Countdown digits and timer emphasis."
+          "label": "タイマー",
+          "description": "カウントダウンの数字とタイマーの強調。"
         },
         "button_bg": {
-          "label": "Button background",
-          "description": "Primary button background color."
+          "label": "ボタンの背景",
+          "description": "プライマリボタンの背景色。"
         },
         "button_hover": {
-          "label": "Button hover",
-          "description": "Background color on hover focus."
+          "label": "ボタンホバー",
+          "description": "ホバーフォーカスの背景色。"
         },
         "button_text": {
-          "label": "Button text",
-          "description": "Text color for primary buttons."
+          "label": "ボタンのテキスト",
+          "description": "主ボタンのテキストの色。"
         },
         "border": {
-          "label": "Border color",
-          "description": "Input borders, cards, and separators."
+          "label": "枠線の色",
+          "description": "枠線、カード、区切り文字を入力します。"
         }
       },
       "gradient": {
         "bg_solid": {
-          "label": "Solid background",
-          "description": "Used when gradient is disabled."
+          "label": "無地の背景",
+          "description": "グラデーションが無効な場合に使用されます。"
         },
         "bg_gradient_start": {
-          "label": "Gradient start",
-          "description": "Starting color of the header gradient."
+          "label": "グラデーションスタート",
+          "description": "ヘッダーのグラデーションの開始色。"
         },
         "bg_gradient_end": {
-          "label": "Gradient end",
-          "description": "Ending color of the header gradient."
+          "label": "グラデーションエンド",
+          "description": "ヘッダーのグラデーションの終了色。"
         }
       }
     },
     "billing": {
       "page": {
-        "title": "Choose your Bidly plan",
-        "subtitle": "Manage your subscription and unlock premium auction features."
+        "title": "Bidly プランを選択してください",
+        "subtitle": "サブスクリプションを管理し、プレミアム オークション機能のロックを解除します。"
       },
-      "planLimitReached": "You've reached your auction limit ({{limit}} auctions) for your current plan.",
-      "planUpgradePrompt": "Please upgrade your plan to create more auctions, or wait for existing auctions to end or close them manually.",
-      "planUpgradeConfirm": "Would you like to view available plans to upgrade?",
+      "planLimitReached": "現在のプランのオークション制限 ({{limit}} オークション) に達しました。",
+      "planUpgradePrompt": "プランをアップグレードしてさらにオークションを作成するか、既存のオークションが終了するまで待つか、手動で閉じてください。",
+      "planUpgradeConfirm": "アップグレード可能なプランを表示しますか?",
       "currentPlan": {
-        "title": "Current plan",
-        "active": "Active: {{plan}}",
-        "pending": "Pending: {{plan}}",
-        "loading": "Loadingâ€¦",
-        "cancelSubscription": "Cancel subscription"
+        "title": "現在の計画",
+        "active": "アクティブ: {{plan}}",
+        "pending": "保留中: {{plan}}",
+        "loading": "読み込み中…",
+        "cancelSubscription": "サブスクリプションをキャンセルする"
       },
       "plans": {
-        "title": "Plans",
+        "title": "予定",
         "free": {
-          "title": "Free",
-          "price": "$0/mo",
-          "description": "Get started with Bidly and run your first auction.",
+          "title": "無料",
+          "price": "$0/月",
+          "description": "Bidly を使い始めて、最初のオークションを実行してください。",
           "highlights": {
-            "1": "1 active auction at a time",
-            "2": "Preview dashboard access",
-            "3": "Upgrade to unlock more auctions"
+            "1": "一度に 1 つのアクティブなオークション",
+            "2": "プレビュー ダッシュボードへのアクセス",
+            "3": "アップグレードしてより多くのオークションのロックを解除します"
           },
-          "actionLabel": "Free plan"
+          "actionLabel": "無料プラン"
         },
         "basic": {
-          "title": "Basic",
-          "price": "$9.99/mo",
-          "description": "Start hosting auctions with the essentials.",
+          "title": "基本",
+          "price": "$9.99/月",
+          "description": "必需品を揃えてオークションの主催を始めましょう。",
           "highlights": {
-            "1": "3 active auctions",
-            "2": "Standard Bidly branding",
-            "3": "Core auction workflows"
+            "1": "3 つのアクティブなオークション",
+            "2": "標準的な Bidly ブランド",
+            "3": "主要なオークション ワークフロー"
           },
-          "actionLabel": "Upgrade to Basic"
+          "actionLabel": "ベーシックにアップグレード"
         },
         "pro": {
-          "title": "Pro",
-          "price": "$19.99/mo",
-          "description": "Unlock advanced bidding and full widget styling.",
+          "title": "プロ",
+          "price": "$19.99/月",
+          "description": "高度な入札機能と完全なウィジェット スタイルを利用可能にします。",
           "highlights": {
-            "1": "20 active auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding"
+            "1": "20 件のアクティブなオークション",
+            "2": "Bidly ブランドを削除する",
+            "3": "ウィジェットとマーケットプレイスのカスタマイズ",
+            "4": "ポップコーン入札"
           },
-          "actionLabel": "Upgrade to Pro"
+          "actionLabel": "プロにアップグレード"
         },
         "enterprise": {
-          "title": "Enterprise",
-          "price": "$49.99/mo",
-          "description": "Unlimited auctions plus real-time bidder chat.",
+          "title": "企業",
+          "price": "$49.99/月",
+          "description": "無制限のオークションとリアルタイムの入札者チャット。",
           "highlights": {
-            "1": "Unlimited auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding & live chatbox"
+            "1": "無制限のオークション",
+            "2": "Bidly ブランドを削除する",
+            "3": "ウィジェットとマーケットプレイスのカスタマイズ",
+            "4": "ポップコーン入札とライブチャットボックス"
           },
-          "actionLabel": "Upgrade to Enterprise"
+          "actionLabel": "エンタープライズへのアップグレード"
         },
-        "trialCopy": "Includes a 7-day free trial. You can cancel anytime from your Shopify admin.",
-        "currentPlan": "Current plan",
-        "pendingActivation": "Pending activation",
-        "downgradeTo": "Downgrade to {{title}}",
-        "upgradeTo": "Upgrade to {{title}}"
+        "trialCopy": "7日間の無料トライアルが含まれています。 Shopify 管理者からいつでもキャンセルできます。",
+        "currentPlan": "現在の計画",
+        "pendingActivation": "アクティブ化を保留中",
+        "downgradeTo": "{{title}} にダウングレード",
+        "upgradeTo": "{{title}} にアップグレードする"
       },
       "banners": {
         "subscriptionActivated": {
-          "title": "Subscription activated",
-          "message": "Your plan is now active. Thanks for upgrading!"
+          "title": "サブスクリプションがアクティブ化されました",
+          "message": "プランは現在有効です。アップグレードしていただきありがとうございます!"
         },
         "awaitingConfirmation": {
-          "title": "Awaiting confirmation",
-          "message": "Finish approving the subscription in Shopify to unlock premium features."
+          "title": "確認待ち",
+          "message": "Shopify でサブスクリプションの承認を完了して、プレミアム機能のロックを解除します。"
         },
         "subscriptionNotConfirmed": {
-          "title": "Subscription not confirmed",
-          "message": "There was a problem confirming billing."
+          "title": "購読は確認されていません",
+          "message": "請求の確認で問題が発生しました。"
         },
         "subscriptionCancelled": {
-          "title": "Subscription cancelled",
-          "message": "{{message}}"
+          "title": "サブスクリプションがキャンセルされました",
+          "message": "__トークン_0__"
         },
         "loadError": {
-          "title": "We couldn't load your plan",
-          "retry": "Retry"
+          "title": "プランを読み込めませんでした",
+          "retry": "リトライ"
         },
         "previewMode": {
-          "title": "Upgrade to activate Bidly",
-          "action": "View plans",
-          "message": "Preview mode lets you explore the admin, but auctions, customization, and live bidding are disabled until you choose a paid plan."
+          "title": "アップグレードして Bidly をアクティブ化する",
+          "action": "プランを見る",
+          "message": "プレビュー モードでは管理者を探索できますが、オークション、カスタマイズ、ライブ入札は有料プランを選択するまで無効になります。"
         }
       },
       "downgrade": {
-        "title": "Downgrade to {{plan}}",
-        "confirm": "Confirm downgrade",
-        "cancel": "Cancel",
-        "message": "You are downgrading from {{current}} to {{target}}.",
-        "featureRemoved": "Feature removed: {{feature}}",
-        "noFeaturesRemoved": "No premium features will be removed.",
-        "auctionsToClose": "We will automatically close {{count}} scheduled auction{{plural}} to meet the {{limit}} limit.",
-        "auctionsFit": "Your current auction count already fits the {{limit}} limit.",
-        "unlimitedLimit": "The new plan includes an unlimited auction limit.",
-        "warning": "Downgrading takes effect immediately and cannot be undone automatically."
+        "title": "{{plan}} にダウングレード",
+        "confirm": "ダウングレードの確認",
+        "cancel": "キャンセル",
+        "message": "{{current}} から {{target}} にダウングレードしています。",
+        "featureRemoved": "削除された機能: {{feature}}",
+        "noFeaturesRemoved": "プレミアム機能は削除されません。",
+        "auctionsToClose": "{{limit}} の制限を満たすために、{{count}} 予定のオークション{{plural}} を自動的に終了します。",
+        "auctionsFit": "現在のオークション数はすでに {{limit}} 制限に達しています。",
+        "unlimitedLimit": "新しいプランには無制限のオークション制限が含まれています。",
+        "warning": "ダウングレードはすぐに有効になり、自動的に元に戻すことはできません。"
       },
       "cancel": {
-        "title": "Cancel subscription",
-        "confirm": "Confirm cancellation",
-        "keep": "Keep subscription",
-        "message": "Are you sure you want to cancel your subscription?",
-        "description": "Your subscription will remain active until the end of the current billing period. After that, your plan will automatically revert to the Free plan, which includes:",
+        "title": "サブスクリプションをキャンセルする",
+        "confirm": "キャンセルの確認",
+        "keep": "サブスクリプションを維持する",
+        "message": "サブスクリプションをキャンセルしてもよろしいですか?",
+        "description": "サブスクリプションは、現在の請求期間が終了するまで有効のままです。その後、プランは自動的に無料プランに戻ります。これには以下が含まれます。",
         "freeFeatures": [
-          "1 active auction at a time",
-          "Standard Bidly branding",
-          "Basic auction features"
+          "一度に 1 つのアクティブなオークション",
+          "標準的な Bidly ブランド",
+          "オークションの基本機能"
         ],
-        "resubscribe": "You can resubscribe at any time to regain access to premium features."
+        "resubscribe": "いつでも再購読して、プレミアム機能へのアクセスを取り戻すことができます。"
       },
       "errors": {
-        "loadError": "Unable to load plan details",
-        "subscribeError": "Unable to start subscription. Please try again.",
-        "cancelError": "Unable to cancel subscription."
+        "loadError": "プランの詳細を読み込めません",
+        "subscribeError": "サブスクリプションを開始できません。もう一度試してください。",
+        "cancelError": "サブスクリプションをキャンセルできません。"
       },
       "formatLimit": {
-        "unlimited": "unlimited",
-        "activeAuctions": "{{count}} active auctions"
+        "unlimited": "無制限",
+        "activeAuctions": "{{count}} 件のアクティブなオークション"
       }
     },
     "analytics": {
-      "loadingLabel": "Loading analytics",
-      "loadingText": "Loading analytics data...",
-      "error": "Failed to load analytics data.",
-      "empty": "No analytics data available.",
-      "unknownProduct": "Unknown product",
-      "headerTitle": "ðŸ“Š Enhanced Analytics",
+      "loadingLabel": "分析を読み込み中",
+      "loadingText": "分析データをロードしています...",
+      "error": "分析データのロードに失敗しました。",
+      "empty": "利用可能な分析データがありません。",
+      "unknownProduct": "不明な製品",
+      "headerTitle": "📊 強化された分析",
       "period": {
-        "label": "Time period",
-        "last7": "Last 7 days",
-        "last30": "Last 30 days",
-        "last90": "Last 90 days",
-        "lastYear": "Last year"
+        "label": "期間",
+        "last7": "過去 7 日間",
+        "last30": "過去 30 日間",
+        "last90": "過去90日間",
+        "lastYear": "去年"
       },
       "summary": {
-        "title": "ðŸ“ˆ Auction Summary",
-        "total": "Total Auctions",
-        "active": "Active Auctions",
-        "ended": "Ended Auctions",
-        "pending": "Pending Auctions",
-        "closed": "Closed Auctions"
+        "title": "📈オークション概要",
+        "total": "合計オークション数",
+        "active": "アクティブオークション",
+        "ended": "終了したオークション",
+        "pending": "保留中のオークション",
+        "closed": "終了したオークション"
       },
       "revenue": {
-        "title": "ðŸ’° Revenue Metrics",
-        "total": "Total Revenue",
-        "averageBid": "Avg Bid Amount",
-        "currency": "Currency",
-        "successRate": "Bid Success Rate"
+        "title": "💰 収益指標",
+        "total": "総収益",
+        "averageBid": "平均入札額",
+        "currency": "通貨",
+        "successRate": "入札成功率"
       },
       "bidding": {
-        "title": "ðŸŽ¯ Bidding Statistics",
-        "total": "Total Bids",
-        "averagePerAuction": "Avg Bids per Auction",
-        "successRate": "Success Rate"
+        "title": "🎯 入札統計",
+        "total": "合計入札額",
+        "averagePerAuction": "オークションごとの平均入札額",
+        "successRate": "成功率"
       },
       "daily": {
-        "title": "ðŸ“… Daily Statistics (Last 7 Days)",
+        "title": "📅 毎日の統計 (過去 7 日間)",
         "columns": {
-          "date": "Date",
-          "auctions": "Auctions",
-          "revenue": "Revenue",
-          "bids": "Bids"
+          "date": "日付",
+          "auctions": "オークション",
+          "revenue": "収益",
+          "bids": "入札"
         }
       },
       "top": {
-        "title": "ðŸ† Top Performing Auctions",
+        "title": "🏆 成績上位のオークション",
         "columns": {
-          "product": "Product",
-          "currentBid": "Current Bid",
-          "totalBids": "Total Bids",
-          "created": "Created"
+          "product": "製品",
+          "currentBid": "現在の入札額",
+          "totalBids": "合計入札額",
+          "created": "作成されました"
         }
       },
       "activity": {
-        "title": "âš¡ Recent Activity",
+        "title": "⚡ 最近の活動",
         "columns": {
-          "product": "Product",
-          "currentBid": "Current Bid",
-          "status": "Status",
-          "created": "Created"
+          "product": "製品",
+          "currentBid": "現在の入札額",
+          "status": "状態",
+          "created": "作成されました"
         }
       },
       "status": {
-        "pending": "Pending",
-        "active": "Active",
-        "ended": "Ended",
-        "closed": "Closed"
+        "pending": "保留中",
+        "active": "アクティブ",
+        "ended": "終了しました",
+        "closed": "閉店"
       }
     },
     "auctions": {
       "errors": {
-        "loadStats": "Failed to load dashboard statistics.",
-        "save": "Error saving auction: {{message}}",
-        "unknownStore": "Unable to determine store information."
+        "loadStats": "ダッシュボード統計のロードに失敗しました。",
+        "save": "オークション保存エラー: {{message}}",
+        "unknownStore": "店舗情報が特定できません。"
       },
       "toast": {
-        "statusUpdate": "ðŸ”„ Auction status updated: {{status}}",
-        "updated": "Auction updated successfully.",
-        "created": "Auction created successfully.",
-        "marketplaceOpen": "Opening auction marketplace in a new tab."
+        "statusUpdate": "🔄オークションステータスが更新されました: {{status}}",
+        "updated": "オークションが正常に更新されました。",
+        "created": "オークションが正常に作成されました。",
+        "marketplaceOpen": "新しいタブでオークション マーケットプレイスを開きます。"
       },
       "dashboard": {
-        "title": "Auction Dashboard",
-        "titleWithShop": "Auction Dashboard - {{shop}}",
-        "subtitleStore": "Store: {{store}}",
-        "subtitleDefault": "Manage your auctions and monitor performance.",
-        "subtitleNeedPlan": "Upgrade to a plan to start hosting auctions.",
-        "primaryCreate": "Create Auction",
-        "primaryChoosePlan": "Choose a plan to create auctions",
-        "previewTitle": "Preview mode active",
-        "previewDescription": "You can explore the Bidly dashboard, but creating or managing live auctions requires an active subscription. Choose a plan to unlock hosting, customization, and live bidding features.",
-        "overviewTitle": "Auction Overview",
-        "totalAuctions": "Total Auctions",
-        "activeAuctions": "Active Auctions",
-        "totalBids": "Total Bids",
-        "quickLinkWidget": "ðŸŽ¨ Widget styles",
-        "quickLinkMarketplace": "ðŸŽ¨ Marketplace styles",
-        "quickLinkPlans": "ðŸ§¾ Plans",
-        "quickLinkMail": "ðŸ“§ Mail service",
-        "tabAuctions": "ðŸ“‹ Auctions",
-        "tabAnalytics": "ðŸ“Š Analytics"
+        "title": "オークションダッシュボード",
+        "titleWithShop": "オークション ダッシュボード - {{shop}}",
+        "subtitleStore": "ストア: {{store}}",
+        "subtitleDefault": "オークションを管理し、パフォーマンスを監視します。",
+        "subtitleNeedPlan": "プランにアップグレードしてオークションの主催を開始します。",
+        "primaryCreate": "オークションの作成",
+        "primaryChoosePlan": "オークションを作成するプランを選択してください",
+        "previewTitle": "プレビューモードがアクティブです",
+        "previewDescription": "Bidly ダッシュボードを探索できますが、ライブ オークションの作成または管理にはアクティブなサブスクリプションが必要です。プランを選択して、ホスティング、カスタマイズ、ライブ入札機能を利用しましょう。",
+        "overviewTitle": "オークション概要",
+        "totalAuctions": "合計オークション数",
+        "activeAuctions": "アクティブオークション",
+        "totalBids": "合計入札額",
+        "quickLinkWidget": "🎨 ウィジェットのスタイル",
+        "quickLinkMarketplace": "🎨 マーケットプレイスのスタイル",
+        "quickLinkPlans": "🧾 計画",
+        "quickLinkMail": "📧メールサービス",
+        "tabAuctions": "📋 オークション",
+        "tabAnalytics": "📊 分析"
       },
       "form": {
         "planGate": {
-          "title": "Choose a plan to create auctions",
-          "description": "Youâ€™re currently in preview mode. Upgrade to a paid Bidly plan to create and manage auctions, unlock widget customization, and enable live bidding features.",
-          "explore": "Explore plans"
+          "title": "オークションを作成するプランを選択してください",
+          "description": "現在プレビュー モードです。有料の Bidly プランにアップグレードすると、オークションの作成と管理、ウィジェットのカスタマイズのロック解除、ライブ入札機能の有効化が可能になります。",
+          "explore": "プランを調べる"
         },
-        "titleCreate": "Create New Auction",
-        "titleEdit": "Edit Auction",
-        "shopifyWarning": "Shopify API is not configured. Product search will be disabled. Please check your backend configuration.",
+        "titleCreate": "新しいオークションを作成する",
+        "titleEdit": "オークションの編集",
+        "shopifyWarning": "Shopify APIが設定されていません。商品検索ができなくなります。バックエンド構成を確認してください。",
         "errors": {
-          "productRequired": "Shopify product is required.",
-          "startingBidPositive": "Starting bid must be greater than 0.",
-          "endTime": "End time must be after start time.",
-          "save": "Failed to save auction."
+          "productRequired": "Shopify製品が必要です。",
+          "startingBidPositive": "開始入札額は 0 より大きくなければなりません。",
+          "endTime": "終了時刻は開始時刻より後である必要があります。",
+          "save": "オークションを保存できませんでした。"
         },
         "search": {
-          "title": "ðŸ” Search Shopify Products",
-          "label": "Search for Shopify Product",
-          "placeholder": "Type product name to search...",
-          "loadingLabel": "Searching products",
-          "debug": "Debug: {{count}} results found",
-          "resultsTitle": "Search Results",
+          "title": "🔍 Shopify 製品を検索",
+          "label": "Shopify 製品を検索",
+          "placeholder": "製品名を入力して検索...",
+          "loadingLabel": "製品を探す",
+          "debug": "デバッグ: {{count}} 結果が見つかりました",
+          "resultsTitle": "検索結果",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Real API failed: {{message}}. Using demo data."
+          "apiFallback": "実際の API が失敗しました: {{message}}。デモデータを使用します。"
         },
         "selectedProduct": {
-          "title": "Selected Product Details",
-          "name": "Title: {{value}}",
-          "vendor": "Vendor: {{value}}",
-          "price": "Price: {{value}}"
+          "title": "選択した製品の詳細",
+          "name": "タイトル: {{value}}",
+          "vendor": "ベンダー: {{value}}",
+          "price": "価格: {{value}}"
         },
         "fields": {
-          "productId": "Shopify Product ID",
-          "productIdPlaceholder": "Product ID will be filled automatically when you select a product.",
-          "startDate": "Start Date",
-          "startTime": "Start Time",
-          "endDate": "End Date",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "startingBidLocked": "Starting bid cannot be changed after a bid has been placed.",
-          "buyNow": "Buy Now Price (Optional)",
-          "reservePrice": "Reserve Price (Optional)",
-          "reserveHelp": "Minimum bid amount required for auction to have a valid winner. Hidden from bidders."
+          "productId": "Shopify 製品ID",
+          "productIdPlaceholder": "製品を選択すると、製品 ID が自動的に入力されます。",
+          "startDate": "開始日",
+          "startTime": "開始時間",
+          "endDate": "終了日",
+          "endTime": "終了時間",
+          "startingBid": "入札開始",
+          "startingBidLocked": "入札後の開始価格の変更はできません。",
+          "buyNow": "今すぐ購入価格 (オプション)",
+          "reservePrice": "予約価格（オプション）",
+          "reserveHelp": "オークションで有効な落札者を獲得するために必要な最低入札額。入札者からは隠されています。"
         },
         "popcorn": {
-          "title": "ðŸ¿ Popcorn Auction Settings (Premium Feature)",
-          "description": "Enable automatic time extension when bids are placed near the end of the auction.",
-          "enable": "Enable Popcorn Bidding",
-          "help": "Automatically extend auction time when bids are placed near the end.",
-          "upgradeHelp": "Automatically extend auction time when bids are placed near the end Â· Available on the Pro and Enterprise plans.",
-          "trigger": "Trigger Threshold (seconds)",
-          "triggerHelp": "Extend auction when this many seconds remain.",
-          "extension": "Extension Duration (seconds)",
-          "extensionHelp": "How many seconds to add to the auction."
+          "title": "🍿 ポップコーンオークション設定（プレミアム機能）",
+          "description": "オークションの終了間近に入札された場合に、自動時間延長を有効にします。",
+          "enable": "ポップコーン入札を有効にする",
+          "help": "入札が終了近くになった場合、オークション時間を自動的に延長します。",
+          "upgradeHelp": "入札が終了近くになった場合、オークション時間を自動的に延長します。 · Pro プランと Enterprise プランで利用可能です。",
+          "trigger": "トリガーしきい値 (秒)",
+          "triggerHelp": "この秒数が残っている場合、オークションを延長します。",
+          "extension": "延長時間 (秒)",
+          "extensionHelp": "オークションに追加する秒数。"
         },
         "chat": {
-          "title": "ðŸ’¬ Chat Box Visibility",
-          "description": "Control whether the Chat Box button appears under your storefront auction widget for this auction.",
-          "toggle": "Show Chat Box button on the widget",
-          "help": "When disabled, bidders will only see the View Bids link centered beneath the widget."
+          "title": "💬 チャットボックスの可視性",
+          "description": "このオークションのストアフロント オークション ウィジェットの下に [チャット ボックス] ボタンを表示するかどうかを制御します。",
+          "toggle": "ウィジェットにチャットボックスボタンを表示",
+          "help": "無効にすると、入札者にはウィジェットの下の中央にある [入札を表示] リンクのみが表示されます。"
         },
         "chatPremium": {
-          "title": "ðŸ’¬ Live Bidder Chat (Premium Feature)",
-          "description": "Keep bidders engaged with real-time conversation during your auctions. Upgrade your plan to use this feature.",
-          "available": "Available on the Enterprise plan."
+          "title": "💬 ライブ入札者チャット (プレミアム機能)",
+          "description": "オークション中に入札者がリアルタイムで会話できるようにします。この機能を使用するには、プランをアップグレードしてください。",
+          "available": "Enterprise プランで利用可能です。"
         }
       },
       "table": {
-          "errors": {
-            "fetch": "Failed to fetch auctions.",
-            "delete": "Failed to delete auction.",
-            "close": "Failed to close auction.",
-            "closeMissingId": "Failed to close auction: Auction ID not found.",
-            "noShop": "Error: No shop domain found.",
-            "noProductId": "Error: No product ID found for this auction.",
-            "openInStore": "Error opening product in store."
-          },
-          "toast": {
-            "deleted": "Auction deleted successfully.",
-            "closed": "Auction closed successfully."
-          },
-          "status": {
-            "reserveNotMet": "Ended Â· Reserve not met",
-            "noWinner": "Ended Â· No winner",
-            "ended": "Ended"
-          },
-          "unknownProduct": "Unknown Product",
-          "actions": {
-            "viewInStore": "View in store",
-            "viewDetails": "View auction details",
-            "edit": "Edit auction",
-            "delete": "Delete auction",
-            "close": "Close auction"
-          },
-          "loading": "Loading auctions...",
-          "empty": {
-            "title": "No auctions found",
-            "action": "Create auction",
-            "description": "Get started by creating your first auction."
-          },
-          "filters": {
-            "open": "Filter",
-            "clear": "Clear filters",
-            "title": "Filter Auctions",
-            "apply": "Apply Filters",
-            "statusLabel": "Status",
-            "productPlaceholder": "Enter product ID"
-          },
-          "columns": {
-            "product": "Product",
-            "start": "Start",
-            "end": "End",
-            "startBid": "Start Bid",
-            "currentBid": "Current Bid",
-            "buyNow": "Buy Now",
-            "reserve": "Reserve",
-            "status": "Status",
-            "bids": "Bids",
-            "actions": "Actions"
-          },
-          "footer": "Showing {{visible}} of {{total}} auctions",
-          "pagination": "Page {{current}} of {{total}}",
-          "delete": {
-            "title": "Delete Auction",
-            "confirm": "Delete",
-            "message": "Are you sure you want to delete this auction? This action cannot be undone.",
-            "hasBids": "Note: This auction has bids and cannot be deleted."
-          },
-          "close": {
-            "title": "Close Auction",
-            "confirm": "Close Auction",
-            "message": "Are you sure you want to close this auction? This will prevent new bids from being placed."
-          }
+        "errors": {
+          "fetch": "オークションの取得に失敗しました。",
+          "delete": "オークションの削除に失敗しました。",
+          "close": "オークションを終了できませんでした。",
+          "closeMissingId": "オークションを終了できませんでした: オークション ID が見つかりません。",
+          "noShop": "エラー: ショップのドメインが見つかりません。",
+          "noProductId": "エラー: このオークションには製品 ID が見つかりません。",
+          "openInStore": "ストアで商品を開くときにエラーが発生しました。"
         },
-      "details": {
-        "title": "Auction Details",
         "toast": {
-          "closed": "Auction closed successfully."
+          "deleted": "オークションは正常に削除されました。",
+          "closed": "オークションは無事終了しました。"
+        },
+        "status": {
+          "reserveNotMet": "終了しました・予約が満たされていません",
+          "noWinner": "終了・当選者なし",
+          "ended": "終了しました"
+        },
+        "unknownProduct": "不明な製品",
+        "actions": {
+          "viewInStore": "店内で見る",
+          "viewDetails": "オークションの詳細を見る",
+          "edit": "オークションを編集する",
+          "delete": "オークションを削除する",
+          "close": "オークションを閉じる"
+        },
+        "loading": "オークションを読み込み中...",
+        "empty": {
+          "title": "オークションが見つかりませんでした",
+          "action": "オークションの作成",
+          "description": "最初のオークションを作成することから始めます。"
+        },
+        "filters": {
+          "open": "フィルター",
+          "clear": "フィルターをクリアする",
+          "title": "オークションのフィルター",
+          "apply": "フィルターを適用する",
+          "statusLabel": "状態",
+          "productPlaceholder": "プロダクトIDを入力してください"
+        },
+        "columns": {
+          "product": "製品",
+          "start": "始める",
+          "end": "終わり",
+          "startBid": "入札を開始する",
+          "currentBid": "現在の入札額",
+          "buyNow": "今すぐ購入",
+          "reserve": "予約する",
+          "status": "状態",
+          "bids": "入札",
+          "actions": "アクション"
+        },
+        "footer": "{{total}} オークション中 {{visible}} 件を表示しています",
+        "pagination": "ページ {{current}} / {{total}}",
+        "delete": {
+          "title": "オークションの削除",
+          "confirm": "消去",
+          "message": "このオークションを削除してもよろしいですか?この操作は元に戻すことができません。",
+          "hasBids": "注：このオークションには入札があり、削除することはできません。"
+        },
+        "close": {
+          "title": "オークションを閉じる",
+          "confirm": "オークションを閉じる",
+          "message": "このオークションを終了してもよろしいですか?これにより、新たな入札ができなくなります。"
+        }
+      },
+      "details": {
+        "title": "オークション詳細",
+        "toast": {
+          "closed": "オークションは無事終了しました。"
         },
         "errors": {
-          "missingId": "Error: Auction ID not found.",
-          "close": "Error closing auction: {{message}}"
+          "missingId": "エラー: オークション ID が見つかりません。",
+          "close": "オークション終了エラー: {{message}}"
         },
         "overview": {
-          "title": "Auction Overview",
-          "productId": "Product ID",
-          "status": "Status",
-          "timeStatus": "Time Status",
-          "chat": "Live Chat"
+          "title": "オークション概要",
+          "productId": "プロダクトID",
+          "status": "状態",
+          "timeStatus": "時間ステータス",
+          "chat": "ライブチャット"
         },
         "timeStatus": {
-          "notStarted": "Not Started",
-          "live": "Live"
+          "notStarted": "未開始",
+          "live": "ライブ"
         },
         "details": {
-          "title": "Auction Details",
-          "startTime": "Start Time",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "currentBid": "Current Bid",
-          "buyNow": "Buy Now Price",
-          "totalBids": "Total Bids",
-          "created": "Created",
-          "updated": "Last Updated",
-          "reserve": "Reserve Price",
-          "popcorn": "Popcorn Bidding",
-          "popcornSettings": "Popcorn Settings",
-          "popcornSummary": "Trigger: {{trigger}}s Â· Extend: +{{extend}}s"
+          "title": "オークション詳細",
+          "startTime": "開始時間",
+          "endTime": "終了時間",
+          "startingBid": "入札開始",
+          "currentBid": "現在の入札額",
+          "buyNow": "今すぐ購入価格",
+          "totalBids": "合計入札額",
+          "created": "作成されました",
+          "updated": "最終更新日",
+          "reserve": "予約価格",
+          "popcorn": "ポップコーン入札",
+          "popcornSettings": "ポップコーンの設定",
+          "popcornSummary": "トリガー: {{trigger}}s · 延長: +{{extend}}s"
         },
         "bidHistory": {
-          "title": "Bid History",
+          "title": "入札履歴",
           "columns": {
-            "index": "#",
-            "bidder": "Bidder",
-            "email": "Email",
-            "amount": "Amount",
-            "time": "Time"
+            "index": null,
+            "bidder": "入札者",
+            "email": "電子メール",
+            "amount": "額",
+            "time": "時間"
           },
-          "empty": "No bids placed yet."
+          "empty": "まだ入札はありません。"
         },
         "actions": {
-          "close": "Close Auction"
+          "close": "オークションを閉じる"
         }
       }
     },
     "onboarding": {
       "page": {
-        "title": "Welcome to Bidly",
-        "subtitle": "Complete these steps to finish your setup."
+        "title": "ビドリーへようこそ",
+        "subtitle": "セットアップを完了するには、次の手順を実行します。"
       },
       "status": {
-        "loading": "Loading onboarding status"
+        "loading": "オンボーディングステータスを読み込んでいます"
       },
       "step1": {
-        "title": "Step 1 Â· Enable the Auction Widget",
-        "description": "Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.",
-        "detected": "We detected the widget is enabled in your theme.",
-        "notDetected": "If you have already enabled the widget, you can mark this step as complete manually.",
-        "error": "We couldn't confirm the widget automatically: {{error}}",
-        "completed": "Completed",
-        "pending": "Pending",
+        "title": "ステップ 1 · オークション ウィジェットを有効にする",
+        "description": "オンライン ストアで Bidly ウィジェットをアクティブにして、製品ページに表示できるようにします。これにより、Shopify テーマエディターが開き、アプリの埋め込みを有効にすることができます。",
+        "detected": "テーマでウィジェットが有効になっていることが検出されました。",
+        "notDetected": "ウィジェットをすでに有効にしている場合は、このステップを手動で完了としてマークできます。",
+        "error": "ウィジェットを自動的に確認できませんでした: {{error}}",
+        "completed": "完了",
+        "pending": "保留中",
         "actions": {
-          "openThemeEditor": "Open theme editor",
-          "refreshStatus": "Refresh status",
-          "markEnabled": "Mark widget as enabled"
+          "openThemeEditor": "テーマエディタを開く",
+          "refreshStatus": "ステータスの更新",
+          "markEnabled": "ウィジェットを有効としてマークする"
         },
         "toast": {
-          "marked": "Marked widget as enabled."
+          "marked": "ウィジェットを有効としてマークしました。"
         }
       },
       "step2": {
-        "title": "Step 2 Â· Add the Auction Marketplace to your menu",
-        "description": "Open your Online Store navigation and add a new menu item linking to your auction marketplace.",
-        "descriptionWithShop": "Open your Online Store navigation and add a new menu item linking to the marketplace. We've generated the URL for {{shop}}.",
-        "completed": "Completed",
-        "pending": "Pending",
-        "marketplaceUrl": "Marketplace URL",
+        "title": "ステップ 2 · オークション マーケットプレイスをメニューに追加する",
+        "description": "オンライン ストア ナビゲーションを開き、オークション マーケットプレイスにリンクする新しいメニュー項目を追加します。",
+        "descriptionWithShop": "オンライン ストア ナビゲーションを開き、マーケットプレイスにリンクする新しいメニュー項目を追加します。 {{shop}} の URL を生成しました。",
+        "completed": "完了",
+        "pending": "保留中",
+        "marketplaceUrl": "マーケットプレイスのURL",
         "actions": {
-          "copy": "Copy",
-          "goToMenu": "Go to menu settings",
-          "markDone": "Mark step as done",
-          "markedDone": "Marked as done"
+          "copy": "コピー",
+          "goToMenu": "メニュー設定に移動します",
+          "markDone": "ステップを完了としてマークする",
+          "markedDone": "完了としてマークされました"
         },
         "toast": {
-          "copied": "Marketplace URL copied",
-          "copyError": "Unable to copy URL. Please copy it manually.",
-          "reminder": "Remember to update your menu after copying the URL."
+          "copied": "マーケットプレイスのURLをコピーしました",
+          "copyError": "URLをコピーできません。手動でコピーしてください。",
+          "reminder": "URL をコピーした後は、必ずメニューを更新してください。"
         }
       },
       "finish": {
-        "title": "Finish setup",
-        "description": "Once both steps are complete, you're ready to start creating auctions with Bidly.",
-        "action": "Finish setup and open dashboard",
+        "title": "セットアップを完了する",
+        "description": "両方の手順が完了すると、Bidly でオークションの作成を開始する準備が整います。",
+        "action": "セットアップを完了してダッシュボードを開く",
         "toast": {
-          "complete": "Onboarding complete! Redirecting to your dashboard.",
-          "error": "Failed to complete onboarding. Please try again."
+          "complete": "オンボーディング完了！ダッシュボードにリダイレクトします。",
+          "error": "オンボーディングを完了できませんでした。もう一度試してください。"
         }
       },
       "errors": {
-        "loadStatus": "Failed to load onboarding status. Please try again."
+        "loadStatus": "オンボーディングステータスの読み込みに失敗しました。もう一度試してください。"
       }
     },
     "oauth": {
       "loading": {
-        "title": "Checking app setup...",
-        "message": "Checking app setup..."
+        "title": "アプリの設定を確認しています...",
+        "message": "アプリの設定を確認しています..."
       },
       "error": {
-        "title": "Setup Error",
-        "tryAgain": "Try Again"
+        "title": "セットアップエラー",
+        "tryAgain": "もう一度やり直してください"
       },
       "setup": {
-        "title": "Complete App Setup",
-        "description": "To use the auction features, you need to complete the app setup process. This will connect your store to the auction system and enable product search.",
+        "title": "アプリのセットアップを完了する",
+        "description": "オークション機能を使用するには、アプリのセットアッププロセスを完了する必要があります。これにより、ストアがオークション システムに接続され、商品検索が可能になります。",
         "whyNeeded": {
-          "title": "Why is this needed?",
-          "message": "The app needs permission to access your store's products to create auctions. This is a one-time setup process."
+          "title": "なぜこれが必要なのでしょうか?",
+          "message": "アプリには、オークションを作成するためにストアの商品にアクセスするための権限が必要です。これは 1 回限りのセットアップ プロセスです。"
         },
         "manualShop": {
-          "label": "Please enter your Shopify store domain:",
-          "placeholder": "store.myshopify.com"
+          "label": "Shopify ストアのドメインを入力してください:",
+          "placeholder": "ストア.myshopify.com"
         },
-        "action": "Complete Setup",
+        "action": "セットアップを完了する",
         "errors": {
-          "noShop": "Unable to get shop information. Please enter your shop domain manually below.",
-          "invalidShop": "Invalid shop parameter. Please refresh the page or access the app through Shopify admin.",
-          "invalidFormat": "Invalid shop domain format: {{shop}}. Expected format: store.myshopify.com",
-          "validationFailed": "Shop domain validation failed. Received: {{shop}}",
-          "urlConstruction": "Error constructing OAuth URL. Please try again."
+          "noShop": "ショップ情報が取得できません。以下にショップのドメインを手動で入力してください。",
+          "invalidShop": "ショップパラメータが無効です。ページを更新するか、Shopify 管理者からアプリにアクセスしてください。",
+          "invalidFormat": "ショップのドメイン形式が無効です: {{shop}}。予期される形式:store.myshopify.com",
+          "validationFailed": "ショップドメインの検証に失敗しました。受信しました: {{shop}}",
+          "urlConstruction": "OAuth URL の構築中にエラーが発生しました。もう一度試してください。"
         }
       }
     }
   }
 }
-
-

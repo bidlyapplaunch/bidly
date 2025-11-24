@@ -1,7 +1,6 @@
 {
-  "bidConfirmation": "Your bid on {{auction_title}} has been received",
-  "outbidNotification": "You have been outbid on {{auction_title}}",
-  "winnerNotification": "You won the auction for {{auction_title}}!",
-  "auctionEndingSoon": "{{auction_title}} is ending soon"
+  "bidConfirmation": "{{auction_title}} への入札を受領しました",
+  "outbidNotification": "{{auction_title}} で高値で入札されました",
+  "winnerNotification": "{{auction_title}} のオークションを落札しました。",
+  "auctionEndingSoon": "{{auction_title}} はまもなく終了します"
 }
-

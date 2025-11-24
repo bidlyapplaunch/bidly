@@ -1,7 +1,6 @@
 {
-  "bidConfirmation": "Your bid on {{auction_title}} has been received",
-  "outbidNotification": "You have been outbid on {{auction_title}}",
-  "winnerNotification": "You won the auction for {{auction_title}}!",
-  "auctionEndingSoon": "{{auction_title}} is ending soon"
+  "bidConfirmation": "Twoja oferta na {{auction_title}} została otrzymana",
+  "outbidNotification": "Twoja oferta została przebita w dniu {{auction_title}}",
+  "winnerNotification": "Wygrałeś aukcję na {{auction_title}}!",
+  "auctionEndingSoon": "{{auction_title}} wkrótce się zakończy"
 }
-

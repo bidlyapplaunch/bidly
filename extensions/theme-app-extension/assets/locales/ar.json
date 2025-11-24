@@ -1,107 +1,106 @@
 {
   "widget": {
     "header": {
-      "title": "Live Auction",
-      "live": "LIVE",
-      "startingSoon": "STARTING SOON",
-      "ended": "ENDED",
-      "reserveNotMet": "RESERVE NOT MET"
+      "title": "المزاد المباشر",
+      "live": "يعيش",
+      "startingSoon": "البدء قريبًا",
+      "ended": "انتهى",
+      "reserveNotMet": "الاحتياطي لم يتم الوفاء به"
     },
     "buttons": {
-      "placeBid": "Place Bid",
-      "buyNow": "Buy Now",
-      "loginShopify": "Log in with Shopify",
-      "continueGuest": "Continue as Guest (View Only)",
-      "logout": "Logout",
-      "chatBox": "Chat Box",
-      "viewBids": "View Bids",
-      "viewBidHistory": "View Bid History"
+      "placeBid": "مكان العطاء",
+      "buyNow": "اشتري الآن",
+      "loginShopify": "تسجيل الدخول مع شوبيفاي",
+      "continueGuest": "المتابعة كضيف (عرض فقط)",
+      "logout": "تسجيل الخروج",
+      "chatBox": "صندوق الدردشة",
+      "viewBids": "عرض العطاءات",
+      "viewBidHistory": "عرض تاريخ العطاء"
     },
     "countdown": {
-      "endsIn": "Ends In:",
-      "startingIn": "Starting in:",
-      "days": "d",
-      "hours": "h",
-      "minutes": "m",
-      "seconds": "s"
+      "endsIn": "ينتهي في:",
+      "startingIn": "البدء في:",
+      "days": "د",
+      "hours": "ح",
+      "minutes": "م",
+      "seconds": "ق"
     },
     "labels": {
-      "currentBid": "CURRENT BID:",
-      "startingBid": "STARTING BID:",
-      "minimumBid": "MINIMUM BID:",
-      "bids": "BIDS:",
-      "guestUser": "Guest User"
+      "currentBid": "العرض الحالي:",
+      "startingBid": "عرض البداية:",
+      "minimumBid": "الحد الأدنى للمزايدة:",
+      "bids": "العطاءات:",
+      "guestUser": "مستخدم ضيف"
     },
     "login": {
-      "title": "Login Required",
-      "message": "Please log in to view this auction",
-      "viewOnly": "View Only",
-      "viewOnlyMessage": "Login to Shopify to enter the auction"
+      "title": "تسجيل الدخول مطلوب",
+      "message": "الرجاء تسجيل الدخول لمشاهدة هذا المزاد",
+      "viewOnly": "عرض فقط",
+      "viewOnlyMessage": "قم بتسجيل الدخول إلى Shopify لدخول المزاد"
     },
     "loading": {
-      "title": "Preparing your auction...",
-      "message": "Checking your account and syncing live bids."
+      "title": "إعداد المزاد الخاص بك...",
+      "message": "التحقق من حسابك ومزامنة عروض الأسعار المباشرة."
     },
     "errors": {
-      "invalidBid": "Invalid bid amount",
-      "bidTooLow": "Bid must be higher than current bid",
-      "auctionEnded": "Auction Ended",
-      "reserveNotMet": "Reserve Not Met",
-      "auctionNotFound": "Auction not found",
-      "networkError": "Network error. Please try again.",
-      "bidFailed": "Failed to place bid. Please try again."
+      "invalidBid": "مبلغ العرض غير صالح",
+      "bidTooLow": "يجب أن يكون العرض أعلى من العرض الحالي",
+      "auctionEnded": "انتهى المزاد",
+      "reserveNotMet": "الاحتياطي لم يتم الوفاء به",
+      "auctionNotFound": "لم يتم العثور على المزاد",
+      "networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+      "bidFailed": "فشل في تقديم العطاء. يرجى المحاولة مرة أخرى."
     },
     "messages": {
-      "auctionEnded": "Auction has ended. Final bid: ${amount}",
-      "auctionEndedReserve": "Auction ended — reserve not met",
-      "bidPlaced": "Bid placed successfully!",
-      "newBid": "New bid: ${amount}",
-      "bidNotification": "New bid placed!",
-      "currentBidLabel": "Current Bid: ${amount}"
+      "auctionEnded": "انتهى المزاد. العرض النهائي: ${amount}",
+      "auctionEndedReserve": "انتهى المزاد - لم يتم استيفاء الاحتياطي",
+      "bidPlaced": "تم تقديم العرض بنجاح!",
+      "newBid": "عرض السعر الجديد: ${amount}",
+      "bidNotification": "تم تقديم عرض جديد!",
+      "currentBidLabel": "المزايدة الحالية: ${amount}"
     },
     "chat": {
-      "title": "Chat",
-      "send": "Send",
-      "placeholder": "Type a message...",
-      "empty": "No messages yet. Start the conversation!",
-      "connecting": "Connecting...",
-      "disconnected": "Disconnected",
-      "error": "Error sending message"
+      "title": "محادثة",
+      "send": "يرسل",
+      "placeholder": "اكتب رسالة...",
+      "empty": "لا توجد رسائل حتى الآن. ابدأ المحادثة!",
+      "connecting": "جارٍ الاتصال...",
+      "disconnected": "غير متصل",
+      "error": "حدث خطأ أثناء إرسال الرسالة"
     },
     "bidHistory": {
-      "title": "Bid History",
-      "noBids": "No bids yet",
-      "bidder": "Bidder",
-      "amount": "Amount",
-      "time": "Time"
+      "title": "تاريخ العطاء",
+      "noBids": "لا توجد عروض بعد",
+      "bidder": "مقدم العرض",
+      "amount": "كمية",
+      "time": "وقت"
     },
     "guestLogin": {
-      "title": "Continue as Guest",
-      "fullName": "Full Name",
-      "emailAddress": "Email Address",
-      "continue": "Continue as Guest",
-      "cancel": "Cancel",
-      "errorNameEmail": "Please enter both name and email",
-      "errorFailed": "Login failed. Please try again.",
-      "errorForm": "Form error. Please try again."
+      "title": "الاستمرار كضيف",
+      "fullName": "الاسم الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "continue": "الاستمرار كضيف",
+      "cancel": "يلغي",
+      "errorNameEmail": "الرجاء إدخال الاسم والبريد الإلكتروني",
+      "errorFailed": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+      "errorForm": "خطأ في النموذج. يرجى المحاولة مرة أخرى."
     },
     "common": {
-      "auctionItem": "Auction Item",
-      "yourName": "Your Name",
-      "yourEmail": "Your Email",
-      "loginToBid": "Login to Bid",
-      "logout": "Logout",
-      "processing": "Processing...",
-      "closeChat": "Close chat",
-      "loggedInAs": "Logged in as:",
-      "welcome": "Welcome, {name}!",
-      "pleaseLoginBid": "Please login to place a bid",
-      "pleaseLoginBuyNow": "Please login to buy now",
-      "invalidBidAmount": "Please enter a valid bid amount",
-      "bidInputNotFound": "Bid input not found. Please refresh the page.",
-      "bidButtonNotFound": "Bid button not found. Please refresh the page.",
-      "buyNowButtonNotFound": "Buy now button not found. Please refresh the page."
+      "auctionItem": "عنصر المزاد",
+      "yourName": "اسمك",
+      "yourEmail": "البريد الإلكتروني الخاص بك",
+      "loginToBid": "تسجيل الدخول للمزايدة",
+      "logout": "تسجيل الخروج",
+      "processing": "يعالج...",
+      "closeChat": "إغلاق الدردشة",
+      "loggedInAs": "تم تسجيل الدخول كـ:",
+      "welcome": "مرحبًا، {name}!",
+      "pleaseLoginBid": "الرجاء تسجيل الدخول لوضع العرض",
+      "pleaseLoginBuyNow": "الرجاء تسجيل الدخول للشراء الآن",
+      "invalidBidAmount": "الرجاء إدخال مبلغ صالح للمزايدة",
+      "bidInputNotFound": "لم يتم العثور على إدخال العطاء. يرجى تحديث الصفحة.",
+      "bidButtonNotFound": "لم يتم العثور على زر العرض. يرجى تحديث الصفحة.",
+      "buyNowButtonNotFound": "زر الشراء الآن غير موجود. يرجى تحديث الصفحة."
     }
   }
 }
-

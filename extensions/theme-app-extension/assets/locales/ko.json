@@ -1,107 +1,106 @@
 {
   "widget": {
     "header": {
-      "title": "Live Auction",
-      "live": "LIVE",
-      "startingSoon": "STARTING SOON",
-      "ended": "ENDED",
-      "reserveNotMet": "RESERVE NOT MET"
+      "title": "실시간 경매",
+      "live": "살다",
+      "startingSoon": "곧 시작",
+      "ended": "종료됨",
+      "reserveNotMet": "예약이 충족되지 않음"
     },
     "buttons": {
-      "placeBid": "Place Bid",
-      "buyNow": "Buy Now",
-      "loginShopify": "Log in with Shopify",
-      "continueGuest": "Continue as Guest (View Only)",
-      "logout": "Logout",
-      "chatBox": "Chat Box",
-      "viewBids": "View Bids",
-      "viewBidHistory": "View Bid History"
+      "placeBid": "입찰하기",
+      "buyNow": "지금 구매",
+      "loginShopify": "Shopify로 로그인",
+      "continueGuest": "게스트로 계속(보기 전용)",
+      "logout": "로그아웃",
+      "chatBox": "채팅 상자",
+      "viewBids": "입찰 보기",
+      "viewBidHistory": "입찰 내역 보기"
     },
     "countdown": {
-      "endsIn": "Ends In:",
-      "startingIn": "Starting in:",
-      "days": "d",
-      "hours": "h",
-      "minutes": "m",
-      "seconds": "s"
+      "endsIn": "종료 날짜:",
+      "startingIn": "시작 날짜:",
+      "days": "디",
+      "hours": "시간",
+      "minutes": "중",
+      "seconds": "에스"
     },
     "labels": {
-      "currentBid": "CURRENT BID:",
-      "startingBid": "STARTING BID:",
-      "minimumBid": "MINIMUM BID:",
-      "bids": "BIDS:",
-      "guestUser": "Guest User"
+      "currentBid": "현재 입찰:",
+      "startingBid": "시작 입찰:",
+      "minimumBid": "최소 입찰가:",
+      "bids": "입찰:",
+      "guestUser": "게스트 사용자"
     },
     "login": {
-      "title": "Login Required",
-      "message": "Please log in to view this auction",
-      "viewOnly": "View Only",
-      "viewOnlyMessage": "Login to Shopify to enter the auction"
+      "title": "로그인 필요",
+      "message": "이 경매를 보려면 로그인하세요.",
+      "viewOnly": "보기 전용",
+      "viewOnlyMessage": "경매에 참여하려면 Shopify에 로그인하세요."
     },
     "loading": {
-      "title": "Preparing your auction...",
-      "message": "Checking your account and syncing live bids."
+      "title": "경매 준비 중...",
+      "message": "계정을 확인하고 실시간 입찰을 동기화하는 중입니다."
     },
     "errors": {
-      "invalidBid": "Invalid bid amount",
-      "bidTooLow": "Bid must be higher than current bid",
-      "auctionEnded": "Auction Ended",
-      "reserveNotMet": "Reserve Not Met",
-      "auctionNotFound": "Auction not found",
-      "networkError": "Network error. Please try again.",
-      "bidFailed": "Failed to place bid. Please try again."
+      "invalidBid": "잘못된 입찰 금액",
+      "bidTooLow": "입찰가는 현재 입찰가보다 높아야 합니다.",
+      "auctionEnded": "경매 종료됨",
+      "reserveNotMet": "예약이 충족되지 않음",
+      "auctionNotFound": "경매를 찾을 수 없습니다",
+      "networkError": "네트워크 오류입니다. 다시 시도해 주세요.",
+      "bidFailed": "입찰에 실패했습니다. 다시 시도해 주세요."
     },
     "messages": {
-      "auctionEnded": "Auction has ended. Final bid: ${amount}",
-      "auctionEndedReserve": "Auction ended — reserve not met",
-      "bidPlaced": "Bid placed successfully!",
-      "newBid": "New bid: ${amount}",
-      "bidNotification": "New bid placed!",
-      "currentBidLabel": "Current Bid: ${amount}"
+      "auctionEnded": "경매가 종료되었습니다. 최종 입찰: ${amount}",
+      "auctionEndedReserve": "경매 종료 — 예약금이 충족되지 않음",
+      "bidPlaced": "입찰이 성공적으로 이루어졌습니다!",
+      "newBid": "새 입찰가: ${amount}",
+      "bidNotification": "새로운 입찰이 이루어졌습니다!",
+      "currentBidLabel": "현재 입찰: ${amount}"
     },
     "chat": {
-      "title": "Chat",
-      "send": "Send",
-      "placeholder": "Type a message...",
-      "empty": "No messages yet. Start the conversation!",
-      "connecting": "Connecting...",
-      "disconnected": "Disconnected",
-      "error": "Error sending message"
+      "title": "채팅",
+      "send": "보내다",
+      "placeholder": "메시지를 입력하세요...",
+      "empty": "아직 메시지가 없습니다. 대화를 시작해 보세요!",
+      "connecting": "연결 중...",
+      "disconnected": "연결이 끊김",
+      "error": "메시지를 보내는 중에 오류가 발생했습니다."
     },
     "bidHistory": {
-      "title": "Bid History",
-      "noBids": "No bids yet",
-      "bidder": "Bidder",
-      "amount": "Amount",
-      "time": "Time"
+      "title": "입찰 내역",
+      "noBids": "아직 입찰이 없습니다.",
+      "bidder": "명령자",
+      "amount": "양",
+      "time": "시간"
     },
     "guestLogin": {
-      "title": "Continue as Guest",
-      "fullName": "Full Name",
-      "emailAddress": "Email Address",
-      "continue": "Continue as Guest",
-      "cancel": "Cancel",
-      "errorNameEmail": "Please enter both name and email",
-      "errorFailed": "Login failed. Please try again.",
-      "errorForm": "Form error. Please try again."
+      "title": "게스트로 계속",
+      "fullName": "성명",
+      "emailAddress": "이메일 주소",
+      "continue": "게스트로 계속",
+      "cancel": "취소",
+      "errorNameEmail": "이름과 이메일을 모두 입력해주세요",
+      "errorFailed": "로그인에 실패했습니다. 다시 시도해 주세요.",
+      "errorForm": "양식 오류입니다. 다시 시도해 주세요."
     },
     "common": {
-      "auctionItem": "Auction Item",
-      "yourName": "Your Name",
-      "yourEmail": "Your Email",
-      "loginToBid": "Login to Bid",
-      "logout": "Logout",
-      "processing": "Processing...",
-      "closeChat": "Close chat",
-      "loggedInAs": "Logged in as:",
-      "welcome": "Welcome, {name}!",
-      "pleaseLoginBid": "Please login to place a bid",
-      "pleaseLoginBuyNow": "Please login to buy now",
-      "invalidBidAmount": "Please enter a valid bid amount",
-      "bidInputNotFound": "Bid input not found. Please refresh the page.",
-      "bidButtonNotFound": "Bid button not found. Please refresh the page.",
-      "buyNowButtonNotFound": "Buy now button not found. Please refresh the page."
+      "auctionItem": "경매 품목",
+      "yourName": "당신의 이름",
+      "yourEmail": "귀하의 이메일",
+      "loginToBid": "입찰에 로그인",
+      "logout": "로그아웃",
+      "processing": "처리 중...",
+      "closeChat": "채팅 닫기",
+      "loggedInAs": "다음 계정으로 로그인됨:",
+      "welcome": "{name}님, 환영합니다!",
+      "pleaseLoginBid": "입찰을 하려면 로그인하세요.",
+      "pleaseLoginBuyNow": "지금 구매하려면 로그인하세요.",
+      "invalidBidAmount": "유효한 입찰 금액을 입력하세요.",
+      "bidInputNotFound": "입찰 입력을 찾을 수 없습니다. 페이지를 새로고침하세요.",
+      "bidButtonNotFound": "입찰 버튼을 찾을 수 없습니다. 페이지를 새로고침하세요.",
+      "buyNowButtonNotFound": "지금 구매 버튼을 찾을 수 없습니다. 페이지를 새로고침하세요."
     }
   }
 }
-

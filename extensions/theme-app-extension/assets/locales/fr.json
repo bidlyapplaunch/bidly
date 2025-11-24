@@ -1,107 +1,106 @@
 {
   "widget": {
     "header": {
-      "title": "Live Auction",
-      "live": "LIVE",
-      "startingSoon": "STARTING SOON",
-      "ended": "ENDED",
-      "reserveNotMet": "RESERVE NOT MET"
+      "title": "Vente aux enchères en direct",
+      "live": "EN DIRECT",
+      "startingSoon": "COMMENCER BIENTÔT",
+      "ended": "TERMINÉ",
+      "reserveNotMet": "RÉSERVE NON ATTEINTE"
     },
     "buttons": {
-      "placeBid": "Place Bid",
-      "buyNow": "Buy Now",
-      "loginShopify": "Log in with Shopify",
-      "continueGuest": "Continue as Guest (View Only)",
-      "logout": "Logout",
-      "chatBox": "Chat Box",
-      "viewBids": "View Bids",
-      "viewBidHistory": "View Bid History"
+      "placeBid": "Placer une offre",
+      "buyNow": "Acheter maintenant",
+      "loginShopify": "Connectez-vous avec Shopify",
+      "continueGuest": "Continuer en tant qu'invité (affichage uniquement)",
+      "logout": "Déconnexion",
+      "chatBox": "Boîte de discussion",
+      "viewBids": "Voir les offres",
+      "viewBidHistory": "Afficher l'historique des enchères"
     },
     "countdown": {
-      "endsIn": "Ends In:",
-      "startingIn": "Starting in:",
+      "endsIn": "Se termine par :",
+      "startingIn": "À partir de :",
       "days": "d",
       "hours": "h",
       "minutes": "m",
       "seconds": "s"
     },
     "labels": {
-      "currentBid": "CURRENT BID:",
-      "startingBid": "STARTING BID:",
-      "minimumBid": "MINIMUM BID:",
-      "bids": "BIDS:",
-      "guestUser": "Guest User"
+      "currentBid": "OFFRE ACTUELLE :",
+      "startingBid": "ENCHÈRE DE DÉMARRAGE :",
+      "minimumBid": "ENCHÈRE MINIMALE :",
+      "bids": "OFFRES :",
+      "guestUser": "Utilisateur invité"
     },
     "login": {
-      "title": "Login Required",
-      "message": "Please log in to view this auction",
-      "viewOnly": "View Only",
-      "viewOnlyMessage": "Login to Shopify to enter the auction"
+      "title": "Connexion requise",
+      "message": "Veuillez vous connecter pour voir cette vente aux enchères",
+      "viewOnly": "Afficher uniquement",
+      "viewOnlyMessage": "Connectez-vous à Shopify pour participer à l'enchère"
     },
     "loading": {
-      "title": "Preparing your auction...",
-      "message": "Checking your account and syncing live bids."
+      "title": "Préparez votre enchère...",
+      "message": "Vérification de votre compte et synchronisation des enchères en direct."
     },
     "errors": {
-      "invalidBid": "Invalid bid amount",
-      "bidTooLow": "Bid must be higher than current bid",
-      "auctionEnded": "Auction Ended",
-      "reserveNotMet": "Reserve Not Met",
-      "auctionNotFound": "Auction not found",
-      "networkError": "Network error. Please try again.",
-      "bidFailed": "Failed to place bid. Please try again."
+      "invalidBid": "Montant de l'enchère invalide",
+      "bidTooLow": "L'enchère doit être supérieure à l'enchère actuelle",
+      "auctionEnded": "Enchère terminée",
+      "reserveNotMet": "Réserve non respectée",
+      "auctionNotFound": "Enchère introuvable",
+      "networkError": "Erreur réseau. Veuillez réessayer.",
+      "bidFailed": "Échec de la soumission. Veuillez réessayer."
     },
     "messages": {
-      "auctionEnded": "Auction has ended. Final bid: ${amount}",
-      "auctionEndedReserve": "Auction ended — reserve not met",
-      "bidPlaced": "Bid placed successfully!",
-      "newBid": "New bid: ${amount}",
-      "bidNotification": "New bid placed!",
-      "currentBidLabel": "Current Bid: ${amount}"
+      "auctionEnded": "L'enchère est terminée. Enchère finale : {amount} $",
+      "auctionEndedReserve": "Enchère terminée – réserve non respectée",
+      "bidPlaced": "Enchère placée avec succès !",
+      "newBid": "Nouvelle enchère : {amount} $",
+      "bidNotification": "Nouvelle enchère placée !",
+      "currentBidLabel": "Enchère actuelle : {amount} $"
     },
     "chat": {
       "title": "Chat",
-      "send": "Send",
-      "placeholder": "Type a message...",
-      "empty": "No messages yet. Start the conversation!",
-      "connecting": "Connecting...",
-      "disconnected": "Disconnected",
-      "error": "Error sending message"
+      "send": "Envoyer",
+      "placeholder": "Tapez un message...",
+      "empty": "Aucun message pour l'instant. Commencez la conversation !",
+      "connecting": "De liaison...",
+      "disconnected": "Déconnecté",
+      "error": "Erreur lors de l'envoi du message"
     },
     "bidHistory": {
-      "title": "Bid History",
-      "noBids": "No bids yet",
-      "bidder": "Bidder",
-      "amount": "Amount",
-      "time": "Time"
+      "title": "Historique des enchères",
+      "noBids": "Aucune offre pour l'instant",
+      "bidder": "Soumissionnaire",
+      "amount": "Montant",
+      "time": "Temps"
     },
     "guestLogin": {
-      "title": "Continue as Guest",
-      "fullName": "Full Name",
-      "emailAddress": "Email Address",
-      "continue": "Continue as Guest",
-      "cancel": "Cancel",
-      "errorNameEmail": "Please enter both name and email",
-      "errorFailed": "Login failed. Please try again.",
-      "errorForm": "Form error. Please try again."
+      "title": "Continuer en tant qu'invité",
+      "fullName": "Nom et prénom",
+      "emailAddress": "Adresse email",
+      "continue": "Continuer en tant qu'invité",
+      "cancel": "Annuler",
+      "errorNameEmail": "Veuillez entrer votre nom et votre adresse e-mail",
+      "errorFailed": "La connexion a échoué. Veuillez réessayer.",
+      "errorForm": "Erreur de formulaire. Veuillez réessayer."
     },
     "common": {
-      "auctionItem": "Auction Item",
-      "yourName": "Your Name",
-      "yourEmail": "Your Email",
-      "loginToBid": "Login to Bid",
-      "logout": "Logout",
-      "processing": "Processing...",
-      "closeChat": "Close chat",
-      "loggedInAs": "Logged in as:",
-      "welcome": "Welcome, {name}!",
-      "pleaseLoginBid": "Please login to place a bid",
-      "pleaseLoginBuyNow": "Please login to buy now",
-      "invalidBidAmount": "Please enter a valid bid amount",
-      "bidInputNotFound": "Bid input not found. Please refresh the page.",
-      "bidButtonNotFound": "Bid button not found. Please refresh the page.",
-      "buyNowButtonNotFound": "Buy now button not found. Please refresh the page."
+      "auctionItem": "Article aux enchères",
+      "yourName": "Votre nom",
+      "yourEmail": "Votre e-mail",
+      "loginToBid": "Connectez-vous pour enchérir",
+      "logout": "Déconnexion",
+      "processing": "Traitement...",
+      "closeChat": "Fermer le chat",
+      "loggedInAs": "Connecté en tant que :",
+      "welcome": "Bienvenue, {name} !",
+      "pleaseLoginBid": "Veuillez vous connecter pour placer une enchère",
+      "pleaseLoginBuyNow": "Veuillez vous connecter pour acheter maintenant",
+      "invalidBidAmount": "Veuillez saisir un montant d'enchère valide",
+      "bidInputNotFound": "Entrée d'enchère introuvable. Veuillez actualiser la page.",
+      "bidButtonNotFound": "Bouton d'enchère introuvable. Veuillez actualiser la page.",
+      "buyNowButtonNotFound": "Bouton Acheter maintenant introuvable. Veuillez actualiser la page."
     }
   }
 }
-

@@ -1,882 +1,880 @@
-﻿{
+{
   "admin": {
     "common": {
-      "loadingApp": "Loading Bidlyâ€¦",
-      "preparingDashboard": "Preparing your dashboardâ€¦",
+      "loadingApp": "Bidly laden...",
+      "preparingDashboard": "Uw dashboard voorbereiden…",
       "appBridge": {
-        "missingShop": "No shop parameter found in the URL.",
-        "initializationFailed": "Failed to initialize Shopify App Bridge.",
-        "initializing": "Initializing Shopify App Bridgeâ€¦",
-        "connecting": "Connecting to Shopifyâ€¦",
-        "errorTitle": "App Initialization Error",
-        "openFromAdmin": "Please open this app from the Shopify admin."
+        "missingShop": "Geen winkelparameter gevonden in de URL.",
+        "initializationFailed": "Kan Shopify App Bridge niet initialiseren.",
+        "initializing": "Shopify App Bridge initialiseren…",
+        "connecting": "Verbinding maken met Shopify…",
+        "errorTitle": "Initialisatiefout van app",
+        "openFromAdmin": "Open deze app vanuit het Shopify-beheercentrum."
       },
-      "refresh": "Refresh",
-      "logout": "Logout",
-      "viewPlans": "View plans",
-      "back": "Back",
-      "createAuction": "Create Auction",
-      "saveChanges": "Save Changes",
-      "cancel": "Cancel",
-      "close": "Close",
-      "enabled": "Enabled",
-      "disabled": "Disabled",
-      "notSet": "Not set",
-      "notConfigured": "Not configured",
-      "notAvailable": "N/A"
+      "refresh": "Vernieuwen",
+      "logout": "Uitloggen",
+      "viewPlans": "Bekijk plannen",
+      "back": "Rug",
+      "createAuction": "Maak een veiling",
+      "saveChanges": "Wijzigingen opslaan",
+      "cancel": "Annuleren",
+      "close": "Dichtbij",
+      "enabled": "Ingeschakeld",
+      "disabled": "Gehandicapt",
+      "notSet": "Niet ingesteld",
+      "notConfigured": "Niet geconfigureerd",
+      "notAvailable": "N.v.t"
     },
     "nav": {
       "dashboard": "Dashboard",
-      "marketplace": "Auction Marketplace",
-      "widgetStyles": "Widget styles",
-      "marketplaceStyles": "Marketplace styles",
-      "mailService": "Mail service",
-      "plans": "Plans"
+      "marketplace": "Veiling marktplaats",
+      "widgetStyles": "Widgetstijlen",
+      "marketplaceStyles": "Marktplaats-stijlen",
+      "mailService": "Postservice",
+      "plans": "Plannen"
     },
     "auth": {
-      "title": "ðŸ” Bidly Admin Login",
+      "title": "🔐 Bidly beheerderslogin",
       "subtitles": {
-        "register": "Create a new admin account",
-        "login": "Sign in to your admin account"
+        "register": "Maak een nieuw beheerdersaccount",
+        "login": "Meld u aan bij uw beheerdersaccount"
       },
       "fields": {
-        "username": "Username",
-        "usernamePlaceholder": "Enter username",
-        "email": "Email",
-        "emailPlaceholder": "Enter email",
-        "password": "Password",
-        "passwordPlaceholder": "Enter password"
+        "username": "Gebruikersnaam",
+        "usernamePlaceholder": "Voer gebruikersnaam in",
+        "email": "E-mail",
+        "emailPlaceholder": "Voer e-mailadres in",
+        "password": "Wachtwoord",
+        "passwordPlaceholder": "Voer wachtwoord in"
       },
       "actions": {
-        "loading": "Please wait...",
+        "loading": "Even geduld a.u.b....",
         "register": "Register",
         "login": "Login"
       },
       "toggle": {
-        "login": "Already have an account? Login",
-        "register": "Need an account? Register"
+        "login": "Heeft u al een account? Login",
+        "register": "Een account nodig? Register"
       },
       "errors": {
-        "usernameRequired": "Username is required.",
-        "emailRequired": "Email is required.",
-        "passwordLength": "Password must be at least 6 characters.",
-        "generic": "Authentication failed."
+        "usernameRequired": "Gebruikersnaam is vereist.",
+        "emailRequired": "E-mail is vereist.",
+        "passwordLength": "Wachtwoord moet minimaal 6 tekens lang zijn.",
+        "generic": "Authenticatie mislukt."
       },
       "demo": {
-        "title": "Demo Credentials:",
-        "email": "Email: {{value}}",
-        "password": "Password: {{value}}"
+        "title": "Demogegevens:",
+        "email": "E-mail: {{value}}",
+        "password": "Wachtwoord: {{value}}"
       }
     },
     "mail_service": {
       "page": {
-        "title": "Mail Service"
+        "title": "Postservice"
       },
       "messages": {
-        "loadError": "Failed to load mail settings.",
-        "saveSuccess": "Mail settings saved successfully.",
-        "saveError": "Failed to save mail settings.",
-        "smtpTestSuccess": "Test email sent.",
-        "smtpTestError": "SMTP test failed.",
-        "upgradeForTests": "Upgrade to a Pro or Enterprise plan to send template tests.",
-        "recipientRequired": "Enter a test email recipient.",
-        "templateMissing": "Template not found.",
-        "templateTestSuccess": "Template test sent to {{recipient}}.",
-        "templateTestError": "Template test failed.",
-        "selectFieldForToken": "Select a template subject or HTML field to insert tokens."
+        "loadError": "Kan e-mailinstellingen niet laden.",
+        "saveSuccess": "E-mailinstellingen zijn succesvol opgeslagen.",
+        "saveError": "Kan e-mailinstellingen niet opslaan.",
+        "smtpTestSuccess": "Test-e-mail verzonden.",
+        "smtpTestError": "SMTP-test mislukt.",
+        "upgradeForTests": "Upgrade naar een Pro- of Enterprise-abonnement om sjabloontests te verzenden.",
+        "recipientRequired": "Voer een test-e-mailontvanger in.",
+        "templateMissing": "Sjabloon niet gevonden.",
+        "templateTestSuccess": "Sjabloontest verzonden naar {{recipient}}.",
+        "templateTestError": "Sjabloontest mislukt.",
+        "selectFieldForToken": "Selecteer een sjabloononderwerp of HTML-veld om tokens in te voegen."
       },
       "tokens": {
-        "title": "Available tokens",
-        "description": "Click a token to insert it into the subject or HTML field you're editing."
+        "title": "Beschikbare tokens",
+        "description": "Klik op een token om het in te voegen in het onderwerp- of HTML-veld dat u aan het bewerken bent."
       },
       "status": {
-        "loading": "Loading mail settings"
+        "loading": "E-mailinstellingen laden"
       },
       "banner": {
-        "upgradeTitle": "Upgrade required",
-        "upgradeDescription": "Custom mail settings are available on Pro and Enterprise plans."
+        "upgradeTitle": "Upgrade vereist",
+        "upgradeDescription": "Aangepaste e-mailinstellingen zijn beschikbaar voor Pro- en Enterprise-abonnementen."
       },
       "smtp": {
-        "title": "SMTP configuration",
-        "description": "Connect your own email server to send notifications from your domain.",
-        "useCustom": "Use my own email server",
-        "secure": "Use secure connection (TLS)",
-        "testRecipient": "Test email recipient",
-        "sendTest": "Send test email",
+        "title": "SMTP-configuratie",
+        "description": "Verbind uw eigen e-mailserver om meldingen vanuit uw domein te verzenden.",
+        "useCustom": "Gebruik mijn eigen e-mailserver",
+        "secure": "Gebruik een beveiligde verbinding (TLS)",
+        "testRecipient": "E-mailontvanger testen",
+        "sendTest": "Test-e-mail verzenden",
         "fields": {
-          "host": "Host",
-          "port": "Port",
-          "username": "Username",
-          "password": "Password / app password",
-          "fromName": "From name",
-          "fromEmail": "From email"
+          "host": "Gastheer",
+          "port": "Haven",
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord / app-wachtwoord",
+          "fromName": "Van naam",
+          "fromEmail": "Van e-mail"
         }
       },
       "templates": {
-        "title": "Email templates",
-        "description": "Customize Bidly notification content. Use the token panel to pull in dynamic values like bidder names or auction details.",
-        "testRecipient": "Test email recipient",
-        "testPlaceholder": "name@example.com",
-        "testHelper": "This address is used by the \"Send test using this template\" buttons below.",
-        "enabled": "Enabled",
-        "subject": "Subject",
-        "editorMode": "Editor mode",
-        "editorSimple": "Simple editor",
-        "editorHtml": "HTML editor",
-        "htmlLabel": "HTML content",
-        "textLabel": "Message body",
-        "reset": "Reset to default",
-        "sendTestForTemplate": "Send test using this template",
+        "title": "E-mailsjablonen",
+        "description": "Pas de inhoud van Bidly-meldingen aan. Gebruik het tokenpaneel om dynamische waarden op te halen, zoals de namen van bieders of veilingdetails.",
+        "testRecipient": "E-mailontvanger testen",
+        "testPlaceholder": "naam@voorbeeld.com",
+        "testHelper": "Dit adres wordt gebruikt door de onderstaande knoppen 'Test verzenden met deze sjabloon'.",
+        "enabled": "Ingeschakeld",
+        "subject": "Onderwerp",
+        "editorMode": "Editor-modus",
+        "editorSimple": "Eenvoudige editor",
+        "editorHtml": "HTML-editor",
+        "htmlLabel": "HTML-inhoud",
+        "textLabel": "Berichttekst",
+        "reset": "Resetten naar standaard",
+        "sendTestForTemplate": "Test verzenden met behulp van deze sjabloon",
         "bidConfirmation": {
-          "title": "Bid confirmation"
+          "title": "Bevestiging van bod"
         },
         "outbidNotification": {
-          "title": "Outbid notification"
+          "title": "Melding overboden"
         },
         "winnerNotification": {
-          "title": "Winner notification"
+          "title": "Kennisgeving van de winnaar"
         },
         "auctionEndingSoon": {
-          "title": "Auction ending soon"
+          "title": "Veiling eindigt binnenkort"
         },
         "adminNotification": {
-          "title": "Admin notification"
+          "title": "Beheerdersmelding"
         }
       },
       "actions": {
-        "save": "Save mail settings"
+        "save": "Bewaar e-mailinstellingen"
       }
     },
     "marketplace": {
       "page": {
-        "title": "Marketplace customization",
-        "subtitle": "Control the typography, template, and color system for the public auction marketplace."
+        "title": "Maatwerk op de marktplaats",
+        "subtitle": "Beheer de typografie, het sjabloon en het kleursysteem voor de openbare veilingmarkt."
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock marketplace styling.",
-        "bannerTitle": "Upgrade required to customize the marketplace",
-        "defaultMessage": "The marketplace customization requires the Pro or Enterprise plan."
+        "subtitle": "Upgrade uw Bidly-abonnement om marktplaatsstijl te ontgrendelen.",
+        "bannerTitle": "Upgrade vereist om de marktplaats aan te passen",
+        "defaultMessage": "Voor het aanpassen van de marktplaats is het Pro- of Enterprise-abonnement vereist."
       },
       "status": {
-        "loading": "Loading marketplace customization"
+        "loading": "Marktplaatsaanpassing laden"
       },
       "actions": {
-        "save": "Save changes",
-        "resetApplied": "Reset to applied",
-        "resetDefaults": "Restore defaults"
+        "save": "Wijzigingen opslaan",
+        "resetApplied": "Resetten naar toegepast",
+        "resetDefaults": "Standaardwaarden herstellen"
       },
       "messages": {
-        "saveSuccess": "Marketplace theme saved.",
-        "saveError": "Failed to save marketplace customization.",
-        "loadError": "Failed to load marketplace customization."
+        "saveSuccess": "Marktplaatsthema opgeslagen.",
+        "saveError": "Kan aanpassing van de marktplaats niet opslaan.",
+        "loadError": "Kan aanpassing van de marktplaats niet laden."
       },
       "errors": {
-        "unavailable": "Marketplace customization unavailable"
+        "unavailable": "Aanpassing van de marktplaats is niet beschikbaar"
       },
       "sections": {
         "design": {
-          "title": "Design foundation",
-          "heading": "Choose template",
-          "description": "Templates control spacing, radius, and depth. They apply instantly to every screen in the customer flow.",
-          "fontLabel": "Font family",
+          "title": "Ontwerp stichting",
+          "heading": "Kies sjabloon",
+          "description": "Sjablonen bepalen de afstand, straal en diepte. Ze zijn direct van toepassing op elk scherm in de klantenstroom.",
+          "fontLabel": "Lettertypefamilie",
           "templates": {
             "classic": {
-              "label": "Classic",
-              "description": "Balanced spacing, subtle depth, and rounded corners."
+              "label": "Klassiek",
+              "description": "Evenwichtige tussenruimte, subtiele diepte en afgeronde hoeken."
             },
             "modern": {
               "label": "Modern",
-              "description": "Softer surfaces, deeper shadows, and generous padding."
+              "description": "Zachtere oppervlakken, diepere schaduwen en royale vulling."
             },
             "minimal": {
-              "label": "Minimal",
-              "description": "Compact spacing with crisp lines and light shadows."
+              "label": "Minimaal",
+              "description": "Compacte spatiëring met scherpe lijnen en lichte schaduwen."
             },
             "bold": {
-              "label": "Bold",
-              "description": "Large radiuses, dramatic shadows, and pill buttons."
+              "label": "Vetgedrukt",
+              "description": "Grote radiussen, dramatische schaduwen en pillenknoppen."
             }
           }
         },
         "palette": {
-          "title": "Color palette",
-          "description": "Every UI element in the marketplace references these tokens. Update them to match your storefront.",
-          "gradientToggleLabel": "Toggle gradient background",
-          "gradientEnabled": "Gradient enabled",
-          "gradientDisabled": "Gradient disabled",
-          "gradientInfo": "Background color is managed by your gradient. Disable the gradient toggle to edit the solid background color."
+          "title": "Kleurenpalet",
+          "description": "Elk UI-element op de markt verwijst naar deze tokens. Update ze zodat ze bij uw winkelpui passen.",
+          "gradientToggleLabel": "Schakel verloopachtergrond in of uit",
+          "gradientEnabled": "Verloop ingeschakeld",
+          "gradientDisabled": "Verloop uitgeschakeld",
+          "gradientInfo": "De achtergrondkleur wordt beheerd door uw verloop. Schakel de verloopschakelaar uit om de effen achtergrondkleur te bewerken."
         }
       },
       "colors": {
         "primary": {
-          "label": "Primary",
-          "description": "Buttons, actions, and primary highlights."
+          "label": "Primair",
+          "description": "Knoppen, acties en primaire hoogtepunten."
         },
         "background": {
-          "label": "Background",
-          "description": "Marketplace page background."
+          "label": "Achtergrond",
+          "description": "Achtergrond van de marktplaatspagina."
         },
         "surface": {
-          "label": "Surface",
-          "description": "Cards, modals, and sheets."
+          "label": "Oppervlak",
+          "description": "Kaarten, modals en vellen."
         },
         "textPrimary": {
-          "label": "Primary text",
-          "description": "Headings and main text."
+          "label": "Primaire tekst",
+          "description": "Kopjes en hoofdtekst."
         },
         "textSecondary": {
-          "label": "Secondary text",
-          "description": "Muted text, helper copy, and labels."
+          "label": "Secundaire tekst",
+          "description": "Gedempte tekst, helperkopie en labels."
         },
         "buttonText": {
-          "label": "Button text",
-          "description": "Text inside secondary buttons and CTA labels."
+          "label": "Knop tekst",
+          "description": "Tekst binnen secundaire knoppen en CTA-labels."
         },
         "button": {
-          "label": "Button",
-          "description": "Secondary button background and border."
+          "label": "Knop",
+          "description": "Secundaire knopachtergrond en rand."
         },
         "border": {
-          "label": "Border",
-          "description": "Card outlines, dividers, and inputs."
+          "label": "Grens",
+          "description": "Kaartcontouren, verdelers en invoer."
         },
         "accent": {
           "label": "Accent",
-          "description": "Timers, stats, and pills."
+          "description": "Timers, statistieken en pillen."
         },
         "success": {
-          "label": "Success",
-          "description": "Positive badges and buy-now confirmations."
+          "label": "Succes",
+          "description": "Positieve badges en koop-nu-bevestigingen."
         },
         "error": {
-          "label": "Error",
-          "description": "Errors, ended states, and blocking toasts."
+          "label": "Fout",
+          "description": "Fouten, beëindigde statussen en geblokkeerde toasts."
         },
         "gradient1": {
-          "label": "Gradient start",
-          "description": "Hero gradient starting color."
+          "label": "Verloop begin",
+          "description": "Beginkleur van de heldverloop."
         },
         "gradient2": {
-          "label": "Gradient end",
-          "description": "Hero gradient ending color."
+          "label": "Verloop einde",
+          "description": "Held verloop eindkleur."
         }
       },
       "preview": {
-        "shopNameFallback": "your store",
-        "pageTitle": "Auction Marketplace Â· Preview",
-        "pageSubtitle": "This preview renders the exact markup used in the storefront.",
-        "demoAction": "Connected as demo customer"
+        "shopNameFallback": "jouw winkel",
+        "pageTitle": "Veilingmarktplaats · Preview",
+        "pageSubtitle": "Dit voorbeeld geeft de exacte opmaak weer die in de storefront wordt gebruikt.",
+        "demoAction": "Aangesloten als demoklant"
       },
       "previewCard": {
-        "title": "Live preview"
+        "title": "Live-voorbeeld"
       }
     },
     "widget": {
       "page": {
-        "title": "Widget customization",
-        "subtitle": "Control how the Bidly widget appears on your product pages without touching code."
+        "title": "Aanpassing van widgets",
+        "subtitle": "Bepaal hoe de Bidly-widget op uw productpagina's verschijnt zonder code aan te raken."
       },
       "planGate": {
-        "subtitle": "Upgrade your Bidly plan to unlock widget styling controls.",
-        "bannerTitle": "Upgrade required to customize the widget",
-        "defaultMessage": "The widget customization requires the Pro or Enterprise plan."
+        "subtitle": "Upgrade uw Bidly-abonnement om de stylingopties voor widgets te ontgrendelen.",
+        "bannerTitle": "Upgrade vereist om de widget aan te passen",
+        "defaultMessage": "Voor het aanpassen van de widget is het Pro- of Enterprise-abonnement vereist."
       },
       "status": {
-        "loading": "Loading customization settings"
+        "loading": "Aanpassingsinstellingen laden"
       },
       "actions": {
-        "save": "Save changes",
-        "resetSaved": "Reset to saved",
-        "resetDefaults": "Reset to defaults"
+        "save": "Wijzigingen opslaan",
+        "resetSaved": "Resetten naar opgeslagen",
+        "resetDefaults": "Resetten naar standaardwaarden"
       },
       "errors": {
-        "saveFailed": "We couldn't save the widget settings"
+        "saveFailed": "We konden de widgetinstellingen niet opslaan"
       },
       "sections": {
         "templates": {
-          "title": "Templates",
-          "description": "Start from a professionally designed preset. You can still adjust individual settings after selecting a template.",
-          "cardLabel": "Template {{id}} Â· {{name}}"
+          "title": "Sjablonen",
+          "description": "Begin met een professioneel ontworpen preset. Nadat u een sjabloon hebt geselecteerd, kunt u nog steeds individuele instellingen aanpassen.",
+          "cardLabel": "Sjabloon {{id}} · {{name}}"
         },
         "typography": {
-          "title": "Typography & layout",
-          "fontLabel": "Font family",
-          "radiusLabel": "Border radius",
-          "shadowLabel": "Depth / shadow"
+          "title": "Typografie & lay-out",
+          "fontLabel": "Lettertypefamilie",
+          "radiusLabel": "Randradius",
+          "shadowLabel": "Diepte / schaduw"
         },
         "gradient": {
-          "title": "Gradient & background",
-          "description": "Choose the gradient colors for the widget header or switch to a flat background.",
-          "enable": "Enable gradient",
-          "disable": "Disable gradient"
+          "title": "Verloop en achtergrond",
+          "description": "Kies de verloopkleuren voor de widgetkop of schakel over naar een vlakke achtergrond.",
+          "enable": "Schakel verloop in",
+          "disable": "Schakel verloop uit"
         },
         "colors": {
-          "title": "Fine tune colors",
-          "description": "Adjust individual tokens for text, buttons, and borders. All colors support hex values only."
+          "title": "Kleuren afstemmen",
+          "description": "Pas individuele tokens aan voor tekst, knoppen en randen. Alle kleuren ondersteunen alleen hexadecimale waarden."
         }
       },
       "previewStates": {
-        "active": "Active auction",
-        "pending": "Pending auction",
-        "ended": "Ended auction"
+        "active": "Actieve veiling",
+        "pending": "In afwachting van veiling",
+        "ended": "Einde veiling"
       },
       "previewCard": {
-        "title": "Live widget preview",
-        "stateLabel": "Preview state",
-        "description": "Preview updates instantly as you adjust settings. This iframe uses the same markup and tokens as the storefront widget.",
-        "iframeTitle": "Widget customization preview"
+        "title": "Live widgetvoorbeeld",
+        "stateLabel": "Voorbeeldstatus",
+        "description": "Bekijk direct een voorbeeld van updates terwijl u de instellingen aanpast. Dit iframe gebruikt dezelfde markeringen en tokens als de storefront-widget.",
+        "iframeTitle": "Voorbeeld van aanpassing van widgets"
       },
       "colors": {
         "accent": {
-          "label": "Accent color",
-          "description": "Applied to prices and primary highlights."
+          "label": "Accentkleur",
+          "description": "Toegepast op prijzen en belangrijkste hoogtepunten."
         },
         "text": {
-          "label": "Primary text",
-          "description": "Default text color for widget content."
+          "label": "Primaire tekst",
+          "description": "Standaardtekstkleur voor widgetinhoud."
         },
         "timer": {
           "label": "Timer",
-          "description": "Countdown digits and timer emphasis."
+          "description": "Aftelcijfers en timernadruk."
         },
         "button_bg": {
-          "label": "Button background",
-          "description": "Primary button background color."
+          "label": "Knop achtergrond",
+          "description": "Achtergrondkleur van primaire knop."
         },
         "button_hover": {
-          "label": "Button hover",
-          "description": "Background color on hover focus."
+          "label": "Knop zweven",
+          "description": "Achtergrondkleur bij hoverfocus."
         },
         "button_text": {
-          "label": "Button text",
-          "description": "Text color for primary buttons."
+          "label": "Knop tekst",
+          "description": "Tekstkleur voor primaire knoppen."
         },
         "border": {
-          "label": "Border color",
-          "description": "Input borders, cards, and separators."
+          "label": "Randkleur",
+          "description": "Voer randen, kaarten en scheidingstekens in."
         }
       },
       "gradient": {
         "bg_solid": {
-          "label": "Solid background",
-          "description": "Used when gradient is disabled."
+          "label": "Stevige achtergrond",
+          "description": "Wordt gebruikt als verloop is uitgeschakeld."
         },
         "bg_gradient_start": {
-          "label": "Gradient start",
-          "description": "Starting color of the header gradient."
+          "label": "Verloop begin",
+          "description": "Beginkleur van de koptekstverloop."
         },
         "bg_gradient_end": {
-          "label": "Gradient end",
-          "description": "Ending color of the header gradient."
+          "label": "Verloop einde",
+          "description": "Eindkleur van de koptekstverloop."
         }
       }
     },
     "billing": {
       "page": {
-        "title": "Choose your Bidly plan",
-        "subtitle": "Manage your subscription and unlock premium auction features."
+        "title": "Kies uw Bidly-abonnement",
+        "subtitle": "Beheer uw abonnement en ontgrendel premium veilingfuncties."
       },
-      "planLimitReached": "You've reached your auction limit ({{limit}} auctions) for your current plan.",
-      "planUpgradePrompt": "Please upgrade your plan to create more auctions, or wait for existing auctions to end or close them manually.",
-      "planUpgradeConfirm": "Would you like to view available plans to upgrade?",
+      "planLimitReached": "U heeft uw veilinglimiet ({{limit}} veilingen) voor uw huidige abonnement bereikt.",
+      "planUpgradePrompt": "Upgrade uw plan om meer veilingen te maken, wacht tot bestaande veilingen eindigen of sluit ze handmatig.",
+      "planUpgradeConfirm": "Wilt u de beschikbare upgradeplannen bekijken?",
       "currentPlan": {
-        "title": "Current plan",
-        "active": "Active: {{plan}}",
-        "pending": "Pending: {{plan}}",
-        "loading": "Loadingâ€¦",
-        "cancelSubscription": "Cancel subscription"
+        "title": "Huidig ​​abonnement",
+        "active": "Actief: {{plan}}",
+        "pending": "In behandeling: {{plan}}",
+        "loading": "Laden…",
+        "cancelSubscription": "Abonnement opzeggen"
       },
       "plans": {
-        "title": "Plans",
+        "title": "Plannen",
         "free": {
-          "title": "Free",
-          "price": "$0/mo",
-          "description": "Get started with Bidly and run your first auction.",
+          "title": "Vrij",
+          "price": "$ 0/maand",
+          "description": "Ga aan de slag met Bidly en voer uw eerste veiling uit.",
           "highlights": {
-            "1": "1 active auction at a time",
-            "2": "Preview dashboard access",
-            "3": "Upgrade to unlock more auctions"
+            "1": "1 actieve veiling tegelijk",
+            "2": "Voorbeeld van dashboardtoegang",
+            "3": "Upgrade om meer veilingen te ontgrendelen"
           },
-          "actionLabel": "Free plan"
+          "actionLabel": "Gratis abonnement"
         },
         "basic": {
-          "title": "Basic",
-          "price": "$9.99/mo",
-          "description": "Start hosting auctions with the essentials.",
+          "title": "Basis",
+          "price": "$ 9,99/maand",
+          "description": "Begin met het hosten van veilingen met de essentiële zaken.",
           "highlights": {
-            "1": "3 active auctions",
-            "2": "Standard Bidly branding",
-            "3": "Core auction workflows"
+            "1": "3 actieve veilingen",
+            "2": "Standaard Bidly-branding",
+            "3": "Kernworkflows voor veilingen"
           },
-          "actionLabel": "Upgrade to Basic"
+          "actionLabel": "Upgrade naar Basis"
         },
         "pro": {
           "title": "Pro",
-          "price": "$19.99/mo",
-          "description": "Unlock advanced bidding and full widget styling.",
+          "price": "$ 19,99/maand",
+          "description": "Ontgrendel geavanceerd bieden en volledige widgetstijl.",
           "highlights": {
-            "1": "20 active auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding"
+            "1": "20 actieve veilingen",
+            "2": "Verwijder Bidly-branding",
+            "3": "Aanpassing van widgets en marktplaatsen",
+            "4": "Popcorn bieden"
           },
-          "actionLabel": "Upgrade to Pro"
+          "actionLabel": "Upgrade naar Pro"
         },
         "enterprise": {
-          "title": "Enterprise",
-          "price": "$49.99/mo",
-          "description": "Unlimited auctions plus real-time bidder chat.",
+          "title": "Onderneming",
+          "price": "$ 49,99/maand",
+          "description": "Onbeperkte veilingen plus realtime chat met bieders.",
           "highlights": {
-            "1": "Unlimited auctions",
-            "2": "Remove Bidly branding",
-            "3": "Widget & marketplace customization",
-            "4": "Popcorn bidding & live chatbox"
+            "1": "Onbeperkte veilingen",
+            "2": "Verwijder Bidly-branding",
+            "3": "Aanpassing van widgets en marktplaatsen",
+            "4": "Popcorn bieden en live chatbox"
           },
-          "actionLabel": "Upgrade to Enterprise"
+          "actionLabel": "Upgrade naar Enterprise"
         },
-        "trialCopy": "Includes a 7-day free trial. You can cancel anytime from your Shopify admin.",
-        "currentPlan": "Current plan",
-        "pendingActivation": "Pending activation",
-        "downgradeTo": "Downgrade to {{title}}",
-        "upgradeTo": "Upgrade to {{title}}"
+        "trialCopy": "Inclusief een gratis proefperiode van 7 dagen. Je kunt op elk moment annuleren via je Shopify-beheercentrum.",
+        "currentPlan": "Huidig ​​abonnement",
+        "pendingActivation": "In afwachting van activering",
+        "downgradeTo": "Downgraden naar {{title}}",
+        "upgradeTo": "Upgrade naar {{title}}"
       },
       "banners": {
         "subscriptionActivated": {
-          "title": "Subscription activated",
-          "message": "Your plan is now active. Thanks for upgrading!"
+          "title": "Abonnement geactiveerd",
+          "message": "Uw plan is nu actief. Bedankt voor het upgraden!"
         },
         "awaitingConfirmation": {
-          "title": "Awaiting confirmation",
-          "message": "Finish approving the subscription in Shopify to unlock premium features."
+          "title": "In afwachting van bevestiging",
+          "message": "Voltooi het goedkeuren van het abonnement in Shopify om premiumfuncties te ontgrendelen."
         },
         "subscriptionNotConfirmed": {
-          "title": "Subscription not confirmed",
-          "message": "There was a problem confirming billing."
+          "title": "Abonnement niet bevestigd",
+          "message": "Er is een probleem opgetreden bij het bevestigen van de facturering."
         },
         "subscriptionCancelled": {
-          "title": "Subscription cancelled",
+          "title": "Abonnement opgezegd",
           "message": "{{message}}"
         },
         "loadError": {
-          "title": "We couldn't load your plan",
-          "retry": "Retry"
+          "title": "We kunnen je plan niet laden",
+          "retry": "Opnieuw proberen"
         },
         "previewMode": {
-          "title": "Upgrade to activate Bidly",
-          "action": "View plans",
-          "message": "Preview mode lets you explore the admin, but auctions, customization, and live bidding are disabled until you choose a paid plan."
+          "title": "Upgrade om Bidly te activeren",
+          "action": "Bekijk plannen",
+          "message": "In de voorbeeldmodus kunt u de beheerder verkennen, maar veilingen, aanpassingen en live bieden zijn uitgeschakeld totdat u een betaald abonnement kiest."
         }
       },
       "downgrade": {
-        "title": "Downgrade to {{plan}}",
-        "confirm": "Confirm downgrade",
-        "cancel": "Cancel",
-        "message": "You are downgrading from {{current}} to {{target}}.",
-        "featureRemoved": "Feature removed: {{feature}}",
-        "noFeaturesRemoved": "No premium features will be removed.",
-        "auctionsToClose": "We will automatically close {{count}} scheduled auction{{plural}} to meet the {{limit}} limit.",
-        "auctionsFit": "Your current auction count already fits the {{limit}} limit.",
-        "unlimitedLimit": "The new plan includes an unlimited auction limit.",
-        "warning": "Downgrading takes effect immediately and cannot be undone automatically."
+        "title": "Downgraden naar {{plan}}",
+        "confirm": "Bevestig de downgrade",
+        "cancel": "Annuleren",
+        "message": "Je bent aan het downgraden van {{current}} naar {{target}}.",
+        "featureRemoved": "Functie verwijderd: {{feature}}",
+        "noFeaturesRemoved": "Er worden geen premiumfuncties verwijderd.",
+        "auctionsToClose": "We sluiten automatisch de {{count}} geplande veiling{{plural}} om aan de limiet van {{limit}} te voldoen.",
+        "auctionsFit": "Uw huidige veilingaantal voldoet al aan de limiet van {{limit}}.",
+        "unlimitedLimit": "Het nieuwe plan omvat een onbeperkte veilinglimiet.",
+        "warning": "Het downgraden wordt onmiddellijk van kracht en kan niet automatisch ongedaan worden gemaakt."
       },
       "cancel": {
-        "title": "Cancel subscription",
-        "confirm": "Confirm cancellation",
-        "keep": "Keep subscription",
-        "message": "Are you sure you want to cancel your subscription?",
-        "description": "Your subscription will remain active until the end of the current billing period. After that, your plan will automatically revert to the Free plan, which includes:",
+        "title": "Abonnement opzeggen",
+        "confirm": "Bevestig de annulering",
+        "keep": "Abonnement behouden",
+        "message": "Weet u zeker dat u uw abonnement wilt opzeggen?",
+        "description": "Uw abonnement blijft actief tot het einde van de huidige factureringsperiode. Daarna keert uw abonnement automatisch terug naar het gratis abonnement, dat het volgende omvat:",
         "freeFeatures": [
-          "1 active auction at a time",
-          "Standard Bidly branding",
-          "Basic auction features"
+          "1 actieve veiling tegelijk",
+          "Standaard Bidly-branding",
+          "Basis veilingfuncties"
         ],
-        "resubscribe": "You can resubscribe at any time to regain access to premium features."
+        "resubscribe": "U kunt zich op elk gewenst moment opnieuw abonneren om weer toegang te krijgen tot premiumfuncties."
       },
       "errors": {
-        "loadError": "Unable to load plan details",
-        "subscribeError": "Unable to start subscription. Please try again.",
-        "cancelError": "Unable to cancel subscription."
+        "loadError": "Kan plangegevens niet laden",
+        "subscribeError": "Kan abonnement niet starten. Probeer het opnieuw.",
+        "cancelError": "Kan abonnement niet opzeggen."
       },
       "formatLimit": {
-        "unlimited": "unlimited",
-        "activeAuctions": "{{count}} active auctions"
+        "unlimited": "onbeperkt",
+        "activeAuctions": "{{count}} actieve veilingen"
       }
     },
     "analytics": {
-      "loadingLabel": "Loading analytics",
-      "loadingText": "Loading analytics data...",
-      "error": "Failed to load analytics data.",
-      "empty": "No analytics data available.",
-      "unknownProduct": "Unknown product",
-      "headerTitle": "ðŸ“Š Enhanced Analytics",
+      "loadingLabel": "Analyses laden",
+      "loadingText": "Analysegegevens laden...",
+      "error": "Kan analysegegevens niet laden.",
+      "empty": "Geen analytische gegevens beschikbaar.",
+      "unknownProduct": "Onbekend product",
+      "headerTitle": "📊 Verbeterde analyses",
       "period": {
-        "label": "Time period",
-        "last7": "Last 7 days",
-        "last30": "Last 30 days",
-        "last90": "Last 90 days",
-        "lastYear": "Last year"
+        "label": "Tijdsperiode",
+        "last7": "Laatste 7 dagen",
+        "last30": "Laatste 30 dagen",
+        "last90": "Laatste 90 dagen",
+        "lastYear": "Vorig jaar"
       },
       "summary": {
-        "title": "ðŸ“ˆ Auction Summary",
-        "total": "Total Auctions",
-        "active": "Active Auctions",
-        "ended": "Ended Auctions",
-        "pending": "Pending Auctions",
-        "closed": "Closed Auctions"
+        "title": "📈 Veilingoverzicht",
+        "total": "Totaal veilingen",
+        "active": "Actieve veilingen",
+        "ended": "Beëindigde veilingen",
+        "pending": "In behandeling zijnde veilingen",
+        "closed": "Gesloten veilingen"
       },
       "revenue": {
-        "title": "ðŸ’° Revenue Metrics",
-        "total": "Total Revenue",
-        "averageBid": "Avg Bid Amount",
-        "currency": "Currency",
-        "successRate": "Bid Success Rate"
+        "title": "💰 Inkomstenstatistieken",
+        "total": "Totale omzet",
+        "averageBid": "Gem. bodbedrag",
+        "currency": "Munteenheid",
+        "successRate": "Succespercentage van biedingen"
       },
       "bidding": {
-        "title": "ðŸŽ¯ Bidding Statistics",
-        "total": "Total Bids",
-        "averagePerAuction": "Avg Bids per Auction",
-        "successRate": "Success Rate"
+        "title": "🎯 Biedstatistieken",
+        "total": "Totaal biedingen",
+        "averagePerAuction": "Gemiddelde biedingen per veiling",
+        "successRate": "Succespercentage"
       },
       "daily": {
-        "title": "ðŸ“… Daily Statistics (Last 7 Days)",
+        "title": "📅 Dagelijkse statistieken (laatste 7 dagen)",
         "columns": {
-          "date": "Date",
-          "auctions": "Auctions",
-          "revenue": "Revenue",
-          "bids": "Bids"
+          "date": "Datum",
+          "auctions": "Veilingen",
+          "revenue": "Winst",
+          "bids": "Biedingen"
         }
       },
       "top": {
-        "title": "ðŸ† Top Performing Auctions",
+        "title": "🏆 Best presterende veilingen",
         "columns": {
           "product": "Product",
-          "currentBid": "Current Bid",
-          "totalBids": "Total Bids",
-          "created": "Created"
+          "currentBid": "Huidig ​​bod",
+          "totalBids": "Totaal biedingen",
+          "created": "Gemaakt"
         }
       },
       "activity": {
-        "title": "âš¡ Recent Activity",
+        "title": "⚡ Recente activiteit",
         "columns": {
           "product": "Product",
-          "currentBid": "Current Bid",
+          "currentBid": "Huidig ​​bod",
           "status": "Status",
-          "created": "Created"
+          "created": "Gemaakt"
         }
       },
       "status": {
-        "pending": "Pending",
-        "active": "Active",
-        "ended": "Ended",
-        "closed": "Closed"
+        "pending": "In behandeling",
+        "active": "Actief",
+        "ended": "Beëindigd",
+        "closed": "Gesloten"
       }
     },
     "auctions": {
       "errors": {
-        "loadStats": "Failed to load dashboard statistics.",
-        "save": "Error saving auction: {{message}}",
-        "unknownStore": "Unable to determine store information."
+        "loadStats": "Kan dashboardstatistieken niet laden.",
+        "save": "Fout bij opslaan veiling: {{message}}",
+        "unknownStore": "Kan winkelinformatie niet bepalen."
       },
       "toast": {
-        "statusUpdate": "ðŸ”„ Auction status updated: {{status}}",
-        "updated": "Auction updated successfully.",
-        "created": "Auction created successfully.",
-        "marketplaceOpen": "Opening auction marketplace in a new tab."
+        "statusUpdate": "🔄 Veilingstatus bijgewerkt: {{status}}",
+        "updated": "Veiling succesvol bijgewerkt.",
+        "created": "Veiling succesvol aangemaakt.",
+        "marketplaceOpen": "Veilingmarktplaats openen in een nieuw tabblad."
       },
       "dashboard": {
-        "title": "Auction Dashboard",
-        "titleWithShop": "Auction Dashboard - {{shop}}",
-        "subtitleStore": "Store: {{store}}",
-        "subtitleDefault": "Manage your auctions and monitor performance.",
-        "subtitleNeedPlan": "Upgrade to a plan to start hosting auctions.",
-        "primaryCreate": "Create Auction",
-        "primaryChoosePlan": "Choose a plan to create auctions",
-        "previewTitle": "Preview mode active",
-        "previewDescription": "You can explore the Bidly dashboard, but creating or managing live auctions requires an active subscription. Choose a plan to unlock hosting, customization, and live bidding features.",
-        "overviewTitle": "Auction Overview",
-        "totalAuctions": "Total Auctions",
-        "activeAuctions": "Active Auctions",
-        "totalBids": "Total Bids",
-        "quickLinkWidget": "ðŸŽ¨ Widget styles",
-        "quickLinkMarketplace": "ðŸŽ¨ Marketplace styles",
-        "quickLinkPlans": "ðŸ§¾ Plans",
-        "quickLinkMail": "ðŸ“§ Mail service",
-        "tabAuctions": "ðŸ“‹ Auctions",
-        "tabAnalytics": "ðŸ“Š Analytics"
+        "title": "Veilingdashboard",
+        "titleWithShop": "Veilingdashboard - {{shop}}",
+        "subtitleStore": "Winkel: {{store}}",
+        "subtitleDefault": "Beheer uw veilingen en volg de prestaties.",
+        "subtitleNeedPlan": "Upgrade naar een abonnement om veilingen te gaan hosten.",
+        "primaryCreate": "Maak een veiling",
+        "primaryChoosePlan": "Kies een plan om veilingen te maken",
+        "previewTitle": "Voorbeeldmodus actief",
+        "previewDescription": "U kunt het Bidly-dashboard verkennen, maar voor het maken of beheren van live veilingen is een actief abonnement vereist. Kies een abonnement om functies voor hosting, maatwerk en live bieden te ontgrendelen.",
+        "overviewTitle": "Veilingoverzicht",
+        "totalAuctions": "Totaal veilingen",
+        "activeAuctions": "Actieve veilingen",
+        "totalBids": "Totaal biedingen",
+        "quickLinkWidget": "🎨 Widgetstijlen",
+        "quickLinkMarketplace": "🎨 Marktplaatsstijlen",
+        "quickLinkPlans": "🧾 Plannen",
+        "quickLinkMail": "📧 Mailservice",
+        "tabAuctions": "📋 Veilingen",
+        "tabAnalytics": "📊 Analyse"
       },
       "form": {
         "planGate": {
-          "title": "Choose a plan to create auctions",
-          "description": "Youâ€™re currently in preview mode. Upgrade to a paid Bidly plan to create and manage auctions, unlock widget customization, and enable live bidding features.",
-          "explore": "Explore plans"
+          "title": "Kies een plan om veilingen te maken",
+          "description": "Je bevindt je momenteel in de voorbeeldmodus. Upgrade naar een betaald Bidly-abonnement om veilingen te maken en te beheren, widgetaanpassingen te ontgrendelen en functies voor live bieden in te schakelen.",
+          "explore": "Plannen verkennen"
         },
-        "titleCreate": "Create New Auction",
-        "titleEdit": "Edit Auction",
-        "shopifyWarning": "Shopify API is not configured. Product search will be disabled. Please check your backend configuration.",
+        "titleCreate": "Maak een nieuwe veiling",
+        "titleEdit": "Veiling bewerken",
+        "shopifyWarning": "Shopify API is niet geconfigureerd. Het zoeken naar producten wordt uitgeschakeld. Controleer uw backend-configuratie.",
         "errors": {
-          "productRequired": "Shopify product is required.",
-          "startingBidPositive": "Starting bid must be greater than 0.",
-          "endTime": "End time must be after start time.",
-          "save": "Failed to save auction."
+          "productRequired": "Shopify-product is vereist.",
+          "startingBidPositive": "Het startbod moet groter zijn dan 0.",
+          "endTime": "De eindtijd moet na de starttijd liggen.",
+          "save": "Kan de veiling niet opslaan."
         },
         "search": {
-          "title": "ðŸ” Search Shopify Products",
-          "label": "Search for Shopify Product",
-          "placeholder": "Type product name to search...",
-          "loadingLabel": "Searching products",
-          "debug": "Debug: {{count}} results found",
-          "resultsTitle": "Search Results",
+          "title": "🔍 Zoek Shopify-producten",
+          "label": "Zoek naar Shopify-product",
+          "placeholder": "Typ de productnaam om te zoeken...",
+          "loadingLabel": "Producten zoeken",
+          "debug": "Foutopsporing: {{count}} resultaten gevonden",
+          "resultsTitle": "Zoekresultaten",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Real API failed: {{message}}. Using demo data."
+          "apiFallback": "Echte API mislukt: {{message}}. Gebruik van demogegevens."
         },
         "selectedProduct": {
-          "title": "Selected Product Details",
-          "name": "Title: {{value}}",
-          "vendor": "Vendor: {{value}}",
-          "price": "Price: {{value}}"
+          "title": "Geselecteerde productdetails",
+          "name": "Titel: {{value}}",
+          "vendor": "Leverancier: {{value}}",
+          "price": "Prijs: {{value}}"
         },
         "fields": {
-          "productId": "Shopify Product ID",
-          "productIdPlaceholder": "Product ID will be filled automatically when you select a product.",
-          "startDate": "Start Date",
-          "startTime": "Start Time",
-          "endDate": "End Date",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "startingBidLocked": "Starting bid cannot be changed after a bid has been placed.",
-          "buyNow": "Buy Now Price (Optional)",
-          "reservePrice": "Reserve Price (Optional)",
-          "reserveHelp": "Minimum bid amount required for auction to have a valid winner. Hidden from bidders."
+          "productId": "Shopify-product-ID",
+          "productIdPlaceholder": "Product-ID wordt automatisch ingevuld wanneer u een product selecteert.",
+          "startDate": "Startdatum",
+          "startTime": "Begintijd",
+          "endDate": "Einddatum",
+          "endTime": "Eindtijd",
+          "startingBid": "Startbod",
+          "startingBidLocked": "Het startbod kan niet meer worden gewijzigd nadat een bod is uitgebracht.",
+          "buyNow": "Koop nu prijs (optioneel)",
+          "reservePrice": "Reserveprijs (optioneel)",
+          "reserveHelp": "Het minimale biedbedrag dat nodig is om een ​​geldige winnaar te hebben, is vereist voor de veiling. Verborgen voor bieders."
         },
         "popcorn": {
-          "title": "ðŸ¿ Popcorn Auction Settings (Premium Feature)",
-          "description": "Enable automatic time extension when bids are placed near the end of the auction.",
-          "enable": "Enable Popcorn Bidding",
-          "help": "Automatically extend auction time when bids are placed near the end.",
-          "upgradeHelp": "Automatically extend auction time when bids are placed near the end Â· Available on the Pro and Enterprise plans.",
-          "trigger": "Trigger Threshold (seconds)",
-          "triggerHelp": "Extend auction when this many seconds remain.",
-          "extension": "Extension Duration (seconds)",
-          "extensionHelp": "How many seconds to add to the auction."
+          "title": "🍿 Instellingen voor popcornveiling (premiumfunctie)",
+          "description": "Schakel automatische verlenging van de tijd in wanneer biedingen tegen het einde van de veiling worden geplaatst.",
+          "enable": "Schakel Popcorn-biedingen in",
+          "help": "Verleng de veilingtijd automatisch wanneer biedingen tegen het einde worden geplaatst.",
+          "upgradeHelp": "Verleng de veilingtijd automatisch wanneer biedingen bijna op zijn. · Beschikbaar voor de Pro- en Enterprise-abonnementen.",
+          "trigger": "Triggerdrempel (seconden)",
+          "triggerHelp": "Verleng de veiling als er nog zoveel seconden over zijn.",
+          "extension": "Verlengingsduur (seconden)",
+          "extensionHelp": "Hoeveel seconden moet worden toegevoegd aan de veiling."
         },
         "chat": {
-          "title": "ðŸ’¬ Chat Box Visibility",
-          "description": "Control whether the Chat Box button appears under your storefront auction widget for this auction.",
-          "toggle": "Show Chat Box button on the widget",
-          "help": "When disabled, bidders will only see the View Bids link centered beneath the widget."
+          "title": "💬 Zichtbaarheid van de chatbox",
+          "description": "Bepaal of de Chat Box-knop wordt weergegeven onder uw winkelveilingwidget voor deze veiling.",
+          "toggle": "Toon chatboxknop op de widget",
+          "help": "Indien uitgeschakeld, zien bieders alleen de link Biedingen bekijken gecentreerd onder de widget."
         },
         "chatPremium": {
-          "title": "ðŸ’¬ Live Bidder Chat (Premium Feature)",
-          "description": "Keep bidders engaged with real-time conversation during your auctions. Upgrade your plan to use this feature.",
-          "available": "Available on the Enterprise plan."
+          "title": "💬 Live biederchat (premiumfunctie)",
+          "description": "Houd bieders betrokken met realtime gesprekken tijdens uw veilingen. Upgrade uw abonnement om deze functie te gebruiken.",
+          "available": "Beschikbaar in het Enterprise-abonnement."
         }
       },
       "table": {
-          "errors": {
-            "fetch": "Failed to fetch auctions.",
-            "delete": "Failed to delete auction.",
-            "close": "Failed to close auction.",
-            "closeMissingId": "Failed to close auction: Auction ID not found.",
-            "noShop": "Error: No shop domain found.",
-            "noProductId": "Error: No product ID found for this auction.",
-            "openInStore": "Error opening product in store."
-          },
-          "toast": {
-            "deleted": "Auction deleted successfully.",
-            "closed": "Auction closed successfully."
-          },
-          "status": {
-            "reserveNotMet": "Ended Â· Reserve not met",
-            "noWinner": "Ended Â· No winner",
-            "ended": "Ended"
-          },
-          "unknownProduct": "Unknown Product",
-          "actions": {
-            "viewInStore": "View in store",
-            "viewDetails": "View auction details",
-            "edit": "Edit auction",
-            "delete": "Delete auction",
-            "close": "Close auction"
-          },
-          "loading": "Loading auctions...",
-          "empty": {
-            "title": "No auctions found",
-            "action": "Create auction",
-            "description": "Get started by creating your first auction."
-          },
-          "filters": {
-            "open": "Filter",
-            "clear": "Clear filters",
-            "title": "Filter Auctions",
-            "apply": "Apply Filters",
-            "statusLabel": "Status",
-            "productPlaceholder": "Enter product ID"
-          },
-          "columns": {
-            "product": "Product",
-            "start": "Start",
-            "end": "End",
-            "startBid": "Start Bid",
-            "currentBid": "Current Bid",
-            "buyNow": "Buy Now",
-            "reserve": "Reserve",
-            "status": "Status",
-            "bids": "Bids",
-            "actions": "Actions"
-          },
-          "footer": "Showing {{visible}} of {{total}} auctions",
-          "pagination": "Page {{current}} of {{total}}",
-          "delete": {
-            "title": "Delete Auction",
-            "confirm": "Delete",
-            "message": "Are you sure you want to delete this auction? This action cannot be undone.",
-            "hasBids": "Note: This auction has bids and cannot be deleted."
-          },
-          "close": {
-            "title": "Close Auction",
-            "confirm": "Close Auction",
-            "message": "Are you sure you want to close this auction? This will prevent new bids from being placed."
-          }
+        "errors": {
+          "fetch": "Kan veilingen niet ophalen.",
+          "delete": "Kan de veiling niet verwijderen.",
+          "close": "Kan de veiling niet sluiten.",
+          "closeMissingId": "Kan de veiling niet sluiten: veiling-ID niet gevonden.",
+          "noShop": "Fout: geen winkeldomein gevonden.",
+          "noProductId": "Fout: Er is geen product-ID gevonden voor deze veiling.",
+          "openInStore": "Fout bij het openen van het product in de winkel."
         },
-      "details": {
-        "title": "Auction Details",
         "toast": {
-          "closed": "Auction closed successfully."
+          "deleted": "Veiling succesvol verwijderd.",
+          "closed": "Veiling succesvol afgesloten."
+        },
+        "status": {
+          "reserveNotMet": "Beëindigd · Reservering niet vervuld",
+          "noWinner": "Beëindigd · Geen winnaar",
+          "ended": "Beëindigd"
+        },
+        "unknownProduct": "Onbekend product",
+        "actions": {
+          "viewInStore": "Bekijk in de winkel",
+          "viewDetails": "Bekijk veilingdetails",
+          "edit": "Veiling bewerken",
+          "delete": "Veiling verwijderen",
+          "close": "Sluit de veiling"
+        },
+        "loading": "Veilingen laden...",
+        "empty": {
+          "title": "Geen veilingen gevonden",
+          "action": "Veiling maken",
+          "description": "Ga aan de slag door uw eerste veiling te maken."
+        },
+        "filters": {
+          "open": "Filter",
+          "clear": "Filters wissen",
+          "title": "Veilingen filteren",
+          "apply": "Filters toepassen",
+          "statusLabel": "Status",
+          "productPlaceholder": "Voer de product-ID in"
+        },
+        "columns": {
+          "product": "Product",
+          "start": "Begin",
+          "end": "Einde",
+          "startBid": "Begin met bieden",
+          "currentBid": "Huidig ​​bod",
+          "buyNow": "Koop nu",
+          "reserve": "Reserveren",
+          "status": "Status",
+          "bids": "Biedingen",
+          "actions": "Acties"
+        },
+        "footer": "Toont {{visible}} van {{total}} veilingen",
+        "pagination": "Pagina {{current}} van {{total}}",
+        "delete": {
+          "title": "Veiling verwijderen",
+          "confirm": "Verwijderen",
+          "message": "Weet u zeker dat u deze veiling wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+          "hasBids": "Let op: Deze veiling heeft biedingen en kan niet worden verwijderd."
+        },
+        "close": {
+          "title": "Veiling sluiten",
+          "confirm": "Veiling sluiten",
+          "message": "Weet u zeker dat u deze veiling wilt sluiten? Dit voorkomt dat er nieuwe biedingen worden geplaatst."
+        }
+      },
+      "details": {
+        "title": "Veilingdetails",
+        "toast": {
+          "closed": "Veiling succesvol afgesloten."
         },
         "errors": {
-          "missingId": "Error: Auction ID not found.",
-          "close": "Error closing auction: {{message}}"
+          "missingId": "Fout: Veiling-ID niet gevonden.",
+          "close": "Fout bij sluiten veiling: {{message}}"
         },
         "overview": {
-          "title": "Auction Overview",
-          "productId": "Product ID",
+          "title": "Veilingoverzicht",
+          "productId": "Product-ID",
           "status": "Status",
-          "timeStatus": "Time Status",
-          "chat": "Live Chat"
+          "timeStatus": "Tijdstatus",
+          "chat": "Livechat"
         },
         "timeStatus": {
-          "notStarted": "Not Started",
+          "notStarted": "Niet gestart",
           "live": "Live"
         },
         "details": {
-          "title": "Auction Details",
-          "startTime": "Start Time",
-          "endTime": "End Time",
-          "startingBid": "Starting Bid",
-          "currentBid": "Current Bid",
-          "buyNow": "Buy Now Price",
-          "totalBids": "Total Bids",
-          "created": "Created",
-          "updated": "Last Updated",
-          "reserve": "Reserve Price",
-          "popcorn": "Popcorn Bidding",
-          "popcornSettings": "Popcorn Settings",
-          "popcornSummary": "Trigger: {{trigger}}s Â· Extend: +{{extend}}s"
+          "title": "Veilingdetails",
+          "startTime": "Begintijd",
+          "endTime": "Eindtijd",
+          "startingBid": "Startbod",
+          "currentBid": "Huidig ​​bod",
+          "buyNow": "Koop nu prijs",
+          "totalBids": "Totaal biedingen",
+          "created": "Gemaakt",
+          "updated": "Laatst bijgewerkt",
+          "reserve": "Reserveprijs",
+          "popcorn": "Popcorn bieden",
+          "popcornSettings": "Popcorn-instellingen",
+          "popcornSummary": "Trigger: {{trigger}}s · Verlengen: +{{extend}}s"
         },
         "bidHistory": {
-          "title": "Bid History",
+          "title": "Biedgeschiedenis",
           "columns": {
-            "index": "#",
-            "bidder": "Bidder",
-            "email": "Email",
-            "amount": "Amount",
-            "time": "Time"
+            "index": null,
+            "bidder": "Bieder",
+            "email": "E-mail",
+            "amount": "Hoeveelheid",
+            "time": "Tijd"
           },
-          "empty": "No bids placed yet."
+          "empty": "Er zijn nog geen biedingen geplaatst."
         },
         "actions": {
-          "close": "Close Auction"
+          "close": "Veiling sluiten"
         }
       }
     },
     "onboarding": {
       "page": {
-        "title": "Welcome to Bidly",
-        "subtitle": "Complete these steps to finish your setup."
+        "title": "Welkom bij Bidly",
+        "subtitle": "Voer deze stappen uit om uw installatie te voltooien."
       },
       "status": {
-        "loading": "Loading onboarding status"
+        "loading": "Onboardingstatus laden"
       },
       "step1": {
-        "title": "Step 1 Â· Enable the Auction Widget",
-        "description": "Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.",
-        "detected": "We detected the widget is enabled in your theme.",
-        "notDetected": "If you have already enabled the widget, you can mark this step as complete manually.",
-        "error": "We couldn't confirm the widget automatically: {{error}}",
-        "completed": "Completed",
-        "pending": "Pending",
+        "title": "Stap 1 · Schakel de veilingwidget in",
+        "description": "Activeer de Bidly-widget in uw online winkel zodat deze op uw productpagina's kan verschijnen. Hiermee wordt de Shopify-thema-editor geopend, waar u het insluiten van de app kunt inschakelen.",
+        "detected": "We hebben vastgesteld dat de widget is ingeschakeld in uw thema.",
+        "notDetected": "Als u de widget al heeft ingeschakeld, kunt u deze stap handmatig als voltooid markeren.",
+        "error": "We konden de widget niet automatisch bevestigen: {{error}}",
+        "completed": "Voltooid",
+        "pending": "In behandeling",
         "actions": {
-          "openThemeEditor": "Open theme editor",
-          "refreshStatus": "Refresh status",
-          "markEnabled": "Mark widget as enabled"
+          "openThemeEditor": "Thema-editor openen",
+          "refreshStatus": "Status vernieuwen",
+          "markEnabled": "Markeer de widget als ingeschakeld"
         },
         "toast": {
-          "marked": "Marked widget as enabled."
+          "marked": "Widget gemarkeerd als ingeschakeld."
         }
       },
       "step2": {
-        "title": "Step 2 Â· Add the Auction Marketplace to your menu",
-        "description": "Open your Online Store navigation and add a new menu item linking to your auction marketplace.",
-        "descriptionWithShop": "Open your Online Store navigation and add a new menu item linking to the marketplace. We've generated the URL for {{shop}}.",
-        "completed": "Completed",
-        "pending": "Pending",
-        "marketplaceUrl": "Marketplace URL",
+        "title": "Stap 2 · Voeg de Veilingmarktplaats toe aan uw menu",
+        "description": "Open uw online winkelnavigatie en voeg een nieuw menu-item toe dat linkt naar uw veilingmarktplaats.",
+        "descriptionWithShop": "Open uw onlinewinkelnavigatie en voeg een nieuw menu-item toe dat linkt naar de marktplaats. We hebben de URL voor {{shop}} gegenereerd.",
+        "completed": "Voltooid",
+        "pending": "In behandeling",
+        "marketplaceUrl": "Marktplaats-URL",
         "actions": {
-          "copy": "Copy",
-          "goToMenu": "Go to menu settings",
-          "markDone": "Mark step as done",
-          "markedDone": "Marked as done"
+          "copy": "Kopiëren",
+          "goToMenu": "Ga naar menu-instellingen",
+          "markDone": "Markeer de stap als voltooid",
+          "markedDone": "Gemarkeerd als klaar"
         },
         "toast": {
-          "copied": "Marketplace URL copied",
-          "copyError": "Unable to copy URL. Please copy it manually.",
-          "reminder": "Remember to update your menu after copying the URL."
+          "copied": "Marktplaats-URL gekopieerd",
+          "copyError": "Kan URL niet kopiëren. Kopieer het handmatig.",
+          "reminder": "Vergeet niet om uw menu bij te werken nadat u de URL heeft gekopieerd."
         }
       },
       "finish": {
-        "title": "Finish setup",
-        "description": "Once both steps are complete, you're ready to start creating auctions with Bidly.",
-        "action": "Finish setup and open dashboard",
+        "title": "Voltooi de installatie",
+        "description": "Zodra beide stappen zijn voltooid, bent u klaar om veilingen te maken met Bidly.",
+        "action": "Voltooi de installatie en open het dashboard",
         "toast": {
-          "complete": "Onboarding complete! Redirecting to your dashboard.",
-          "error": "Failed to complete onboarding. Please try again."
+          "complete": "Onboarding voltooid! Omleiden naar uw dashboard.",
+          "error": "Kan onboarding niet voltooien. Probeer het opnieuw."
         }
       },
       "errors": {
-        "loadStatus": "Failed to load onboarding status. Please try again."
+        "loadStatus": "Kan onboardingstatus niet laden. Probeer het opnieuw."
       }
     },
     "oauth": {
       "loading": {
-        "title": "Checking app setup...",
-        "message": "Checking app setup..."
+        "title": "App-instellingen controleren...",
+        "message": "App-instellingen controleren..."
       },
       "error": {
-        "title": "Setup Error",
-        "tryAgain": "Try Again"
+        "title": "Installatiefout",
+        "tryAgain": "Probeer het opnieuw"
       },
       "setup": {
-        "title": "Complete App Setup",
-        "description": "To use the auction features, you need to complete the app setup process. This will connect your store to the auction system and enable product search.",
+        "title": "Voltooi de app-installatie",
+        "description": "Om de veilingfuncties te gebruiken, moet u het installatieproces van de app voltooien. Hiermee wordt uw winkel verbonden met het veilingsysteem en wordt het zoeken naar producten mogelijk gemaakt.",
         "whyNeeded": {
-          "title": "Why is this needed?",
-          "message": "The app needs permission to access your store's products to create auctions. This is a one-time setup process."
+          "title": "Waarom is dit nodig?",
+          "message": "De app heeft toestemming nodig voor toegang tot de producten van uw winkel om veilingen te kunnen maken. Dit is een eenmalig installatieproces."
         },
         "manualShop": {
-          "label": "Please enter your Shopify store domain:",
-          "placeholder": "store.myshopify.com"
+          "label": "Voer uw Shopify-winkeldomein in:",
+          "placeholder": "winkel.myshopify.com"
         },
-        "action": "Complete Setup",
+        "action": "Volledige installatie",
         "errors": {
-          "noShop": "Unable to get shop information. Please enter your shop domain manually below.",
-          "invalidShop": "Invalid shop parameter. Please refresh the page or access the app through Shopify admin.",
-          "invalidFormat": "Invalid shop domain format: {{shop}}. Expected format: store.myshopify.com",
-          "validationFailed": "Shop domain validation failed. Received: {{shop}}",
-          "urlConstruction": "Error constructing OAuth URL. Please try again."
+          "noShop": "Kan winkelinformatie niet ophalen. Vul hieronder handmatig uw winkeldomein in.",
+          "invalidShop": "Ongeldige winkelparameter. Vernieuw de pagina of open de app via het Shopify-beheercentrum.",
+          "invalidFormat": "Ongeldig winkeldomeinformaat: {{shop}}. Verwacht formaat: store.myshopify.com",
+          "validationFailed": "Validatie van winkeldomein mislukt. Ontvangen: {{shop}}",
+          "urlConstruction": "Fout bij het samenstellen van de OAuth-URL. Probeer het opnieuw."
         }
       }
     }
   }
 }
-
-

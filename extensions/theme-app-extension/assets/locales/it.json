@@ -1,107 +1,106 @@
 {
   "widget": {
     "header": {
-      "title": "Live Auction",
-      "live": "LIVE",
-      "startingSoon": "STARTING SOON",
-      "ended": "ENDED",
-      "reserveNotMet": "RESERVE NOT MET"
+      "title": "Asta dal vivo",
+      "live": "VIVERE",
+      "startingSoon": "A INIZIO PRESTO",
+      "ended": "FINITO",
+      "reserveNotMet": "RISERVA NON RAGGIUNTA"
     },
     "buttons": {
-      "placeBid": "Place Bid",
-      "buyNow": "Buy Now",
-      "loginShopify": "Log in with Shopify",
-      "continueGuest": "Continue as Guest (View Only)",
-      "logout": "Logout",
-      "chatBox": "Chat Box",
-      "viewBids": "View Bids",
-      "viewBidHistory": "View Bid History"
+      "placeBid": "Fai un'offerta",
+      "buyNow": "Acquista ora",
+      "loginShopify": "Accedi con Shopify",
+      "continueGuest": "Continua come ospite (solo visualizzazione)",
+      "logout": "Esci",
+      "chatBox": "Casella di chat",
+      "viewBids": "Visualizza offerte",
+      "viewBidHistory": "Visualizza la cronologia delle offerte"
     },
     "countdown": {
-      "endsIn": "Ends In:",
-      "startingIn": "Starting in:",
-      "days": "d",
-      "hours": "h",
-      "minutes": "m",
-      "seconds": "s"
+      "endsIn": "Termina tra:",
+      "startingIn": "A partire da:",
+      "days": "D",
+      "hours": "H",
+      "minutes": "M",
+      "seconds": "S"
     },
     "labels": {
-      "currentBid": "CURRENT BID:",
-      "startingBid": "STARTING BID:",
-      "minimumBid": "MINIMUM BID:",
-      "bids": "BIDS:",
-      "guestUser": "Guest User"
+      "currentBid": "OFFERTA ATTUALE:",
+      "startingBid": "OFFERTA INIZIALE:",
+      "minimumBid": "OFFERTA MINIMA:",
+      "bids": "OFFERTE:",
+      "guestUser": "Utente ospite"
     },
     "login": {
-      "title": "Login Required",
-      "message": "Please log in to view this auction",
-      "viewOnly": "View Only",
-      "viewOnlyMessage": "Login to Shopify to enter the auction"
+      "title": "Accesso richiesto",
+      "message": "Effettua il login per visualizzare quest'asta",
+      "viewOnly": "Solo visualizzazione",
+      "viewOnlyMessage": "Accedi a Shopify per partecipare all'asta"
     },
     "loading": {
-      "title": "Preparing your auction...",
-      "message": "Checking your account and syncing live bids."
+      "title": "Preparazione dell'asta...",
+      "message": "Controllo del tuo account e sincronizzazione delle offerte in tempo reale."
     },
     "errors": {
-      "invalidBid": "Invalid bid amount",
-      "bidTooLow": "Bid must be higher than current bid",
-      "auctionEnded": "Auction Ended",
-      "reserveNotMet": "Reserve Not Met",
-      "auctionNotFound": "Auction not found",
-      "networkError": "Network error. Please try again.",
-      "bidFailed": "Failed to place bid. Please try again."
+      "invalidBid": "Importo dell'offerta non valida",
+      "bidTooLow": "L'offerta deve essere superiore all'offerta corrente",
+      "auctionEnded": "Asta terminata",
+      "reserveNotMet": "Riserva non soddisfatta",
+      "auctionNotFound": "Asta non trovata",
+      "networkError": "Errore di rete. Per favore riprova.",
+      "bidFailed": "Impossibile fare un'offerta. Per favore riprova."
     },
     "messages": {
-      "auctionEnded": "Auction has ended. Final bid: ${amount}",
-      "auctionEndedReserve": "Auction ended — reserve not met",
-      "bidPlaced": "Bid placed successfully!",
-      "newBid": "New bid: ${amount}",
-      "bidNotification": "New bid placed!",
-      "currentBidLabel": "Current Bid: ${amount}"
+      "auctionEnded": "L'asta è terminata. Offerta finale: ${amount}",
+      "auctionEndedReserve": "Asta terminata: riserva non soddisfatta",
+      "bidPlaced": "Offerta effettuata con successo!",
+      "newBid": "Nuova offerta: ${amount}",
+      "bidNotification": "Nuova offerta fatta!",
+      "currentBidLabel": "Offerta corrente: ${amount}"
     },
     "chat": {
-      "title": "Chat",
-      "send": "Send",
-      "placeholder": "Type a message...",
-      "empty": "No messages yet. Start the conversation!",
-      "connecting": "Connecting...",
-      "disconnected": "Disconnected",
-      "error": "Error sending message"
+      "title": "Chiacchierata",
+      "send": "Inviare",
+      "placeholder": "Digita un messaggio...",
+      "empty": "Nessun messaggio ancora. Inizia la conversazione!",
+      "connecting": "Collegamento...",
+      "disconnected": "Disconnesso",
+      "error": "Errore durante l'invio del messaggio"
     },
     "bidHistory": {
-      "title": "Bid History",
-      "noBids": "No bids yet",
-      "bidder": "Bidder",
-      "amount": "Amount",
-      "time": "Time"
+      "title": "Cronologia delle offerte",
+      "noBids": "Nessuna offerta ancora",
+      "bidder": "Offerente",
+      "amount": "Quantità",
+      "time": "Tempo"
     },
     "guestLogin": {
-      "title": "Continue as Guest",
-      "fullName": "Full Name",
-      "emailAddress": "Email Address",
-      "continue": "Continue as Guest",
-      "cancel": "Cancel",
-      "errorNameEmail": "Please enter both name and email",
-      "errorFailed": "Login failed. Please try again.",
-      "errorForm": "Form error. Please try again."
+      "title": "Continua come ospite",
+      "fullName": "Nome e cognome",
+      "emailAddress": "Indirizzo e-mail",
+      "continue": "Continua come ospite",
+      "cancel": "Cancellare",
+      "errorNameEmail": "Inserisci sia il nome che l'e-mail",
+      "errorFailed": "Accesso non riuscito. Per favore riprova.",
+      "errorForm": "Errore del modulo. Per favore riprova."
     },
     "common": {
-      "auctionItem": "Auction Item",
-      "yourName": "Your Name",
-      "yourEmail": "Your Email",
-      "loginToBid": "Login to Bid",
-      "logout": "Logout",
-      "processing": "Processing...",
-      "closeChat": "Close chat",
-      "loggedInAs": "Logged in as:",
-      "welcome": "Welcome, {name}!",
-      "pleaseLoginBid": "Please login to place a bid",
-      "pleaseLoginBuyNow": "Please login to buy now",
-      "invalidBidAmount": "Please enter a valid bid amount",
-      "bidInputNotFound": "Bid input not found. Please refresh the page.",
-      "bidButtonNotFound": "Bid button not found. Please refresh the page.",
-      "buyNowButtonNotFound": "Buy now button not found. Please refresh the page."
+      "auctionItem": "Articolo all'asta",
+      "yourName": "Il tuo nome",
+      "yourEmail": "La tua e-mail",
+      "loginToBid": "Accedi per fare offerte",
+      "logout": "Esci",
+      "processing": "Elaborazione...",
+      "closeChat": "Chiudi la chat",
+      "loggedInAs": "Effettuato l'accesso come:",
+      "welcome": "Benvenuto, {name}!",
+      "pleaseLoginBid": "Effettua il login per fare un'offerta",
+      "pleaseLoginBuyNow": "Effettua il login per acquistare ora",
+      "invalidBidAmount": "Inserisci un importo di offerta valido",
+      "bidInputNotFound": "Inserimento dell'offerta non trovato. Aggiorna la pagina.",
+      "bidButtonNotFound": "Pulsante offerta non trovato. Aggiorna la pagina.",
+      "buyNowButtonNotFound": "Pulsante Acquista ora non trovato. Aggiorna la pagina."
     }
   }
 }
-
