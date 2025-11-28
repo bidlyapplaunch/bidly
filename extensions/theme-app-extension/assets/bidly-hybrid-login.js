@@ -79,136 +79,140 @@
 
     // Shopify customer detection
     async function detectShopifyCustomer() {
+        const MAX_ATTEMPTS = 8;
+        const BASE_DELAY_MS = 250;
+
         try {
-            console.log('Bidly: Detecting Shopify customer...');
-            console.log('Bidly: window.Shopify:', window.Shopify);
-            console.log('Bidly: window.Shopify?.customer:', window.Shopify?.customer);
-            
-            // Check for Shopify customer data in various locations
-            let customerData = null;
-            
-            // Method 1: Check window.Shopify.customer
-            if (window.Shopify?.customer && window.Shopify.customer.id) {
-                customerData = {
-                    id: window.Shopify.customer.id,
-                    email: window.Shopify.customer.email,
-                    firstName: window.Shopify.customer.first_name || null,
-                    lastName: window.Shopify.customer.last_name || null
-                };
-                console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
-            }
-            
-            // Method 2: Check for customer data in meta tags
-            if (!customerData) {
-                const customerMeta = document.querySelector('meta[name="shopify-customer"]');
-                if (customerMeta) {
+            for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+                console.log(`Bidly: Detecting Shopify customer (attempt ${attempt}/${MAX_ATTEMPTS})...`);
+                console.log('Bidly: window.Shopify:', window.Shopify);
+                console.log('Bidly: window.Shopify?.customer:', window.Shopify?.customer);
+                
+                // Check for Shopify customer data in various locations
+                let customerData = null;
+                
+                // Method 1: Check window.Shopify.customer
+                if (window.Shopify?.customer && window.Shopify.customer.id) {
+                    customerData = {
+                        id: window.Shopify.customer.id,
+                        email: window.Shopify.customer.email,
+                        firstName: window.Shopify.customer.first_name || null,
+                        lastName: window.Shopify.customer.last_name || null
+                    };
+                    console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
+                }
+                
+                // Method 2: Check for customer data in meta tags
+                if (!customerData) {
+                    const customerMeta = document.querySelector('meta[name="shopify-customer"]');
+                    if (customerMeta) {
+                        try {
+                            const customerJson = JSON.parse(customerMeta.content);
+                            customerData = {
+                                id: customerJson.id,
+                                email: customerJson.email,
+                                firstName: customerJson.first_name || null,
+                                lastName: customerJson.last_name || null
+                            };
+                            console.log('Bidly: Found customer via meta tag:', customerData);
+                        } catch (e) {
+                            console.warn('Bidly: Error parsing customer meta tag:', e);
+                        }
+                    }
+                }
+                
+                // Method 3: Check for customer data in script tags
+                if (!customerData) {
+                    const customerScript = document.querySelector('script[data-customer]');
+                    if (customerScript) {
+                        try {
+                            const customerJson = JSON.parse(customerScript.textContent);
+                            customerData = {
+                                id: customerJson.id,
+                                email: customerJson.email,
+                                firstName: customerJson.first_name || null,
+                                lastName: customerJson.last_name || null
+                            };
+                            console.log('Bidly: Found customer via script tag:', customerData);
+                        } catch (e) {
+                            console.warn('Bidly: Error parsing customer script:', e);
+                        }
+                    }
+                }
+                
+                // Method 4: Check for customer data in global variables
+                if (!customerData && window.customer && window.customer.id) {
+                    customerData = {
+                        id: window.customer.id,
+                        email: window.customer.email,
+                        firstName: window.customer.first_name || null,
+                        lastName: window.customer.last_name || null
+                    };
+                    console.log('Bidly: Found customer via window.customer:', customerData);
+                }
+                
+                // Method 5: Check for customer data in window.customerData
+                if (!customerData && window.customerData) {
                     try {
-                        const customerJson = JSON.parse(customerMeta.content);
-                        customerData = {
-                            id: customerJson.id,
-                            email: customerJson.email,
-                            firstName: customerJson.first_name || null,
-                            lastName: customerJson.last_name || null
-                        };
-                        console.log('Bidly: Found customer via meta tag:', customerData);
+                        const customerJson = typeof window.customerData === 'string' 
+                            ? JSON.parse(window.customerData) 
+                            : window.customerData;
+                        
+                        if (customerJson.id) {
+                            customerData = {
+                                id: customerJson.id,
+                                email: customerJson.email,
+                                firstName: customerJson.first_name || customerJson.firstName || null,
+                                lastName: customerJson.last_name || customerJson.lastName || null
+                            };
+                            console.log('Bidly: Found customer via window.customerData:', customerData);
+                        }
                     } catch (e) {
-                        console.warn('Bidly: Error parsing customer meta tag:', e);
+                        console.log('Bidly: Failed to parse window.customerData:', e);
                     }
                 }
-            }
-            
-            // Method 3: Check for customer data in script tags
-            if (!customerData) {
-                const customerScript = document.querySelector('script[data-customer]');
-                if (customerScript) {
+                
+                // Method 6: Check for customer data in Shopify global object
+                if (!customerData && window.Shopify?.customerData) {
                     try {
-                        const customerJson = JSON.parse(customerScript.textContent);
-                        customerData = {
-                            id: customerJson.id,
-                            email: customerJson.email,
-                            firstName: customerJson.first_name || null,
-                            lastName: customerJson.last_name || null
-                        };
-                        console.log('Bidly: Found customer via script tag:', customerData);
+                        const customerJson = typeof window.Shopify.customerData === 'string' 
+                            ? JSON.parse(window.Shopify.customerData) 
+                            : window.Shopify.customerData;
+                        
+                        if (customerJson.id) {
+                            customerData = {
+                                id: customerJson.id,
+                                email: customerJson.email,
+                                firstName: customerJson.first_name || customerJson.firstName || null,
+                                lastName: customerJson.last_name || customerJson.lastName || null
+                            };
+                            console.log('Bidly: Found customer via window.Shopify.customerData:', customerData);
+                        }
                     } catch (e) {
-                        console.warn('Bidly: Error parsing customer script:', e);
+                        console.log('Bidly: Failed to parse window.Shopify.customerData:', e);
                     }
                 }
-            }
-            
-            // Method 4: Check for customer data in global variables
-            if (!customerData && window.customer && window.customer.id) {
-                customerData = {
-                    id: window.customer.id,
-                    email: window.customer.email,
-                    firstName: window.customer.first_name || null,
-                    lastName: window.customer.last_name || null
-                };
-                console.log('Bidly: Found customer via window.customer:', customerData);
-            }
-            
-            // Method 5: Check for customer data in window.customerData
-            if (!customerData && window.customerData) {
-                try {
-                    const customerJson = typeof window.customerData === 'string' 
-                        ? JSON.parse(window.customerData) 
-                        : window.customerData;
-                    
-                    if (customerJson.id) {
-                        customerData = {
-                            id: customerJson.id,
-                            email: customerJson.email,
-                            firstName: customerJson.first_name || customerJson.firstName || null,
-                            lastName: customerJson.last_name || customerJson.lastName || null
-                        };
-                        console.log('Bidly: Found customer via window.customerData:', customerData);
-                    }
-                } catch (e) {
-                    console.log('Bidly: Failed to parse window.customerData:', e);
-                }
-            }
-            
-            // Method 6: Check for customer data in Shopify global object
-            if (!customerData && window.Shopify?.customerData) {
-                try {
-                    const customerJson = typeof window.Shopify.customerData === 'string' 
-                        ? JSON.parse(window.Shopify.customerData) 
-                        : window.Shopify.customerData;
-                    
-                    if (customerJson.id) {
-                        customerData = {
-                            id: customerJson.id,
-                            email: customerJson.email,
-                            firstName: customerJson.first_name || customerJson.firstName || null,
-                            lastName: customerJson.last_name || customerJson.lastName || null
-                        };
-                        console.log('Bidly: Found customer via window.Shopify.customerData:', customerData);
-                    }
-                } catch (e) {
-                    console.log('Bidly: Failed to parse window.Shopify.customerData:', e);
-                }
-            }
-            
-            // Method 7: Check for customer data in localStorage/sessionStorage
-            if (!customerData) {
-                const storedCustomer = localStorage.getItem('shopify_customer') || sessionStorage.getItem('shopify_customer');
-                if (storedCustomer) {
-                    try {
-                        const customerJson = JSON.parse(storedCustomer);
-                        customerData = {
-                            id: customerJson.id,
-                            email: customerJson.email,
-                            firstName: customerJson.first_name || null,
-                            lastName: customerJson.last_name || null
-                        };
-                        console.log('Bidly: Found customer via storage:', customerData);
-                    } catch (e) {
-                        console.warn('Bidly: Error parsing stored customer:', e);
+                
+                // Method 7: Check for customer data in localStorage/sessionStorage
+                if (!customerData) {
+                    const storedCustomer = localStorage.getItem('shopify_customer') || sessionStorage.getItem('shopify_customer');
+                    if (storedCustomer) {
+                        try {
+                            const customerJson = JSON.parse(storedCustomer);
+                            customerData = {
+                                id: customerJson.id,
+                                email: customerJson.email,
+                                firstName: customerJson.first_name || null,
+                                lastName: customerJson.last_name || null
+                            };
+                            console.log('Bidly: Found customer via storage:', customerData);
+                        } catch (e) {
+                            console.warn('Bidly: Error parsing stored customer:', e);
+                        }
                     }
                 }
-            }
-            
-            if (customerData && customerData.email) {
+                
+                if (customerData && customerData.email) {
                 // Clear any guest customer data from sessionStorage since we have a Shopify customer
                 try {
                     sessionStorage.removeItem('bidly_guest_customer');
@@ -355,7 +359,15 @@
                 
                 return true;
             }
+                
+                if (attempt < MAX_ATTEMPTS) {
+                    const delay = BASE_DELAY_MS * attempt;
+                    console.log(`Bidly: No Shopify customer detected yet, retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
             
+            console.warn('Bidly: Shopify customer not detected after retries');
             return false;
         } catch (error) {
             console.error('Bidly: Error detecting Shopify customer:', error);
