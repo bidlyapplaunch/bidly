@@ -8,7 +8,7 @@
 
 /* Responsive adjustments for widget container */
 @media (min-width: 768px) {
-    .bidly-auction-widget-root .bidly-widget-container {
+    .bidly-widget-responsive .bidly-widget-container {
         max-width: 100%;
     }
     
@@ -19,33 +19,33 @@
 
 /* Medium containers - adjust padding for narrower themes */
 @media (min-width: 481px) and (max-width: 767px) {
-    .bidly-auction-widget-root .bidly-widget-header {
+    .bidly-widget-responsive .bidly-widget-header {
         padding: 18px 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-timer {
+    .bidly-widget-responsive .bidly-widget-timer {
         padding: 18px 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-pricing {
+    .bidly-widget-responsive .bidly-widget-pricing {
         padding: 0 20px 18px 20px !important;
         gap: 12px;
     }
     
-    .bidly-auction-widget-root .bidly-widget-actions {
+    .bidly-widget-responsive .bidly-widget-actions {
         padding: 0 20px 18px 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-footer {
+    .bidly-widget-responsive .bidly-widget-footer {
         padding: 12px 20px 18px 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-bid-action-card {
+    .bidly-widget-responsive .bidly-bid-action-card {
         padding: 18px !important;
     }
     
-    .bidly-auction-widget-root .bidly-current-bid,
-    .bidly-auction-widget-root .bidly-bid-count {
+    .bidly-widget-responsive .bidly-current-bid,
+    .bidly-widget-responsive .bidly-bid-count {
         padding: 16px 14px !important;
         min-height: 80px;
     }
@@ -59,28 +59,28 @@
         border-radius: 8px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-container {
+    .bidly-widget-responsive .bidly-widget-container {
         margin-bottom: 1.25rem;
     }
     
-    .bidly-auction-widget-root .bidly-widget-header {
+    .bidly-widget-responsive .bidly-widget-header {
         padding: 20px 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-timer {
+    .bidly-widget-responsive .bidly-widget-timer {
         padding: 20px 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-pricing {
+    .bidly-widget-responsive .bidly-widget-pricing {
         padding: 0 20px 20px 20px !important;
         gap: 12px;
     }
     
-    .bidly-auction-widget-root .bidly-widget-actions {
+    .bidly-widget-responsive .bidly-widget-actions {
         padding: 0 20px 20px 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-footer {
+    .bidly-widget-responsive .bidly-widget-footer {
         padding: 14px 20px 20px 20px !important;
     }
 
@@ -113,33 +113,33 @@
         border-radius: 6px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-header {
+    .bidly-widget-responsive .bidly-widget-header {
         padding: 18px 16px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-timer {
+    .bidly-widget-responsive .bidly-widget-timer {
         padding: 18px 16px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-pricing {
+    .bidly-widget-responsive .bidly-widget-pricing {
         padding: 0 16px 18px 16px !important;
         gap: 10px;
     }
     
-    .bidly-auction-widget-root .bidly-widget-actions {
+    .bidly-widget-responsive .bidly-widget-actions {
         padding: 0 16px 18px 16px !important;
     }
     
-    .bidly-auction-widget-root .bidly-widget-footer {
+    .bidly-widget-responsive .bidly-widget-footer {
         padding: 12px 16px 18px 16px !important;
     }
     
-    .bidly-auction-widget-root .bidly-bid-action-card {
+    .bidly-widget-responsive .bidly-bid-action-card {
         padding: 20px !important;
     }
     
-    .bidly-auction-widget-root .bidly-current-bid,
-    .bidly-auction-widget-root .bidly-bid-count {
+    .bidly-widget-responsive .bidly-current-bid,
+    .bidly-widget-responsive .bidly-bid-count {
         padding: 16px 14px !important;
         min-height: 80px;
     }
@@ -153,8 +153,6 @@
 .bidly-auction-app-embed {
     display: block;
     width: 100%;
-    min-width: 320px;
-    max-width: 100%;
     margin: 0 auto;
     position: relative;
     font-family: 'Inter', sans-serif;
@@ -163,17 +161,22 @@
 }
 
 /* Widget Root Wrapper - CSS Isolation */
-.bidly-auction-widget-root {
-    max-width: 420px;
+.bidly-widget-responsive {
+    max-width: 420px;       /* perfect width on most themes */
     width: 100%;
-    margin: 0 auto;
-    min-width: 320px;
+    margin: 0 auto;         /* center it */
     box-sizing: border-box;
     isolation: isolate;
+    contain: layout style paint;
+}
+
+/* Prevent theme CSS from shrinking or stretching it */
+.bidly-widget-responsive * {
+    box-sizing: border-box !important;
 }
 
 /* Login Required Styles */
-.bidly-auction-widget-root .bidly-login-required {
+.bidly-widget-responsive .bidly-login-required {
     text-align: center;
     padding: 30px 20px;
     background: #ffffff;
@@ -246,7 +249,7 @@
 }
 
 /* Widget Container - Seamless gradient design */
-.bidly-auction-widget-root .bidly-widget-container {
+.bidly-widget-responsive .bidly-widget-container {
     position: relative;
     display: block;
     width: 100%;
@@ -262,7 +265,7 @@
     box-sizing: border-box;
 }
 
-.bidly-auction-widget-root .bidly-widget-container::before {
+.bidly-widget-responsive .bidly-widget-container::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -273,18 +276,18 @@
     z-index: -1;
 }
 
-.bidly-auction-widget-root .bidly-widget-header,
-.bidly-auction-widget-root .bidly-widget-content,
-.bidly-auction-widget-root .bidly-widget-timer,
-.bidly-auction-widget-root .bidly-widget-pricing,
-.bidly-auction-widget-root .bidly-widget-actions,
-.bidly-auction-widget-root .bidly-widget-footer {
+.bidly-widget-responsive .bidly-widget-header,
+.bidly-widget-responsive .bidly-widget-content,
+.bidly-widget-responsive .bidly-widget-timer,
+.bidly-widget-responsive .bidly-widget-pricing,
+.bidly-widget-responsive .bidly-widget-actions,
+.bidly-widget-responsive .bidly-widget-footer {
     position: relative;
     z-index: 1;
 }
 
 /* Widget Header - Matching Featured Auction Style */
-.bidly-auction-widget-root .bidly-widget-header {
+.bidly-widget-responsive .bidly-widget-header {
     position: relative;
     display: flex;
     justify-content: space-between;
@@ -300,7 +303,7 @@
     box-sizing: border-box;
 }
 
-.bidly-auction-widget-root .bidly-widget-title {
+.bidly-widget-responsive .bidly-widget-title {
     font-size: 20px;
     font-weight: 700;
     margin: 0;
@@ -425,7 +428,7 @@
     margin-bottom: 20px;
 }
 
-.bidly-auction-widget-root .bidly-bid-input-group {
+.bidly-widget-responsive .bidly-bid-input-group {
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -516,7 +519,7 @@
     margin-bottom: 15px;
 }
 
-.bidly-auction-widget-root .bidly-bid-action-card {
+.bidly-widget-responsive .bidly-bid-action-card {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -703,7 +706,7 @@
 }
 
 /* Widget Timer Section - Glassmorphism card */
-.bidly-auction-widget-root .bidly-widget-timer {
+.bidly-widget-responsive .bidly-widget-timer {
     padding: 20px 22px;
     background: transparent;
     border-top: none;
@@ -713,7 +716,7 @@
     box-sizing: border-box;
 }
 
-.bidly-auction-widget-root .bidly-timer-card {
+.bidly-widget-responsive .bidly-timer-card {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -751,7 +754,7 @@
 }
 
 /* Widget Pricing Section - Glassmorphism cards side-by-side */
-.bidly-auction-widget-root .bidly-widget-pricing {
+.bidly-widget-responsive .bidly-widget-pricing {
     padding: 0 22px 20px 22px;
     background: transparent;
     border-top: none;
@@ -763,7 +766,7 @@
     box-sizing: border-box;
 }
 
-.bidly-auction-widget-root .bidly-current-bid {
+.bidly-widget-responsive .bidly-current-bid {
     flex: 1;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
@@ -780,7 +783,7 @@
     box-sizing: border-box;
 }
 
-.bidly-auction-widget-root .bidly-bid-count {
+.bidly-widget-responsive .bidly-bid-count {
     flex: 1;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
@@ -824,7 +827,7 @@
 }
 
 /* Widget Actions Section - Seamless flow */
-.bidly-auction-widget-root .bidly-widget-actions {
+.bidly-widget-responsive .bidly-widget-actions {
     padding: 0 22px 20px 22px;
     background: transparent;
     border-top: none;
@@ -834,7 +837,7 @@
 }
 
 /* Widget Footer - Seamless flow */
-.bidly-auction-widget-root .bidly-widget-footer {
+.bidly-widget-responsive .bidly-widget-footer {
     padding: 14px 22px 20px 22px;
     background: transparent;
     border-top: none;
@@ -1416,7 +1419,7 @@
 
 /* Responsive Design */
 @media (max-width: 480px) {
-    .bidly-widget-container {
+    .bidly-widget-responsive .bidly-widget-container {
         margin: 10px;
     }
     
@@ -1662,26 +1665,15 @@
 /* ==========================================================================
    Widget Root CSS Isolation - Ensures all widget elements are properly scoped
    ========================================================================== */
-.bidly-auction-widget-root {
-    /* Force isolation from theme styles */
-    isolation: isolate;
-    contain: layout style paint;
-}
-
-/* Ensure all widget child elements respect container width */
-.bidly-auction-widget-root * {
-    box-sizing: border-box;
-}
-
 /* Remove any hardcoded widths from widget elements */
-.bidly-auction-widget-root .bidly-widget-container,
-.bidly-auction-widget-root .bidly-timer-card,
-.bidly-auction-widget-root .bidly-bid-action-card,
-.bidly-auction-widget-root .bidly-inline-bid-form,
-.bidly-auction-widget-root .bidly-bid-input-group,
-.bidly-auction-widget-root .bidly-widget-pricing,
-.bidly-auction-widget-root .bidly-widget-actions,
-.bidly-auction-widget-root .bidly-widget-footer {
+.bidly-widget-responsive .bidly-widget-container,
+.bidly-widget-responsive .bidly-timer-card,
+.bidly-widget-responsive .bidly-bid-action-card,
+.bidly-widget-responsive .bidly-inline-bid-form,
+.bidly-widget-responsive .bidly-bid-input-group,
+.bidly-widget-responsive .bidly-widget-pricing,
+.bidly-widget-responsive .bidly-widget-actions,
+.bidly-widget-responsive .bidly-widget-footer {
     width: 100% !important;
     max-width: 100% !important;
 }

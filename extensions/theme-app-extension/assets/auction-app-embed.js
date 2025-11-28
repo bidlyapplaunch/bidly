@@ -613,7 +613,7 @@
         const wrapper = document.createElement('div');
         wrapper.className = `${CONFIG.widgetClass} bidly-widget-fallback`;
         wrapper.innerHTML = `
-            <div class="bidly-auction-widget-root">
+            <div class="bidly-widget-responsive">
                 <div class="bidly-widget-container bidly-widget-loading">
                 <div class="bidly-widget-header">
                     <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
@@ -1106,7 +1106,7 @@
         const chatEnabled = auctionData.chatEnabled !== false;
         return `
             <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
-                <div class="bidly-auction-widget-root">
+                <div class="bidly-widget-responsive">
                     <div class="bidly-widget-container bidly-widget-loading">
                     <div class="bidly-widget-header">
                         <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
@@ -1156,7 +1156,7 @@
             }
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
-                    <div class="bidly-auction-widget-root">
+                    <div class="bidly-widget-responsive">
                         <div class="bidly-widget-container">
                         <div class="bidly-widget-header">
                             <h3 class="bidly-widget-title">Live Auction</h3>
@@ -1196,7 +1196,7 @@
         
         return `
         <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
-                <div class="bidly-auction-widget-root">
+                <div class="bidly-widget-responsive">
                     <div class="bidly-widget-container">
                     <div class="bidly-widget-header">
                         <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
