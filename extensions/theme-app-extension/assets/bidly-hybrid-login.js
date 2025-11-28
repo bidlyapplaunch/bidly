@@ -76,30 +76,119 @@
     // Customer state management
     let currentCustomer = null;
     let isLoggedIn = false;
+    let proxyPrefetchPromise = null;
+    let proxyPrefetchResult = null;
+    let proxyPrefetchTimestamp = 0;
+
+    function getCustomerIdCandidates() {
+        const ids = new Set();
+        const add = (value) => {
+            if (!value) {
+                return;
+            }
+            const normalized = value.toString().split('/').pop().trim();
+            if (normalized) {
+                ids.add(normalized);
+            }
+        };
+
+        add(window.Shopify?.customer?.id);
+        add(window.ShopifyAnalytics?.meta?.page?.customerId);
+        add(window.meta?.page?.customerId);
+        add(window.__st?.cid);
+        add(currentCustomer?.shopifyId);
+
+        try {
+            const stored = sessionStorage.getItem('bidly_last_customer_id');
+            if (stored) {
+                add(stored);
+            }
+        } catch (storageError) {
+            console.warn('Bidly: Unable to read stored customer id', storageError);
+        }
+
+        return Array.from(ids);
+    }
+
+    async function requestCustomerContext(customerId) {
+        const params = new URLSearchParams();
+        params.append('_', Date.now().toString());
+        if (customerId) {
+            params.append('logged_in_customer_id', customerId);
+            params.append('customer_id', customerId);
+        }
+        // include Shopify's known customer id when available
+        const shopifyCustomerId = window.Shopify?.customer?.id;
+        if (!customerId && shopifyCustomerId) {
+            params.append('shopify_customer_id', shopifyCustomerId.toString());
+        }
+
+        const response = await fetch(`/apps/bidly/customer/context?${params.toString()}`, {
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            },
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const data = await response.json();
+        if (data?.success && data.loggedIn && data.customer?.email) {
+            return {
+                id: data.customer.id,
+                email: data.customer.email,
+                firstName: data.customer.firstName || null,
+                lastName: data.customer.lastName || null,
+                fullName: data.customer.fullName || null,
+                displayName: data.customer.fullName || data.customer.email || 'Shopify Customer'
+            };
+        }
+
+        return null;
+    }
 
     async function fetchCustomerContextViaProxy() {
         try {
-            const response = await fetch(`/apps/bidly/customer/context?_=${Date.now()}`, {
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                return null;
+            if (!proxyPrefetchPromise || Date.now() - proxyPrefetchTimestamp > 3000) {
+                proxyPrefetchTimestamp = Date.now();
+                proxyPrefetchPromise = requestCustomerContext(null)
+                    .then((result) => {
+                        proxyPrefetchResult = result;
+                        return result;
+                    })
+                    .catch((error) => {
+                        console.warn('Bidly: Proxy prefetch failed', error);
+                        proxyPrefetchResult = null;
+                        return null;
+                    });
             }
 
-            const data = await response.json();
-            if (data?.success && data.loggedIn && data.customer?.email) {
-                return {
-                    id: data.customer.id,
-                    email: data.customer.email,
-                    firstName: data.customer.firstName || null,
-                    lastName: data.customer.lastName || null,
-                    fullName: data.customer.fullName || null,
-                    displayName: data.customer.fullName || data.customer.email || 'Shopify Customer'
-                };
+            if (proxyPrefetchResult && proxyPrefetchResult.email) {
+                return proxyPrefetchResult;
+            }
+
+            const prefetched = await proxyPrefetchPromise;
+            if (prefetched && prefetched.email) {
+                return prefetched;
+            }
+
+            const candidates = getCustomerIdCandidates();
+
+            for (const candidate of candidates) {
+                const context = await requestCustomerContext(candidate);
+                if (context) {
+                    proxyPrefetchResult = context;
+                    return context;
+                }
+            }
+
+            const fallback = await requestCustomerContext(null);
+            if (fallback) {
+                proxyPrefetchResult = fallback;
+                return fallback;
             }
         } catch (error) {
             console.warn('Bidly: Failed to fetch customer context via proxy', error);
@@ -151,6 +240,13 @@
                 };
                 isLoggedIn = true;
                 console.log('Bidly: Customer synced with backend:', currentCustomer);
+                try {
+                    if (currentCustomer.shopifyId) {
+                        sessionStorage.setItem('bidly_last_customer_id', currentCustomer.shopifyId.toString());
+                    }
+                } catch (storageError) {
+                    console.warn('Bidly: Unable to store Shopify customer id:', storageError);
+                }
                 return true;
             }
 
