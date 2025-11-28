@@ -123,48 +123,25 @@ class ShopifyService {
    */
   async searchProducts(shopDomain, query, limit = 10) {
     try {
+      const trimmedQuery = (query || '').trim();
+      if (!trimmedQuery) {
+        return [];
+      }
+      
       const { client } = await this.getStoreClient(shopDomain);
-      
-      // Shopify REST API doesn't support text search directly
-      // We need to fetch products and filter them client-side
-      console.log(`🔍 Searching for: "${query}" in store: ${shopDomain}`);
-      
-      const response = await client.get('/products.json', {
-        params: {
-          limit: 250, // Get more products to search through
-        },
-      });
-      
-      const allProducts = response.data.products;
-      console.log(`📦 Found ${allProducts.length} total products`);
-      
-      // Filter products based on query
-      const searchQuery = query.toLowerCase();
-      console.log(`🔍 Search query: "${searchQuery}"`);
-      
-      const filteredProducts = allProducts.filter(product => {
-        const title = product.title?.toLowerCase() || '';
-        const body = product.body_html?.toLowerCase() || '';
-        const tags = product.tags?.toLowerCase() || '';
-        const vendor = product.vendor?.toLowerCase() || '';
-        
-        const matches = title.includes(searchQuery) || 
-               body.includes(searchQuery) || 
-               tags.includes(searchQuery) || 
-               vendor.includes(searchQuery);
-        
-        if (matches) {
-          console.log(`✅ Match found: "${product.title}" (title: "${title}", vendor: "${vendor}")`);
+      console.log(`🔍 Searching for: "${trimmedQuery}" in store: ${shopDomain}`);
+
+      try {
+        const graphQLResults = await this.searchProductsGraphQL(client, trimmedQuery, limit);
+        if (graphQLResults.length > 0) {
+          return graphQLResults;
         }
-        
-        return matches;
-      });
-      
-      console.log(`✅ Found ${filteredProducts.length} matching products out of ${allProducts.length} total`);
-      
-      // Take only the requested limit
-      const limitedProducts = filteredProducts.slice(0, limit);
-      return limitedProducts.map(product => this.formatProductData(product));
+        console.log('⚠️ GraphQL search returned no matches, falling back to REST pagination.');
+      } catch (graphQLError) {
+        console.warn('⚠️ GraphQL product search failed, falling back to REST pagination:', graphQLError.message);
+      }
+
+      return await this.searchProductsRest(client, trimmedQuery, limit, shopDomain);
     } catch (error) {
       console.error('Error searching products:', error.response?.data || error.message);
       
@@ -389,6 +366,208 @@ class ShopifyService {
   extractPageInfo(url) {
     const urlObj = new URL(url);
     return urlObj.searchParams.get('page_info');
+  }
+
+  buildGraphQLSearchQuery(rawQuery) {
+    const escaped = rawQuery.replace(/"/g, '\\"').trim();
+    if (!escaped) {
+      return '';
+    }
+    
+    // Match title, description, vendor, product type, and tags
+    const wildcardQuery = `*${escaped}*`;
+    return `(title:${wildcardQuery} OR body:${wildcardQuery} OR tag:${wildcardQuery} OR vendor:${wildcardQuery} OR product_type:${wildcardQuery})`;
+  }
+
+  async searchProductsGraphQL(client, query, limit) {
+    const searchQuery = this.buildGraphQLSearchQuery(query);
+    if (!searchQuery) {
+      return [];
+    }
+
+    console.log('🧭 Executing GraphQL product search');
+    
+    const gql = `
+      query SearchProducts($query: String!, $first: Int!, $after: String) {
+        products(first: $first, after: $after, sortKey: UPDATED_AT, reverse: true, query: $query) {
+          edges {
+            cursor
+            node {
+              id
+              title
+              handle
+              descriptionHtml
+              vendor
+              productType
+              tags
+              status
+              createdAt
+              updatedAt
+              images(first: 10) {
+                edges {
+                  node {
+                    id
+                    url
+                    altText
+                    width
+                    height
+                  }
+                }
+              }
+              variants(first: 25) {
+                edges {
+                  node {
+                    id
+                    title
+                    price
+                    compareAtPrice
+                    sku
+                    inventoryQuantity
+                    availableForSale
+                  }
+                }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+
+    const results = [];
+    let cursor = null;
+
+    while (results.length < limit) {
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          query: searchQuery,
+          first: Math.min(50, limit),
+          after: cursor,
+        },
+      });
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productEdges = response.data?.data?.products?.edges || [];
+      productEdges.forEach(edge => {
+        if (results.length >= limit) {
+          return;
+        }
+        const normalized = this.normalizeGraphQLProduct(edge.node);
+        results.push(this.formatProductData(normalized));
+      });
+
+      const pageInfo = response.data?.data?.products?.pageInfo;
+      if (pageInfo?.hasNextPage && pageInfo.endCursor) {
+        cursor = pageInfo.endCursor;
+      } else {
+        break;
+      }
+    }
+
+    console.log(`🧭 GraphQL search returned ${results.length} products`);
+    return results;
+  }
+
+  normalizeGraphQLProduct(node) {
+    const stripGid = gid => {
+      if (!gid) return null;
+      const parts = gid.split('/');
+      return parts[parts.length - 1];
+    };
+
+    const images = node.images?.edges?.map(edge => ({
+      id: stripGid(edge.node.id),
+      src: edge.node.url,
+      alt: edge.node.altText || node.title,
+      width: edge.node.width,
+      height: edge.node.height,
+    })) || [];
+
+    const variants = node.variants?.edges?.map(edge => ({
+      id: stripGid(edge.node.id),
+      title: edge.node.title,
+      price: edge.node.price,
+      compare_at_price: edge.node.compareAtPrice,
+      sku: edge.node.sku,
+      inventory_quantity: edge.node.inventoryQuantity,
+      available: edge.node.availableForSale,
+    })) || [];
+
+    return {
+      id: stripGid(node.id),
+      title: node.title,
+      handle: node.handle,
+      body_html: node.descriptionHtml || '',
+      vendor: node.vendor,
+      product_type: node.productType,
+      tags: Array.isArray(node.tags) ? node.tags.join(',') : '',
+      status: node.status,
+      created_at: node.createdAt,
+      updated_at: node.updatedAt,
+      images,
+      variants,
+    };
+  }
+
+  filterProductsByQuery(products, query) {
+    const searchQuery = query.toLowerCase();
+    return products.filter(product => {
+      const title = product.title?.toLowerCase() || '';
+      const body = product.body_html?.toLowerCase() || '';
+      const tags = typeof product.tags === 'string'
+        ? product.tags.toLowerCase()
+        : Array.isArray(product.tags)
+          ? product.tags.join(',').toLowerCase()
+          : '';
+      const vendor = product.vendor?.toLowerCase() || '';
+
+      const matches = title.includes(searchQuery) ||
+        body.includes(searchQuery) ||
+        tags.includes(searchQuery) ||
+        vendor.includes(searchQuery);
+
+      if (matches) {
+        console.log(`✅ Match found: "${product.title}" (vendor: "${product.vendor}")`);
+      }
+
+      return matches;
+    });
+  }
+
+  async searchProductsRest(client, query, limit, shopDomain) {
+    console.log('🌀 Executing REST fallback search with pagination');
+    const matchedProducts = [];
+    let pageInfo = null;
+
+    do {
+      const params = { limit: 250 };
+      if (pageInfo) {
+        params.page_info = pageInfo;
+      }
+
+      const response = await client.get('/products.json', { params });
+      const products = response.data.products || [];
+
+      const filtered = this.filterProductsByQuery(products, query);
+      matchedProducts.push(...filtered);
+
+      if (matchedProducts.length >= limit) {
+        break;
+      }
+
+      const pagination = this.extractPaginationInfo(response.headers);
+      pageInfo = pagination?.hasNext ? pagination.nextPageInfo : null;
+    } while (pageInfo);
+
+    console.log(`✅ REST search returned ${matchedProducts.length} matching products for store ${shopDomain}`);
+    return matchedProducts.slice(0, limit).map(product => this.formatProductData(product));
   }
 
   /**
