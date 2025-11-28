@@ -6,12 +6,48 @@
     z-index: 99999;
 }
 
+/* Responsive adjustments for widget container */
+@media (min-width: 768px) {
+    .bidly-widget-container {
+        max-width: 500px;
+    }
+    
+    .bidly-auction-app-embed {
+        max-width: 500px;
+    }
+}
+
 @media (max-width: 768px) {
     .bidly-auction-app-embed {
         width: 100% !important;
         margin: 0 !important;
         padding: 0 12px !important;
         border-radius: 8px !important;
+    }
+    
+    .bidly-widget-container {
+        margin-bottom: 1.25rem;
+    }
+    
+    .bidly-widget-header {
+        padding: 20px 20px !important;
+    }
+    
+    .bidly-widget-timer {
+        padding: 20px 20px !important;
+    }
+    
+    .bidly-widget-pricing {
+        padding: 0 20px 20px 20px !important;
+        gap: 12px;
+    }
+    
+    .bidly-widget-actions {
+        padding: 0 20px 20px 20px !important;
+    }
+    
+    .bidly-widget-footer {
+        padding: 14px 20px 20px 20px !important;
     }
 
     .bidly-auction-app-embed .bidly-button,
@@ -42,6 +78,37 @@
         padding: 0 8px !important;
         border-radius: 6px !important;
     }
+    
+    .bidly-widget-header {
+        padding: 18px 16px !important;
+    }
+    
+    .bidly-widget-timer {
+        padding: 18px 16px !important;
+    }
+    
+    .bidly-widget-pricing {
+        padding: 0 16px 18px 16px !important;
+        gap: 10px;
+    }
+    
+    .bidly-widget-actions {
+        padding: 0 16px 18px 16px !important;
+    }
+    
+    .bidly-widget-footer {
+        padding: 12px 16px 18px 16px !important;
+    }
+    
+    .bidly-bid-action-card {
+        padding: 20px !important;
+    }
+    
+    .bidly-current-bid,
+    .bidly-bid-count {
+        padding: 16px 14px !important;
+        min-height: 80px;
+    }
 
     .bidly-auction-app-embed h3,
     .bidly-auction-app-embed .text {
@@ -52,11 +119,13 @@
 .bidly-auction-app-embed {
     display: block;
     width: 100%;
-    max-width: 420px;
-    margin: 0;
+    min-width: 320px;
+    max-width: 100%;
+    margin: 0 auto;
     position: relative;
     font-family: 'Inter', sans-serif;
     color: #1f2937;
+    box-sizing: border-box;
 }
 
 /* Login Required Styles */
@@ -134,8 +203,9 @@
     position: relative;
     display: block;
     width: 100%;
-    max-width: 420px;
-    margin: 0 0 1.25rem;
+    min-width: 320px;
+    max-width: 100%;
+    margin: 0 auto 1.5rem;
     background: transparent;
     border-radius: 16px;
     overflow: hidden;
@@ -143,6 +213,7 @@
     font-family: 'Inter', sans-serif;
     border: none;
     isolation: isolate;
+    box-sizing: border-box;
 }
 
 .bidly-widget-container::before {
@@ -172,10 +243,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: 24px 28px;
     background: transparent;
     border-bottom: none;
-    min-height: 60px;
+    min-height: 64px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .bidly-widget-title {
@@ -260,11 +333,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
+    margin-bottom: 24px;
+    padding: 18px;
     background: transparent;
     border-radius: 8px;
     border: none;
+    gap: 12px;
 }
 
 .bidly-status-item {
@@ -305,7 +379,7 @@
 .bidly-bid-input-group {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     align-items: stretch;
     margin-bottom: 0;
 }
@@ -394,10 +468,10 @@
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .bidly-minimum-bid {
@@ -575,7 +649,7 @@
 
 /* Widget Timer Section - Glassmorphism card */
 .bidly-widget-timer {
-    padding: 20px 24px;
+    padding: 24px 28px;
     background: transparent;
     border-top: none;
     margin-bottom: 0;
@@ -585,8 +659,8 @@
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 24px 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     text-align: center;
 }
@@ -617,11 +691,11 @@
 
 /* Widget Pricing Section - Glassmorphism cards side-by-side */
 .bidly-widget-pricing {
-    padding: 0 24px 20px 24px;
+    padding: 0 28px 24px 28px;
     background: transparent;
     border-top: none;
     display: flex;
-    gap: 16px;
+    gap: 18px;
     align-items: stretch;
 }
 
@@ -629,26 +703,28 @@
     flex: 1;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
-    padding: 16px;
-    border-radius: 8px;
+    padding: 20px 18px;
+    border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height: 90px;
 }
 
 .bidly-bid-count {
     flex: 1;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
-    padding: 16px;
-    border-radius: 8px;
+    padding: 20px 18px;
+    border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height: 90px;
 }
 
 .bidly-label {
@@ -679,20 +755,20 @@
 
 /* Widget Actions Section - Seamless flow */
 .bidly-widget-actions {
-    padding: 0 24px 20px 24px;
+    padding: 0 28px 24px 28px;
     background: transparent;
     border-top: none;
 }
 
 /* Widget Footer - Seamless flow */
 .bidly-widget-footer {
-    padding: 12px 24px 20px 24px;
+    padding: 16px 28px 24px 28px;
     background: transparent;
     border-top: none;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     text-align: center;
     width: 100%;
 }
