@@ -144,6 +144,47 @@
             '.price-wrapper',
             '.product-price-wrapper'
         ],
+        productFormSelectors: [
+            'form[action^="/cart/add"]',
+            'form[action*="/cart/add"]',
+            '.product-form',
+            '.product__form',
+            'form.product-form',
+            '#product-form',
+            '[data-product-form]',
+            'form[data-product-form]'
+        ],
+        quantitySelectors: [
+            '.product-form__input--quantity',
+            '.product-form__quantity',
+            '.quantity-selector',
+            '.quantity-wrapper',
+            '.product-quantity',
+            '.product__quantity',
+            '[name="quantity"]',
+            'input[type="number"][name="quantity"]',
+            '.quantity-input',
+            '.qty-selector',
+            '[data-quantity]',
+            '.product-single__quantity',
+            '.product-form__quantity-wrapper'
+        ],
+        addToCartSelectors: [
+            'button[type="submit"][name="add"]',
+            'button[name="add"]',
+            '.product-form__cart-submit',
+            '.btn--add-to-cart',
+            '.add-to-cart',
+            '.product-form__submit',
+            'button.product-form__submit',
+            '[data-add-to-cart]',
+            'button[data-add-to-cart]',
+            '.add-to-cart-button',
+            '.product__submit',
+            'input[type="submit"][name="add"]',
+            '.shopify-payment-button',
+            '.dynamic-checkout__content'
+        ],
         plan: DEFAULT_PLAN_CONTEXT.key,
         planLevel: DEFAULT_PLAN_CONTEXT.level,
         capabilities: {
@@ -438,6 +479,64 @@
             }
         } catch (error) {
             console.warn('Bidly: Failed to hide product price elements', error);
+        }
+    }
+
+    function hideProductFormElements() {
+        try {
+            // Hide product forms
+            for (const selector of CONFIG.productFormSelectors) {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach((element) => {
+                    if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
+                        return;
+                    }
+                    if (!element.dataset.bidlyOriginalDisplay) {
+                        element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
+                    }
+                    element.style.display = 'none';
+                });
+            }
+
+            // Hide quantity selectors (search both inside and outside forms)
+            for (const selector of CONFIG.quantitySelectors) {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach((element) => {
+                    if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
+                        return;
+                    }
+                    // Skip if parent form is already hidden
+                    const parentForm = element.closest('form');
+                    if (parentForm && parentForm.style.display === 'none') {
+                        return;
+                    }
+                    if (!element.dataset.bidlyOriginalDisplay) {
+                        element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
+                    }
+                    element.style.display = 'none';
+                });
+            }
+
+            // Hide add-to-cart buttons (search both inside and outside forms)
+            for (const selector of CONFIG.addToCartSelectors) {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach((element) => {
+                    if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
+                        return;
+                    }
+                    // Skip if parent form is already hidden
+                    const parentForm = element.closest('form');
+                    if (parentForm && parentForm.style.display === 'none') {
+                        return;
+                    }
+                    if (!element.dataset.bidlyOriginalDisplay) {
+                        element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
+                    }
+                    element.style.display = 'none';
+                });
+            }
+        } catch (error) {
+            console.warn('Bidly: Failed to hide product form elements', error);
         }
     }
 
@@ -1551,22 +1650,6 @@
         const productForm = document.querySelector('form[action^="/cart/add"]');
         if (productForm && productForm.parentElement) {
             productForm.insertAdjacentElement('afterend', widgetRoot);
-
-            if (!productForm.dataset.bidlyOriginalDisplay) {
-                productForm.dataset.bidlyOriginalDisplay = window.getComputedStyle(productForm).display || 'block';
-            }
-            productForm.style.display = 'none';
-
-            const dynamicCheckout = productForm.querySelector('.shopify-payment-button');
-            if (dynamicCheckout) {
-                dynamicCheckout.style.display = 'none';
-            }
-
-            const quantityWrapper =
-                productForm.querySelector('.product-form__input--quantity, .product-form__quantity, .quantity-selector');
-            if (quantityWrapper) {
-                quantityWrapper.style.display = 'none';
-            }
         } else if (insertionTarget) {
             const titleElement =
                 insertionTarget.querySelector('h1, .product__title, .product-title') ||
@@ -1584,6 +1667,7 @@
         }
 
         hideProductPrice();
+        hideProductFormElements();
 
         if (auctionData.status === 'pending' && auctionData.startTime) {
             initializeCountdownTimer(auctionData.auctionId, auctionData.startTime);
