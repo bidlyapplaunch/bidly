@@ -8,7 +8,7 @@
 
 /* Responsive adjustments for widget container */
 @media (min-width: 768px) {
-    .bidly-widget-container {
+    .bidly-auction-widget-root .bidly-widget-container {
         max-width: 100%;
     }
     
@@ -19,33 +19,33 @@
 
 /* Medium containers - adjust padding for narrower themes */
 @media (min-width: 481px) and (max-width: 767px) {
-    .bidly-widget-header {
+    .bidly-auction-widget-root .bidly-widget-header {
         padding: 18px 20px !important;
     }
     
-    .bidly-widget-timer {
+    .bidly-auction-widget-root .bidly-widget-timer {
         padding: 18px 20px !important;
     }
     
-    .bidly-widget-pricing {
+    .bidly-auction-widget-root .bidly-widget-pricing {
         padding: 0 20px 18px 20px !important;
         gap: 12px;
     }
     
-    .bidly-widget-actions {
+    .bidly-auction-widget-root .bidly-widget-actions {
         padding: 0 20px 18px 20px !important;
     }
     
-    .bidly-widget-footer {
+    .bidly-auction-widget-root .bidly-widget-footer {
         padding: 12px 20px 18px 20px !important;
     }
     
-    .bidly-bid-action-card {
+    .bidly-auction-widget-root .bidly-bid-action-card {
         padding: 18px !important;
     }
     
-    .bidly-current-bid,
-    .bidly-bid-count {
+    .bidly-auction-widget-root .bidly-current-bid,
+    .bidly-auction-widget-root .bidly-bid-count {
         padding: 16px 14px !important;
         min-height: 80px;
     }
@@ -59,28 +59,28 @@
         border-radius: 8px !important;
     }
     
-    .bidly-widget-container {
+    .bidly-auction-widget-root .bidly-widget-container {
         margin-bottom: 1.25rem;
     }
     
-    .bidly-widget-header {
+    .bidly-auction-widget-root .bidly-widget-header {
         padding: 20px 20px !important;
     }
     
-    .bidly-widget-timer {
+    .bidly-auction-widget-root .bidly-widget-timer {
         padding: 20px 20px !important;
     }
     
-    .bidly-widget-pricing {
+    .bidly-auction-widget-root .bidly-widget-pricing {
         padding: 0 20px 20px 20px !important;
         gap: 12px;
     }
     
-    .bidly-widget-actions {
+    .bidly-auction-widget-root .bidly-widget-actions {
         padding: 0 20px 20px 20px !important;
     }
     
-    .bidly-widget-footer {
+    .bidly-auction-widget-root .bidly-widget-footer {
         padding: 14px 20px 20px 20px !important;
     }
 
@@ -113,33 +113,33 @@
         border-radius: 6px !important;
     }
     
-    .bidly-widget-header {
+    .bidly-auction-widget-root .bidly-widget-header {
         padding: 18px 16px !important;
     }
     
-    .bidly-widget-timer {
+    .bidly-auction-widget-root .bidly-widget-timer {
         padding: 18px 16px !important;
     }
     
-    .bidly-widget-pricing {
+    .bidly-auction-widget-root .bidly-widget-pricing {
         padding: 0 16px 18px 16px !important;
         gap: 10px;
     }
     
-    .bidly-widget-actions {
+    .bidly-auction-widget-root .bidly-widget-actions {
         padding: 0 16px 18px 16px !important;
     }
     
-    .bidly-widget-footer {
+    .bidly-auction-widget-root .bidly-widget-footer {
         padding: 12px 16px 18px 16px !important;
     }
     
-    .bidly-bid-action-card {
+    .bidly-auction-widget-root .bidly-bid-action-card {
         padding: 20px !important;
     }
     
-    .bidly-current-bid,
-    .bidly-bid-count {
+    .bidly-auction-widget-root .bidly-current-bid,
+    .bidly-auction-widget-root .bidly-bid-count {
         padding: 16px 14px !important;
         min-height: 80px;
     }
@@ -162,13 +162,26 @@
     box-sizing: border-box;
 }
 
+/* Widget Root Wrapper - CSS Isolation */
+.bidly-auction-widget-root {
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+    min-width: 320px;
+    box-sizing: border-box;
+    isolation: isolate;
+}
+
 /* Login Required Styles */
-.bidly-login-required {
+.bidly-auction-widget-root .bidly-login-required {
     text-align: center;
     padding: 30px 20px;
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .bidly-login-message h4 {
@@ -233,11 +246,10 @@
 }
 
 /* Widget Container - Seamless gradient design */
-.bidly-widget-container {
+.bidly-auction-widget-root .bidly-widget-container {
     position: relative;
     display: block;
     width: 100%;
-    min-width: 320px;
     max-width: 100%;
     margin: 0 auto 1.5rem;
     background: transparent;
@@ -250,7 +262,7 @@
     box-sizing: border-box;
 }
 
-.bidly-widget-container::before {
+.bidly-auction-widget-root .bidly-widget-container::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -261,18 +273,18 @@
     z-index: -1;
 }
 
-.bidly-widget-header,
-.bidly-widget-content,
-.bidly-widget-timer,
-.bidly-widget-pricing,
-.bidly-widget-actions,
-.bidly-widget-footer {
+.bidly-auction-widget-root .bidly-widget-header,
+.bidly-auction-widget-root .bidly-widget-content,
+.bidly-auction-widget-root .bidly-widget-timer,
+.bidly-auction-widget-root .bidly-widget-pricing,
+.bidly-auction-widget-root .bidly-widget-actions,
+.bidly-auction-widget-root .bidly-widget-footer {
     position: relative;
     z-index: 1;
 }
 
 /* Widget Header - Matching Featured Auction Style */
-.bidly-widget-header {
+.bidly-auction-widget-root .bidly-widget-header {
     position: relative;
     display: flex;
     justify-content: space-between;
@@ -283,9 +295,12 @@
     min-height: 64px;
     gap: 12px;
     flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-.bidly-widget-title {
+.bidly-auction-widget-root .bidly-widget-title {
     font-size: 20px;
     font-weight: 700;
     margin: 0;
@@ -410,12 +425,15 @@
     margin-bottom: 20px;
 }
 
-.bidly-bid-input-group {
+.bidly-auction-widget-root .bidly-bid-input-group {
     display: flex;
     flex-direction: column;
     gap: 14px;
     align-items: stretch;
     margin-bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .bidly-bid-input {
@@ -498,7 +516,7 @@
     margin-bottom: 15px;
 }
 
-.bidly-bid-action-card {
+.bidly-auction-widget-root .bidly-bid-action-card {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -506,6 +524,9 @@
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     margin-bottom: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .bidly-minimum-bid {
@@ -682,14 +703,17 @@
 }
 
 /* Widget Timer Section - Glassmorphism card */
-.bidly-widget-timer {
+.bidly-auction-widget-root .bidly-widget-timer {
     padding: 20px 22px;
     background: transparent;
     border-top: none;
     margin-bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-.bidly-timer-card {
+.bidly-auction-widget-root .bidly-timer-card {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -697,6 +721,9 @@
     padding: 20px 18px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     text-align: center;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .bidly-timer-label {
@@ -724,16 +751,19 @@
 }
 
 /* Widget Pricing Section - Glassmorphism cards side-by-side */
-.bidly-widget-pricing {
+.bidly-auction-widget-root .bidly-widget-pricing {
     padding: 0 22px 20px 22px;
     background: transparent;
     border-top: none;
     display: flex;
     gap: 14px;
     align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-.bidly-current-bid {
+.bidly-auction-widget-root .bidly-current-bid {
     flex: 1;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
@@ -745,9 +775,12 @@
     flex-direction: column;
     justify-content: center;
     min-height: 85px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-.bidly-bid-count {
+.bidly-auction-widget-root .bidly-bid-count {
     flex: 1;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
@@ -759,6 +792,9 @@
     flex-direction: column;
     justify-content: center;
     min-height: 85px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .bidly-label {
@@ -788,14 +824,17 @@
 }
 
 /* Widget Actions Section - Seamless flow */
-.bidly-widget-actions {
+.bidly-auction-widget-root .bidly-widget-actions {
     padding: 0 22px 20px 22px;
     background: transparent;
     border-top: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Widget Footer - Seamless flow */
-.bidly-widget-footer {
+.bidly-auction-widget-root .bidly-widget-footer {
     padding: 14px 22px 20px 22px;
     background: transparent;
     border-top: none;
@@ -805,6 +844,8 @@
     gap: 12px;
     text-align: center;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .bidly-footer-actions {
@@ -1616,4 +1657,31 @@
     background: #f8fafc !important;
     border: 1px solid rgba(148, 163, 184, 0.28) !important;
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ==========================================================================
+   Widget Root CSS Isolation - Ensures all widget elements are properly scoped
+   ========================================================================== */
+.bidly-auction-widget-root {
+    /* Force isolation from theme styles */
+    isolation: isolate;
+    contain: layout style paint;
+}
+
+/* Ensure all widget child elements respect container width */
+.bidly-auction-widget-root * {
+    box-sizing: border-box;
+}
+
+/* Remove any hardcoded widths from widget elements */
+.bidly-auction-widget-root .bidly-widget-container,
+.bidly-auction-widget-root .bidly-timer-card,
+.bidly-auction-widget-root .bidly-bid-action-card,
+.bidly-auction-widget-root .bidly-inline-bid-form,
+.bidly-auction-widget-root .bidly-bid-input-group,
+.bidly-auction-widget-root .bidly-widget-pricing,
+.bidly-auction-widget-root .bidly-widget-actions,
+.bidly-auction-widget-root .bidly-widget-footer {
+    width: 100% !important;
+    max-width: 100% !important;
 }

@@ -613,7 +613,8 @@
         const wrapper = document.createElement('div');
         wrapper.className = `${CONFIG.widgetClass} bidly-widget-fallback`;
         wrapper.innerHTML = `
-            <div class="bidly-widget-container bidly-widget-loading">
+            <div class="bidly-auction-widget-root">
+                <div class="bidly-widget-container bidly-widget-loading">
                 <div class="bidly-widget-header">
                     <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
                     <div class="bidly-widget-status">
@@ -623,6 +624,7 @@
                 <div class="bidly-loading-state" style="padding: 1.25rem; text-align: center;">
                     <p style="font-weight:600; margin-bottom:0.35rem;">${content.title}</p>
                     <p style="opacity:0.75; font-size:0.92rem; margin:0;">${content.message}</p>
+                </div>
                 </div>
             </div>
         `;
@@ -1104,7 +1106,8 @@
         const chatEnabled = auctionData.chatEnabled !== false;
         return `
             <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
-                <div class="bidly-widget-container bidly-widget-loading">
+                <div class="bidly-auction-widget-root">
+                    <div class="bidly-widget-container bidly-widget-loading">
                     <div class="bidly-widget-header">
                         <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
                         <div class="bidly-widget-status">
@@ -1118,6 +1121,7 @@
                         <p style="opacity:0.75; font-size:0.92rem; margin:0;">
                             ${t('widget.loading.message')}
                         </p>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -1152,7 +1156,8 @@
             }
             return `
                 <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
-                    <div class="bidly-widget-container">
+                    <div class="bidly-auction-widget-root">
+                        <div class="bidly-widget-container">
                         <div class="bidly-widget-header">
                             <h3 class="bidly-widget-title">Live Auction</h3>
                             <div class="bidly-widget-status">
@@ -1181,6 +1186,7 @@
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
             `;
         }
@@ -1190,7 +1196,8 @@
         
         return `
         <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
-                <div class="bidly-widget-container">
+                <div class="bidly-auction-widget-root">
+                    <div class="bidly-widget-container">
                     <div class="bidly-widget-header">
                         <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
                         <div class="bidly-widget-status">
@@ -1305,6 +1312,7 @@
                                 </a>
                             ` : ''}
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
