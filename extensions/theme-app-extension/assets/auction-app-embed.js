@@ -1199,12 +1199,14 @@
                 <div class="bidly-widget-responsive">
                     <div class="bidly-widget-container">
                     <div class="bidly-widget-header">
-                        <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
-                        <div class="bidly-widget-status">
-                            ${status === 'active' ? `<span class="bidly-status-active">${t('widget.header.live')}</span>` : 
-                              status === 'pending' ? `<span class="bidly-status-pending">${t('widget.header.startingSoon')}</span>` : 
-                              status === 'reserve_not_met' ? `<span class="bidly-status-ended">${t('widget.header.reserveNotMet')}</span>` :
-                              `<span class="bidly-status-ended">${t('widget.header.ended')}</span>`}
+                        <div class="bidly-header-main">
+                            <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
+                            <div class="bidly-widget-status">
+                                ${status === 'active' ? `<span class="bidly-status-active">${t('widget.header.live')}</span>` : 
+                                  status === 'pending' ? `<span class="bidly-status-pending">${t('widget.header.startingSoon')}</span>` : 
+                                  status === 'reserve_not_met' ? `<span class="bidly-status-ended">${t('widget.header.reserveNotMet')}</span>` :
+                                  `<span class="bidly-status-ended">${t('widget.header.ended')}</span>`}
+                            </div>
                         </div>
                         <div class="bidly-customer-info">
                             <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.displayName || getCurrentCustomer()?.fullName || getCurrentCustomer()?.name || t('widget.labels.guestUser')}</span>
