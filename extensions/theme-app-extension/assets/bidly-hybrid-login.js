@@ -311,13 +311,8 @@
         const BASE_DELAY_MS = 250;
 
         try {
-            const proxyCustomer = await fetchCustomerContextViaProxy();
-            if (proxyCustomer && proxyCustomer.email) {
-                const synced = await persistCustomerToBackend(proxyCustomer);
-                if (synced) {
-                    return true;
-                }
-            }
+            // Try proxy in parallel (non-blocking), but check old methods immediately
+            const proxyPromise = fetchCustomerContextViaProxy().catch(() => null);
 
             for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
                 console.log(`Bidly: Detecting Shopify customer (attempt ${attempt}/${MAX_ATTEMPTS})...`);
@@ -459,6 +454,22 @@
                     console.log(`Bidly: No Shopify customer detected yet, retrying in ${delay}ms...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
+            }
+            
+            // Final check: try proxy result if it's ready
+            try {
+                const proxyResult = await Promise.race([
+                    proxyPromise,
+                    new Promise(resolve => setTimeout(() => resolve(null), 100))
+                ]);
+                if (proxyResult && proxyResult.email) {
+                    const synced = await persistCustomerToBackend(proxyResult);
+                    if (synced) {
+                        return true;
+                    }
+                }
+            } catch (e) {
+                // Proxy failed, continue
             }
             
             console.warn('Bidly: Shopify customer not detected after retries');
