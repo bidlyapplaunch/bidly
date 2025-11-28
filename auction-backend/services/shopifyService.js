@@ -2,6 +2,16 @@ import axios from 'axios';
 import Store from '../models/Store.js';
 import generateRandomName from '../utils/generateRandomName.js';
 
+const RETRYABLE_ERROR_CODES = new Set([
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'ENOTFOUND',
+  'ECONNABORTED',
+  'EAI_AGAIN'
+]);
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Enhanced Shopify Service with OAuth Support
  * This service now works with store-specific access tokens from the OAuth flow
@@ -14,6 +24,48 @@ class ShopifyService {
     console.log('🔧 ShopifyService initialized with OAuth support');
     console.log('  - API Version:', this.apiVersion);
     console.log('  - Mode: Store-specific tokens (OAuth)');
+  }
+
+  isRetryableError(error) {
+    const status = error?.response?.status;
+    if (status === 429) {
+      return true;
+    }
+    if (status >= 500 && status < 600) {
+      return true;
+    }
+    if (error?.code && RETRYABLE_ERROR_CODES.has(error.code)) {
+      return true;
+    }
+    if (error?.message && error.message.toLowerCase().includes('timeout')) {
+      return true;
+    }
+    return false;
+  }
+
+  async executeWithRetry(operationName, fn, { maxAttempts = 3, baseDelayMs = 400 } = {}) {
+    let attempt = 0;
+    let lastError = null;
+
+    while (attempt < maxAttempts) {
+      attempt += 1;
+      try {
+        return await fn(attempt);
+      } catch (error) {
+        lastError = error;
+        if (!this.isRetryableError(error) || attempt >= maxAttempts) {
+          throw error;
+        }
+
+        const delay = baseDelayMs * Math.pow(2, attempt - 1);
+        console.warn(
+          `⚠️ ${operationName} failed on attempt ${attempt}/${maxAttempts} (${error.message}). Retrying in ${delay}ms...`
+        );
+        await sleep(delay);
+      }
+    }
+
+    throw lastError;
   }
 
   /**
@@ -934,40 +986,51 @@ class ShopifyService {
    * @param {string} note - Draft order note (optional)
    * @returns {Object} Created draft order data
    */
-  async createDraftOrder(shopDomain, customerId, productId, customPrice, note = '') {
-    try {
+  async createDraftOrder(shopDomain, customerId, productId, customPrice, note = '', options = {}) {
+    const { idempotencyKey = null, maxAttempts = 3 } = options || {};
+
+    const perform = async () => {
       const { client } = await this.getStoreClient(shopDomain);
-      
-      // Get the product to find the variant ID
+
       const productResponse = await client.get(`/products/${productId}.json`);
       const product = productResponse.data.product;
-      
+
       if (!product.variants || product.variants.length === 0) {
         throw new Error('Product has no variants');
       }
 
       const variantId = product.variants[0].id;
 
-      // Create the draft order
-      // Shopify requires variant_id, but we can also include product_id for reference
-      const draftOrderResponse = await client.post('/draft_orders.json', {
-        draft_order: {
-          line_items: [
-            {
-              variant_id: variantId,
-              quantity: 1,
-              price: customPrice.toString() // Custom price (winning bid amount)
-            }
-          ],
-          customer: {
-            id: customerId
-          },
-          note: note || 'Generated automatically by Bidly Auction App'
-        }
-      });
+      const requestConfig = idempotencyKey
+        ? { headers: { 'Idempotency-Key': idempotencyKey } }
+        : undefined;
+
+      const draftOrderResponse = await client.post(
+        '/draft_orders.json',
+        {
+          draft_order: {
+            line_items: [
+              {
+                variant_id: variantId,
+                quantity: 1,
+                price: customPrice.toString()
+              }
+            ],
+            customer: {
+              id: customerId
+            },
+            note: note || 'Generated automatically by Bidly Auction App'
+          }
+        },
+        requestConfig
+      );
 
       console.log(`✅ Draft order created: ${draftOrderResponse.data.draft_order.id}`);
       return draftOrderResponse.data.draft_order;
+    };
+
+    try {
+      return await this.executeWithRetry('createDraftOrder', perform, { maxAttempts });
     } catch (error) {
       console.error('Error creating draft order:', error.response?.data || error.message);
       throw new Error(`Failed to create draft order: ${error.response?.data?.errors || error.message}`);
@@ -982,20 +1045,34 @@ class ShopifyService {
    * @param {string} customMessage - Invoice email message body
    * @returns {Object} Invoice send result
    */
-  async sendDraftOrderInvoice(shopDomain, draftOrderId, subject, customMessage) {
-    try {
+  async sendDraftOrderInvoice(shopDomain, draftOrderId, subject, customMessage, options = {}) {
+    const { idempotencyKey = null, maxAttempts = 2 } = options || {};
+
+    const perform = async () => {
       const { client } = await this.getStoreClient(shopDomain);
-      
-      const invoiceResponse = await client.post(`/draft_orders/${draftOrderId}/send_invoice.json`, {
-        draft_order_invoice: {
-          to: null, // Send to draft order customer
-          subject: subject,
-          custom_message: customMessage
-        }
-      });
+
+      const requestConfig = idempotencyKey
+        ? { headers: { 'Idempotency-Key': idempotencyKey } }
+        : undefined;
+
+      const invoiceResponse = await client.post(
+        `/draft_orders/${draftOrderId}/send_invoice.json`,
+        {
+          draft_order_invoice: {
+            to: null,
+            subject: subject,
+            custom_message: customMessage
+          }
+        },
+        requestConfig
+      );
 
       console.log(`✅ Invoice sent for draft order: ${draftOrderId}`);
       return invoiceResponse.data;
+    };
+
+    try {
+      return await this.executeWithRetry('sendDraftOrderInvoice', perform, { maxAttempts });
     } catch (error) {
       console.error('Error sending draft order invoice:', error.response?.data || error.message);
       throw new Error(`Failed to send draft order invoice: ${error.response?.data?.errors || error.message}`);

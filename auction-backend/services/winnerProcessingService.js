@@ -15,6 +15,13 @@ class WinnerProcessingService {
         this.isProcessing = new Set(); // Prevent duplicate processing
     }
 
+    buildIdempotencyKey(action, auctionId, shopDomain) {
+        const cleanAction = (action || 'op').toString().toLowerCase();
+        const cleanAuctionId = auctionId ? auctionId.toString() : 'unknown';
+        const cleanShop = (shopDomain || 'shop').toString().replace(/[^a-z0-9\-]/gi, '').toLowerCase() || 'shop';
+        return `bidly-${cleanAction}-${cleanAuctionId}-${cleanShop}`;
+    }
+
     /**
      * Process auction winner - main entry point
      */
@@ -197,30 +204,43 @@ class WinnerProcessingService {
             
             // 8. Create draft order with duplicated product
             let draftOrder = null;
-            let invoiceSent = false;
+            let invoiceSent = Boolean(claimedAuction.invoiceSent);
             if (claimedAuction.draftOrderId) {
                 console.log(`ℹ️ Existing draft order ${claimedAuction.draftOrderId} found for auction ${auctionId}, skipping creation.`);
                 draftOrder = { id: claimedAuction.draftOrderId };
             } else {
+                const draftOrderKey = this.buildIdempotencyKey('draft-order', claimedAuction._id, shopDomain);
                 draftOrder = await shopifyService.createDraftOrder(
                     shopDomain,
                     shopifyCustomer.id.toString(),
                     duplicatedProductId,
                     claimedAuction.currentBid,
-                    `Generated automatically by Bidly Auction App for auction #${auctionId}`
+                    `Generated automatically by Bidly Auction App for auction #${auctionId}`,
+                    {
+                        idempotencyKey: draftOrderKey,
+                        maxAttempts: 3
+                    }
                 );
-                
-                // 9. Send invoice via Shopify
+            }
+
+            if (!invoiceSent) {
                 const invoiceSubject = `Congratulations! You Won the Auction for ${privateProduct.productTitle || claimedAuction.productTitle || 'the auction item'}`;
                 const invoiceMessage = `Congratulations! You have successfully won the auction. You have 30 minutes to claim your win, or the second highest bidder will receive the win instead.`;
-                
+                const invoiceKey = this.buildIdempotencyKey('invoice', claimedAuction._id, shopDomain);
+
                 await shopifyService.sendDraftOrderInvoice(
                     shopDomain,
                     draftOrder.id.toString(),
                     invoiceSubject,
-                    invoiceMessage
+                    invoiceMessage,
+                    {
+                        idempotencyKey: invoiceKey,
+                        maxAttempts: 2
+                    }
                 );
                 invoiceSent = true;
+            } else {
+                console.log(`ℹ️ Invoice already marked as sent for auction ${auctionId}, skipping resend.`);
             }
             
             // 10. Update auction with winner, private product, and draft order info

@@ -85,10 +85,22 @@ router.get('/by-product/:productId', async (req, res, next) => {
       ...auction.toObject(),
       status: status
     };
+
+    let planContext = null;
+    try {
+      const Store = (await import('../models/Store.js')).default;
+      const { sanitizePlan, getPlanCapabilities, DEFAULT_PLAN } = await import('../config/billingPlans.js');
+      const store = await Store.findByDomain(shopDomain).select('plan');
+      const planKey = sanitizePlan(store?.plan || DEFAULT_PLAN);
+      planContext = getPlanCapabilities(planKey);
+    } catch (planError) {
+      console.warn('⚠️ Failed to resolve plan context for store', shopDomain, planError.message);
+    }
     
     res.json({
       success: true,
-      auction: auctionWithRealTimeStatus
+      auction: auctionWithRealTimeStatus,
+      plan: planContext
     });
   } catch (error) {
     next(error);

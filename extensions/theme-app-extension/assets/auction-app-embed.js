@@ -97,6 +97,28 @@
         console.warn('⚠️ Bidly: Unable to detect shop domain, defaulting to hostname');
     }
 
+    const PLAN_LEVELS = Object.freeze({
+        free: 0,
+        basic: 1,
+        pro: 2,
+        enterprise: 3
+    });
+
+    const DEFAULT_PLAN_CONTEXT = Object.freeze({
+        key: 'free',
+        level: PLAN_LEVELS.free,
+        features: {
+            removeBranding: false,
+            customization: false,
+            popcorn: false,
+            chat: false,
+            hybridLogin: false
+        },
+        limits: {
+            auctions: 0
+        }
+    });
+
     // Configuration
     const CONFIG = {
         backendUrl: (function() {
@@ -122,20 +144,89 @@
             '.price-wrapper',
             '.product-price-wrapper'
         ],
-        plan: 'free',
+        plan: DEFAULT_PLAN_CONTEXT.key,
+        planLevel: DEFAULT_PLAN_CONTEXT.level,
         capabilities: {
-            key: 'free',
-            features: {
-                removeBranding: false,
-                customization: false,
-                popcorn: false,
-                chat: false
-            },
-            limits: {
-                auctions: 0
-            }
+            key: DEFAULT_PLAN_CONTEXT.key,
+            level: DEFAULT_PLAN_CONTEXT.level,
+            features: { ...DEFAULT_PLAN_CONTEXT.features },
+            limits: { ...DEFAULT_PLAN_CONTEXT.limits }
         }
     };
+
+    function normalizePlanKey(key) {
+        if (!key || typeof key !== 'string') {
+            return DEFAULT_PLAN_CONTEXT.key;
+        }
+        const normalized = key.toLowerCase();
+        return PLAN_LEVELS.hasOwnProperty(normalized) ? normalized : DEFAULT_PLAN_CONTEXT.key;
+    }
+
+    function applyPlanContext(planPayload) {
+        if (!planPayload) {
+            return;
+        }
+
+        const key = normalizePlanKey(planPayload.key || planPayload.plan || planPayload.name);
+        const level = typeof planPayload.level === 'number' ? planPayload.level : (PLAN_LEVELS[key] ?? DEFAULT_PLAN_CONTEXT.level);
+        const incomingFeatures = (planPayload.features || planPayload.capabilities?.features) || {};
+        const incomingLimits = (planPayload.limits || planPayload.capabilities?.limits) || {};
+
+        const mergedFeatures = {
+            ...DEFAULT_PLAN_CONTEXT.features,
+            ...incomingFeatures
+        };
+
+        if (typeof incomingFeatures.hybridLogin === 'undefined') {
+            mergedFeatures.hybridLogin = level > PLAN_LEVELS.free;
+        }
+
+        CONFIG.plan = key;
+        CONFIG.planLevel = level;
+        CONFIG.capabilities = {
+            key,
+            level,
+            features: mergedFeatures,
+            limits: {
+                ...DEFAULT_PLAN_CONTEXT.limits,
+                ...incomingLimits
+            }
+        };
+
+        console.log('Bidly: Applied plan context', CONFIG.capabilities);
+    }
+
+    function planFeatureEnabled(featureKey) {
+        return Boolean(CONFIG.capabilities?.features?.[featureKey]);
+    }
+
+    function shouldUseHybridLogin() {
+        return planFeatureEnabled('hybridLogin') || CONFIG.planLevel > PLAN_LEVELS.free;
+    }
+
+    function fetchWithTimeout(resource, options = {}, timeoutMs = 6000) {
+        let timeoutId;
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const enhancedOptions = controller ? { ...options, signal: controller.signal } : { ...options };
+
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => {
+                if (controller) {
+                    controller.abort();
+                }
+                reject(new Error(`Fetch timeout after ${timeoutMs}ms`));
+            }, timeoutMs);
+        });
+
+        return Promise.race([
+            fetch(resource, enhancedOptions),
+            timeoutPromise
+        ]).finally(() => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        });
+    }
 
     const DEFAULT_WIDGET_SETTINGS = {
         show_timer: true,
@@ -279,7 +370,11 @@
             const targetLocale = localeFiles.includes(locale) ? locale : 'en';
 
             try {
-                const response = await fetch(`/apps/bidly/assets/locales/${targetLocale}.json`);
+                const response = await fetchWithTimeout(
+                    `/apps/bidly/assets/locales/${targetLocale}.json`,
+                    {},
+                    3500
+                );
                 if (response.ok) {
                     translations = await response.json();
                     return;
@@ -326,6 +421,7 @@
 
     // Make translation function globally available for other scripts
     window.BidlyTranslate = t;
+
 
     function hideProductPrice() {
         try {
@@ -376,6 +472,68 @@
         '#ProductInfo-template',
         '#ProductInfo-product-template'
     ];
+
+    function mountFallbackElement(node) {
+        const productForm = document.querySelector('form[action^="/cart/add"]');
+        if (productForm && productForm.parentElement) {
+            productForm.insertAdjacentElement('beforebegin', node);
+            return;
+        }
+
+        for (const selector of PRODUCT_INFO_SELECTORS) {
+            const container = document.querySelector(selector);
+            if (container) {
+                container.prepend(node);
+                return;
+            }
+        }
+
+        (document.querySelector('#MainContent') || document.body).prepend(node);
+    }
+
+    function removeFallbackBanner() {
+        const existing = document.querySelector('.bidly-widget-fallback');
+        if (existing) {
+            existing.remove();
+        }
+    }
+
+    function renderWidgetFallbackBanner(state = 'timeout') {
+        if (document.querySelector('.bidly-widget-fallback')) {
+            return;
+        }
+
+        const copy = {
+            timeout: {
+                title: t('widget.loading.title'),
+                message: t('widget.errors.networkError')
+            },
+            unavailable: {
+                title: t('widget.header.ended'),
+                message: t('widget.errors.auctionNotFound')
+            }
+        };
+
+        const content = copy[state] || copy.timeout;
+        const wrapper = document.createElement('div');
+        wrapper.className = `${CONFIG.widgetClass} bidly-widget-fallback`;
+        wrapper.innerHTML = `
+            <div class="bidly-widget-container bidly-widget-loading">
+                <div class="bidly-widget-header">
+                    <h3 class="bidly-widget-title">${t('widget.header.title')}</h3>
+                    <div class="bidly-widget-status">
+                        <span class="bidly-status-pending">${t('widget.header.startingSoon')}</span>
+                    </div>
+                </div>
+                <div class="bidly-loading-state" style="padding: 1.25rem; text-align: center;">
+                    <p style="font-weight:600; margin-bottom:0.35rem;">${content.title}</p>
+                    <p style="opacity:0.75; font-size:0.92rem; margin:0;">${content.message}</p>
+                </div>
+            </div>
+        `;
+
+        mountFallbackElement(wrapper);
+    }
 
     const PREVIEW_WIDGET_SETTINGS = {
         show_timer: true,
@@ -875,7 +1033,8 @@
     function createWidgetHTML(auctionData, settings) {
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice, startTime } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
-        const chatEnabled = auctionData.chatEnabled !== false;
+        const chatEnabled = planFeatureEnabled('chat') && auctionData.chatEnabled !== false;
+        const allowGuestLogin = shouldUseHybridLogin();
         const footerClassNames = ['bidly-footer-actions'];
         if (!chatEnabled) {
             footerClassNames.push('bidly-footer-single');
@@ -921,10 +1080,12 @@
                                     ${t('widget.buttons.loginShopify')}
                                 </button>
                                 
-                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
-                                    <span class="bidly-btn-icon">👤</span>
-                                    ${t('widget.buttons.continueGuest')}
-                                </button>
+                                ${allowGuestLogin ? `
+                                    <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
+                                        <span class="bidly-btn-icon">👤</span>
+                                        ${t('widget.buttons.continueGuest')}
+                                    </button>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
@@ -1154,6 +1315,33 @@
         return null;
     }
 
+    function buildAuctionCheckFromPayload(payload) {
+        if (!payload || !payload.auction) {
+            return null;
+        }
+
+        if (payload.plan || payload.planContext) {
+            applyPlanContext(payload.plan || payload.planContext);
+        }
+
+        const auction = payload.auction;
+        const allowChat = planFeatureEnabled('chat');
+
+        return {
+            hasAuction: true,
+            auctionId: auction._id,
+            status: auction.status || 'pending',
+            currentBid: Number(auction.currentBid) || 0,
+            startingBid: Number(auction.startingBid) || 0,
+            reservePrice: Number(auction.reservePrice) || 0,
+            endTime: auction.endTime,
+            startTime: auction.startTime,
+            bidCount: auction.bidHistory?.length || 0,
+            buyNowPrice: Number(auction.buyNowPrice) || 0,
+            chatEnabled: allowChat && auction.chatEnabled !== false
+        };
+    }
+
     // Check if product has auction data by fetching from backend API
     async function checkProductForAuction() {
         try {
@@ -1194,29 +1382,17 @@
                 const apiUrl = `${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`;
                 console.log('Bidly: Fetching auction data from:', apiUrl);
                 
-                const response = await fetch(apiUrl);
+                const response = await fetchWithTimeout(apiUrl, {}, 6000);
                 console.log('Bidly: API response status:', response.status);
                 
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Bidly: API response data:', data);
                     
-                    if (data.success && data.auction) {
-                        const auction = data.auction;
-                        const chatEnabled = auction.chatEnabled !== false;
-                        console.log('Bidly: Found auction data:', auction);
-                        return {
-                            hasAuction: true,
-                            auctionId: auction._id,
-                            status: auction.status || 'pending',
-                            currentBid: parseFloat(auction.currentBid) || 0,
-                            startingBid: parseFloat(auction.startingBid) || 0,
-                            reservePrice: parseFloat(auction.reservePrice) || 0,
-                            endTime: auction.endTime,
-                            bidCount: auction.bidHistory?.length || 0,
-                            buyNowPrice: parseFloat(auction.buyNowPrice) || 0,
-                            chatEnabled
-                        };
+                    const normalized = buildAuctionCheckFromPayload(data);
+                    if (normalized) {
+                        console.log('Bidly: Found auction data:', normalized);
+                        return normalized;
                     } else {
                         console.log('Bidly: API returned success but no auction data:', data);
                     }
@@ -1333,6 +1509,8 @@
             console.log('Bidly: No auction data available, not injecting widget');
             return;
         }
+
+        removeFallbackBanner();
 
         const themeSettings = await fetchWidgetThemeSettings();
 
@@ -2607,127 +2785,118 @@
             return;
         }
 
-        // Check if widget already exists to prevent reloading
         const existingWidget = document.querySelector('.bidly-auction-app-embed');
         if (existingWidget) {
             console.log('Bidly: Widget already exists, skipping initialization to prevent reload');
             return;
         }
-        
-        // Wait for shared login system to initialize and detect customer
-        // Check sessionStorage directly first for faster detection
-        let hasCustomerInStorage = false;
-        try {
-            const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
-            if (guestCustomerStr) {
-                hasCustomerInStorage = true;
-                console.log('Bidly: Found guest customer in sessionStorage');
-            }
-        } catch (e) {
-            // Ignore storage errors
-        }
-        
-        // Wait for login system to be available
-        let attempts = 0;
-        const maxAttempts = 10; // Wait up to 1 second for login system
-        
-        while (!window.BidlyHybridLogin && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-        
-        if (window.BidlyHybridLogin) {
-            console.log('Bidly: Shared hybrid login system loaded');
-            
-            // Wait for login system initialization to complete
-            // The init() function is async and runs automatically, so we need to wait for it
-            let loginCheckAttempts = 0;
-            const maxLoginChecks = 20; // Check up to 2 seconds total
-            let lastLoginState = isUserLoggedIn();
-            
-            // Wait until login state stabilizes (stops changing) or we detect a customer
-            while (loginCheckAttempts < maxLoginChecks) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                const currentLoginState = isUserLoggedIn();
-                
-                // If we found a customer, break immediately
-                if (currentLoginState) {
-                    console.log('Bidly: Customer detected before widget render');
-                    markLoginResolved('customer-detected-before-render');
-                    break;
-                }
-                
-                // If state changed, reset counter (still initializing)
-                if (currentLoginState !== lastLoginState) {
-                    lastLoginState = currentLoginState;
-                    loginCheckAttempts = 0; // Reset counter when state changes
-                } else {
-                    loginCheckAttempts++;
-                }
-            }
-            
-            if (!isUserLoggedIn()) {
-                console.log('Bidly: No customer detected after waiting, will show login view');
-                markLoginResolved('login-check-complete-no-customer');
-            }
-        } else if (hasCustomerInStorage) {
-            // If login system not loaded but we have customer in storage, wait a bit more
-            console.log('Bidly: Login system not loaded yet, but customer found in storage, waiting...');
-            let storageWaitAttempts = 0;
-            while (!window.BidlyHybridLogin && storageWaitAttempts < 5) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                storageWaitAttempts++;
-            }
-            markLoginResolved('guest-customer-from-storage');
-        } else {
-            console.log('Bidly: Shared login system not available after waiting');
-            markLoginResolved('login-system-unavailable');
-        }
 
-        // Resolve product ID first
         const productId = resolveProductId();
         if (!productId) {
             console.log('Bidly: No product ID detected; aborting widget injection.');
             return;
         }
 
-        // Fetch auction data immediately (injectWidget will find insertion point itself)
+        const auctionUrl = `${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`;
+        let auctionPayload = null;
+
         try {
-            const response = await fetch(`${CONFIG.backendUrl}/api/auctions/by-product/${productId}?shop=${CONFIG.shopDomain}`);
+            const response = await fetchWithTimeout(auctionUrl, {}, 7000);
             if (!response.ok) {
+                if (response.status === 404) {
+                    console.log('Bidly: No active auction for product', productId);
+                    removeFallbackBanner();
+                    return;
+                }
                 console.warn('Bidly: Product auction check returned non-OK status:', response.status);
+                renderWidgetFallbackBanner('unavailable');
                 return;
             }
 
-            const data = await response.json();
-            if (!data?.success || !data.auction) {
-                console.log('Bidly: No active auction for product', productId);
-                return;
-            }
-
-            window.currentAuctionCheck = {
-                hasAuction: true,
-                auctionId: data.auction._id,
-                status: data.auction.status || 'pending',
-                currentBid: Number(data.auction.currentBid) || 0,
-                startingBid: Number(data.auction.startingBid) || 0,
-                reservePrice: Number(data.auction.reservePrice) || 0,
-                endTime: data.auction.endTime,
-                startTime: data.auction.startTime,
-                bidCount: data.auction.bidHistory?.length || 0,
-                buyNowPrice: Number(data.auction.buyNowPrice) || 0,
-                chatEnabled: data.auction.chatEnabled !== false
-            };
-
-            if (pendingLoginRefresh) {
-                tryRefreshWidgetAfterLogin('auction-data-ready');
-            }
+            auctionPayload = await response.json();
         } catch (error) {
             console.warn('Bidly: Failed to check auction for product', productId, error);
+            renderWidgetFallbackBanner('timeout');
             return;
         }
 
-        // Get settings from block
+        const normalizedAuction = buildAuctionCheckFromPayload(auctionPayload);
+        if (!normalizedAuction) {
+            removeFallbackBanner();
+            console.log('Bidly: No auction data available for product', productId);
+            return;
+        }
+
+        window.currentAuctionCheck = normalizedAuction;
+        removeFallbackBanner();
+
+        if (pendingLoginRefresh) {
+            tryRefreshWidgetAfterLogin('auction-data-ready');
+        }
+
+        if (shouldUseHybridLogin()) {
+            let hasCustomerInStorage = false;
+            try {
+                const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
+                if (guestCustomerStr) {
+                    hasCustomerInStorage = true;
+                    console.log('Bidly: Found guest customer in sessionStorage');
+                }
+            } catch (e) {
+                // Ignore storage errors
+            }
+            
+            let attempts = 0;
+            const maxAttempts = 10;
+            while (!window.BidlyHybridLogin && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (window.BidlyHybridLogin) {
+                console.log('Bidly: Shared hybrid login system loaded');
+                let loginCheckAttempts = 0;
+                const maxLoginChecks = 20;
+                let lastLoginState = isUserLoggedIn();
+                
+                while (loginCheckAttempts < maxLoginChecks) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    const currentLoginState = isUserLoggedIn();
+                    
+                    if (currentLoginState) {
+                        console.log('Bidly: Customer detected before widget render');
+                        markLoginResolved('customer-detected-before-render');
+                        break;
+                    }
+                    
+                    if (currentLoginState !== lastLoginState) {
+                        lastLoginState = currentLoginState;
+                        loginCheckAttempts = 0;
+                    } else {
+                        loginCheckAttempts++;
+                    }
+                }
+                
+                if (!isUserLoggedIn()) {
+                    console.log('Bidly: No customer detected after waiting, will show login view');
+                    markLoginResolved('login-check-complete-no-customer');
+                }
+            } else if (hasCustomerInStorage) {
+                console.log('Bidly: Login system not loaded yet, but customer found in storage, waiting...');
+                let storageWaitAttempts = 0;
+                while (!window.BidlyHybridLogin && storageWaitAttempts < 5) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    storageWaitAttempts++;
+                }
+                markLoginResolved('guest-customer-from-storage');
+            } else {
+                console.log('Bidly: Shared login system not available after waiting');
+                markLoginResolved('login-system-unavailable');
+            }
+        } else {
+            markLoginResolved('plan-no-hybrid-login');
+        }
+
         const settings = { ...DEFAULT_WIDGET_SETTINGS };
         
         injectWidget(window.currentAuctionCheck, settings);
