@@ -129,6 +129,89 @@ router.get('/health', (req, res) => {
 // All other app proxy routes require store identification
 router.use(identifyStore);
 
+const getShopifyAccessToken = (store) => {
+  if (!store) return null;
+  if (typeof store.getAccessToken === 'function') {
+    return store.getAccessToken();
+  }
+  return store.accessToken || null;
+};
+
+const fetchShopifyCustomer = async (shopDomain, accessToken, customerId) => {
+  if (!shopDomain || !accessToken || !customerId) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}/customers/${customerId}.json`,
+      {
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(
+        '⚠️ Failed to fetch Shopify customer details:',
+        response.status,
+        await response.text()
+      );
+      return null;
+    }
+
+    const payload = await response.json();
+    return payload?.customer || null;
+  } catch (error) {
+    console.error('❌ Error fetching Shopify customer:', error);
+    return null;
+  }
+};
+
+router.get('/customer/context', async (req, res) => {
+  try {
+    const shopDomain = req.shopDomain;
+    const rawCustomerId = req.query.logged_in_customer_id || req.query.customer_id;
+
+    if (!shopDomain || !rawCustomerId) {
+      return res.json({ success: true, loggedIn: false });
+    }
+
+    const normalizedCustomerId = rawCustomerId.toString().split('/').pop();
+    const accessToken = getShopifyAccessToken(req.store);
+
+    if (!accessToken) {
+      console.warn('⚠️ No access token available for customer context fetch');
+      return res.json({ success: true, loggedIn: false });
+    }
+
+    const customer = await fetchShopifyCustomer(shopDomain, accessToken, normalizedCustomerId);
+
+    if (!customer) {
+      return res.json({ success: true, loggedIn: false });
+    }
+
+    const fullName = [customer.first_name || '', customer.last_name || ''].join(' ').trim();
+
+    return res.json({
+      success: true,
+      loggedIn: true,
+      customer: {
+        id: customer.id,
+        email: customer.email,
+        firstName: customer.first_name || '',
+        lastName: customer.last_name || '',
+        fullName: fullName || customer.email || 'Shopify Customer'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error in customer context endpoint:', error);
+    return res.json({ success: false, loggedIn: false });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     if (!marketplaceTemplate) {

@@ -77,21 +77,159 @@
     let currentCustomer = null;
     let isLoggedIn = false;
 
+    async function fetchCustomerContextViaProxy() {
+        try {
+            const response = await fetch(`/apps/bidly/customer/context?_=${Date.now()}`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const data = await response.json();
+            if (data?.success && data.loggedIn && data.customer?.email) {
+                return {
+                    id: data.customer.id,
+                    email: data.customer.email,
+                    firstName: data.customer.firstName || null,
+                    lastName: data.customer.lastName || null,
+                    fullName: data.customer.fullName || null,
+                    displayName: data.customer.fullName || data.customer.email || 'Shopify Customer'
+                };
+            }
+        } catch (error) {
+            console.warn('Bidly: Failed to fetch customer context via proxy', error);
+        }
+        return null;
+    }
+
+    async function persistCustomerToBackend(customerData) {
+        if (!customerData || !customerData.email) {
+            return false;
+        }
+
+        try {
+            const response = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    shopifyId: customerData.id || customerData.shopifyId || null,
+                    email: customerData.email,
+                    firstName: customerData.firstName || customerData.first_name || undefined,
+                    lastName: customerData.lastName || customerData.last_name || undefined,
+                    displayName: customerData.displayName || customerData.fullName || undefined,
+                    shopDomain: CONFIG.shopDomain
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const persisted = result.customer || {};
+                const displayName =
+                    persisted.displayName ||
+                    persisted.fullName ||
+                    customerData.displayName ||
+                    customerData.fullName ||
+                    customerData.email ||
+                    'Shopify Customer';
+
+                currentCustomer = {
+                    id: persisted.id || persisted._id || customerData.id || customerData.shopifyId,
+                    email: persisted.email || customerData.email,
+                    firstName: persisted.firstName || customerData.firstName || null,
+                    lastName: persisted.lastName || customerData.lastName || null,
+                    fullName: persisted.fullName || customerData.fullName || displayName,
+                    displayName,
+                    shopifyId: persisted.shopifyId || customerData.id || customerData.shopifyId || null,
+                    isTemp: persisted.isTemp === true
+                };
+                isLoggedIn = true;
+                console.log('Bidly: Customer synced with backend:', currentCustomer);
+                return true;
+            }
+
+            if (response.status === 409) {
+                const errorData = await response.json().catch(() => null);
+                const existing = errorData?.existingCustomer || errorData?.customer;
+                if (existing) {
+                    currentCustomer = {
+                        id: existing.id || existing._id || customerData.id,
+                        email: existing.email || customerData.email,
+                        firstName: existing.firstName || customerData.firstName || null,
+                        lastName: existing.lastName || customerData.lastName || null,
+                        fullName: existing.fullName || customerData.fullName || existing.displayName,
+                        displayName: existing.displayName || customerData.displayName || customerData.email,
+                        shopifyId: existing.shopifyId || customerData.id || customerData.shopifyId,
+                        isTemp: existing.isTemp === true
+                    };
+                    isLoggedIn = true;
+                    console.log('Bidly: Using existing customer from 409 response:', currentCustomer);
+                    return true;
+                }
+
+                if (customerData.email) {
+                    try {
+                        const fetchResponse = await fetch(`${CONFIG.backendUrl}/api/customers/by-email?email=${encodeURIComponent(customerData.email)}&shop=${encodeURIComponent(CONFIG.shopDomain)}`);
+                        if (fetchResponse.ok) {
+                            const fetchResult = await fetchResponse.json();
+                            if (fetchResult.success && fetchResult.customer) {
+                                const fetched = fetchResult.customer;
+                                currentCustomer = {
+                                    id: fetched.id || fetched._id || customerData.id,
+                                    email: fetched.email || customerData.email,
+                                    firstName: fetched.firstName || customerData.firstName || null,
+                                    lastName: fetched.lastName || customerData.lastName || null,
+                                    fullName: fetched.fullName || customerData.fullName || fetched.displayName,
+                                    displayName: fetched.displayName || customerData.displayName || customerData.email,
+                                    shopifyId: fetched.shopifyId || customerData.id || customerData.shopifyId,
+                                    isTemp: fetched.isTemp === true
+                                };
+                                isLoggedIn = true;
+                                console.log('Bidly: Fetched existing customer via GET:', currentCustomer);
+                                return true;
+                            }
+                        }
+                    } catch (fetchError) {
+                        console.warn('Bidly: Failed to fetch customer via GET after 409:', fetchError);
+                    }
+                }
+            }
+
+            console.warn('Bidly: Failed to sync customer with backend:', response.status);
+        } catch (error) {
+            console.warn('Bidly: Error syncing customer with backend:', error);
+        }
+
+        return false;
+    }
+
     // Shopify customer detection
     async function detectShopifyCustomer() {
         const MAX_ATTEMPTS = 8;
         const BASE_DELAY_MS = 250;
 
         try {
+            const proxyCustomer = await fetchCustomerContextViaProxy();
+            if (proxyCustomer && proxyCustomer.email) {
+                const synced = await persistCustomerToBackend(proxyCustomer);
+                if (synced) {
+                    return true;
+                }
+            }
+
             for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
                 console.log(`Bidly: Detecting Shopify customer (attempt ${attempt}/${MAX_ATTEMPTS})...`);
                 console.log('Bidly: window.Shopify:', window.Shopify);
                 console.log('Bidly: window.Shopify?.customer:', window.Shopify?.customer);
                 
-                // Check for Shopify customer data in various locations
                 let customerData = null;
                 
-                // Method 1: Check window.Shopify.customer
                 if (window.Shopify?.customer && window.Shopify.customer.id) {
                     customerData = {
                         id: window.Shopify.customer.id,
@@ -102,7 +240,6 @@
                     console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
                 }
                 
-                // Method 2: Check for customer data in meta tags
                 if (!customerData) {
                     const customerMeta = document.querySelector('meta[name="shopify-customer"]');
                     if (customerMeta) {
@@ -121,7 +258,6 @@
                     }
                 }
                 
-                // Method 3: Check for customer data in script tags
                 if (!customerData) {
                     const customerScript = document.querySelector('script[data-customer]');
                     if (customerScript) {
@@ -140,7 +276,6 @@
                     }
                 }
                 
-                // Method 4: Check for customer data in global variables
                 if (!customerData && window.customer && window.customer.id) {
                     customerData = {
                         id: window.customer.id,
@@ -151,7 +286,6 @@
                     console.log('Bidly: Found customer via window.customer:', customerData);
                 }
                 
-                // Method 5: Check for customer data in window.customerData
                 if (!customerData && window.customerData) {
                     try {
                         const customerJson = typeof window.customerData === 'string' 
@@ -172,7 +306,6 @@
                     }
                 }
                 
-                // Method 6: Check for customer data in Shopify global object
                 if (!customerData && window.Shopify?.customerData) {
                     try {
                         const customerJson = typeof window.Shopify.customerData === 'string' 
@@ -193,7 +326,6 @@
                     }
                 }
                 
-                // Method 7: Check for customer data in localStorage/sessionStorage
                 if (!customerData) {
                     const storedCustomer = localStorage.getItem('shopify_customer') || sessionStorage.getItem('shopify_customer');
                     if (storedCustomer) {
@@ -213,152 +345,18 @@
                 }
                 
                 if (customerData && customerData.email) {
-                // Clear any guest customer data from sessionStorage since we have a Shopify customer
-                try {
-                    sessionStorage.removeItem('bidly_guest_customer');
-                    console.log('Bidly: Cleared guest customer from sessionStorage (Shopify customer detected)');
-                } catch (storageError) {
-                    console.warn('Bidly: Could not clear guest storage:', storageError);
-                }
-                
-                // Sync with backend FIRST to get proper displayName (backend will generate random name if needed)
-                try {
-                    const response = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    body: JSON.stringify({
-                        shopifyId: customerData.id,
-                        email: customerData.email,
-                        firstName: customerData.firstName || undefined,
-                        lastName: customerData.lastName || undefined,
-                        displayName: customerData.displayName || undefined,
-                        shopDomain: CONFIG.shopDomain
-                    })
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
-                        // Backend always provides displayName (generated random name if needed)
-                        // Use MongoDB ObjectId from backend as id, fallback to Shopify ID if not available
-                        currentCustomer = {
-                            id: result.customer?.id || customerData.id,
-                            email: customerData.email,
-                            firstName: result.customer?.firstName || customerData.firstName || null,
-                            lastName: result.customer?.lastName || customerData.lastName || null,
-                            fullName: result.customer?.fullName || null,
-                            displayName: result.customer.displayName,
-                            shopifyId: customerData.id,
-                            isTemp: false
-                        };
-                        console.log('Bidly: Customer synced with backend:', currentCustomer);
-                    } else if (response.status === 409) {
-                        // 409 = Customer already exists - backend should return the existing customer
-                        console.log('Bidly: Customer already exists (409), fetching existing customer...');
-                        try {
-                            // Try to parse the response - backend might return customer data even with 409
-                            const errorData = await response.json().catch(() => null);
-                            if (errorData?.success && errorData?.customer) {
-                                // Backend returned the existing customer successfully
-                                // Use MongoDB ObjectId from backend as id, fallback to Shopify ID if not available
-                                currentCustomer = {
-                                    id: errorData.customer.id || customerData.id,
-                                    email: customerData.email,
-                                    firstName: errorData.customer.firstName || customerData.firstName || null,
-                                    lastName: errorData.customer.lastName || customerData.lastName || null,
-                                    fullName: errorData.customer.fullName || null,
-                                    displayName: errorData.customer.displayName,
-                                    shopifyId: customerData.id,
-                                    isTemp: false
-                                };
-                                console.log('Bidly: Using existing customer from 409 response:', currentCustomer);
-                            } else {
-                                // Backend didn't return customer in 409 response, try a GET request to fetch by email
-                                const fetchResponse = await fetch(`${CONFIG.backendUrl}/api/customers/by-email?email=${encodeURIComponent(customerData.email)}&shop=${encodeURIComponent(CONFIG.shopDomain)}`);
-                                if (fetchResponse.ok) {
-                                    const fetchResult = await fetchResponse.json();
-                                    if (fetchResult.success && fetchResult.customer) {
-                                        // Use MongoDB ObjectId from backend as id, fallback to Shopify ID if not available
-                                        currentCustomer = {
-                                            id: fetchResult.customer.id || customerData.id,
-                                            email: customerData.email,
-                                            firstName: fetchResult.customer.firstName || customerData.firstName || null,
-                                            lastName: fetchResult.customer.lastName || customerData.lastName || null,
-                                            fullName: fetchResult.customer.fullName || null,
-                                            displayName: fetchResult.customer.displayName,
-                                            shopifyId: customerData.id,
-                                            isTemp: false
-                                        };
-                                        console.log('Bidly: Fetched existing customer via GET:', currentCustomer);
-                                    } else {
-                                        throw new Error('Customer not found in GET response');
-                                    }
-                                } else {
-                                    throw new Error('Failed to fetch existing customer');
-                                }
-                            }
-                        } catch (retryError) {
-                            console.warn('Bidly: Failed to fetch existing customer after 409:', retryError);
-                            // Fallback: use a temporary display name until we can sync properly
-                            const firstName = customerData.firstName || '';
-                            const lastName = customerData.lastName || '';
-                            const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || (window.BidlyTranslate ? window.BidlyTranslate('widget.labels.guestUser') : 'Guest User');
-                            currentCustomer = {
-                                id: customerData.id,
-                                email: customerData.email,
-                                firstName: firstName || null,
-                                lastName: lastName || null,
-                                fullName: tempName,
-                                displayName: tempName,
-                                shopifyId: customerData.id,
-                                isTemp: false
-                            };
-                            console.log('Bidly: Using fallback customer data after 409 retry failed:', currentCustomer);
-                        }
-                    } else {
-                        const errorText = await response.text();
-                        console.warn('Bidly: Failed to sync customer with backend:', response.status, errorText);
-                        // Fallback: construct a temporary name, but don't use 'Customer'
-                        const firstName = customerData.firstName || '';
-                        const lastName = customerData.lastName || '';
-                        const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Guest User';
-                        currentCustomer = {
-                            id: customerData.id,
-                            email: customerData.email,
-                            firstName: firstName || null,
-                            lastName: lastName || null,
-                            fullName: tempName,
-                            displayName: tempName,
-                            shopifyId: customerData.id,
-                            isTemp: false
-                        };
-                        console.log('Bidly: Using fallback customer data:', currentCustomer);
+                    try {
+                        sessionStorage.removeItem('bidly_guest_customer');
+                        console.log('Bidly: Cleared guest customer from sessionStorage (Shopify customer detected)');
+                    } catch (storageError) {
+                        console.warn('Bidly: Could not clear guest storage:', storageError);
                     }
-                } catch (error) {
-                    console.warn('Bidly: Error syncing customer with backend:', error);
-                    // Fallback: construct a temporary name, but don't use 'Customer'
-                    const firstName = customerData.firstName || '';
-                    const lastName = customerData.lastName || '';
-                    const tempName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Guest User';
-                    currentCustomer = {
-                        id: customerData.id,
-                        email: customerData.email,
-                        firstName: firstName || null,
-                        lastName: lastName || null,
-                        fullName: tempName,
-                        displayName: tempName,
-                        shopifyId: customerData.id,
-                        isTemp: false
-                    };
-                    console.log('Bidly: Using fallback customer data (error):', currentCustomer);
+
+                    const synced = await persistCustomerToBackend(customerData);
+                    if (synced) {
+                        return true;
+                    }
                 }
-                
-                isLoggedIn = true;
-                console.log('Bidly: Customer detected and processed:', currentCustomer);
-                
-                return true;
-            }
                 
                 if (attempt < MAX_ATTEMPTS) {
                     const delay = BASE_DELAY_MS * attempt;
