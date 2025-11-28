@@ -286,7 +286,7 @@
     z-index: 1;
 }
 
-/* Widget Header - Matching Featured Auction Style */
+/* Widget Header - Simplified Design */
 .bidly-widget-responsive .bidly-widget-header {
     position: relative;
     display: flex;
@@ -295,35 +295,24 @@
     padding: 20px 22px;
     background: transparent;
     border-bottom: none;
-    min-height: 64px;
+    min-height: 50px;
     gap: 12px;
-    flex-wrap: wrap;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
 }
 
-.bidly-widget-responsive .bidly-header-main {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1 1 auto;
-    min-width: 0;
+.bidly-widget-responsive .bidly-widget-status {
+    flex: 0 0 auto;
 }
 
 .bidly-widget-responsive .bidly-customer-info {
     flex: 0 0 auto;
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     justify-content: flex-end;
-}
-
-.bidly-widget-responsive .bidly-widget-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin: 0;
-    color: #ffffff;
-    flex: 0 0 auto;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .bidly-widget-user {
@@ -612,7 +601,7 @@
 }
 
 /* Widget Status Badge */
-.bidly-widget-status {
+.bidly-widget-responsive .bidly-widget-status {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1443,18 +1432,18 @@
     }
 
     .bidly-widget-responsive .bidly-widget-header {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-wrap: wrap;
         gap: 8px;
     }
 
-    .bidly-widget-responsive .bidly-header-main,
+    .bidly-widget-responsive .bidly-widget-status,
     .bidly-widget-responsive .bidly-customer-info {
-        width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
     }
 
     .bidly-widget-responsive .bidly-customer-info {
-        justify-content: space-between;
+        justify-content: flex-end;
         margin-left: 0;
     }
     
