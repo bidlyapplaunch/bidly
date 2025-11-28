@@ -200,10 +200,6 @@
         return Boolean(CONFIG.capabilities?.features?.[featureKey]);
     }
 
-    function shouldUseHybridLogin() {
-        return planFeatureEnabled('hybridLogin') || CONFIG.planLevel > PLAN_LEVELS.free;
-    }
-
     function fetchWithTimeout(resource, options = {}, timeoutMs = 6000) {
         let timeoutId;
         const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -1034,7 +1030,6 @@
         const { auctionId, status, currentBid, startingBid, reservePrice, endTime, bidCount, buyNowPrice, startTime } = auctionData;
         const { show_timer, show_bid_history, widget_position } = settings;
         const chatEnabled = planFeatureEnabled('chat') && auctionData.chatEnabled !== false;
-        const allowGuestLogin = shouldUseHybridLogin();
         const footerClassNames = ['bidly-footer-actions'];
         if (!chatEnabled) {
             footerClassNames.push('bidly-footer-single');
@@ -1080,12 +1075,10 @@
                                     ${t('widget.buttons.loginShopify')}
                                 </button>
                                 
-                                ${allowGuestLogin ? `
-                                    <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
-                                        <span class="bidly-btn-icon">👤</span>
-                                        ${t('widget.buttons.continueGuest')}
-                                    </button>
-                                ` : ''}
+                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
+                                    <span class="bidly-btn-icon">👤</span>
+                                    ${t('widget.buttons.continueGuest')}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2834,67 +2827,64 @@
             tryRefreshWidgetAfterLogin('auction-data-ready');
         }
 
-        if (shouldUseHybridLogin()) {
-            let hasCustomerInStorage = false;
-            try {
-                const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
-                if (guestCustomerStr) {
-                    hasCustomerInStorage = true;
-                    console.log('Bidly: Found guest customer in sessionStorage');
-                }
-            } catch (e) {
-                // Ignore storage errors
+        let hasCustomerInStorage = false;
+        try {
+            const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
+            if (guestCustomerStr) {
+                hasCustomerInStorage = true;
+                console.log('Bidly: Found guest customer in sessionStorage');
             }
+        } catch (e) {
+            // Ignore storage errors
+        }
+        
+        let attempts = 0;
+        const maxAttempts = 10; // Wait up to 1 second for login system
+        
+        while (!window.BidlyHybridLogin && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (window.BidlyHybridLogin) {
+            console.log('Bidly: Shared hybrid login system loaded');
+            let loginCheckAttempts = 0;
+            const maxLoginChecks = 20; // Check up to 2 seconds total
+            let lastLoginState = isUserLoggedIn();
             
-            let attempts = 0;
-            const maxAttempts = 10;
-            while (!window.BidlyHybridLogin && attempts < maxAttempts) {
+            while (loginCheckAttempts < maxLoginChecks) {
                 await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
+                const currentLoginState = isUserLoggedIn();
+                
+                if (currentLoginState) {
+                    console.log('Bidly: Customer detected before widget render');
+                    markLoginResolved('customer-detected-before-render');
+                    break;
+                }
+                
+                if (currentLoginState !== lastLoginState) {
+                    lastLoginState = currentLoginState;
+                    loginCheckAttempts = 0; // Reset counter when state changes
+                } else {
+                    loginCheckAttempts++;
+                }
             }
             
-            if (window.BidlyHybridLogin) {
-                console.log('Bidly: Shared hybrid login system loaded');
-                let loginCheckAttempts = 0;
-                const maxLoginChecks = 20;
-                let lastLoginState = isUserLoggedIn();
-                
-                while (loginCheckAttempts < maxLoginChecks) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    const currentLoginState = isUserLoggedIn();
-                    
-                    if (currentLoginState) {
-                        console.log('Bidly: Customer detected before widget render');
-                        markLoginResolved('customer-detected-before-render');
-                        break;
-                    }
-                    
-                    if (currentLoginState !== lastLoginState) {
-                        lastLoginState = currentLoginState;
-                        loginCheckAttempts = 0;
-                    } else {
-                        loginCheckAttempts++;
-                    }
-                }
-                
-                if (!isUserLoggedIn()) {
-                    console.log('Bidly: No customer detected after waiting, will show login view');
-                    markLoginResolved('login-check-complete-no-customer');
-                }
-            } else if (hasCustomerInStorage) {
-                console.log('Bidly: Login system not loaded yet, but customer found in storage, waiting...');
-                let storageWaitAttempts = 0;
-                while (!window.BidlyHybridLogin && storageWaitAttempts < 5) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    storageWaitAttempts++;
-                }
-                markLoginResolved('guest-customer-from-storage');
-            } else {
-                console.log('Bidly: Shared login system not available after waiting');
-                markLoginResolved('login-system-unavailable');
+            if (!isUserLoggedIn()) {
+                console.log('Bidly: No customer detected after waiting, will show login view');
+                markLoginResolved('login-check-complete-no-customer');
             }
+        } else if (hasCustomerInStorage) {
+            console.log('Bidly: Login system not loaded yet, but customer found in storage, waiting...');
+            let storageWaitAttempts = 0;
+            while (!window.BidlyHybridLogin && storageWaitAttempts < 5) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                storageWaitAttempts++;
+            }
+            markLoginResolved('guest-customer-from-storage');
         } else {
-            markLoginResolved('plan-no-hybrid-login');
+            console.log('Bidly: Shared login system not available after waiting');
+            markLoginResolved('login-system-unavailable');
         }
 
         const settings = { ...DEFAULT_WIDGET_SETTINGS };
