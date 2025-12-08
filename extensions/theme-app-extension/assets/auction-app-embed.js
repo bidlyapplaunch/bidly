@@ -486,54 +486,81 @@
         try {
             // Hide product forms
             for (const selector of CONFIG.productFormSelectors) {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach((element) => {
-                    if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
-                        return;
-                    }
-                    if (!element.dataset.bidlyOriginalDisplay) {
-                        element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
-                    }
-                    element.style.display = 'none';
-                });
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach((element) => {
+                        if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
+                            return;
+                        }
+                        // Additional safety check: ensure element is still in DOM
+                        if (!element.isConnected) {
+                            return;
+                        }
+                        if (!element.dataset.bidlyOriginalDisplay) {
+                            element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
+                        }
+                        element.style.display = 'none';
+                    });
+                } catch (selectorError) {
+                    // Silently skip selectors that cause errors (theme-specific issues)
+                    console.debug('Bidly: Skipping selector due to error:', selector, selectorError);
+                }
             }
 
             // Hide quantity selectors (search both inside and outside forms)
             for (const selector of CONFIG.quantitySelectors) {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach((element) => {
-                    if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
-                        return;
-                    }
-                    // Skip if parent form is already hidden
-                    const parentForm = element.closest('form');
-                    if (parentForm && parentForm.style.display === 'none') {
-                        return;
-                    }
-                    if (!element.dataset.bidlyOriginalDisplay) {
-                        element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
-                    }
-                    element.style.display = 'none';
-                });
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach((element) => {
+                        if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
+                            return;
+                        }
+                        // Additional safety check: ensure element is still in DOM
+                        if (!element.isConnected) {
+                            return;
+                        }
+                        // Skip if parent form is already hidden
+                        const parentForm = element.closest('form');
+                        if (parentForm && parentForm.style.display === 'none') {
+                            return;
+                        }
+                        if (!element.dataset.bidlyOriginalDisplay) {
+                            element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
+                        }
+                        element.style.display = 'none';
+                    });
+                } catch (selectorError) {
+                    // Silently skip selectors that cause errors (theme-specific issues)
+                    console.debug('Bidly: Skipping quantity selector due to error:', selector, selectorError);
+                }
             }
 
             // Hide add-to-cart buttons (search both inside and outside forms)
             for (const selector of CONFIG.addToCartSelectors) {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach((element) => {
-                    if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
-                        return;
-                    }
-                    // Skip if parent form is already hidden
-                    const parentForm = element.closest('form');
-                    if (parentForm && parentForm.style.display === 'none') {
-                        return;
-                    }
-                    if (!element.dataset.bidlyOriginalDisplay) {
-                        element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
-                    }
-                    element.style.display = 'none';
-                });
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach((element) => {
+                        if (!element || element.closest(`.${CONFIG.widgetClass}`)) {
+                            return;
+                        }
+                        // Additional safety check: ensure element is still in DOM
+                        if (!element.isConnected) {
+                            return;
+                        }
+                        // Skip if parent form is already hidden
+                        const parentForm = element.closest('form');
+                        if (parentForm && parentForm.style.display === 'none') {
+                            return;
+                        }
+                        if (!element.dataset.bidlyOriginalDisplay) {
+                            element.dataset.bidlyOriginalDisplay = window.getComputedStyle(element).display || '';
+                        }
+                        element.style.display = 'none';
+                    });
+                } catch (selectorError) {
+                    // Silently skip selectors that cause errors (theme-specific issues)
+                    console.debug('Bidly: Skipping add-to-cart selector due to error:', selector, selectorError);
+                }
             }
         } catch (error) {
             console.warn('Bidly: Failed to hide product form elements', error);
@@ -1671,7 +1698,16 @@
         }
 
         hideProductPrice();
-        hideProductFormElements();
+        
+        // Delay hiding product form elements to allow theme scripts to initialize first
+        // This prevents errors in theme's product-form.js that try to access form elements
+        setTimeout(() => {
+            try {
+                hideProductFormElements();
+            } catch (error) {
+                console.warn('Bidly: Error hiding product form elements (non-critical):', error);
+            }
+        }, 100);
 
         if (auctionData.status === 'pending' && auctionData.startTime) {
             initializeCountdownTimer(auctionData.auctionId, auctionData.startTime);
@@ -3564,6 +3600,23 @@
             }
         }, 500);
     });
+
+    // Add global error handler to catch and suppress theme script errors
+    // This prevents theme's product-form.js errors from breaking the widget
+    const originalErrorHandler = window.onerror;
+    window.onerror = function(message, source, lineno, colno, error) {
+        // Suppress errors from theme's product-form.js that try to access null elements
+        if (source && source.includes('product-form.js') && 
+            (message.includes('querySelector') || message.includes('Cannot read properties of null'))) {
+            console.debug('Bidly: Suppressed theme script error (non-critical):', message);
+            return true; // Suppress the error
+        }
+        // Let other errors through to the original handler
+        if (originalErrorHandler) {
+            return originalErrorHandler.call(this, message, source, lineno, colno, error);
+        }
+        return false;
+    };
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
