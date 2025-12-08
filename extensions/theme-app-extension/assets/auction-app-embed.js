@@ -482,6 +482,85 @@
         }
     }
 
+    function protectWidgetFromRemoval(widgetElement) {
+        if (!widgetElement) return;
+        
+        // Store reference to widget and its parent
+        const widgetId = widgetElement.id || widgetElement.getAttribute('data-auction-id');
+        if (!widgetId) return;
+        
+        // Add data attribute to mark it as protected
+        widgetElement.setAttribute('data-bidly-protected', 'true');
+        
+        // Use MutationObserver to detect if widget is removed
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.removedNodes.forEach((node) => {
+                    if (node === widgetElement || (node.nodeType === 1 && node.contains && node.contains(widgetElement))) {
+                        console.warn('Bidly: Widget was removed, attempting to restore...');
+                        // Re-inject widget after a short delay
+                        setTimeout(() => {
+                            const auctionId = widgetElement.getAttribute('data-auction-id');
+                            if (auctionId && !document.querySelector(`#bidly-auction-widget-${auctionId}`)) {
+                                // Widget was removed, try to re-inject
+                                const settings = {
+                                    show_timer: true,
+                                    show_bid_history: true,
+                                    widget_position: 'below_price'
+                                };
+                                // Get auction data from widget if possible
+                                const auctionData = {
+                                    hasAuction: true,
+                                    auctionId: auctionId,
+                                    status: widgetElement.querySelector('.bidly-status-active') ? 'active' : 
+                                            widgetElement.querySelector('.bidly-status-pending') ? 'pending' : 'ended'
+                                };
+                                injectWidget(auctionData, settings);
+                            }
+                        }, 100);
+                    }
+                });
+            });
+        });
+        
+        // Observe the parent container for removals
+        const parent = widgetElement.parentElement;
+        if (parent) {
+            observer.observe(parent, {
+                childList: true,
+                subtree: true
+            });
+        }
+        
+        // Prevent widget from being removed by overriding remove/removeChild if possible
+        try {
+            const originalRemove = widgetElement.remove;
+            widgetElement.remove = function() {
+                console.warn('Bidly: Attempt to remove widget blocked');
+                // Don't actually remove, just log
+                return false;
+            };
+        } catch (e) {
+            // If we can't override remove, that's okay
+            console.debug('Bidly: Could not override remove method');
+        }
+        
+        // Also protect against removeChild
+        if (parent) {
+            const originalRemoveChild = parent.removeChild;
+            parent.removeChild = function(child) {
+                if (child === widgetElement || (child.contains && child.contains(widgetElement))) {
+                    console.warn('Bidly: Attempt to removeChild widget blocked');
+                    return child; // Return the child but don't actually remove it
+                }
+                return originalRemoveChild.call(this, child);
+            };
+        }
+        
+        // Store observer for cleanup if needed
+        widgetElement._bidlyObserver = observer;
+    }
+
     function hideProductFormElements() {
         try {
             // Hide product forms
@@ -1701,13 +1780,40 @@
         
         // Delay hiding product form elements to allow theme scripts to initialize first
         // This prevents errors in theme's product-form.js that try to access form elements
+        // Increased delay to 500ms to give theme scripts more time
         setTimeout(() => {
             try {
                 hideProductFormElements();
             } catch (error) {
                 console.warn('Bidly: Error hiding product form elements (non-critical):', error);
             }
-        }, 100);
+        }, 500);
+        
+        // Protect widget from being removed by theme scripts
+        protectWidgetFromRemoval(widgetRoot);
+        
+        // Ensure widget stays visible - prevent CSS from hiding it
+        widgetRoot.style.display = 'block';
+        widgetRoot.style.visibility = 'visible';
+        widgetRoot.style.opacity = '1';
+        
+        // Add a check to ensure widget is still visible after a delay
+        setTimeout(() => {
+            const checkWidget = document.querySelector(`#bidly-auction-widget-${auctionData.auctionId}`);
+            if (checkWidget) {
+                const computedStyle = window.getComputedStyle(checkWidget);
+                if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
+                    console.warn('Bidly: Widget was hidden, restoring visibility...');
+                    checkWidget.style.display = 'block';
+                    checkWidget.style.visibility = 'visible';
+                    checkWidget.style.opacity = '1';
+                }
+            } else {
+                console.warn('Bidly: Widget was removed from DOM, attempting to re-inject...');
+                // Re-inject the widget
+                setTimeout(() => injectWidget(auctionData, settings), 200);
+            }
+        }, 1000);
 
         if (auctionData.status === 'pending' && auctionData.startTime) {
             initializeCountdownTimer(auctionData.auctionId, auctionData.startTime);
@@ -3607,7 +3713,9 @@
     window.onerror = function(message, source, lineno, colno, error) {
         // Suppress errors from theme's product-form.js that try to access null elements
         if (source && source.includes('product-form.js') && 
-            (message.includes('querySelector') || message.includes('Cannot read properties of null'))) {
+            (message.includes('querySelector') || 
+             message.includes('Cannot read properties of null') ||
+             message.includes('Cannot set properties of null'))) {
             console.debug('Bidly: Suppressed theme script error (non-critical):', message);
             return true; // Suppress the error
         }
