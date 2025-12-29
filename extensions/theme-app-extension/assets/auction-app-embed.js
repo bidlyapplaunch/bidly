@@ -1452,7 +1452,7 @@
                         <div class="bidly-ended-message">
                             ${status === 'reserve_not_met' 
                                 ? t('widget.messages.auctionEndedReserve')
-                                : t('widget.messages.auctionEnded', { amount: displayBid.toFixed(2) })}
+                                : t('widget.messages.auctionEnded', { amount: formatCurrency(displayBid) })}
                         </div>
                     `}
 
@@ -2562,7 +2562,7 @@
             // Standard bid notification
             messageContent = `
                 <div style="font-weight: bold; margin-bottom: 5px;">${t('widget.messages.bidNotification')}</div>
-                <div>${t('widget.messages.currentBidLabel', { amount: currentBid.toFixed(2) })}</div>
+                <div>${t('widget.messages.currentBidLabel', { amount: formatCurrency(currentBid) })}</div>
                 ${bidCount != null ? `<div>Total Bids: ${bidCount}</div>` : ''}
             `;
         } else {
