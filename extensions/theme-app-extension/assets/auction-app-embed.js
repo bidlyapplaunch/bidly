@@ -98,13 +98,18 @@
     }
 
     // Currency formatting helper
-    // amount is in USD (backend currency), converts to store currency for display
+    // TODO: Multi-currency support - Currently disabled, using USD only
+    // In the future, uncomment the conversion logic to support store currency
+    // amount is in USD (backend currency)
     function formatCurrency(amount) {
         if (typeof amount !== 'number' || isNaN(amount)) {
             return '0.00';
         }
         
-        // Try to use Shopify's currency formatting
+        // TEMPORARILY DISABLED: Multi-currency conversion
+        // For now, always display as USD regardless of store currency
+        // When re-enabling multi-currency, uncomment the code below:
+        /*
         if (window.Shopify?.currency) {
             const currency = window.Shopify.currency;
             const activeCurrency = currency.active || 'USD';
@@ -114,38 +119,38 @@
             const convertedAmount = amount * parseFloat(rate);
             
             // Format based on currency
-            // For PLN (Polish Złoty)
             if (activeCurrency === 'PLN') {
                 return `${convertedAmount.toFixed(2)} zł`;
             }
-            // For EUR
             if (activeCurrency === 'EUR') {
                 return `€${convertedAmount.toFixed(2)}`;
             }
-            // For GBP
             if (activeCurrency === 'GBP') {
                 return `£${convertedAmount.toFixed(2)}`;
             }
-            // For other currencies, try to get symbol from Shopify
             if (currency.money_format) {
-                // Shopify money format like: ${{amount}} or {{amount}} zł
                 return currency.money_format.replace('{{amount}}', convertedAmount.toFixed(2));
             }
-            // Default: use currency code
             return `${convertedAmount.toFixed(2)} ${activeCurrency}`;
         }
+        */
         
         // Fallback: check for Shopify.money_format in theme
         if (window.Shopify?.formatMoney) {
             return window.Shopify.formatMoney(amount * 100); // formatMoney expects cents
         }
         
-        // Last resort: use dollar sign
+        // Always use dollar sign for now (USD only)
         return `$${amount.toFixed(2)}`;
     }
     
     // Format currency that's already in store currency (no conversion)
+    // TODO: Multi-currency support - Currently disabled, using USD only
     function formatStoreCurrency(amount) {
+        // For now, just use formatCurrency (both are USD)
+        return formatCurrency(amount);
+        
+        /* FUTURE: Multi-currency support
         if (typeof amount !== 'number' || isNaN(amount)) {
             return '0.00';
         }
@@ -154,7 +159,6 @@
             const currency = window.Shopify.currency;
             const activeCurrency = currency.active || 'USD';
             
-            // Format based on currency (amount is already in store currency)
             if (activeCurrency === 'PLN') {
                 return `${amount.toFixed(2)} zł`;
             }
@@ -171,16 +175,20 @@
         }
         
         return `$${amount.toFixed(2)}`;
+        */
     }
     
     // Convert from store currency to USD (backend base currency)
-    // The backend stores all amounts in USD, so we need to convert user input
+    // TODO: Multi-currency support - Currently disabled, returns value as-is
     function convertToUSD(storeCurrencyAmount) {
+        // TEMPORARILY DISABLED: No conversion, return as-is (assuming USD)
+        return storeCurrencyAmount;
+        
+        /* FUTURE: Multi-currency support
         if (typeof storeCurrencyAmount !== 'number' || isNaN(storeCurrencyAmount)) {
             return storeCurrencyAmount;
         }
         
-        // If already in USD, no conversion needed
         if (!window.Shopify?.currency || !window.Shopify.currency.rate) {
             return storeCurrencyAmount;
         }
@@ -188,24 +196,27 @@
         const rate = parseFloat(window.Shopify.currency.rate) || 1;
         const activeCurrency = window.Shopify.currency.active || 'USD';
         
-        // If store currency is USD, no conversion needed
         if (activeCurrency === 'USD') {
             return storeCurrencyAmount;
         }
         
         // Convert from store currency to USD
         // rate = storeCurrency / USD, so USD = storeCurrency / rate
-        // Round to 2 decimal places to avoid floating-point precision issues
         return Math.round((storeCurrencyAmount / rate) * 100) / 100;
+        */
     }
     
     // Convert from USD to store currency (for display and input validation)
+    // TODO: Multi-currency support - Currently disabled, returns value as-is
     function convertFromUSD(usdAmount) {
+        // TEMPORARILY DISABLED: No conversion, return as-is (assuming USD)
+        return usdAmount;
+        
+        /* FUTURE: Multi-currency support
         if (typeof usdAmount !== 'number' || isNaN(usdAmount)) {
             return usdAmount;
         }
         
-        // If already in store currency or no conversion needed
         if (!window.Shopify?.currency || !window.Shopify.currency.rate) {
             return usdAmount;
         }
@@ -213,15 +224,14 @@
         const rate = parseFloat(window.Shopify.currency.rate) || 1;
         const activeCurrency = window.Shopify.currency.active || 'USD';
         
-        // If store currency is USD, no conversion needed
         if (activeCurrency === 'USD') {
             return usdAmount;
         }
         
         // Convert from USD to store currency
         // rate = storeCurrency / USD, so storeCurrency = USD * rate
-        // Round to 2 decimal places to avoid floating-point precision issues
         return Math.round((usdAmount * rate) * 100) / 100;
+        */
     }
 
     const PLAN_LEVELS = Object.freeze({
@@ -1383,9 +1393,8 @@
         // Determine the display bid and minimum bid logic
         const displayBid = bidCount > 0 ? currentBid : startingBid;
         // Calculate minimum bid in USD (backend currency)
-        const minBidAmountUSD = bidCount > 0 ? Math.max(currentBid + 1, startingBid) : startingBid;
-        // Convert to store currency for input validation (users enter in store currency)
-        const minBidAmount = convertFromUSD(minBidAmountUSD);
+        // TODO: Multi-currency - Currently using USD directly, no conversion
+        const minBidAmount = bidCount > 0 ? Math.max(currentBid + 1, startingBid) : startingBid;
         
         // Check if user is logged in and if they're a Shopify customer
         const loggedIn = isUserLoggedIn();
@@ -1495,7 +1504,7 @@
                                 <div class="bidly-bid-action-card">
                                     <div class="bidly-minimum-bid">
                                         <span class="bidly-label">${t('widget.labels.minimumBid')}</span>
-                                        <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">${formatStoreCurrency(minBidAmount)}</span>
+                                        <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">${formatCurrency(minBidAmount)}</span>
                                     </div>
                                     <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
                                         <div class="bidly-bid-input-group">
@@ -1505,7 +1514,7 @@
                                                    name="amount" 
                                                    step="1" 
                                                    min="${Math.ceil(minBidAmount)}" 
-                                                   placeholder="Min: ${formatStoreCurrency(minBidAmount)}"
+                                                   placeholder="Min: ${formatCurrency(minBidAmount)}"
                                                    ${isGuestViewOnly ? 'disabled' : 'required'}>
                                             <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>${t('widget.buttons.placeBid')}</button>
                                         </div>
@@ -2301,12 +2310,11 @@
                             }
                             
                             // Update minimum bid (in USD from backend)
-                            const minBidUSD = data.currentBid + 1;
-                            // Convert to store currency for display and input validation
-                            const minBid = convertFromUSD(minBidUSD);
+                            // TODO: Multi-currency - Currently using USD directly, no conversion
+                            const minBid = data.currentBid + 1;
                             const minBidElement = widget.querySelector('[data-min-bid]') || widget.querySelector('.bidly-minimum-bid .bidly-amount');
                             if (minBidElement) {
-                                minBidElement.textContent = formatStoreCurrency(minBid);
+                                minBidElement.textContent = formatCurrency(minBid);
                                 minBidElement.setAttribute('data-min-bid', minBid);
                             }
                             
@@ -2315,7 +2323,7 @@
                             if (bidInput) {
                                 bidInput.min = Math.ceil(minBid);
                                 bidInput.step = '1';
-                                bidInput.placeholder = `Min: ${formatStoreCurrency(minBid)}`;
+                                bidInput.placeholder = `Min: ${formatCurrency(minBid)}`;
                             }
                         }
                     }
@@ -2547,12 +2555,11 @@
         }
         
         if (minBidElement) {
-            // Use same logic as widget creation (calculate in USD, then convert to store currency)
+            // Use same logic as widget creation (calculate in USD)
+            // TODO: Multi-currency - Currently using USD directly, no conversion
             const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
-            const minBidAmountUSD = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
-            // Convert to store currency for display and input validation
-            const minBidAmount = convertFromUSD(minBidAmountUSD);
-            minBidElement.textContent = formatStoreCurrency(minBidAmount);
+            const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
+            minBidElement.textContent = formatCurrency(minBidAmount);
             minBidElement.setAttribute('data-min-bid', minBidAmount);
         }
 
@@ -2937,18 +2944,20 @@
             
             const form = event.target;
             const formData = new FormData(form);
-            const bidAmountStoreCurrency = parseFloat(formData.get('amount'));
+            // TODO: Multi-currency - Currently using USD directly, no conversion
+            const bidAmount = parseFloat(formData.get('amount'));
             
-            // Convert bid amount from store currency to USD (backend stores in USD)
-            const bidAmountUSD = convertToUSD(bidAmountStoreCurrency);
-            console.log('Bidly: Converting bid amount (submitBid modal):', bidAmountStoreCurrency, 'store currency to', bidAmountUSD, 'USD');
+            if (isNaN(bidAmount) || bidAmount <= 0) {
+                alert('Please enter a valid bid amount.');
+                return;
+            }
             
             // Only include customerId if it's a valid MongoDB ObjectId
             // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
             const isValidObjectId = customer.id && /^[0-9a-fA-F]{24}$/.test(customer.id);
             
             const bidData = {
-                amount: bidAmountUSD,
+                amount: bidAmount,
                 bidder: customer.displayName || customer.fullName || 'Guest User',
                 bidderEmail: customer.email,
                 customerEmail: customer.email // Send both for backend compatibility
@@ -3038,16 +3047,13 @@
             const customer = getCurrentCustomer();
             const form = event.target;
             const formData = new FormData(form);
-            const bidAmountStoreCurrency = parseFloat(formData.get('amount'));
+            // TODO: Multi-currency - Currently using USD directly, no conversion
+            const bidAmount = parseFloat(formData.get('amount'));
             
-            if (isNaN(bidAmountStoreCurrency) || bidAmountStoreCurrency <= 0) {
+            if (isNaN(bidAmount) || bidAmount <= 0) {
                 alert('Please enter a valid bid amount.');
                 return;
             }
-
-            // Convert bid amount from store currency to USD (backend stores in USD)
-            const bidAmountUSD = convertToUSD(bidAmountStoreCurrency);
-            console.log('Bidly: Converting bid amount:', bidAmountStoreCurrency, 'store currency to', bidAmountUSD, 'USD');
 
             // Only include customerId if it's a valid MongoDB ObjectId
             // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
@@ -3059,9 +3065,9 @@
                 console.error('Bidly: Customer missing email:', customer);
                 return;
             }
-
+            
             const bidData = {
-                amount: bidAmountUSD,
+                amount: bidAmount,
                 bidder: customer.displayName || customer.fullName || 'Guest User',
                 bidderEmail: customer.email,
                 customerEmail: customer.email // Send both for backend compatibility
