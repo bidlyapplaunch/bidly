@@ -3,12 +3,13 @@ import db from "../db.server";
 import { getMongoCollections } from "../mongodb.server";
 
 export const action = async ({ request }) => {
-  const { shop, topic, payload } = await authenticate.webhook(request);
-
-  console.log(`Received ${topic} webhook for ${shop}`);
-  console.log('Payload:', JSON.stringify(payload, null, 2));
-  
   try {
+    // authenticate.webhook automatically verifies HMAC signature
+    // If verification fails, it will throw an error
+    const { shop, topic, payload } = await authenticate.webhook(request);
+
+    console.log(`Received ${topic} webhook for ${shop}`);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
     // Normalize shop domain (remove protocol, trailing slashes)
     const normalizedShop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
 
@@ -96,6 +97,11 @@ export const action = async ({ request }) => {
 
     return new Response(null, { status: 200 });
   } catch (error) {
+    // HMAC verification failure or other authentication errors
+    if (error.message?.includes('HMAC') || error.message?.includes('verification') || error.status === 401) {
+      console.error('❌ HMAC verification failed:', error.message);
+      return new Response(null, { status: 401 });
+    }
     console.error('❌ Error processing shop redact:', error);
     return new Response(null, { status: 500 });
   }

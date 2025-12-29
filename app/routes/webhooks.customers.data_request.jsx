@@ -3,16 +3,18 @@ import db from "../db.server";
 import { getMongoCollections } from "../mongodb.server";
 
 export const action = async ({ request }) => {
-  const { shop, topic, payload } = await authenticate.webhook(request);
-
-  console.log(`Received ${topic} webhook for ${shop}`);
-  console.log('Payload:', JSON.stringify(payload, null, 2));
-  
   try {
+    // authenticate.webhook automatically verifies HMAC signature
+    // If verification fails, it will throw an error
+    const { shop, topic, payload } = await authenticate.webhook(request);
+
+    console.log(`Received ${topic} webhook for ${shop}`);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
+    
     // Extract customer ID from payload
-    // Shopify sends: { customer: { id: "gid://shopify/Customer/123" }, orders_requested: [] }
-    const customerId = payload?.customer?.id;
-    const shopifyCustomerId = customerId ? customerId.replace('gid://shopify/Customer/', '') : null;
+    // Shopify sends: { customer: { id: 191167, email: "john@example.com" }, orders_requested: [] }
+    // customer.id is a number, not a GID
+    const shopifyCustomerId = payload?.customer?.id;
     
     if (!shopifyCustomerId) {
       console.warn('⚠️ No customer ID found in payload');
@@ -39,8 +41,9 @@ export const action = async ({ request }) => {
     
     if (mongoCollections) {
       // Find customer by shopifyId and shopDomain (primary lookup)
+      // Convert to string since MongoDB stores shopifyId as String
       let customer = await mongoCollections.customers.findOne({
-        shopifyId: shopifyCustomerId,
+        shopifyId: String(shopifyCustomerId),
         shopDomain: normalizedShop
       });
 
@@ -129,6 +132,11 @@ export const action = async ({ request }) => {
 
     return new Response(null, { status: 200 });
   } catch (error) {
+    // HMAC verification failure or other authentication errors
+    if (error.message?.includes('HMAC') || error.message?.includes('verification') || error.status === 401) {
+      console.error('❌ HMAC verification failed:', error.message);
+      return new Response(null, { status: 401 });
+    }
     console.error('❌ Error processing customer data request:', error);
     return new Response(null, { status: 500 });
   }
