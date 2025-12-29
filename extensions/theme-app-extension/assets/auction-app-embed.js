@@ -165,7 +165,33 @@
         
         // Convert from store currency to USD
         // rate = storeCurrency / USD, so USD = storeCurrency / rate
-        return storeCurrencyAmount / rate;
+        // Round to 2 decimal places to avoid floating-point precision issues
+        return Math.round((storeCurrencyAmount / rate) * 100) / 100;
+    }
+    
+    // Convert from USD to store currency (for display and input validation)
+    function convertFromUSD(usdAmount) {
+        if (typeof usdAmount !== 'number' || isNaN(usdAmount)) {
+            return usdAmount;
+        }
+        
+        // If already in store currency or no conversion needed
+        if (!window.Shopify?.currency || !window.Shopify.currency.rate) {
+            return usdAmount;
+        }
+        
+        const rate = parseFloat(window.Shopify.currency.rate) || 1;
+        const activeCurrency = window.Shopify.currency.active || 'USD';
+        
+        // If store currency is USD, no conversion needed
+        if (activeCurrency === 'USD') {
+            return usdAmount;
+        }
+        
+        // Convert from USD to store currency
+        // rate = storeCurrency / USD, so storeCurrency = USD * rate
+        // Round to 2 decimal places to avoid floating-point precision issues
+        return Math.round((usdAmount * rate) * 100) / 100;
     }
 
     const PLAN_LEVELS = Object.freeze({
@@ -1326,7 +1352,10 @@
         
         // Determine the display bid and minimum bid logic
         const displayBid = bidCount > 0 ? currentBid : startingBid;
-        const minBidAmount = bidCount > 0 ? Math.max(currentBid + 1, startingBid) : startingBid;
+        // Calculate minimum bid in USD (backend currency)
+        const minBidAmountUSD = bidCount > 0 ? Math.max(currentBid + 1, startingBid) : startingBid;
+        // Convert to store currency for input validation (users enter in store currency)
+        const minBidAmount = convertFromUSD(minBidAmountUSD);
         
         // Check if user is logged in and if they're a Shopify customer
         const loggedIn = isUserLoggedIn();
@@ -1445,7 +1474,7 @@
                                                    id="bidly-bid-amount-${auctionId}" 
                                                    name="amount" 
                                                    step="0.01" 
-                                                   min="${minBidAmount}" 
+                                                   min="${minBidAmount.toFixed(2)}" 
                                                    placeholder="Min: ${formatCurrency(minBidAmount)}"
                                                    ${isGuestViewOnly ? 'disabled' : 'required'}>
                                             <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>${t('widget.buttons.placeBid')}</button>
