@@ -96,6 +96,11 @@ export const identifyStore = async (req, res, next) => {
       return next();
     }
 
+    // Skip store validation for root path (embedded app initialization)
+    if (req.path === '/' || req.path === '') {
+      return next();
+    }
+
     if (
       req.method === 'GET' &&
       STATIC_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix))
