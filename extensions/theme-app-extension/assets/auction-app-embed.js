@@ -1779,6 +1779,17 @@
             return;
         }
 
+        // Validate status: Don't mark as ended if endTime hasn't passed yet
+        // This prevents the backend from incorrectly ending auctions
+        if (auctionData.status === 'ended' && auctionData.endTime) {
+            const endTime = new Date(auctionData.endTime);
+            const now = new Date();
+            if (endTime > now) {
+                console.warn('Bidly: Backend says auction ended but endTime hasn\'t passed yet. Correcting status to active.');
+                auctionData.status = 'active';
+            }
+        }
+
         removeFallbackBanner();
 
         const themeSettings = await fetchWidgetThemeSettings();
