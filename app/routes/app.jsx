@@ -6,14 +6,16 @@ import { authenticate } from "../shopify.server";
 export const loader = async ({ request }) => {
   const { session, admin } = await authenticate.admin(request);
 
-  // Ensure Store exists in MongoDB (non-blocking)
-  // This helps prevent errors when the app first loads after installation
+  // Ensure Store exists in MongoDB BEFORE returning
+  // This is critical to prevent errors when the app first loads after installation
+  const shopDomain = session.shop;
+  const normalizedShop = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
+  
   try {
-    const collections = await import("../mongodb.server").then(m => m.getMongoCollections());
+    const { getMongoCollections } = await import("../mongodb.server");
+    const collections = await getMongoCollections();
+    
     if (collections && collections.stores) {
-      const shopDomain = session.shop;
-      const normalizedShop = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
-
       // Get shop info from Shopify
       const shopQuery = `#graphql
         query getShopInfo {
@@ -38,11 +40,12 @@ export const loader = async ({ request }) => {
         const shopifyStoreId = parseInt(shop.id.split('/').pop());
         const existingStore = await collections.stores.findOne({ shopDomain: normalizedShop });
 
+        // Prepare store data with all required fields (storeEmail is required)
         const storeData = {
           shopDomain: normalizedShop,
           shopifyStoreId,
-          storeName: shop.name,
-          storeEmail: shop.email || '',
+          storeName: shop.name || normalizedShop,
+          storeEmail: shop.email || `${normalizedShop}@example.com`, // Required field, use fallback if empty
           currency: shop.currencyCode || 'USD',
           timezone: shop.ianaTimezone || 'UTC',
           accessToken: session.accessToken,
@@ -71,11 +74,16 @@ export const loader = async ({ request }) => {
           });
           console.log(`✅ Created store record for ${normalizedShop}`);
         }
+      } else {
+        console.warn(`⚠️ Could not fetch shop info for ${normalizedShop}`);
       }
+    } else {
+      console.warn("⚠️ MongoDB collections not available, store will not be created");
     }
   } catch (error) {
-    // Silently fail - this is non-critical, store will be created on first API call
-    console.warn("Could not ensure store in MongoDB (non-critical):", error.message);
+    // Log the error but don't fail - the app should still load
+    console.error("❌ Error ensuring store in MongoDB:", error);
+    console.error("Error details:", error.stack);
   }
 
   // eslint-disable-next-line no-undef
