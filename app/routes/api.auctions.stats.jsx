@@ -3,17 +3,26 @@ import { authenticate } from "../shopify.server";
 const BACKEND_URL = "https://bidly-auction-backend.onrender.com";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
+  const shopDomain = session.shop;
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/auctions/stats`, {
+    const url = new URL(`${BACKEND_URL}/api/auctions/stats`);
+    url.searchParams.set('shop', shopDomain);
+    
+    const response = await fetch(url.toString(), {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-shopify-shop-domain': shopDomain
       }
     });
     
     if (!response.ok) {
-      throw new Error(`Backend responded with ${response.status}`);
+      const errorData = await response.json().catch(() => ({ message: `Backend responded with ${response.status}` }));
+      return new Response(JSON.stringify(errorData), {
+        status: response.status,
+        headers: { "Content-Type": "application/json" }
+      });
     }
     
     const data = await response.json();
