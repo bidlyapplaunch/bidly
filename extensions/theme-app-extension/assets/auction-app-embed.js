@@ -1772,101 +1772,72 @@
             });
         }
 
-        // Detect Dawn theme for special handling
-        const isDawnTheme = document.querySelector('[data-section-type="product"]') || 
-                           document.querySelector('.product-form__outer') ||
-                           window.Shopify?.theme?.name?.toLowerCase().includes('dawn');
+        // PRIORITY: Always insert widget directly after product title, regardless of theme
+        // Try multiple selectors to find the product title
+        const titleSelectors = [
+            'h1.product__title',
+            'h1.product-title',
+            '.product__title h1',
+            '.product-title h1',
+            'h1[data-product-title]',
+            '.product__info h1',
+            '.product-single__title h1',
+            'h1'
+        ];
         
-        let insertionTarget = null;
-        for (const selector of PRODUCT_INFO_SELECTORS) {
-            const candidate = document.querySelector(selector);
-            if (candidate) {
-                insertionTarget = candidate;
-                break;
+        let titleElement = null;
+        for (const selector of titleSelectors) {
+            const candidates = document.querySelectorAll(selector);
+            // Find the first h1 that's likely the product title (not in header/footer)
+            for (const candidate of candidates) {
+                const isInHeader = candidate.closest('header, .header, [role="banner"]');
+                const isInFooter = candidate.closest('footer, .footer, [role="contentinfo"]');
+                const isInProductArea = candidate.closest('.product, .product__info, .product-single, [data-section-type="product"]');
+                
+                if (!isInHeader && !isInFooter && (isInProductArea || selector === 'h1')) {
+                    titleElement = candidate;
+                    break;
+                }
             }
+            if (titleElement) break;
         }
-
-        // For Dawn theme, try to find the product form wrapper first
-        if (isDawnTheme) {
-            const dawnFormWrapper = document.querySelector('.product-form__outer') || 
-                                   document.querySelector('[data-product-form]') ||
-                                   document.querySelector('.product__info');
-            
-            if (dawnFormWrapper) {
-                // Insert widget after the form wrapper but before any scripts
-                const formElement = dawnFormWrapper.querySelector('form[action^="/cart/add"]');
-                if (formElement && formElement.parentElement) {
-                    formElement.insertAdjacentElement('afterend', widgetRoot);
-                } else {
-                    dawnFormWrapper.appendChild(widgetRoot);
-                }
-            } else {
-                // Fallback for Dawn: find product info section
-                const productInfo = document.querySelector('.product__info') || 
-                                  document.querySelector('[data-section-type="product"]');
-                if (productInfo) {
-                    productInfo.appendChild(widgetRoot);
-                } else {
-                    // Last resort: find the form and insert after it
-                    const productForm = document.querySelector('form[action^="/cart/add"]');
-                    if (productForm && productForm.parentElement) {
-                        productForm.insertAdjacentElement('afterend', widgetRoot);
-                    } else {
-                        console.warn('Bidly: Dawn theme structure not found, using fallback');
-                        const fallbackContainer = document.querySelector('main') || document.body;
-                        fallbackContainer.appendChild(widgetRoot);
-                    }
+        
+        if (titleElement && titleElement.parentElement) {
+            // Insert widget directly after the product title
+            console.log('Bidly: Inserting widget after product title:', titleElement);
+            titleElement.insertAdjacentElement('afterend', widgetRoot);
+        } else {
+            // Fallback: Try to find product info container and insert after title within it
+            let insertionTarget = null;
+            for (const selector of PRODUCT_INFO_SELECTORS) {
+                const candidate = document.querySelector(selector);
+                if (candidate) {
+                    insertionTarget = candidate;
+                    break;
                 }
             }
-        } else {
-            // Standard insertion logic for other themes
-            const productForm = document.querySelector('form[action^="/cart/add"]');
-            if (productForm && productForm.parentElement) {
-                productForm.insertAdjacentElement('afterend', widgetRoot);
-            } else if (insertionTarget) {
-                const titleElement =
-                    insertionTarget.querySelector('h1, .product__title, .product-title') ||
-                    insertionTarget.querySelector('h1');
-
-                if (titleElement && titleElement.parentElement) {
-                    titleElement.parentElement.insertBefore(widgetRoot, titleElement.nextSibling);
+            
+            if (insertionTarget) {
+                // Try to find title within the container
+                const titleInContainer = insertionTarget.querySelector('h1, .product__title, .product-title');
+                if (titleInContainer && titleInContainer.parentElement) {
+                    console.log('Bidly: Inserting widget after title in container:', titleInContainer);
+                    titleInContainer.insertAdjacentElement('afterend', widgetRoot);
                 } else {
-                    insertionTarget.appendChild(widgetRoot);
+                    // Insert at the beginning of the container (before other content)
+                    console.log('Bidly: Inserting widget at start of product info container');
+                    insertionTarget.insertBefore(widgetRoot, insertionTarget.firstChild);
                 }
             } else {
-                console.warn('Bidly: Product info container not found; trying universal fallback.');
-                // Universal fallback: try multiple common containers
-                const fallbackSelectors = [
-                    '#MainContent',
-                    'main',
-                    '.main-content',
-                    '.product',
-                    '[data-section-type="product"]',
-                    '.product-single',
-                    'body'
-                ];
-                
-                let fallbackContainer = null;
-                for (const selector of fallbackSelectors) {
-                    const container = document.querySelector(selector);
-                    if (container) {
-                        fallbackContainer = container;
-                        break;
-                    }
-                }
-                
-                if (fallbackContainer) {
-                    // Try to insert near product form if it exists
-                    const productForm = fallbackContainer.querySelector('form[action^="/cart/add"]');
-                    if (productForm && productForm.parentElement) {
-                        productForm.insertAdjacentElement('afterend', widgetRoot);
-                    } else {
-                        // Insert at the beginning of the container
-                        fallbackContainer.insertBefore(widgetRoot, fallbackContainer.firstChild);
-                    }
+                // Last resort: Find any h1 on the page and insert after it
+                const anyH1 = document.querySelector('main h1, .product h1, [data-section-type="product"] h1');
+                if (anyH1 && anyH1.parentElement) {
+                    console.log('Bidly: Inserting widget after first h1 found:', anyH1);
+                    anyH1.insertAdjacentElement('afterend', widgetRoot);
                 } else {
-                    // Last resort: append to body
-                    document.body.appendChild(widgetRoot);
+                    console.warn('Bidly: Could not find product title, using fallback insertion');
+                    const fallbackContainer = document.querySelector('main, .main-content, .product, [data-section-type="product"]') || document.body;
+                    fallbackContainer.insertBefore(widgetRoot, fallbackContainer.firstChild);
                 }
             }
         }
