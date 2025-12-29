@@ -97,6 +97,52 @@
         console.warn('⚠️ Bidly: Unable to detect shop domain, defaulting to hostname');
     }
 
+    // Currency formatting helper
+    function formatCurrency(amount) {
+        if (typeof amount !== 'number' || isNaN(amount)) {
+            return '0.00';
+        }
+        
+        // Try to use Shopify's currency formatting
+        if (window.Shopify?.currency) {
+            const currency = window.Shopify.currency;
+            const activeCurrency = currency.active || 'USD';
+            const rate = currency.rate || 1;
+            
+            // Apply currency rate if needed
+            const convertedAmount = amount * parseFloat(rate);
+            
+            // Format based on currency
+            // For PLN (Polish Złoty)
+            if (activeCurrency === 'PLN') {
+                return `${convertedAmount.toFixed(2)} zł`;
+            }
+            // For EUR
+            if (activeCurrency === 'EUR') {
+                return `€${convertedAmount.toFixed(2)}`;
+            }
+            // For GBP
+            if (activeCurrency === 'GBP') {
+                return `£${convertedAmount.toFixed(2)}`;
+            }
+            // For other currencies, try to get symbol from Shopify
+            if (currency.money_format) {
+                // Shopify money format like: ${{amount}} or {{amount}} zł
+                return currency.money_format.replace('{{amount}}', convertedAmount.toFixed(2));
+            }
+            // Default: use currency code
+            return `${convertedAmount.toFixed(2)} ${activeCurrency}`;
+        }
+        
+        // Fallback: check for Shopify.money_format in theme
+        if (window.Shopify?.formatMoney) {
+            return window.Shopify.formatMoney(amount * 100); // formatMoney expects cents
+        }
+        
+        // Last resort: use dollar sign
+        return `$${amount.toFixed(2)}`;
+    }
+
     const PLAN_LEVELS = Object.freeze({
         free: 0,
         basic: 1,
@@ -1340,7 +1386,7 @@
                     <div class="bidly-widget-pricing">
                         <div class="bidly-current-bid">
                             <span class="bidly-label">${bidCount > 0 ? t('widget.labels.currentBid') : t('widget.labels.startingBid')}</span>
-                            <span class="bidly-amount" data-current-bid="${displayBid}">$${displayBid.toFixed(2)}</span>
+                            <span class="bidly-amount" data-current-bid="${displayBid}">${formatCurrency(displayBid)}</span>
                         </div>
                         <div class="bidly-bid-count">
                             <span class="bidly-label">${t('widget.labels.bids')}</span>
@@ -1365,7 +1411,7 @@
                                 <div class="bidly-bid-action-card">
                                     <div class="bidly-minimum-bid">
                                         <span class="bidly-label">${t('widget.labels.minimumBid')}</span>
-                                        <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">$${minBidAmount.toFixed(2)}</span>
+                                        <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">${formatCurrency(minBidAmount)}</span>
                                     </div>
                                     <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
                                         <div class="bidly-bid-input-group">
@@ -1375,7 +1421,7 @@
                                                    name="amount" 
                                                    step="0.01" 
                                                    min="${minBidAmount}" 
-                                                   placeholder="Min: $${minBidAmount.toFixed(2)}"
+                                                   placeholder="Min: ${formatCurrency(minBidAmount)}"
                                                    ${isGuestViewOnly ? 'disabled' : 'required'}>
                                             <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>${t('widget.buttons.placeBid')}</button>
                                         </div>
@@ -1386,7 +1432,7 @@
                                 <button class="bidly-buy-now-btn ${isGuestViewOnly ? 'bidly-blurred' : ''}" 
                                         ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})"`}
                                         ${isGuestViewOnly ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                                    ${t('widget.buttons.buyNow')} ($${buyNowPrice.toFixed(2)})
+                                    ${t('widget.buttons.buyNow')} (${formatCurrency(buyNowPrice)})
                                 </button>
                             ` : ''}
                         </div>
@@ -2116,7 +2162,7 @@
                             }
                             
                             if (currentBidElement) {
-                                currentBidElement.textContent = `$${data.currentBid.toFixed(2)}`;
+                                currentBidElement.textContent = formatCurrency(data.currentBid);
                                 currentBidElement.setAttribute('data-current-bid', data.currentBid);
                             }
                             
@@ -2133,7 +2179,7 @@
                             const minBid = data.currentBid + 1;
                             const minBidElement = widget.querySelector('[data-min-bid]') || widget.querySelector('.bidly-minimum-bid .bidly-amount');
                             if (minBidElement) {
-                                minBidElement.textContent = `$${minBid.toFixed(2)}`;
+                                minBidElement.textContent = formatCurrency(minBid);
                                 minBidElement.setAttribute('data-min-bid', minBid);
                             }
                             
@@ -2141,7 +2187,7 @@
                             const bidInput = widget.querySelector('.bidly-inline-bid-form input[type="number"]');
                             if (bidInput) {
                                 bidInput.min = minBid;
-                                bidInput.placeholder = `Min: $${minBid.toFixed(2)}`;
+                                bidInput.placeholder = `Min: ${formatCurrency(minBid)}`;
                             }
                         }
                     }
@@ -2344,7 +2390,7 @@
             // Use same logic as widget creation
             const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
             const displayBid = bidCount > 0 ? auctionData.currentBid : auctionData.startingBid;
-            currentBidElement.textContent = `$${displayBid.toFixed(2)}`;
+            currentBidElement.textContent = formatCurrency(displayBid);
             currentBidElement.setAttribute('data-current-bid', displayBid);
         }
 
@@ -2365,7 +2411,7 @@
             // Use same logic as widget creation
             const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
             const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
-            minBidElement.textContent = `$${minBidAmount.toFixed(2)}`;
+            minBidElement.textContent = formatCurrency(minBidAmount);
             minBidElement.setAttribute('data-min-bid', minBidAmount);
         }
 
@@ -2392,7 +2438,7 @@
                 const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
                 const newMinBid = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
                 bidInput.min = newMinBid;
-                bidInput.placeholder = `Min: $${newMinBid.toFixed(2)}`;
+                bidInput.placeholder = `Min: ${formatCurrency(newMinBid)}`;
             }
             
             // Handle form state based on auction status
@@ -2509,7 +2555,7 @@
             // Enhanced notification with bidder name and product
             const firstName = bidderName.split(' ')[0]; // Get first name only
             messageContent = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${firstName} bid $${currentBid.toFixed(2)} on ${productTitle}</div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${firstName} bid ${formatCurrency(currentBid)} on ${productTitle}</div>
                 ${bidCount != null ? `<div style="font-size: 12px; opacity: 0.9;">Total Bids: ${bidCount}</div>` : ''}
             `;
         } else if (currentBid != null) {
@@ -2604,7 +2650,7 @@
                     <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
-                    <p>Are you sure you want to buy this item for <strong>$${price.toFixed(2)}</strong>?</p>
+                    <p>Are you sure you want to buy this item for <strong>${formatCurrency(price)}</strong>?</p>
                     <p>This will end the auction immediately and you will be the winner.</p>
                     <div class="bidly-form-actions">
                         <button onclick="window.BidlyAuctionWidget.confirmBuyNow('${auctionId}', ${price})" class="bidly-confirm-buy">Yes, ${t('widget.buttons.buyNow')}</button>
@@ -2689,7 +2735,7 @@
                                                     <span class="bidly-bidder">${bid.bidder}</span>
                                                     <span class="bidly-bid-time">${new Date(bid.timestamp).toLocaleString()}</span>
                                                 </div>
-                                                <div class="bidly-bid-amount">$${bid.amount.toFixed(2)}</div>
+                                                <div class="bidly-bid-amount">${formatCurrency(bid.amount)}</div>
                                             </div>
                                         `;
                                     }).join('')
