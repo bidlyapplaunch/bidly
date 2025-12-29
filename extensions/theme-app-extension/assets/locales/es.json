@@ -53,7 +53,7 @@
     },
     "messages": {
       "auctionEnded": "La subasta ha finalizado. Puja final: ${amount}",
-      "auctionEndedReserve": "Subasta finalizada — reserva no alcanzada",
+      "auctionEndedReserve": "Subasta finalizada - reserva no alcanzada",
       "bidPlaced": "¡Puja realizada exitosamente!",
       "newBid": "Nueva puja: ${amount}",
       "bidNotification": "¡Nueva puja realizada!",

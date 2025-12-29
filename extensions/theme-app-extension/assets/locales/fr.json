@@ -53,7 +53,7 @@
     },
     "messages": {
       "auctionEnded": "L'enchère est terminée. Enchère finale : {amount} $",
-      "auctionEndedReserve": "Enchère terminée – réserve non respectée",
+      "auctionEndedReserve": "Enchère terminée - réserve non respectée",
       "bidPlaced": "Enchère placée avec succès !",
       "newBid": "Nouvelle enchère : {amount} $",
       "bidNotification": "Nouvelle enchère placée !",

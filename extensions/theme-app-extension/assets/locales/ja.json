@@ -53,7 +53,7 @@
     },
     "messages": {
       "auctionEnded": "オークションは終了しました。最終入札額: ${amount}",
-      "auctionEndedReserve": "オークションは終了しました — リザーブが満たされていません",
+      "auctionEndedReserve": "オークションは終了しました - リザーブが満たされていません",
       "bidPlaced": "無事に入札されました！",
       "newBid": "新しい入札額: ${amount}",
       "bidNotification": "新たに入札されました！",

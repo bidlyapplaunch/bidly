@@ -373,7 +373,7 @@
             },
             messages: {
                 auctionEnded: "Auction has ended. Final bid: ${amount}",
-                auctionEndedReserve: "Auction ended — reserve not met",
+                auctionEndedReserve: "Auction ended - reserve not met",
                 bidPlaced: "Bid placed successfully!",
                 newBid: "New bid: ${amount}",
                 bidNotification: "New bid placed!",
@@ -1583,11 +1583,23 @@
 
         const auction = payload.auction;
         const allowChat = planFeatureEnabled('chat');
+        
+        // Validate status: Don't mark as ended if endTime hasn't passed yet
+        // This prevents the backend from incorrectly ending auctions
+        let status = auction.status || 'pending';
+        if (status === 'ended' && auction.endTime) {
+            const endTime = new Date(auction.endTime);
+            const now = new Date();
+            if (endTime > now) {
+                console.warn('Bidly: Backend says auction ended but endTime hasn\'t passed yet. Correcting status to active.');
+                status = 'active';
+            }
+        }
 
         return {
             hasAuction: true,
             auctionId: auction._id,
-            status: auction.status || 'pending',
+            status: status,
             currentBid: Number(auction.currentBid) || 0,
             startingBid: Number(auction.startingBid) || 0,
             reservePrice: Number(auction.reservePrice) || 0,
@@ -2069,6 +2081,15 @@
             socket.on('bid-placed', (data) => {
                 console.log('Bidly: Real-time bid update received:', data);
                 if (data.auctionId === auctionId) {
+                    // Validate status before updating
+                    if (data.auction && data.auction.status === 'ended' && data.auction.endTime) {
+                        const endTime = new Date(data.auction.endTime);
+                        const now = new Date();
+                        if (endTime > now) {
+                            console.warn('Bidly: WebSocket says auction ended but endTime hasn\'t passed. Correcting to active.');
+                            data.auction.status = 'active';
+                        }
+                    }
                     updateWidgetData(auctionId, data.auction);
                     
                     // Get bidder information and product title for notification
@@ -2094,6 +2115,15 @@
                 console.log('Bidly: Real-time auction update received:', data);
                 if (data.auctionId === auctionId) {
                     if (data.auction) {
+                        // Validate status before updating
+                        if (data.auction.status === 'ended' && data.auction.endTime) {
+                            const endTime = new Date(data.auction.endTime);
+                            const now = new Date();
+                            if (endTime > now) {
+                                console.warn('Bidly: WebSocket auction-updated says ended but endTime hasn\'t passed. Correcting to active.');
+                                data.auction.status = 'active';
+                            }
+                        }
                         updateWidgetData(auctionId, data.auction);
                     } else {
                         // Fallback: fetch full auction data if not included
@@ -2366,6 +2396,17 @@
         }
         
         console.log('Bidly: Widget found, updating elements...');
+        
+        // Validate status: Don't mark as ended if endTime hasn't passed yet
+        // This prevents the backend from incorrectly ending auctions after bids
+        if (auctionData.status === 'ended' && auctionData.endTime) {
+            const endTime = new Date(auctionData.endTime);
+            const now = new Date();
+            if (endTime > now) {
+                console.warn('Bidly: Backend says auction ended but endTime hasn\'t passed yet. Correcting status to active.');
+                auctionData.status = 'active';
+            }
+        }
 
         // Update chat enabled state immediately
         if (auctionData.hasOwnProperty('chatEnabled')) {
@@ -2963,10 +3004,21 @@
                     
                     // Update widget with data from bid response (no additional fetch needed)
                     if (result.auction) {
-                        updateWidgetData(auctionId, result.auction);
+                        // Validate status before updating - don't let backend incorrectly end auctions
+                        const auctionData = { ...result.auction };
+                        if (auctionData.status === 'ended' && auctionData.endTime) {
+                            const endTime = new Date(auctionData.endTime);
+                            const now = new Date();
+                            if (endTime > now) {
+                                console.warn('Bidly: Bid response (submitBid) says auction ended but endTime hasn\'t passed. Correcting to active.');
+                                auctionData.status = 'active';
+                            }
+                        }
+                        
+                        updateWidgetData(auctionId, auctionData);
                         // Also update cached auction check for future refreshes
                         if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
-                            window.currentAuctionCheck = { ...window.currentAuctionCheck, ...result.auction };
+                            window.currentAuctionCheck = { ...window.currentAuctionCheck, ...auctionData };
                         }
                     }
                     

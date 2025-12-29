@@ -53,7 +53,7 @@
     },
     "messages": {
       "auctionEnded": "Aukcja dobiegła końca. Ostateczna oferta: ${amount}",
-      "auctionEndedReserve": "Aukcja zakończona – rezerwa nie została osiągnięta",
+      "auctionEndedReserve": "Aukcja zakończona - rezerwa nie została osiągnięta",
       "bidPlaced": "Oferta złożona pomyślnie!",
       "newBid": "Nowa stawka: ${amount}",
       "bidNotification": "Nowa oferta złożona!",

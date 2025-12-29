@@ -53,7 +53,7 @@
     },
     "messages": {
       "auctionEnded": "Auction has ended. Final bid: ${amount}",
-      "auctionEndedReserve": "Auction ended — reserve not met",
+      "auctionEndedReserve": "Auction ended - reserve not met",
       "bidPlaced": "Bid placed successfully!",
       "newBid": "New bid: ${amount}",
       "bidNotification": "New bid placed!",

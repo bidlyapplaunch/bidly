@@ -53,7 +53,7 @@
     },
     "messages": {
       "auctionEnded": "Die Auktion ist beendet. Endgültiges Gebot: ${amount}",
-      "auctionEndedReserve": "Auktion beendet – Mindestreserve nicht erreicht",
+      "auctionEndedReserve": "Auktion beendet - Mindestreserve nicht erreicht",
       "bidPlaced": "Gebot erfolgreich abgegeben!",
       "newBid": "Neues Gebot: ${amount}",
       "bidNotification": "Neues Gebot abgegeben!",
