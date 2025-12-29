@@ -1844,15 +1844,16 @@
 
         hideProductPrice();
         
-        // For Dawn theme and other themes that need form elements, we should be more careful
-        // Reuse the isDawnTheme variable already declared above
+        // Detect Dawn theme for form element hiding
+        const isDawnTheme = document.querySelector('[data-section-type="product"]') || 
+                           document.querySelector('.product-form__outer') ||
+                           window.Shopify?.theme?.name?.toLowerCase().includes('dawn');
         
         // For Dawn theme, we need to be very careful not to break product-form.js
         // Instead of hiding the entire form, we'll use a more targeted approach
         if (isDawnTheme) {
-            // Wait for Dawn's product-form.js to fully initialize
-            // Check for the presence of product-form.js by looking for its expected structure
-            const waitForDawnForm = () => {
+            // Optimized: Check immediately and only wait if needed
+            const hideDawnFormElements = () => {
                 const variantInput = document.querySelector('input[name="id"]');
                 const productForm = document.querySelector('form[action^="/cart/add"]');
                 
@@ -1872,14 +1873,21 @@
                     }
                     
                     console.log('Bidly: Dawn theme form elements hidden safely');
-                } else {
-                    // Retry after a short delay
-                    setTimeout(waitForDawnForm, 200);
+                    return true;
                 }
+                return false;
             };
             
-            // Start checking after a delay to let scripts initialize
-            setTimeout(waitForDawnForm, 1000);
+            // Try immediately first
+            if (!hideDawnFormElements()) {
+                // If not ready, try again after shorter delay (500ms instead of 1000ms)
+                setTimeout(() => {
+                    if (!hideDawnFormElements()) {
+                        // One more try after another 500ms
+                        setTimeout(hideDawnFormElements, 500);
+                    }
+                }, 500);
+            }
         } else {
             // For other themes, use the standard hiding approach with delay
             setTimeout(() => {
@@ -3144,7 +3152,8 @@
         let auctionPayload = null;
 
         try {
-            const response = await fetchWithTimeout(auctionUrl, {}, 7000);
+            // Reduced timeout for faster loading - 5 seconds instead of 7
+            const response = await fetchWithTimeout(auctionUrl, {}, 5000);
             if (!response.ok) {
                 if (response.status === 404) {
                     console.log('Bidly: No active auction for product', productId);
@@ -3177,6 +3186,20 @@
             tryRefreshWidgetAfterLogin('auction-data-ready');
         }
 
+        // Optimized: Check for customer immediately without long waits
+        // Check multiple sources for customer data right away
+        let customerDetected = false;
+        
+        // Quick check for customer in multiple locations
+        if (window.Shopify?.customer?.id || 
+            window.Shopify?.customerData?.id ||
+            (typeof window.Shopify?.customerData === 'string' && window.Shopify.customerData.includes('"id"')) ||
+            window.customerData?.id) {
+            customerDetected = true;
+            console.log('Bidly: Customer detected immediately from window.Shopify');
+        }
+        
+        // Check storage quickly
         let hasCustomerInStorage = false;
         try {
             const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
@@ -3188,8 +3211,9 @@
             // Ignore storage errors
         }
         
+        // Reduced wait time for login system - only wait 300ms max
         let attempts = 0;
-        const maxAttempts = 10; // Wait up to 1 second for login system
+        const maxAttempts = 3; // Wait up to 300ms for login system
         
         while (!window.BidlyHybridLogin && attempts < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -3198,42 +3222,46 @@
         
         if (window.BidlyHybridLogin) {
             console.log('Bidly: Shared hybrid login system loaded');
-            let loginCheckAttempts = 0;
-            const maxLoginChecks = 20; // Check up to 2 seconds total
-            let lastLoginState = isUserLoggedIn();
             
-            while (loginCheckAttempts < maxLoginChecks) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                const currentLoginState = isUserLoggedIn();
+            // If customer already detected, mark as resolved immediately
+            if (customerDetected || isUserLoggedIn()) {
+                console.log('Bidly: Customer detected, skipping long wait');
+                markLoginResolved('customer-detected-immediately');
+            } else {
+                // Reduced wait time - only check for 500ms instead of 2 seconds
+                let loginCheckAttempts = 0;
+                const maxLoginChecks = 5; // Check up to 500ms total
+                let lastLoginState = isUserLoggedIn();
                 
-                if (currentLoginState) {
-                    console.log('Bidly: Customer detected before widget render');
-                    markLoginResolved('customer-detected-before-render');
-                    break;
+                while (loginCheckAttempts < maxLoginChecks) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    const currentLoginState = isUserLoggedIn();
+                    
+                    if (currentLoginState) {
+                        console.log('Bidly: Customer detected during quick check');
+                        markLoginResolved('customer-detected-during-check');
+                        break;
+                    }
+                    
+                    if (currentLoginState !== lastLoginState) {
+                        lastLoginState = currentLoginState;
+                        loginCheckAttempts = 0; // Reset counter when state changes
+                    } else {
+                        loginCheckAttempts++;
+                    }
                 }
                 
-                if (currentLoginState !== lastLoginState) {
-                    lastLoginState = currentLoginState;
-                    loginCheckAttempts = 0; // Reset counter when state changes
-                } else {
-                    loginCheckAttempts++;
+                if (!isUserLoggedIn()) {
+                    console.log('Bidly: No customer detected after quick check, will show login view');
+                    markLoginResolved('login-check-complete-no-customer');
                 }
-            }
-            
-            if (!isUserLoggedIn()) {
-                console.log('Bidly: No customer detected after waiting, will show login view');
-                markLoginResolved('login-check-complete-no-customer');
             }
         } else if (hasCustomerInStorage) {
-            console.log('Bidly: Login system not loaded yet, but customer found in storage, waiting...');
-            let storageWaitAttempts = 0;
-            while (!window.BidlyHybridLogin && storageWaitAttempts < 5) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                storageWaitAttempts++;
-            }
+            console.log('Bidly: Login system not loaded yet, but customer found in storage');
+            // Don't wait long - just mark as resolved
             markLoginResolved('guest-customer-from-storage');
         } else {
-            console.log('Bidly: Shared login system not available after waiting');
+            console.log('Bidly: Shared login system not available, proceeding without wait');
             markLoginResolved('login-system-unavailable');
         }
 

@@ -331,6 +331,27 @@
                     console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
                 }
                 
+                // Also check window.Shopify.customerData early (Dawn theme and others use this)
+                if (!customerData && window.Shopify?.customerData) {
+                    try {
+                        const customerJson = typeof window.Shopify.customerData === 'string' 
+                            ? JSON.parse(window.Shopify.customerData) 
+                            : window.Shopify.customerData;
+                        
+                        if (customerJson.id) {
+                            customerData = {
+                                id: customerJson.id,
+                                email: customerJson.email,
+                                firstName: customerJson.first_name || customerJson.firstName || null,
+                                lastName: customerJson.last_name || customerJson.lastName || null
+                            };
+                            console.log('Bidly: Found customer via window.Shopify.customerData (early check):', customerData);
+                        }
+                    } catch (e) {
+                        // Ignore parse errors, will try again later
+                    }
+                }
+                
                 if (!customerData) {
                     const customerMeta = document.querySelector('meta[name="shopify-customer"]');
                     if (customerMeta) {
