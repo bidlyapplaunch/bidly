@@ -33,7 +33,7 @@
     }
     
     .bidly-widget-responsive .bidly-widget-actions {
-        padding: 0 20px 18px 20px !important;
+        padding: 0 20px 22px 20px !important;
     }
     
     .bidly-widget-responsive .bidly-widget-footer {
@@ -77,7 +77,7 @@
     }
     
     .bidly-widget-responsive .bidly-widget-actions {
-        padding: 0 20px 20px 20px !important;
+        padding: 0 20px 22px 20px !important;
     }
     
     .bidly-widget-responsive .bidly-widget-footer {
@@ -127,7 +127,7 @@
     }
     
     .bidly-widget-responsive .bidly-widget-actions {
-        padding: 0 16px 18px 16px !important;
+        padding: 0 16px 20px 16px !important;
     }
     
     .bidly-widget-responsive .bidly-widget-footer {
@@ -832,12 +832,26 @@
 
 /* Widget Actions Section - Seamless flow */
 .bidly-widget-responsive .bidly-widget-actions {
-    padding: 0 22px 20px 22px;
+    padding: 0 22px 24px 22px;
     background: transparent;
     border-top: none;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+}
+
+/* Payment Note Styles - Ensure visibility */
+.bidly-widget-responsive .bidly-payment-note {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #666 !important;
+    font-size: 0.75rem !important;
+    margin-top: 0.75rem !important;
+    margin-bottom: 0 !important;
+    text-align: center !important;
+    padding: 0 !important;
+    line-height: 1.4 !important;
 }
 
 /* Widget Footer - Seamless flow */
