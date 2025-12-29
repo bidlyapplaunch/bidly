@@ -122,6 +122,15 @@ const Dashboard = ({ onLogout }) => {
       }
     } catch (err) {
       console.error('Failed to load plan info', err);
+      // If billing isn't available, default to free plan
+      if (err.response?.status === 403 && err.response?.data?.code === 'BILLING_PARTNER_REQUIRED') {
+        console.warn('Billing not available, defaulting to free plan');
+        setPlanInfo({
+          plan: 'free',
+          pendingPlan: null,
+          planDetails: null
+        });
+      }
     }
   };
 

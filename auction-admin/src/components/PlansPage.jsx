@@ -293,7 +293,20 @@ const PlansPage = () => {
       }
     } catch (err) {
       console.error('Plan load error', err);
-      setError(err.response?.data?.message || err.message || t('admin.billing.errors.loadError'));
+      // If billing isn't available (403), default to free plan instead of showing error
+      if (err.response?.status === 403 && err.response?.data?.code === 'BILLING_PARTNER_REQUIRED') {
+        console.warn('Billing not available, defaulting to free plan');
+        setPlanData({
+          plan: 'free',
+          pendingPlan: null,
+          planDetails: PLAN_CONFIG.free,
+          pendingPlanDetails: null,
+          trialEndsAt: null
+        });
+        setError(''); // Clear error, show info message instead
+      } else {
+        setError(err.response?.data?.message || err.message || t('admin.billing.errors.loadError'));
+      }
     } finally {
       setLoading(false);
     }
@@ -325,11 +338,16 @@ const PlansPage = () => {
       }
     } catch (err) {
       console.error('Subscribe error', err);
-      setError(err.response?.data?.message || err.message || t('admin.billing.errors.subscribeError'));
+      // Handle billing not available error gracefully
+      if (err.response?.status === 403 && err.response?.data?.code === 'BILLING_PARTNER_REQUIRED') {
+        setError(err.response?.data?.message || 'Billing is not available for this app yet. Please move the app into a Shopify Partners organization to enable paid plans.');
+      } else {
+        setError(err.response?.data?.message || err.message || t('admin.billing.errors.subscribeError'));
+      }
     } finally {
       setLoadingPlan(null);
     }
-  }, [i18n]);
+  }, [i18n, t]);
 
   const buildDowngradeInfo = useCallback(
     (targetPlanKey) => {
