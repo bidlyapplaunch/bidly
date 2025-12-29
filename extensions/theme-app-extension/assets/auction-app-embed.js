@@ -671,7 +671,16 @@
         '.product-single__form',
         '.product-single__info',
         '#ProductInfo-template',
-        '#ProductInfo-product-template'
+        '#ProductInfo-product-template',
+        // Dawn theme selectors
+        '[data-product-form]',
+        '.product-form__outer',
+        '.product__media-wrapper',
+        '.product__info',
+        'main .product',
+        '.product__wrapper',
+        '#product-form-install',
+        '.product__content'
     ];
 
     function mountFallbackElement(node) {
@@ -1763,6 +1772,11 @@
             });
         }
 
+        // Detect Dawn theme for special handling
+        const isDawnTheme = document.querySelector('[data-section-type="product"]') || 
+                           document.querySelector('.product-form__outer') ||
+                           window.Shopify?.theme?.name?.toLowerCase().includes('dawn');
+        
         let insertionTarget = null;
         for (const selector of PRODUCT_INFO_SELECTORS) {
             const candidate = document.querySelector(selector);
@@ -1772,37 +1786,142 @@
             }
         }
 
-        const productForm = document.querySelector('form[action^="/cart/add"]');
-        if (productForm && productForm.parentElement) {
-            productForm.insertAdjacentElement('afterend', widgetRoot);
-        } else if (insertionTarget) {
-            const titleElement =
-                insertionTarget.querySelector('h1, .product__title, .product-title') ||
-                insertionTarget.querySelector('h1');
-
-            if (titleElement && titleElement.parentElement) {
-                titleElement.parentElement.insertBefore(widgetRoot, titleElement.nextSibling);
+        // For Dawn theme, try to find the product form wrapper first
+        if (isDawnTheme) {
+            const dawnFormWrapper = document.querySelector('.product-form__outer') || 
+                                   document.querySelector('[data-product-form]') ||
+                                   document.querySelector('.product__info');
+            
+            if (dawnFormWrapper) {
+                // Insert widget after the form wrapper but before any scripts
+                const formElement = dawnFormWrapper.querySelector('form[action^="/cart/add"]');
+                if (formElement && formElement.parentElement) {
+                    formElement.insertAdjacentElement('afterend', widgetRoot);
+                } else {
+                    dawnFormWrapper.appendChild(widgetRoot);
+                }
             } else {
-                insertionTarget.appendChild(widgetRoot);
+                // Fallback for Dawn: find product info section
+                const productInfo = document.querySelector('.product__info') || 
+                                  document.querySelector('[data-section-type="product"]');
+                if (productInfo) {
+                    productInfo.appendChild(widgetRoot);
+                } else {
+                    // Last resort: find the form and insert after it
+                    const productForm = document.querySelector('form[action^="/cart/add"]');
+                    if (productForm && productForm.parentElement) {
+                        productForm.insertAdjacentElement('afterend', widgetRoot);
+                    } else {
+                        console.warn('Bidly: Dawn theme structure not found, using fallback');
+                        const fallbackContainer = document.querySelector('main') || document.body;
+                        fallbackContainer.appendChild(widgetRoot);
+                    }
+                }
             }
         } else {
-            console.warn('Bidly: Product info container not found; appending widget near main content.');
-            const fallbackContainer = document.querySelector('#MainContent') || document.body;
-            fallbackContainer.appendChild(widgetRoot);
+            // Standard insertion logic for other themes
+            const productForm = document.querySelector('form[action^="/cart/add"]');
+            if (productForm && productForm.parentElement) {
+                productForm.insertAdjacentElement('afterend', widgetRoot);
+            } else if (insertionTarget) {
+                const titleElement =
+                    insertionTarget.querySelector('h1, .product__title, .product-title') ||
+                    insertionTarget.querySelector('h1');
+
+                if (titleElement && titleElement.parentElement) {
+                    titleElement.parentElement.insertBefore(widgetRoot, titleElement.nextSibling);
+                } else {
+                    insertionTarget.appendChild(widgetRoot);
+                }
+            } else {
+                console.warn('Bidly: Product info container not found; trying universal fallback.');
+                // Universal fallback: try multiple common containers
+                const fallbackSelectors = [
+                    '#MainContent',
+                    'main',
+                    '.main-content',
+                    '.product',
+                    '[data-section-type="product"]',
+                    '.product-single',
+                    'body'
+                ];
+                
+                let fallbackContainer = null;
+                for (const selector of fallbackSelectors) {
+                    const container = document.querySelector(selector);
+                    if (container) {
+                        fallbackContainer = container;
+                        break;
+                    }
+                }
+                
+                if (fallbackContainer) {
+                    // Try to insert near product form if it exists
+                    const productForm = fallbackContainer.querySelector('form[action^="/cart/add"]');
+                    if (productForm && productForm.parentElement) {
+                        productForm.insertAdjacentElement('afterend', widgetRoot);
+                    } else {
+                        // Insert at the beginning of the container
+                        fallbackContainer.insertBefore(widgetRoot, fallbackContainer.firstChild);
+                    }
+                } else {
+                    // Last resort: append to body
+                    document.body.appendChild(widgetRoot);
+                }
+            }
         }
 
         hideProductPrice();
         
-        // Delay hiding product form elements to allow theme scripts to initialize first
-        // This prevents errors in theme's product-form.js that try to access form elements
-        // Increased delay to 500ms to give theme scripts more time
-        setTimeout(() => {
-            try {
-                hideProductFormElements();
-            } catch (error) {
-                console.warn('Bidly: Error hiding product form elements (non-critical):', error);
-            }
-        }, 500);
+        // For Dawn theme and other themes that need form elements, we should be more careful
+        // Check if this is Dawn theme by looking for Dawn-specific elements
+        const isDawnTheme = document.querySelector('[data-section-type="product"]') || 
+                           document.querySelector('.product-form__outer') ||
+                           window.Shopify?.theme?.name?.toLowerCase().includes('dawn');
+        
+        // For Dawn theme, we need to be very careful not to break product-form.js
+        // Instead of hiding the entire form, we'll use a more targeted approach
+        if (isDawnTheme) {
+            // Wait for Dawn's product-form.js to fully initialize
+            // Check for the presence of product-form.js by looking for its expected structure
+            const waitForDawnForm = () => {
+                const variantInput = document.querySelector('input[name="id"]');
+                const productForm = document.querySelector('form[action^="/cart/add"]');
+                
+                if (variantInput && productForm && productForm.contains(variantInput)) {
+                    // Dawn's product-form.js has initialized, now we can safely hide elements
+                    // But we'll only hide the submit button, not the form structure itself
+                    const submitButton = productForm.querySelector('button[type="submit"][name="add"]');
+                    const quantityWrapper = productForm.querySelector('.product-form__quantity');
+                    
+                    if (submitButton && !submitButton.dataset.bidlyOriginalDisplay) {
+                        submitButton.dataset.bidlyOriginalDisplay = window.getComputedStyle(submitButton).display || '';
+                        submitButton.style.display = 'none';
+                    }
+                    if (quantityWrapper && !quantityWrapper.dataset.bidlyOriginalDisplay) {
+                        quantityWrapper.dataset.bidlyOriginalDisplay = window.getComputedStyle(quantityWrapper).display || '';
+                        quantityWrapper.style.display = 'none';
+                    }
+                    
+                    console.log('Bidly: Dawn theme form elements hidden safely');
+                } else {
+                    // Retry after a short delay
+                    setTimeout(waitForDawnForm, 200);
+                }
+            };
+            
+            // Start checking after a delay to let scripts initialize
+            setTimeout(waitForDawnForm, 1000);
+        } else {
+            // For other themes, use the standard hiding approach with delay
+            setTimeout(() => {
+                try {
+                    hideProductFormElements();
+                } catch (error) {
+                    console.warn('Bidly: Error hiding product form elements (non-critical):', error);
+                }
+            }, 500);
+        }
         
         // Protect widget from being removed by theme scripts
         protectWidgetFromRemoval(widgetRoot);
