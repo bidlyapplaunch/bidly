@@ -57,7 +57,9 @@
       "bidPlaced": "¡Puja realizada exitosamente!",
       "newBid": "Nueva puja: ${amount}",
       "bidNotification": "¡Nueva puja realizada!",
-      "currentBidLabel": "Puja Actual: ${amount}"
+      "currentBidLabel": "Puja Actual: ${amount}",
+      "paymentNote": "El pago se procesa en la caja después de que termine la subasta",
+      "buyNowPaymentNote": "El pago se procesa inmediatamente en la caja"
     },
     "chat": {
       "title": "Chat",

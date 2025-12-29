@@ -1522,11 +1522,17 @@
                                 </div>
                             </div>
                             ${buyNowPrice > 0 ? `
-                                <button class="bidly-buy-now-btn ${isGuestViewOnly ? 'bidly-blurred' : ''}" 
-                                        ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})"`}
-                                        ${isGuestViewOnly ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                                    ${t('widget.buttons.buyNow')} (${formatCurrency(buyNowPrice)})
-                                </button>
+                                <div class="bidly-buy-now-section">
+                                    <button class="bidly-buy-now-btn ${isGuestViewOnly ? 'bidly-blurred' : ''}" 
+                                            ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.openBuyNowModal('${auctionId}', ${buyNowPrice})"`}
+                                            ${isGuestViewOnly ? 'style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                                        ${t('widget.buttons.buyNow')} (${formatCurrency(buyNowPrice)})
+                                    </button>
+                                    <p class="bidly-payment-note" style="font-size: 0.75rem; color: #666; margin-top: 0.5rem; margin-bottom: 0;">${t('widget.messages.buyNowPaymentNote')}</p>
+                                </div>
+                            ` : ''}
+                            ${status === 'active' ? `
+                                <p class="bidly-payment-note" style="font-size: 0.75rem; color: #666; margin-top: 0.75rem; margin-bottom: 0; text-align: center;">${t('widget.messages.paymentNote')}</p>
                             ` : ''}
                         </div>
                     ` : status === 'pending' ? `

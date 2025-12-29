@@ -57,7 +57,9 @@
       "bidPlaced": "Offerta effettuata con successo!",
       "newBid": "Nuova offerta: ${amount}",
       "bidNotification": "Nuova offerta fatta!",
-      "currentBidLabel": "Offerta corrente: ${amount}"
+      "currentBidLabel": "Offerta corrente: ${amount}",
+      "paymentNote": "Il pagamento viene elaborato alla cassa dopo la fine dell'asta",
+      "buyNowPaymentNote": "Il pagamento viene elaborato immediatamente alla cassa"
     },
     "chat": {
       "title": "Chiacchierata",

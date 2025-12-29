@@ -57,7 +57,9 @@
       "bidPlaced": "Bod succesvol geplaatst!",
       "newBid": "Nieuw bod: ${amount}",
       "bidNotification": "Nieuw bod geplaatst!",
-      "currentBidLabel": "Huidig ​​bod: ${amount}"
+      "currentBidLabel": "Huidig ​​bod: ${amount}",
+      "paymentNote": "Betaling wordt verwerkt bij de kassa na afloop van de veiling",
+      "buyNowPaymentNote": "Betaling wordt onmiddellijk verwerkt bij de kassa"
     },
     "chat": {
       "title": "Chatten",

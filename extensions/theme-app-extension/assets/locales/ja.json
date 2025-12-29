@@ -57,7 +57,9 @@
       "bidPlaced": "無事に入札されました！",
       "newBid": "新しい入札額: ${amount}",
       "bidNotification": "新たに入札されました！",
-      "currentBidLabel": "現在の入札額: ${amount}"
+      "currentBidLabel": "現在の入札額: ${amount}",
+      "paymentNote": "オークション終了後、チェックアウト時に支払いが処理されます",
+      "buyNowPaymentNote": "チェックアウト時に即座に支払いが処理されます"
     },
     "chat": {
       "title": "チャット",

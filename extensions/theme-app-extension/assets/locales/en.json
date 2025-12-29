@@ -57,7 +57,9 @@
       "bidPlaced": "Bid placed successfully!",
       "newBid": "New bid: ${amount}",
       "bidNotification": "New bid placed!",
-      "currentBidLabel": "Current Bid: ${amount}"
+      "currentBidLabel": "Current Bid: ${amount}",
+      "paymentNote": "Payment processed at checkout after auction ends",
+      "buyNowPaymentNote": "Payment processed immediately at checkout"
     },
     "chat": {
       "title": "Chat",

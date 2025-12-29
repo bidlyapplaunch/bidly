@@ -57,7 +57,9 @@
       "bidPlaced": "Oferta złożona pomyślnie!",
       "newBid": "Nowa stawka: ${amount}",
       "bidNotification": "Nowa oferta złożona!",
-      "currentBidLabel": "Aktualna oferta: ${amount}"
+      "currentBidLabel": "Aktualna oferta: ${amount}",
+      "paymentNote": "Płatność przetwarzana w kasie po zakończeniu aukcji",
+      "buyNowPaymentNote": "Płatność przetwarzana natychmiast w kasie"
     },
     "chat": {
       "title": "Pogawędzić",

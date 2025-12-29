@@ -57,7 +57,9 @@
       "bidPlaced": "تم تقديم العرض بنجاح!",
       "newBid": "عرض السعر الجديد: ${amount}",
       "bidNotification": "تم تقديم عرض جديد!",
-      "currentBidLabel": "المزايدة الحالية: ${amount}"
+      "currentBidLabel": "المزايدة الحالية: ${amount}",
+      "paymentNote": "يتم معالجة الدفع عند الخروج بعد انتهاء المزاد",
+      "buyNowPaymentNote": "يتم معالجة الدفع فورًا عند الخروج"
     },
     "chat": {
       "title": "محادثة",

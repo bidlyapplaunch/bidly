@@ -57,7 +57,9 @@
       "bidPlaced": "Gebot erfolgreich abgegeben!",
       "newBid": "Neues Gebot: ${amount}",
       "bidNotification": "Neues Gebot abgegeben!",
-      "currentBidLabel": "Aktuelles Gebot: ${amount}"
+      "currentBidLabel": "Aktuelles Gebot: ${amount}",
+      "paymentNote": "Zahlung wird an der Kasse nach Ende der Auktion bearbeitet",
+      "buyNowPaymentNote": "Zahlung wird sofort an der Kasse bearbeitet"
     },
     "chat": {
       "title": "Chatten",

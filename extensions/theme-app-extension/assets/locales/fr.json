@@ -52,12 +52,14 @@
       "bidFailed": "Échec de la soumission. Veuillez réessayer."
     },
     "messages": {
-      "auctionEnded": "L'enchère est terminée. Enchère finale : {amount} $",
+      "auctionEnded": "L'enchère est terminée. Enchère finale : {amount} $",
       "auctionEndedReserve": "Enchère terminée - réserve non respectée",
-      "bidPlaced": "Enchère placée avec succès !",
-      "newBid": "Nouvelle enchère : {amount} $",
+      "bidPlaced": "Enchère placée avec succès !",
+      "newBid": "Nouvelle enchère : {amount} $",
       "bidNotification": "Nouvelle enchère placée !",
-      "currentBidLabel": "Enchère actuelle : {amount} $"
+      "currentBidLabel": "Enchère actuelle : {amount} $",
+      "paymentNote": "Le paiement est traité à la caisse après la fin de l'enchère",
+      "buyNowPaymentNote": "Le paiement est traité immédiatement à la caisse"
     },
     "chat": {
       "title": "Chat",

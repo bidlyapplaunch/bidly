@@ -57,7 +57,9 @@
       "bidPlaced": "입찰이 성공적으로 이루어졌습니다!",
       "newBid": "새 입찰가: ${amount}",
       "bidNotification": "새로운 입찰이 이루어졌습니다!",
-      "currentBidLabel": "현재 입찰: ${amount}"
+      "currentBidLabel": "현재 입찰: ${amount}",
+      "paymentNote": "경매 종료 후 결제 시 결제가 처리됩니다",
+      "buyNowPaymentNote": "결제 시 즉시 결제가 처리됩니다"
     },
     "chat": {
       "title": "채팅",
