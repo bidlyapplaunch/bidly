@@ -142,6 +142,31 @@
         // Last resort: use dollar sign
         return `$${amount.toFixed(2)}`;
     }
+    
+    // Convert from store currency to USD (backend base currency)
+    // The backend stores all amounts in USD, so we need to convert user input
+    function convertToUSD(storeCurrencyAmount) {
+        if (typeof storeCurrencyAmount !== 'number' || isNaN(storeCurrencyAmount)) {
+            return storeCurrencyAmount;
+        }
+        
+        // If already in USD, no conversion needed
+        if (!window.Shopify?.currency || !window.Shopify.currency.rate) {
+            return storeCurrencyAmount;
+        }
+        
+        const rate = parseFloat(window.Shopify.currency.rate) || 1;
+        const activeCurrency = window.Shopify.currency.active || 'USD';
+        
+        // If store currency is USD, no conversion needed
+        if (activeCurrency === 'USD') {
+            return storeCurrencyAmount;
+        }
+        
+        // Convert from store currency to USD
+        // rate = storeCurrency / USD, so USD = storeCurrency / rate
+        return storeCurrencyAmount / rate;
+    }
 
     const PLAN_LEVELS = Object.freeze({
         free: 0,
@@ -2944,12 +2969,16 @@
             const customer = getCurrentCustomer();
             const form = event.target;
             const formData = new FormData(form);
-            const bidAmount = parseFloat(formData.get('amount'));
+            const bidAmountStoreCurrency = parseFloat(formData.get('amount'));
             
-            if (isNaN(bidAmount) || bidAmount <= 0) {
+            if (isNaN(bidAmountStoreCurrency) || bidAmountStoreCurrency <= 0) {
                 alert('Please enter a valid bid amount.');
                 return;
             }
+
+            // Convert bid amount from store currency to USD (backend stores in USD)
+            const bidAmountUSD = convertToUSD(bidAmountStoreCurrency);
+            console.log('Bidly: Converting bid amount:', bidAmountStoreCurrency, 'store currency to', bidAmountUSD, 'USD');
 
             // Only include customerId if it's a valid MongoDB ObjectId
             // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
@@ -2963,7 +2992,7 @@
             }
 
             const bidData = {
-                amount: bidAmount,
+                amount: bidAmountUSD,
                 bidder: customer.displayName || customer.fullName || 'Guest User',
                 bidderEmail: customer.email,
                 customerEmail: customer.email // Send both for backend compatibility
