@@ -309,18 +309,47 @@
     async function detectShopifyCustomer() {
         const MAX_ATTEMPTS = 8;
         const BASE_DELAY_MS = 250;
+        
+        // Detect Dawn theme for special handling
+        const isDawnTheme = window.Shopify?.theme?.name?.toLowerCase().includes('dawn');
 
         try {
             // Try proxy in parallel (non-blocking), but check old methods immediately
+            // For Dawn theme, this is especially important
             const proxyPromise = fetchCustomerContextViaProxy().catch(() => null);
+            
+            if (isDawnTheme) {
+                console.log('Bidly: Dawn theme detected - using enhanced customer detection');
+            }
 
             for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
                 console.log(`Bidly: Detecting Shopify customer (attempt ${attempt}/${MAX_ATTEMPTS})...`);
                 console.log('Bidly: window.Shopify:', window.Shopify);
                 console.log('Bidly: window.Shopify?.customer:', window.Shopify?.customer);
+                console.log('Bidly: window.customerData (Liquid injected):', window.customerData);
+                
+                // For Dawn theme, check proxy result earlier in the loop (after attempt 2)
+                if (isDawnTheme && attempt >= 3) {
+                    try {
+                        const earlyProxyResult = await Promise.race([
+                            proxyPromise,
+                            new Promise(resolve => setTimeout(() => resolve(null), 200))
+                        ]);
+                        if (earlyProxyResult && earlyProxyResult.email) {
+                            console.log('Bidly: Dawn theme - customer found via proxy (early in loop):', earlyProxyResult);
+                            const synced = await persistCustomerToBackend(earlyProxyResult);
+                            if (synced) {
+                                return true;
+                            }
+                        }
+                    } catch (e) {
+                        // Continue with other checks
+                    }
+                }
                 
                 let customerData = null;
                 
+                // Check window.Shopify.customer (standard method)
                 if (window.Shopify?.customer && window.Shopify.customer.id) {
                     customerData = {
                         id: window.Shopify.customer.id,
@@ -331,6 +360,29 @@
                     console.log('Bidly: Found customer via window.Shopify.customer:', customerData);
                 }
                 
+                // Dawn theme: Also check if customer is logged in via cookies/session indicators
+                if (!customerData) {
+                    try {
+                        // Check for customer session cookie
+                        const cookies = document.cookie.split(';');
+                        let hasCustomerSession = false;
+                        for (const cookie of cookies) {
+                            const [name] = cookie.trim().split('=');
+                            if (name.includes('customer') || name.includes('_shopify_y') || name.includes('_shopify_s')) {
+                                hasCustomerSession = true;
+                                break;
+                            }
+                        }
+                        
+                        // If we have session indicators but no customer data, try app proxy
+                        if (hasCustomerSession) {
+                            console.log('Bidly: Customer session detected via cookies, will try app proxy...');
+                        }
+                    } catch (e) {
+                        // Ignore cookie errors
+                    }
+                }
+                
                 // Also check window.Shopify.customerData early (Dawn theme and others use this)
                 if (!customerData && window.Shopify?.customerData) {
                     try {
@@ -338,10 +390,11 @@
                             ? JSON.parse(window.Shopify.customerData) 
                             : window.Shopify.customerData;
                         
-                        if (customerJson.id) {
+                        // Check if customerData has actual data (not all nulls)
+                        if (customerJson && (customerJson.id || customerJson.email)) {
                             customerData = {
-                                id: customerJson.id,
-                                email: customerJson.email,
+                                id: customerJson.id || customerJson.customer_id || null,
+                                email: customerJson.email || null,
                                 firstName: customerJson.first_name || customerJson.firstName || null,
                                 lastName: customerJson.last_name || customerJson.lastName || null
                             };
@@ -349,6 +402,59 @@
                         }
                     } catch (e) {
                         // Ignore parse errors, will try again later
+                    }
+                }
+                
+                // Dawn theme specific: Check for customer in JSON-LD structured data
+                if (!customerData) {
+                    try {
+                        const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+                        for (const script of jsonLdScripts) {
+                            try {
+                                const data = JSON.parse(script.textContent);
+                                // Check if it's a Person schema with customer info
+                                if (data['@type'] === 'Person' && (data.identifier || data.email)) {
+                                    customerData = {
+                                        id: data.identifier || data.customerId || null,
+                                        email: data.email || null,
+                                        firstName: data.givenName || data.firstName || null,
+                                        lastName: data.familyName || data.lastName || null
+                                    };
+                                    if (customerData.id || customerData.email) {
+                                        console.log('Bidly: Found customer via JSON-LD:', customerData);
+                                        break;
+                                    }
+                                }
+                            } catch (e) {
+                                // Continue to next script
+                            }
+                        }
+                    } catch (e) {
+                        // Ignore errors
+                    }
+                }
+                
+                // Dawn theme: Check for customer data in data attributes
+                if (!customerData) {
+                    try {
+                        const customerElement = document.querySelector('[data-customer-id], [data-customer-email], [data-customer]');
+                        if (customerElement) {
+                            const customerId = customerElement.getAttribute('data-customer-id') || 
+                                             customerElement.getAttribute('data-customer');
+                            const customerEmail = customerElement.getAttribute('data-customer-email');
+                            
+                            if (customerId || customerEmail) {
+                                customerData = {
+                                    id: customerId || null,
+                                    email: customerEmail || null,
+                                    firstName: customerElement.getAttribute('data-customer-first-name') || null,
+                                    lastName: customerElement.getAttribute('data-customer-last-name') || null
+                                };
+                                console.log('Bidly: Found customer via data attributes:', customerData);
+                            }
+                        }
+                    } catch (e) {
+                        // Ignore errors
                     }
                 }
                 
@@ -398,20 +504,24 @@
                     console.log('Bidly: Found customer via window.customer:', customerData);
                 }
                 
+                // Check window.customerData (injected by Liquid template) - prioritize this for Dawn
                 if (!customerData && window.customerData) {
                     try {
                         const customerJson = typeof window.customerData === 'string' 
                             ? JSON.parse(window.customerData) 
                             : window.customerData;
                         
-                        if (customerJson.id) {
+                        // Check if customerData has actual data (not all nulls) - important for Dawn theme
+                        if (customerJson && (customerJson.id || customerJson.email)) {
                             customerData = {
-                                id: customerJson.id,
-                                email: customerJson.email,
+                                id: customerJson.id || null,
+                                email: customerJson.email || null,
                                 firstName: customerJson.first_name || customerJson.firstName || null,
                                 lastName: customerJson.last_name || customerJson.lastName || null
                             };
-                            console.log('Bidly: Found customer via window.customerData:', customerData);
+                            console.log('Bidly: Found customer via window.customerData (Liquid injected):', customerData);
+                        } else {
+                            console.log('Bidly: window.customerData exists but has no valid data:', customerJson);
                         }
                     } catch (e) {
                         console.log('Bidly: Failed to parse window.customerData:', e);
@@ -477,20 +587,38 @@
                 }
             }
             
-            // Final check: try proxy result if it's ready
+            // Final check: try proxy result if it's ready (more aggressive for Dawn theme)
             try {
+                // For Dawn theme, wait a bit longer for proxy to resolve
+                const isDawnTheme = window.Shopify?.theme?.name?.toLowerCase().includes('dawn');
+                const proxyTimeout = isDawnTheme ? 500 : 100;
+                
                 const proxyResult = await Promise.race([
                     proxyPromise,
-                    new Promise(resolve => setTimeout(() => resolve(null), 100))
+                    new Promise(resolve => setTimeout(() => resolve(null), proxyTimeout))
                 ]);
                 if (proxyResult && proxyResult.email) {
+                    console.log('Bidly: Found customer via app proxy:', proxyResult);
                     const synced = await persistCustomerToBackend(proxyResult);
                     if (synced) {
                         return true;
                     }
                 }
+                
+                // If proxy didn't resolve but we're in Dawn, try direct fetch
+                if (isDawnTheme && !proxyResult) {
+                    console.log('Bidly: Dawn theme - trying direct proxy fetch...');
+                    const directProxyResult = await fetchCustomerContextViaProxy();
+                    if (directProxyResult && directProxyResult.email) {
+                        console.log('Bidly: Found customer via direct proxy fetch:', directProxyResult);
+                        const synced = await persistCustomerToBackend(directProxyResult);
+                        if (synced) {
+                            return true;
+                        }
+                    }
+                }
             } catch (e) {
-                // Proxy failed, continue
+                console.warn('Bidly: Proxy check failed:', e);
             }
             
             console.warn('Bidly: Shopify customer not detected after retries');
