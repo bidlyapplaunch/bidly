@@ -2873,13 +2873,18 @@
             
             const form = event.target;
             const formData = new FormData(form);
+            const bidAmountStoreCurrency = parseFloat(formData.get('amount'));
+            
+            // Convert bid amount from store currency to USD (backend stores in USD)
+            const bidAmountUSD = convertToUSD(bidAmountStoreCurrency);
+            console.log('Bidly: Converting bid amount (submitBid modal):', bidAmountStoreCurrency, 'store currency to', bidAmountUSD, 'USD');
             
             // Only include customerId if it's a valid MongoDB ObjectId
             // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
             const isValidObjectId = customer.id && /^[0-9a-fA-F]{24}$/.test(customer.id);
             
             const bidData = {
-                amount: parseFloat(formData.get('amount')),
+                amount: bidAmountUSD,
                 bidder: customer.displayName || customer.fullName || 'Guest User',
                 bidderEmail: customer.email,
                 customerEmail: customer.email // Send both for backend compatibility
