@@ -2,7 +2,7 @@ import crypto from 'crypto';
 
 const createOAuthLink = () => {
   const shopDomain = 'bidly-2.myshopify.com';
-  const apiKey = process.env.SHOPIFY_API_KEY || '4d6fd182c13268701d61dc45f76c735e';
+  const apiKey = process.env.SHOPIFY_API_KEY || '698a2d663b3718b47b794bfbd6835ef4';
   const apiSecret = process.env.SHOPIFY_API_SECRET || 'your_secret_here';
   const redirectUri = 'https://bidly-auction-backend.onrender.com/auth/shopify/callback';
   
