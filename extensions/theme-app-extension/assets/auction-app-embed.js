@@ -2514,9 +2514,11 @@
         }
         
         if (minBidElement) {
-            // Use same logic as widget creation
+            // Use same logic as widget creation (calculate in USD, then convert to store currency)
             const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
-            const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
+            const minBidAmountUSD = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
+            // Convert to store currency for display and input validation
+            const minBidAmount = convertFromUSD(minBidAmountUSD);
             minBidElement.textContent = formatCurrency(minBidAmount);
             minBidElement.setAttribute('data-min-bid', minBidAmount);
         }
