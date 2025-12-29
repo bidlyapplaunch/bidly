@@ -98,6 +98,7 @@
     }
 
     // Currency formatting helper
+    // amount is in USD (backend currency), converts to store currency for display
     function formatCurrency(amount) {
         if (typeof amount !== 'number' || isNaN(amount)) {
             return '0.00';
@@ -109,7 +110,7 @@
             const activeCurrency = currency.active || 'USD';
             const rate = currency.rate || 1;
             
-            // Apply currency rate if needed
+            // Apply currency rate if needed (convert from USD to store currency)
             const convertedAmount = amount * parseFloat(rate);
             
             // Format based on currency
@@ -140,6 +141,35 @@
         }
         
         // Last resort: use dollar sign
+        return `$${amount.toFixed(2)}`;
+    }
+    
+    // Format currency that's already in store currency (no conversion)
+    function formatStoreCurrency(amount) {
+        if (typeof amount !== 'number' || isNaN(amount)) {
+            return '0.00';
+        }
+        
+        if (window.Shopify?.currency) {
+            const currency = window.Shopify.currency;
+            const activeCurrency = currency.active || 'USD';
+            
+            // Format based on currency (amount is already in store currency)
+            if (activeCurrency === 'PLN') {
+                return `${amount.toFixed(2)} zł`;
+            }
+            if (activeCurrency === 'EUR') {
+                return `€${amount.toFixed(2)}`;
+            }
+            if (activeCurrency === 'GBP') {
+                return `£${amount.toFixed(2)}`;
+            }
+            if (currency.money_format) {
+                return currency.money_format.replace('{{amount}}', amount.toFixed(2));
+            }
+            return `${amount.toFixed(2)} ${activeCurrency}`;
+        }
+        
         return `$${amount.toFixed(2)}`;
     }
     
@@ -1465,7 +1495,7 @@
                                 <div class="bidly-bid-action-card">
                                     <div class="bidly-minimum-bid">
                                         <span class="bidly-label">${t('widget.labels.minimumBid')}</span>
-                                        <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">${formatCurrency(minBidAmount)}</span>
+                                        <span class="bidly-amount bidly-amount-green" data-min-bid="${minBidAmount}">${formatStoreCurrency(minBidAmount)}</span>
                                     </div>
                                     <form onsubmit="${isGuestViewOnly ? 'event.preventDefault(); return false;' : `window.BidlyAuctionWidget.submitInlineBid(event, '${auctionId}')`}">
                                         <div class="bidly-bid-input-group">
@@ -1473,9 +1503,9 @@
                                                    class="bidly-bid-input"
                                                    id="bidly-bid-amount-${auctionId}" 
                                                    name="amount" 
-                                                   step="0.01" 
-                                                   min="${minBidAmount.toFixed(2)}" 
-                                                   placeholder="Min: ${formatCurrency(minBidAmount)}"
+                                                   step="1" 
+                                                   min="${Math.ceil(minBidAmount)}" 
+                                                   placeholder="Min: ${formatStoreCurrency(minBidAmount)}"
                                                    ${isGuestViewOnly ? 'disabled' : 'required'}>
                                             <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>${t('widget.buttons.placeBid')}</button>
                                         </div>
@@ -2276,15 +2306,16 @@
                             const minBid = convertFromUSD(minBidUSD);
                             const minBidElement = widget.querySelector('[data-min-bid]') || widget.querySelector('.bidly-minimum-bid .bidly-amount');
                             if (minBidElement) {
-                                minBidElement.textContent = formatCurrency(minBid);
+                                minBidElement.textContent = formatStoreCurrency(minBid);
                                 minBidElement.setAttribute('data-min-bid', minBid);
                             }
                             
                             // Update bid input placeholder
                             const bidInput = widget.querySelector('.bidly-inline-bid-form input[type="number"]');
                             if (bidInput) {
-                                bidInput.min = minBid.toFixed(2);
-                                bidInput.placeholder = `Min: ${formatCurrency(minBid)}`;
+                                bidInput.min = Math.ceil(minBid);
+                                bidInput.step = '1';
+                                bidInput.placeholder = `Min: ${formatStoreCurrency(minBid)}`;
                             }
                         }
                     }
@@ -2521,7 +2552,7 @@
             const minBidAmountUSD = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
             // Convert to store currency for display and input validation
             const minBidAmount = convertFromUSD(minBidAmountUSD);
-            minBidElement.textContent = formatCurrency(minBidAmount);
+            minBidElement.textContent = formatStoreCurrency(minBidAmount);
             minBidElement.setAttribute('data-min-bid', minBidAmount);
         }
 
