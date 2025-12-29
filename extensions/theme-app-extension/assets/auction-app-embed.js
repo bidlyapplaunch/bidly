@@ -1874,10 +1874,7 @@
         hideProductPrice();
         
         // For Dawn theme and other themes that need form elements, we should be more careful
-        // Check if this is Dawn theme by looking for Dawn-specific elements
-        const isDawnTheme = document.querySelector('[data-section-type="product"]') || 
-                           document.querySelector('.product-form__outer') ||
-                           window.Shopify?.theme?.name?.toLowerCase().includes('dawn');
+        // Reuse the isDawnTheme variable already declared above
         
         // For Dawn theme, we need to be very careful not to break product-form.js
         // Instead of hiding the entire form, we'll use a more targeted approach
