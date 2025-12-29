@@ -13,7 +13,7 @@ const STATIC_PATH_PREFIXES = [
   '/preview/'
 ];
 
-const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth'];
+const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth', '/auth'];
 
 const cleanDomain = (rawDomain) => {
   if (!rawDomain) {
