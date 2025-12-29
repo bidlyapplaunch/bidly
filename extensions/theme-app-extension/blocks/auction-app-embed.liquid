@@ -75,7 +75,14 @@
 // Initialize the auction app embed
 window.BidlyAuctionEmbed = {
     init: function() {
-        console.log('Bidly: Initializing auction app embed...');
+        // Prevent duplicate initialization
+        if (window.__BIDLY_INIT_STARTED || window.__BIDLY_INIT_COMPLETE) {
+            console.log('Bidly: Initialization already in progress or complete, skipping liquid init');
+            return;
+        }
+        
+        window.__BIDLY_INIT_STARTED = true;
+        console.log('Bidly: Initializing auction app embed (from liquid)...');
         
         // Get settings from block
         const settings = {
@@ -89,9 +96,14 @@ window.BidlyAuctionEmbed = {
             if (auctionCheck.hasAuction) {
                 console.log('Bidly: Product has auction data, injecting widget...', auctionCheck);
                 this.injectWidget(auctionCheck, settings);
+                window.__BIDLY_INIT_COMPLETE = true;
             } else {
                 console.log('Bidly: No auction data found for this product');
+                window.__BIDLY_INIT_STARTED = false; // Reset if no auction found
             }
+        }).catch(error => {
+            console.error('Bidly: Error during initialization:', error);
+            window.__BIDLY_INIT_STARTED = false; // Reset on error
         });
     },
     
@@ -244,11 +256,18 @@ window.BidlyAuctionEmbed = {
 };
 
 // Initialize when DOM is ready
-if (document.readyState === 'loading') {
+// Check if initialization already started to prevent duplicates
+if (window.__BIDLY_INIT_STARTED || window.__BIDLY_INIT_COMPLETE) {
+    console.log('Bidly: Initialization already in progress or complete, skipping liquid init');
+} else if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.BidlyAuctionEmbed.init();
+        if (!window.__BIDLY_INIT_STARTED && !window.__BIDLY_INIT_COMPLETE) {
+            window.BidlyAuctionEmbed.init();
+        }
     });
 } else {
-    window.BidlyAuctionEmbed.init();
+    if (!window.__BIDLY_INIT_STARTED && !window.__BIDLY_INIT_COMPLETE) {
+        window.BidlyAuctionEmbed.init();
+    }
 }
 </script>

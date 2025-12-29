@@ -1743,9 +1743,24 @@
 
         applyWidgetTheme(widgetRoot, themeSettings);
 
-        const existingWidget = document.querySelector(`.${CONFIG.widgetClass}`);
-        if (existingWidget && existingWidget !== widgetRoot) {
-            existingWidget.remove();
+        // Remove ALL existing widgets to prevent duplicates
+        const existingWidgets = document.querySelectorAll(`.${CONFIG.widgetClass}`);
+        existingWidgets.forEach(widget => {
+            if (widget !== widgetRoot) {
+                console.log('Bidly: Removing duplicate widget:', widget);
+                widget.remove();
+            }
+        });
+        
+        // Also check for widgets with the same auction ID
+        if (auctionData && auctionData.auctionId) {
+            const duplicateById = document.querySelectorAll(`#bidly-auction-widget-${auctionData.auctionId}`);
+            duplicateById.forEach(widget => {
+                if (widget !== widgetRoot && !widgetRoot.contains(widget)) {
+                    console.log('Bidly: Removing duplicate widget by ID:', widget);
+                    widget.remove();
+                }
+            });
         }
 
         let insertionTarget = null;
@@ -2997,7 +3012,23 @@
     }
 
     // Main initialization function
+    // Global flag to prevent duplicate initialization
+    window.__BIDLY_INIT_STARTED = window.__BIDLY_INIT_STARTED || false;
+    window.__BIDLY_INIT_COMPLETE = window.__BIDLY_INIT_COMPLETE || false;
+
     async function init() {
+        // Prevent duplicate initialization
+        if (window.__BIDLY_INIT_STARTED) {
+            console.log('Bidly: Initialization already in progress, skipping duplicate init');
+            return;
+        }
+        
+        if (window.__BIDLY_INIT_COMPLETE) {
+            console.log('Bidly: Initialization already completed, skipping duplicate init');
+            return;
+        }
+
+        window.__BIDLY_INIT_STARTED = true;
         console.log('Bidly: Initializing auction app embed...');
 
         await loadTranslations();
@@ -3005,13 +3036,15 @@
 
         if (PREVIEW_MODE) {
             renderPreviewWidget(initialTheme, PREVIEW_DATA.auctionData || { status: PREVIEW_DATA.state || 'active' });
+            window.__BIDLY_INIT_COMPLETE = true;
             return;
         }
 
-        const existingWidget = document.querySelector('.bidly-auction-app-embed');
-        if (existingWidget) {
-            console.log('Bidly: Widget already exists, skipping initialization to prevent reload');
-            return;
+        // Check for existing widgets - remove ALL duplicates
+        const existingWidgets = document.querySelectorAll('.bidly-auction-app-embed');
+        if (existingWidgets.length > 0) {
+            console.log(`Bidly: Found ${existingWidgets.length} existing widget(s), removing duplicates...`);
+            existingWidgets.forEach(widget => widget.remove());
         }
 
         const productId = resolveProductId();
