@@ -2270,8 +2270,10 @@
                                 }
                             }
                             
-                            // Update minimum bid
-                            const minBid = data.currentBid + 1;
+                            // Update minimum bid (in USD from backend)
+                            const minBidUSD = data.currentBid + 1;
+                            // Convert to store currency for display and input validation
+                            const minBid = convertFromUSD(minBidUSD);
                             const minBidElement = widget.querySelector('[data-min-bid]') || widget.querySelector('.bidly-minimum-bid .bidly-amount');
                             if (minBidElement) {
                                 minBidElement.textContent = formatCurrency(minBid);
@@ -2281,7 +2283,7 @@
                             // Update bid input placeholder
                             const bidInput = widget.querySelector('.bidly-inline-bid-form input[type="number"]');
                             if (bidInput) {
-                                bidInput.min = minBid;
+                                bidInput.min = minBid.toFixed(2);
                                 bidInput.placeholder = `Min: ${formatCurrency(minBid)}`;
                             }
                         }
