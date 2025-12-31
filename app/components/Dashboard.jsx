@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
@@ -7,6 +9,9 @@ import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
 import socketService from '../services/socket';
 
 const Dashboard = ({ onLogout }) => {
+  const app = useAppBridge();
+  const fetch = authenticatedFetch(app);
+  
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedAuction, setSelectedAuction] = useState(null);

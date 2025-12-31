@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
+  const app = useAppBridge();
+  const fetch = authenticatedFetch(app);
+  
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

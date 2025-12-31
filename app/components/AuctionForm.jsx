@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
+  const app = useAppBridge();
+  const fetch = authenticatedFetch(app);
+  
   const [formData, setFormData] = useState({
     shopifyProductId: '',
     startingBid: '',
