@@ -172,8 +172,9 @@ class WinnerProcessingService {
                 console.log(`💰 Creating product with winning bid amount: $${winningBidAmount}`);
                 
                 try {
-                    privateProduct = await this.createPrivateProductForWinner(
-                        store,
+                    privateProduct = await shopifyGraphQLService.createPrivateProductForWinner(
+                        shopDomain,
+                        store.accessToken,
                         originalProduct,
                         enrichedWinner,
                         winningBidAmount
@@ -221,11 +222,55 @@ class WinnerProcessingService {
                     });
                     throw productError;
                 }
-            } else if (!claimedAuction.duplicatedProductId) {
+            } else {
+                // Existing product found - verify its price matches the winning bid
+                // If price doesn't match, we need to update it because Shopify uses variant price for draft orders
+                console.log(`ℹ️ Existing private product found - verifying price matches winning bid $${winningBidAmount}...`);
+                
+                const duplicatedProductId = claimedAuction.duplicatedProductId || (
+                    privateProduct.productId.includes('gid://')
+                        ? privateProduct.productId.split('/').pop()
+                        : privateProduct.productId
+                );
+                
+                try {
+                    // Get current product variant price
+                    const shopifyService = getShopifyService();
+                    const productDetails = await shopifyGraphQLService.getProduct(shopDomain, store.accessToken, duplicatedProductId);
+                    const currentVariantPrice = parseFloat(productDetails.product.variants.edges[0]?.node?.price || 0);
+                    
+                    if (Math.abs(currentVariantPrice - winningBidAmount) > 0.01) {
+                        console.log(`⚠️ Product variant price is $${currentVariantPrice}, but winning bid is $${winningBidAmount}. Updating variant price...`);
+                        
+                        // Update variant price to match winning bid
+                        const priceUpdateResult = await shopifyGraphQLService.updateProductVariantPrices(
+                            shopDomain,
+                            store.accessToken,
+                            privateProduct.productId,
+                            productDetails.product.variants.edges,
+                            winningBidAmount
+                        );
+                        
+                        const failedUpdates = priceUpdateResult.variantUpdates.filter(v => !v.success);
+                        if (failedUpdates.length > 0) {
+                            console.error(`❌ Failed to update variant price:`, failedUpdates);
+                            throw new Error(`Failed to update product variant price to winning bid amount: ${failedUpdates.map(v => v.error).join('; ')}`);
+                        }
+                        
+                        console.log(`✅ Product variant price updated to $${winningBidAmount}`);
+                    } else {
+                        console.log(`✅ Product variant price ($${currentVariantPrice}) already matches winning bid`);
+                    }
+                } catch (priceCheckError) {
+                    console.error(`❌ Error verifying/updating product price:`, priceCheckError.message);
+                    // Don't fail completely - try creating draft order anyway, but log the issue
+                    console.warn(`⚠️ Continuing with draft order creation despite price check failure`);
+                }
+                
                 // Ensure duplicatedProductId is populated for downstream logic
-                claimedAuction.duplicatedProductId = privateProduct.productId.includes('gid://')
-                    ? privateProduct.productId.split('/').pop()
-                    : privateProduct.productId;
+                if (!claimedAuction.duplicatedProductId) {
+                    claimedAuction.duplicatedProductId = duplicatedProductId;
+                }
             }
             
             // 6. Find or create Shopify customer
