@@ -458,50 +458,65 @@ class ShopifyGraphQLService {
      */
     async updateProductVariantPrices(storeDomain, accessToken, productId, variants, winningBidAmount) {
         console.log('🔄 Using GraphQL to update variant prices');
-        const variantUpdates = [];
-        
-        // Use GraphQL productVariantUpdate mutation for each variant
-        for (const variantEdge of variants) {
-            const variantId = variantEdge.node.id; // Keep as GID
-            try {
-                const query = `
-                    mutation productVariantUpdate($input: ProductVariantInput!) {
-                        productVariantUpdate(input: $input) {
-                            productVariant {
-                                id
-                                price
-                            }
-                            userErrors {
-                                field
-                                message
-                            }
+        // productVariantUpdate is deprecated - use productVariantsBulkUpdate
+        const variantUpdatesInput = variants.map(variantEdge => ({
+            id: variantEdge.node.id, // Keep as GID
+            price: winningBidAmount.toString()
+        }));
+
+        try {
+            const query = `
+                mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+                    productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                        productVariants {
+                            id
+                            price
+                        }
+                        userErrors {
+                            field
+                            message
                         }
                     }
-                `;
-
-                const variables = {
-                    input: {
-                        id: variantId,
-                        price: winningBidAmount.toString()
-                    }
-                };
-
-                const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
-                
-                if (result.productVariantUpdate.userErrors.length > 0) {
-                    const errorMsg = result.productVariantUpdate.userErrors[0].message;
-                    console.error(`Failed to update variant ${variantId}:`, errorMsg);
-                    variantUpdates.push({ id: variantId, success: false, error: errorMsg });
-                } else {
-                    variantUpdates.push({ id: variantId, success: true });
                 }
-            } catch (error) {
-                console.error(`Failed to update variant ${variantId}:`, error.message);
-                variantUpdates.push({ id: variantId, success: false, error: error.message });
+            `;
+
+            const variables = {
+                productId: productId,
+                variants: variantUpdatesInput
+            };
+
+            const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
+            
+            if (result.productVariantsBulkUpdate.userErrors.length > 0) {
+                const errorMsg = result.productVariantsBulkUpdate.userErrors[0].message;
+                console.error(`Failed to update variants:`, errorMsg);
+                // Return error for all variants
+                return {
+                    variantUpdates: variantUpdatesInput.map(v => ({
+                        id: v.id,
+                        success: false,
+                        error: errorMsg
+                    }))
+                };
+            } else {
+                // All variants updated successfully
+                return {
+                    variantUpdates: variantUpdatesInput.map(v => ({
+                        id: v.id,
+                        success: true
+                    }))
+                };
             }
+        } catch (error) {
+            console.error(`Failed to update variants:`, error.message);
+            return {
+                variantUpdates: variantUpdatesInput.map(v => ({
+                    id: v.id,
+                    success: false,
+                    error: error.message
+                }))
+            };
         }
-        
-        return { variantUpdates };
     }
 
     /**
