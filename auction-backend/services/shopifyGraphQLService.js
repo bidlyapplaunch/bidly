@@ -530,30 +530,107 @@ class ShopifyGraphQLService {
 
     /**
      * Create a private product for auction winner
+     * Uses productDuplicate to copy everything (images, metafields, collections, etc.)
+     * Then updates variant prices to the winning bid amount
      */
     async createPrivateProductForWinner(storeDomain, accessToken, originalProduct, winnerData, winningBidAmount) {
-        // Use manual product creation instead of duplication
-        // This ensures prices and images are set correctly from the start
-        // productDuplicate preserves original prices and may have issues with images
-        console.log(`🔄 Creating product manually with correct price $${winningBidAmount} from the start...`);
+        // Get the original product ID (handle both GID format and numeric ID)
+        const originalProductId = typeof originalProduct === 'string' 
+            ? originalProduct 
+            : (originalProduct.id || originalProduct);
         
-        // Ensure we have full product data
-        let fullProduct = originalProduct;
-        if (!fullProduct.title || !fullProduct.variants || !fullProduct.images) {
-            console.log('⚠️ Fetching full product details for manual creation...');
-            const productId = typeof originalProduct === 'string' ? originalProduct : originalProduct.id.split('/').pop();
-            const productData = await this.getProduct(storeDomain, accessToken, productId);
-            fullProduct = productData.product;
+        // Ensure it's in GID format
+        const productGid = originalProductId.includes('gid://') 
+            ? originalProductId 
+            : `gid://shopify/Product/${originalProductId}`;
+        
+        console.log(`🔄 Duplicating product ${productGid} to copy all fields (images, metafields, collections, etc.)...`);
+        
+        // Step 1: Use productDuplicate to copy everything (images, metafields, collections, inventory settings, etc.)
+        const duplicateResult = await this.duplicateProductForWinner(
+            storeDomain, 
+            accessToken, 
+            productGid, 
+            {
+                productTitle: typeof originalProduct === 'string' ? 'Product' : (originalProduct.title || 'Product'),
+                winnerName: winnerData.bidder || winnerData.winnerName || 'Winner'
+            }
+        );
+        
+        if (duplicateResult.productDuplicate.userErrors.length > 0) {
+            throw new Error(`Product duplication failed: ${duplicateResult.productDuplicate.userErrors[0].message}`);
         }
-
-        // Create product manually with winning bid price and images set correctly
-        const newProduct = await this.createProductManually(storeDomain, accessToken, fullProduct, winnerData, winningBidAmount);
-
+        
+        const duplicatedProduct = duplicateResult.productDuplicate.newProduct;
+        const newProductId = duplicatedProduct.id;
+        
+        console.log(`✅ Product duplicated successfully. Now updating variant prices to $${winningBidAmount}...`);
+        
+        // Step 2: Get the duplicated product's variants
+        const getProductQuery = `
+            query getProduct($id: ID!) {
+                product(id: $id) {
+                    id
+                    variants(first: 10) {
+                        edges {
+                            node {
+                                id
+                                price
+                                title
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+        
+        const productData = await this.executeGraphQL(storeDomain, accessToken, getProductQuery, {
+            id: newProductId
+        });
+        
+        const variants = productData.product.variants?.edges || [];
+        if (variants.length === 0) {
+            throw new Error('Duplicated product has no variants');
+        }
+        
+        // Step 3: Update variant prices to winning bid amount
+        const variantUpdates = variants.map(variantEdge => ({
+            id: variantEdge.node.id,
+            price: winningBidAmount.toString()
+        }));
+        
+        const updateVariantsQuery = `
+            mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+                productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                    productVariants {
+                        id
+                        price
+                        title
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        `;
+        
+        const updateVariantsResult = await this.executeGraphQL(storeDomain, accessToken, updateVariantsQuery, {
+            productId: newProductId,
+            variants: variantUpdates
+        });
+        
+        if (updateVariantsResult.productVariantsBulkUpdate.userErrors.length > 0) {
+            throw new Error(`Variant price update failed: ${updateVariantsResult.productVariantsBulkUpdate.userErrors[0].message}`);
+        }
+        
+        console.log(`✅ Variant prices updated to $${winningBidAmount}`);
+        
         return {
-            productId: newProduct.id,
-            productHandle: newProduct.handle,
-            productTitle: newProduct.title,
-            productUrl: `https://${storeDomain}/products/${newProduct.handle}`
+            productId: duplicatedProduct.id,
+            productHandle: duplicatedProduct.handle,
+            productTitle: duplicatedProduct.title,
+            productUrl: `https://${storeDomain}/products/${duplicatedProduct.handle}`
         };
     }
 
