@@ -71,21 +71,44 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
         timezone: shopResponse.data.shop.timezone
       };
       
-      // Try to get products
-      console.log('🔍 Testing products API...');
-      const productsResponse = await client.get('/products.json', {
-        params: { limit: 5 }
+      // Try to get products using GraphQL
+      console.log('🔍 Testing products API (GraphQL)...');
+      const productsResponse = await client.post('/graphql.json', {
+        query: `
+          query GetProducts($first: Int!) {
+            products(first: $first, sortKey: UPDATED_AT, reverse: true) {
+              edges {
+                node {
+                  id
+                  title
+                  handle
+                  status
+                }
+              }
+            }
+          }
+        `,
+        variables: { first: 5 }
       });
+      
+      if (productsResponse.data?.errors) {
+        throw new Error(productsResponse.data.errors.map(err => err.message).join('; '));
+      }
+      
       console.log('✅ Products API works!');
       
+      const productEdges = productsResponse.data?.data?.products?.edges || [];
       const productsData = {
-        count: productsResponse.data.products.length,
-        products: productsResponse.data.products.map(p => ({
-          id: p.id,
-          title: p.title,
-          handle: p.handle,
-          status: p.status
-        }))
+        count: productEdges.length,
+        products: productEdges.map(edge => {
+          const id = edge.node.id.split('/').pop();
+          return {
+            id,
+            title: edge.node.title,
+            handle: edge.node.handle,
+            status: edge.node.status
+          };
+        })
       };
       
       return res.json({

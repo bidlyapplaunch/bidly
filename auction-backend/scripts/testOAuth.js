@@ -57,16 +57,36 @@ const testOAuthToken = async () => {
       console.log(`   - Shop Domain: ${shopResponse.data.shop.domain}`);
       console.log(`   - Shop Plan: ${shopResponse.data.shop.plan_name}`);
       
-      // Try to get products
-      console.log('\n🔍 Testing products API...');
-      const productsResponse = await client.get('/products.json', {
-        params: { limit: 5 }
+      // Try to get products using GraphQL
+      console.log('\n🔍 Testing products API (GraphQL)...');
+      const productsResponse = await client.post('/graphql.json', {
+        query: `
+          query GetProducts($first: Int!) {
+            products(first: $first, sortKey: UPDATED_AT, reverse: true) {
+              edges {
+                node {
+                  id
+                  title
+                  handle
+                  status
+                }
+              }
+            }
+          }
+        `,
+        variables: { first: 5 }
       });
-      console.log('✅ Products API works!');
-      console.log(`   - Found ${productsResponse.data.products.length} products`);
       
-      if (productsResponse.data.products.length > 0) {
-        console.log(`   - First product: ${productsResponse.data.products[0].title}`);
+      if (productsResponse.data?.errors) {
+        throw new Error(productsResponse.data.errors.map(err => err.message).join('; '));
+      }
+      
+      console.log('✅ Products API works!');
+      const productEdges = productsResponse.data?.data?.products?.edges || [];
+      console.log(`   - Found ${productEdges.length} products`);
+      
+      if (productEdges.length > 0) {
+        console.log(`   - First product: ${productEdges[0].node.title}`);
       }
       
     } catch (error) {

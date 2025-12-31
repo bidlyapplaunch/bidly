@@ -130,7 +130,7 @@ class ShopifyService {
   }
 
   /**
-   * Fetch a single product by ID for a specific store
+   * Fetch a single product by ID for a specific store (GraphQL)
    * @param {string} shopDomain - The shop's domain
    * @param {string} productId - Shopify product ID
    * @returns {Object} Product data with title, images, and price
@@ -139,10 +139,67 @@ class ShopifyService {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      const response = await client.get(`/products/${productId}.json`);
-      const product = response.data.product;
-      
-      return this.formatProductData(product);
+      // Use GraphQL instead of REST API
+      const gql = `
+        query GetProduct($id: ID!) {
+          product(id: $id) {
+            id
+            title
+            handle
+            descriptionHtml
+            vendor
+            productType
+            tags
+            status
+            createdAt
+            updatedAt
+            images(first: 10) {
+              edges {
+                node {
+                  id
+                  url
+                  altText
+                  width
+                  height
+                }
+              }
+            }
+            variants(first: 25) {
+              edges {
+                node {
+                  id
+                  title
+                  price
+                  compareAtPrice
+                  sku
+                  inventoryQuantity
+                  availableForSale
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          id: `gid://shopify/Product/${productId}`
+        }
+      });
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productNode = response.data?.data?.product;
+      if (!productNode) {
+        throw new Error(`Product ${productId} not found`);
+      }
+
+      // Normalize GraphQL response to REST-like format for formatProductData
+      const normalized = this.normalizeGraphQLProduct(productNode);
+      return this.formatProductData(normalized);
     } catch (error) {
       console.error('Error fetching product:', error.response?.data || error.message);
       throw new Error(`Failed to fetch product ${productId}: ${error.response?.data?.errors || error.message}`);
@@ -190,10 +247,9 @@ class ShopifyService {
         }
         console.log('⚠️ GraphQL search returned no matches, falling back to REST pagination.');
       } catch (graphQLError) {
-        console.warn('⚠️ GraphQL product search failed, falling back to REST pagination:', graphQLError.message);
+        console.warn('⚠️ GraphQL product search failed:', graphQLError.message);
+        throw graphQLError;
       }
-
-      return await this.searchProductsRest(client, trimmedQuery, limit, shopDomain);
     } catch (error) {
       console.error('Error searching products:', error.response?.data || error.message);
       
@@ -297,28 +353,96 @@ class ShopifyService {
   }
 
   /**
-   * Get all products with pagination for a specific store
+   * Get all products with pagination for a specific store (GraphQL)
    * @param {string} shopDomain - The shop's domain
    * @param {number} limit - Number of products per page (default: 50)
-   * @param {string} pageInfo - Pagination cursor (optional)
+   * @param {string} pageInfo - Pagination cursor (optional, GraphQL uses "after" parameter)
    * @returns {Object} Object with products array and pagination info
    */
   async getAllProducts(shopDomain, limit = 50, pageInfo = null) {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      const params = { limit };
-      if (pageInfo) {
-        params.page_info = pageInfo;
+      const gql = `
+        query GetAllProducts($first: Int!, $after: String) {
+          products(first: $first, after: $after, sortKey: UPDATED_AT, reverse: true) {
+            edges {
+              cursor
+              node {
+                id
+                title
+                handle
+                descriptionHtml
+                vendor
+                productType
+                tags
+                status
+                createdAt
+                updatedAt
+                images(first: 10) {
+                  edges {
+                    node {
+                      id
+                      url
+                      altText
+                      width
+                      height
+                    }
+                  }
+                }
+                variants(first: 25) {
+                  edges {
+                    node {
+                      id
+                      title
+                      price
+                      compareAtPrice
+                      sku
+                      inventoryQuantity
+                      availableForSale
+                    }
+                  }
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+              endCursor
+              startCursor
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          first: limit,
+          after: pageInfo || null
+        }
+      });
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
       }
 
-      const response = await client.get('/products.json', { params });
-      const products = response.data.products;
-      const pagination = this.extractPaginationInfo(response.headers);
+      const productEdges = response.data?.data?.products?.edges || [];
+      const pageInfoData = response.data?.data?.products?.pageInfo || {};
+
+      const products = productEdges.map(edge => {
+        const normalized = this.normalizeGraphQLProduct(edge.node);
+        return this.formatProductData(normalized);
+      });
 
       return {
-        products: products.map(product => this.formatProductData(product)),
-        pagination,
+        products,
+        pagination: {
+          hasNext: pageInfoData.hasNextPage || false,
+          hasPrevious: pageInfoData.hasPreviousPage || false,
+          nextPageInfo: pageInfoData.endCursor || null,
+          previousPageInfo: pageInfoData.startCursor || null
+        }
       };
     } catch (error) {
       console.error('Error fetching all products:', error.response?.data || error.message);
@@ -593,34 +717,6 @@ class ShopifyService {
     });
   }
 
-  async searchProductsRest(client, query, limit, shopDomain) {
-    console.log('🌀 Executing REST fallback search with pagination');
-    const matchedProducts = [];
-    let pageInfo = null;
-
-    do {
-      const params = { limit: 250 };
-      if (pageInfo) {
-        params.page_info = pageInfo;
-      }
-
-      const response = await client.get('/products.json', { params });
-      const products = response.data.products || [];
-
-      const filtered = this.filterProductsByQuery(products, query);
-      matchedProducts.push(...filtered);
-
-      if (matchedProducts.length >= limit) {
-        break;
-      }
-
-      const pagination = this.extractPaginationInfo(response.headers);
-      pageInfo = pagination?.hasNext ? pagination.nextPageInfo : null;
-    } while (pageInfo);
-
-    console.log(`✅ REST search returned ${matchedProducts.length} matching products for store ${shopDomain}`);
-    return matchedProducts.slice(0, limit).map(product => this.formatProductData(product));
-  }
 
   /**
    * Validate if a product ID exists in Shopify for a specific store
@@ -638,7 +734,7 @@ class ShopifyService {
   }
 
   /**
-   * Get product inventory information for a specific store
+   * Get product inventory information for a specific store (GraphQL)
    * @param {string} shopDomain - The shop's domain
    * @param {string} productId - Shopify product ID
    * @returns {Object} Inventory data
@@ -647,19 +743,60 @@ class ShopifyService {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      const response = await client.get(`/products/${productId}.json`);
-      const product = response.data.product;
-      
-      if (!product.variants || product.variants.length === 0) {
+      const gql = `
+        query GetProductInventory($id: ID!) {
+          product(id: $id) {
+            id
+            variants(first: 25) {
+              edges {
+                node {
+                  id
+                  title
+                  price
+                  sku
+                  inventoryQuantity
+                  availableForSale
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          id: `gid://shopify/Product/${productId}`
+        }
+      });
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productNode = response.data?.data?.product;
+      if (!productNode) {
         return { totalInventory: 0, variants: [] };
       }
 
-      const inventory = product.variants.map(variant => ({
-        id: variant.id.toString(),
-        title: variant.title,
-        inventory: variant.inventory_quantity || 0,
-        available: variant.available,
-        sku: variant.sku,
+      const variantEdges = productNode.variants?.edges || [];
+      
+      if (variantEdges.length === 0) {
+        return { totalInventory: 0, variants: [] };
+      }
+
+      const stripGid = gid => {
+        if (!gid) return null;
+        const parts = gid.split('/');
+        return parts[parts.length - 1];
+      };
+
+      const inventory = variantEdges.map(edge => ({
+        id: stripGid(edge.node.id),
+        title: edge.node.title,
+        inventory: edge.node.inventoryQuantity || 0,
+        available: edge.node.availableForSale,
+        sku: edge.node.sku,
       }));
 
       const totalInventory = inventory.reduce((sum, variant) => sum + variant.inventory, 0);
@@ -675,7 +812,7 @@ class ShopifyService {
   }
 
   /**
-   * Get product suggestions for autocomplete for a specific store
+   * Get product suggestions for autocomplete for a specific store (GraphQL)
    * @param {string} shopDomain - The shop's domain
    * @param {string} query - Search query
    * @param {number} limit - Number of suggestions
@@ -685,36 +822,69 @@ class ShopifyService {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      // Fetch all products and filter client-side (same as search)
-      const response = await client.get('/products.json', {
-        params: {
-          limit: 250, // Get more products to search through
-          fields: 'id,title,handle,images,variants,vendor,product_type',
-        },
+      // Use GraphQL search instead of REST
+      const searchQuery = this.buildGraphQLSearchQuery(query);
+      if (!searchQuery) {
+        return [];
+      }
+
+      const gql = `
+        query GetProductSuggestions($query: String!, $first: Int!) {
+          products(first: $first, query: $query, sortKey: UPDATED_AT, reverse: true) {
+            edges {
+              node {
+                id
+                title
+                handle
+                vendor
+                productType
+                images(first: 1) {
+                  edges {
+                    node {
+                      url
+                    }
+                  }
+                }
+                variants(first: 1) {
+                  edges {
+                    node {
+                      price
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          query: searchQuery,
+          first: limit
+        }
       });
-      
-      const allProducts = response.data.products;
-      const searchQuery = query.toLowerCase();
-      
-      // Filter products based on query
-      const filteredProducts = allProducts.filter(product => {
-        const title = product.title?.toLowerCase() || '';
-        const vendor = product.vendor?.toLowerCase() || '';
-        
-        return title.includes(searchQuery) || vendor.includes(searchQuery);
-      });
-      
-      // Take only the requested limit
-      const limitedProducts = filteredProducts.slice(0, limit);
-      
-      return limitedProducts.map(product => ({
-        id: product.id.toString(),
-        title: product.title,
-        handle: product.handle,
-        price: product.variants?.[0]?.price ? parseFloat(product.variants[0].price) : 0,
-        image: product.images?.[0]?.src || null,
-        vendor: product.vendor,
-        productType: product.product_type,
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productEdges = response.data?.data?.products?.edges || [];
+      const stripGid = gid => {
+        if (!gid) return null;
+        const parts = gid.split('/');
+        return parts[parts.length - 1];
+      };
+
+      return productEdges.map(edge => ({
+        id: stripGid(edge.node.id),
+        title: edge.node.title,
+        handle: edge.node.handle,
+        price: edge.node.variants?.edges?.[0]?.node?.price ? parseFloat(edge.node.variants.edges[0].node.price) : 0,
+        image: edge.node.images?.edges?.[0]?.node?.url || null,
+        vendor: edge.node.vendor,
+        productType: edge.node.productType,
       }));
     } catch (error) {
       console.error('Error fetching product suggestions:', error.response?.data || error.message);
@@ -733,7 +903,7 @@ class ShopifyService {
   }
 
   /**
-   * Get product by handle (URL-friendly identifier) for a specific store
+   * Get product by handle (URL-friendly identifier) for a specific store (GraphQL)
    * @param {string} shopDomain - The shop's domain
    * @param {string} handle - Product handle
    * @returns {Object} Product data
@@ -742,16 +912,63 @@ class ShopifyService {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      const response = await client.get('/products.json', {
-        params: { handle: handle }
+      const gql = `
+        query GetProductByHandle($handle: String!) {
+          productByHandle(handle: $handle) {
+            id
+            title
+            handle
+            descriptionHtml
+            vendor
+            productType
+            tags
+            status
+            createdAt
+            updatedAt
+            images(first: 10) {
+              edges {
+                node {
+                  id
+                  url
+                  altText
+                  width
+                  height
+                }
+              }
+            }
+            variants(first: 25) {
+              edges {
+                node {
+                  id
+                  title
+                  price
+                  compareAtPrice
+                  sku
+                  inventoryQuantity
+                  availableForSale
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: { handle }
       });
-      
-      const products = response.data.products;
-      if (products.length === 0) {
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productNode = response.data?.data?.productByHandle;
+      if (!productNode) {
         throw new Error(`Product with handle "${handle}" not found`);
       }
-      
-      return this.formatProductData(products[0]);
+
+      const normalized = this.normalizeGraphQLProduct(productNode);
+      return this.formatProductData(normalized);
     } catch (error) {
       console.error('Error fetching product by handle:', error.response?.data || error.message);
       throw new Error(`Failed to fetch product by handle: ${error.response?.data?.errors || error.message}`);
@@ -759,7 +976,8 @@ class ShopifyService {
   }
 
   /**
-   * Get products by vendor
+   * Get products by vendor (GraphQL)
+   * @param {string} shopDomain - The shop's domain
    * @param {string} vendor - Vendor name
    * @param {number} limit - Number of results
    * @returns {Array} Array of products
@@ -768,15 +986,68 @@ class ShopifyService {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      const response = await client.get('/products.json', {
-        params: {
-          vendor: vendor,
-          limit: limit,
-        },
+      const gql = `
+        query GetProductsByVendor($query: String!, $first: Int!) {
+          products(first: $first, query: $query, sortKey: UPDATED_AT, reverse: true) {
+            edges {
+              node {
+                id
+                title
+                handle
+                descriptionHtml
+                vendor
+                productType
+                tags
+                status
+                createdAt
+                updatedAt
+                images(first: 10) {
+                  edges {
+                    node {
+                      id
+                      url
+                      altText
+                      width
+                      height
+                    }
+                  }
+                }
+                variants(first: 25) {
+                  edges {
+                    node {
+                      id
+                      title
+                      price
+                      compareAtPrice
+                      sku
+                      inventoryQuantity
+                      availableForSale
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          query: `vendor:'${vendor.replace(/'/g, "\\'")}'`,
+          first: limit
+        }
       });
-      
-      const products = response.data.products;
-      return products.map(product => this.formatProductData(product));
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productEdges = response.data?.data?.products?.edges || [];
+      return productEdges.map(edge => {
+        const normalized = this.normalizeGraphQLProduct(edge.node);
+        return this.formatProductData(normalized);
+      });
     } catch (error) {
       console.error('Error fetching products by vendor:', error.response?.data || error.message);
       throw new Error(`Failed to fetch products by vendor: ${error.response?.data?.errors || error.message}`);
@@ -784,7 +1055,8 @@ class ShopifyService {
   }
 
   /**
-   * Get products by product type
+   * Get products by product type (GraphQL)
+   * @param {string} shopDomain - The shop's domain
    * @param {string} productType - Product type
    * @param {number} limit - Number of results
    * @returns {Array} Array of products
@@ -793,15 +1065,68 @@ class ShopifyService {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      const response = await client.get('/products.json', {
-        params: {
-          product_type: productType,
-          limit: limit,
-        },
+      const gql = `
+        query GetProductsByType($query: String!, $first: Int!) {
+          products(first: $first, query: $query, sortKey: UPDATED_AT, reverse: true) {
+            edges {
+              node {
+                id
+                title
+                handle
+                descriptionHtml
+                vendor
+                productType
+                tags
+                status
+                createdAt
+                updatedAt
+                images(first: 10) {
+                  edges {
+                    node {
+                      id
+                      url
+                      altText
+                      width
+                      height
+                    }
+                  }
+                }
+                variants(first: 25) {
+                  edges {
+                    node {
+                      id
+                      title
+                      price
+                      compareAtPrice
+                      sku
+                      inventoryQuantity
+                      availableForSale
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          query: `product_type:'${productType.replace(/'/g, "\\'")}'`,
+          first: limit
+        }
       });
-      
-      const products = response.data.products;
-      return products.map(product => this.formatProductData(product));
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productEdges = response.data?.data?.products?.edges || [];
+      return productEdges.map(edge => {
+        const normalized = this.normalizeGraphQLProduct(edge.node);
+        return this.formatProductData(normalized);
+      });
     } catch (error) {
       console.error('Error fetching products by type:', error.response?.data || error.message);
       throw new Error(`Failed to fetch products by type: ${error.response?.data?.errors || error.message}`);
@@ -809,7 +1134,8 @@ class ShopifyService {
   }
 
   /**
-   * Get products with specific tags
+   * Get products with specific tags (GraphQL)
+   * @param {string} shopDomain - The shop's domain
    * @param {Array} tags - Array of tags
    * @param {number} limit - Number of results
    * @returns {Array} Array of products
@@ -818,16 +1144,71 @@ class ShopifyService {
     try {
       const { client } = await this.getStoreClient(shopDomain);
       
-      const tagQuery = tags.join(',');
-      const response = await client.get('/products.json', {
-        params: {
-          tags: tagQuery,
-          limit: limit,
-        },
-      });
+      // Build GraphQL tag query - tag:tag1 OR tag:tag2 OR ...
+      const tagQueries = tags.map(tag => `tag:'${tag.replace(/'/g, "\\'")}'`).join(' OR ');
       
-      const products = response.data.products;
-      return products.map(product => this.formatProductData(product));
+      const gql = `
+        query GetProductsByTags($query: String!, $first: Int!) {
+          products(first: $first, query: $query, sortKey: UPDATED_AT, reverse: true) {
+            edges {
+              node {
+                id
+                title
+                handle
+                descriptionHtml
+                vendor
+                productType
+                tags
+                status
+                createdAt
+                updatedAt
+                images(first: 10) {
+                  edges {
+                    node {
+                      id
+                      url
+                      altText
+                      width
+                      height
+                    }
+                  }
+                }
+                variants(first: 25) {
+                  edges {
+                    node {
+                      id
+                      title
+                      price
+                      compareAtPrice
+                      sku
+                      inventoryQuantity
+                      availableForSale
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          query: tagQueries,
+          first: limit
+        }
+      });
+
+      if (response.data?.errors) {
+        throw new Error(response.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productEdges = response.data?.data?.products?.edges || [];
+      return productEdges.map(edge => {
+        const normalized = this.normalizeGraphQLProduct(edge.node);
+        return this.formatProductData(normalized);
+      });
     } catch (error) {
       console.error('Error fetching products by tags:', error.response?.data || error.message);
       throw new Error(`Failed to fetch products by tags: ${error.response?.data?.errors || error.message}`);
@@ -992,14 +1373,41 @@ class ShopifyService {
     const perform = async () => {
       const { client } = await this.getStoreClient(shopDomain);
 
-      const productResponse = await client.get(`/products/${productId}.json`);
-      const product = productResponse.data.product;
+      // Use GraphQL to get product variants instead of REST
+      const gql = `
+        query GetProductVariants($id: ID!) {
+          product(id: $id) {
+            id
+            variants(first: 1) {
+              edges {
+                node {
+                  id
+                }
+              }
+            }
+          }
+        }
+      `;
 
-      if (!product.variants || product.variants.length === 0) {
+      const productResponse = await client.post('/graphql.json', {
+        query: gql,
+        variables: {
+          id: `gid://shopify/Product/${productId}`
+        }
+      });
+
+      if (productResponse.data?.errors) {
+        throw new Error(productResponse.data.errors.map(err => err.message).join('; '));
+      }
+
+      const productNode = productResponse.data?.data?.product;
+      if (!productNode || !productNode.variants?.edges || productNode.variants.edges.length === 0) {
         throw new Error('Product has no variants');
       }
 
-      const variantId = product.variants[0].id;
+      // Extract variant ID from GID
+      const variantGid = productNode.variants.edges[0].node.id;
+      const variantId = variantGid.split('/').pop();
 
       const requestConfig = idempotencyKey
         ? { headers: { 'Idempotency-Key': idempotencyKey } }
