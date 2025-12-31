@@ -363,17 +363,33 @@ class ShopifyGraphQLService {
      */
     async duplicateProductForWinner(storeDomain, accessToken, originalProductId, winnerData) {
         const query = `
-            mutation productDuplicate($productId: ID!, $newTitle: String!, $newStatus: ProductStatus) {
-                productDuplicate(productId: $productId, newTitle: $newTitle, newStatus: $newStatus) {
+            mutation productDuplicate($productId: ID!, $newTitle: String!, $newStatus: ProductStatus, $includeImages: Boolean) {
+                productDuplicate(productId: $productId, newTitle: $newTitle, newStatus: $newStatus, includeImages: $includeImages) {
                     newProduct {
                         id
                         title
                         handle
                         status
+                        media(first: 10) {
+                            edges {
+                                node {
+                                    ... on MediaImage {
+                                        id
+                                        image {
+                                            url
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     userErrors {
                         field
                         message
+                    }
+                    imageJob {
+                        id
+                        done
                     }
                 }
             }
@@ -382,7 +398,8 @@ class ShopifyGraphQLService {
         const variables = {
             productId: originalProductId,
             newTitle: `${winnerData.productTitle} (Auction Winner - ${winnerData.winnerName})`,
-            newStatus: 'UNLISTED'
+            newStatus: 'UNLISTED',
+            includeImages: true  // Explicitly include images in duplication
         };
 
         return await this.executeGraphQL(storeDomain, accessToken, query, variables);
@@ -564,9 +581,29 @@ class ShopifyGraphQLService {
         const duplicatedProduct = duplicateResult.productDuplicate.newProduct;
         const newProductId = duplicatedProduct.id;
         
-        console.log(`✅ Product duplicated successfully. Now updating variant prices to $${winningBidAmount}...`);
+        // Check if images were copied (count media in duplicated product)
+        // Note: getProduct returns images.edges, but productDuplicate returns media.edges
+        const duplicatedMediaCount = duplicatedProduct.media?.edges?.length || 0;
+        const originalMediaCount = originalProduct.images?.edges?.length || 0;
         
-        // Step 2: Get the duplicated product's variants
+        console.log(`✅ Product duplicated successfully. Images: ${duplicatedMediaCount} copied (original had ${originalMediaCount})`);
+        
+        // Step 2: If images weren't copied, manually attach them using original image URLs
+        // originalProduct comes from getProduct() which returns images.edges structure
+        if (duplicatedMediaCount === 0 && originalMediaCount > 0 && typeof originalProduct === 'object' && originalProduct.images?.edges) {
+            console.log(`⚠️ Images were not copied during duplication. Manually attaching ${originalMediaCount} images...`);
+            try {
+                await this.attachImagesToProduct(storeDomain, accessToken, newProductId, originalProduct.images.edges);
+                console.log(`✅ Successfully attached ${originalMediaCount} images to duplicated product`);
+            } catch (imageError) {
+                console.warn(`⚠️ Failed to manually attach images (non-critical): ${imageError.message}`);
+                // Don't throw - product was still created, just without images
+            }
+        }
+        
+        console.log(`🔄 Now updating variant prices to $${winningBidAmount}...`);
+        
+        // Step 3: Get the duplicated product's variants
         const getProductQuery = `
             query getProduct($id: ID!) {
                 product(id: $id) {
@@ -593,7 +630,7 @@ class ShopifyGraphQLService {
             throw new Error('Duplicated product has no variants');
         }
         
-        // Step 3: Update variant prices to winning bid amount
+        // Step 4: Update variant prices to winning bid amount
         const variantUpdates = variants.map(variantEdge => ({
             id: variantEdge.node.id,
             price: winningBidAmount.toString()
