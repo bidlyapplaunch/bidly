@@ -350,16 +350,29 @@ class ShopifyGraphQLService {
 
             newProduct = duplicateResult.productDuplicate.newProduct;
 
-            // Get the duplicated product details to update variant prices
+            // Get the duplicated product details to check if images were preserved
             const productDetails = await this.getProduct(storeDomain, accessToken, newProduct.id.split('/').pop());
 
-            // Ensure images are copied (duplication should preserve them, but let's verify)
-            if (productDetails.product.images.edges.length === 0 && originalProduct.images?.edges?.length > 0) {
-                console.log('⚠️ Duplicated product has no images, copying from original...');
-                await this.copyProductImages(storeDomain, accessToken, newProduct.id, originalProduct.images.edges);
+            // Check if images need to be copied (productDuplicate should preserve them, but verify)
+            const hasImagesAfterDuplication = productDetails.product.images.edges.length > 0;
+            const originalHasImages = originalProduct.images?.edges && originalProduct.images.edges.length > 0;
+            
+            if (originalHasImages && !hasImagesAfterDuplication) {
+                console.log(`🖼️ Duplicated product missing images, copying ${originalProduct.images.edges.length} images from original...`);
+                const imageCopyResult = await this.copyProductImages(storeDomain, accessToken, newProduct.id, originalProduct.images.edges);
+                if (!imageCopyResult.success) {
+                    console.warn('⚠️ Image copy failed (non-critical, product still created):', imageCopyResult.error);
+                } else {
+                    console.log(`✅ Images copied successfully`);
+                }
+            } else if (hasImagesAfterDuplication) {
+                console.log(`✅ Duplicated product already has ${productDetails.product.images.edges.length} images`);
+            } else {
+                console.log('ℹ️ No images in original product to copy');
             }
 
-            // Update all variant prices to the winning bid amount using productUpdate
+            // Update all variant prices to the winning bid amount (non-blocking)
+            // Draft order will use customPrice anyway, but try to set product price correctly
             if (productDetails.product.variants.edges.length > 0) {
                 try {
                     const priceUpdateResult = await this.updateProductVariantPrices(
@@ -373,16 +386,14 @@ class ShopifyGraphQLService {
                     // Check if any variant updates failed
                     const failedUpdates = priceUpdateResult.variantUpdates.filter(v => !v.success);
                     if (failedUpdates.length > 0) {
-                        console.error('❌ Some variant price updates failed:', failedUpdates);
-                        throw new Error(`Failed to update ${failedUpdates.length} variant price(s): ${failedUpdates.map(v => v.error).join('; ')}`);
+                        console.warn('⚠️ Some variant price updates failed (draft order will still use correct price):', failedUpdates);
+                        // Don't throw - draft order uses customPrice which is correct
+                    } else {
+                        console.log('✅ Variant prices updated successfully to $' + winningBidAmount);
                     }
-                    
-                    console.log('✅ Variant prices updated successfully to $' + winningBidAmount);
                 } catch (variantError) {
-                    console.error('❌ Failed to update variant prices:', variantError.message);
-                    // Don't continue silently - this is critical for correct pricing
-                    // The draft order will use customPrice, but the product price should match
-                    throw new Error(`Product duplicated but failed to set price to winning bid ($${winningBidAmount}): ${variantError.message}`);
+                    console.warn('⚠️ Variant price update failed (non-critical, draft order will use correct price):', variantError.message);
+                    // Don't throw - continue with product creation, draft order will use customPrice
                 }
             }
         } catch (error) {

@@ -148,41 +148,56 @@ class WinnerProcessingService {
                 const winningBidForProduct = winner.amount || claimedAuction.currentBid || 0;
                 console.log(`💰 Product creation pricing - Winner amount: $${winner.amount}, Current bid: $${claimedAuction.currentBid}, Using: $${winningBidForProduct}`);
                 
-                privateProduct = await this.createPrivateProductForWinner(
-                    store,
-                    originalProduct,
-                    enrichedWinner,
-                    winningBidForProduct
-                );
+                try {
+                    privateProduct = await this.createPrivateProductForWinner(
+                        store,
+                        originalProduct,
+                        enrichedWinner,
+                        winningBidForProduct
+                    );
 
-                const duplicatedProductId = privateProduct.productId.includes('gid://')
-                    ? privateProduct.productId.split('/').pop()
-                    : privateProduct.productId;
+                    const duplicatedProductId = privateProduct.productId.includes('gid://')
+                        ? privateProduct.productId.split('/').pop()
+                        : privateProduct.productId;
 
-                // Persist the private product info immediately so retries reuse it
-                await Auction.findByIdAndUpdate(auctionId, {
-                    $set: {
-                        privateProduct: {
-                            productId: privateProduct.productId,
-                            productHandle: privateProduct.productHandle,
-                            productTitle: privateProduct.productTitle,
-                            productUrl: privateProduct.productUrl,
-                            createdAt: new Date()
-                        },
-                        duplicatedProductId,
-                        updatedAt: new Date()
-                    }
-                });
+                    // Persist the private product info IMMEDIATELY so retries reuse it
+                    // This prevents duplicate product creation on retry
+                    await Auction.findByIdAndUpdate(auctionId, {
+                        $set: {
+                            privateProduct: {
+                                productId: privateProduct.productId,
+                                productHandle: privateProduct.productHandle,
+                                productTitle: privateProduct.productTitle,
+                                productUrl: privateProduct.productUrl,
+                                createdAt: new Date()
+                            },
+                            duplicatedProductId,
+                            updatedAt: new Date()
+                        }
+                    });
 
-                // Reflect the persisted data on the in-memory auction document
-                claimedAuction.privateProduct = {
-                    productId: privateProduct.productId,
-                    productHandle: privateProduct.productHandle,
-                    productTitle: privateProduct.productTitle,
-                    productUrl: privateProduct.productUrl,
-                    createdAt: new Date()
-                };
-                claimedAuction.duplicatedProductId = duplicatedProductId;
+                    // Reflect the persisted data on the in-memory auction document
+                    claimedAuction.privateProduct = {
+                        productId: privateProduct.productId,
+                        productHandle: privateProduct.productHandle,
+                        productTitle: privateProduct.productTitle,
+                        productUrl: privateProduct.productUrl,
+                        createdAt: new Date()
+                    };
+                    claimedAuction.duplicatedProductId = duplicatedProductId;
+                    
+                    console.log(`✅ Private product created and saved: ${privateProduct.productId}`);
+                } catch (productError) {
+                    console.error(`❌ Failed to create private product for auction ${auctionId}:`, productError.message);
+                    // Release lock and throw to prevent infinite retries
+                    await Auction.findByIdAndUpdate(auctionId, {
+                        $set: {
+                            winnerProcessingLock: false,
+                            updatedAt: new Date()
+                        }
+                    });
+                    throw productError;
+                }
             } else if (!claimedAuction.duplicatedProductId) {
                 // Ensure duplicatedProductId is populated for downstream logic
                 claimedAuction.duplicatedProductId = privateProduct.productId.includes('gid://')
@@ -222,18 +237,41 @@ class WinnerProcessingService {
                 console.log(`ℹ️ Existing draft order ${claimedAuction.draftOrderId} found for auction ${auctionId}, skipping creation.`);
                 draftOrder = { id: claimedAuction.draftOrderId };
             } else {
-                const draftOrderKey = this.buildIdempotencyKey('draft-order', claimedAuction._id, shopDomain);
-                draftOrder = await shopifyService.createDraftOrder(
-                    shopDomain,
-                    shopifyCustomer.id.toString(),
-                    duplicatedProductId,
-                    winningBidAmount, // Use winner.amount instead of currentBid to ensure correct price
-                    `Generated automatically by Bidly Auction App for auction #${auctionId}`,
-                    {
-                        idempotencyKey: draftOrderKey,
-                        maxAttempts: 3
-                    }
-                );
+                try {
+                    const draftOrderKey = this.buildIdempotencyKey('draft-order', claimedAuction._id, shopDomain);
+                    console.log(`📦 Creating draft order for auction ${auctionId} with price $${winningBidAmount}...`);
+                    draftOrder = await shopifyService.createDraftOrder(
+                        shopDomain,
+                        shopifyCustomer.id.toString(),
+                        duplicatedProductId,
+                        winningBidAmount, // Use winner.amount to ensure correct price
+                        `Generated automatically by Bidly Auction App for auction #${auctionId}`,
+                        {
+                            idempotencyKey: draftOrderKey,
+                            maxAttempts: 3
+                        }
+                    );
+                    
+                    // Save draft order ID immediately to prevent duplicate creation on retry
+                    await Auction.findByIdAndUpdate(auctionId, {
+                        $set: {
+                            draftOrderId: draftOrder.id.toString(),
+                            updatedAt: new Date()
+                        }
+                    });
+                    claimedAuction.draftOrderId = draftOrder.id.toString();
+                    console.log(`✅ Draft order created and saved: ${draftOrder.id}`);
+                } catch (draftOrderError) {
+                    console.error(`❌ Failed to create draft order for auction ${auctionId}:`, draftOrderError.message);
+                    // Release lock and throw to prevent infinite retries
+                    await Auction.findByIdAndUpdate(auctionId, {
+                        $set: {
+                            winnerProcessingLock: false,
+                            updatedAt: new Date()
+                        }
+                    });
+                    throw new Error(`Failed to create draft order: ${draftOrderError.message}`);
+                }
             }
 
             if (!invoiceSent) {
