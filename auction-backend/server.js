@@ -780,11 +780,12 @@ const checkAuctionStatusChanges = async () => {
           try {
             // Use the new winner processing service
             const { default: winnerProcessingService } = await import('./services/winnerProcessingService.js');
+            console.log(`🔄 Attempting to process winner for auction ${auction._id}, shopDomain: ${auction.shopDomain}`);
             await winnerProcessingService.processAuctionWinner(auction._id, auction.shopDomain);
-            
             console.log(`✅ Winner processing completed for auction ${auction._id}`);
           } catch (processingError) {
             console.error(`❌ Error processing ended auction ${auction._id}:`, processingError);
+            console.error(`❌ Error stack:`, processingError.stack);
             // Don't fail the status update if processing fails
           }
         }

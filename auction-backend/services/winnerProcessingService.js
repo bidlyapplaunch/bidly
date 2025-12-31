@@ -61,7 +61,23 @@ class WinnerProcessingService {
             claimedAuction = await Auction.findOneAndUpdate(claimFilter, claimUpdate, { new: true });
 
             if (!claimedAuction) {
-                console.log(`⚠️ Winner processing skipped for auction ${auctionId} – already locked or processed`);
+                // Check why it was skipped
+                const existingAuction = await Auction.findById(auctionId);
+                if (existingAuction) {
+                    console.log(`⚠️ Winner processing skipped for auction ${auctionId}`);
+                    console.log(`   Status: ${existingAuction.status}, WinnerProcessed: ${existingAuction.winnerProcessed}, Lock: ${existingAuction.winnerProcessingLock}`);
+                    if (existingAuction.status !== 'ended') {
+                        console.log(`   ⚠️ Auction status is '${existingAuction.status}' but should be 'ended'`);
+                    }
+                    if (existingAuction.winnerProcessed) {
+                        console.log(`   ℹ️ Auction already processed`);
+                    }
+                    if (existingAuction.winnerProcessingLock) {
+                        console.log(`   ⚠️ Auction is locked - might be stuck. Lock should clear on completion or error.`);
+                    }
+                } else {
+                    console.log(`⚠️ Auction ${auctionId} not found`);
+                }
                 return;
             }
             
