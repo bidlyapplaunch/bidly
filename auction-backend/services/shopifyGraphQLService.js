@@ -350,26 +350,9 @@ class ShopifyGraphQLService {
 
             newProduct = duplicateResult.productDuplicate.newProduct;
 
-            // Get the duplicated product details to check if images were preserved
+            // productDuplicate automatically preserves images - no manual copying needed
+            // Get the duplicated product details for price updates
             const productDetails = await this.getProduct(storeDomain, accessToken, newProduct.id.split('/').pop());
-
-            // Check if images need to be copied (productDuplicate should preserve them, but verify)
-            const hasImagesAfterDuplication = productDetails.product.images.edges.length > 0;
-            const originalHasImages = originalProduct.images?.edges && originalProduct.images.edges.length > 0;
-            
-            if (originalHasImages && !hasImagesAfterDuplication) {
-                console.log(`🖼️ Duplicated product missing images, copying ${originalProduct.images.edges.length} images from original...`);
-                const imageCopyResult = await this.copyProductImages(storeDomain, accessToken, newProduct.id, originalProduct.images.edges);
-                if (!imageCopyResult.success) {
-                    console.warn('⚠️ Image copy failed (non-critical, product still created):', imageCopyResult.error);
-                } else {
-                    console.log(`✅ Images copied successfully`);
-                }
-            } else if (hasImagesAfterDuplication) {
-                console.log(`✅ Duplicated product already has ${productDetails.product.images.edges.length} images`);
-            } else {
-                console.log('ℹ️ No images in original product to copy');
-            }
 
             // Update all variant prices to the winning bid amount (non-blocking)
             // Draft order will use customPrice anyway, but try to set product price correctly
