@@ -164,7 +164,6 @@ class ShopifyGraphQLService {
         }
 
         const variantInputs = variants.map((edge, index) => ({
-            productId: productId,
             price: winningBidAmount.toString(),
             title: edge.node?.title || 'Default Title',
             sku: edge.node?.sku || `auction-winner-${Date.now()}-${index}`,
@@ -174,9 +173,10 @@ class ShopifyGraphQLService {
         }));
 
         // Use productVariantsBulkCreate to add all variants at once
+        // productId is a top-level argument, not inside each variant
         const variantsQuery = `
-            mutation productVariantsBulkCreate($variants: [ProductVariantsBulkInput!]!) {
-                productVariantsBulkCreate(variants: $variants) {
+            mutation productVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+                productVariantsBulkCreate(productId: $productId, variants: $variants) {
                     productVariants {
                         id
                         price
@@ -191,6 +191,7 @@ class ShopifyGraphQLService {
         `;
 
         const variantsResult = await this.executeGraphQL(storeDomain, accessToken, variantsQuery, {
+            productId: productId,
             variants: variantInputs
         });
 
