@@ -156,50 +156,65 @@ class ShopifyGraphQLService {
         const newProduct = createResult.productCreate.product;
         const productId = newProduct.id;
 
-        // Step 2: Add variants with winning bid price
-        // Use productVariantCreate for each variant (simpler and more reliable than bulk)
-        const variants = originalProduct.variants?.edges || [];
-        if (variants.length === 0) {
-            // Create a default variant if no variants exist
-            variants.push({ node: { title: 'Default Title', sku: null } });
-        }
-
-        // Create each variant individually
-        const variantQuery = `
-            mutation productVariantCreate($input: ProductVariantInput!) {
-                productVariantCreate(input: $input) {
-                    productVariant {
-                        id
-                        price
-                        title
-                    }
-                    userErrors {
-                        field
-                        message
+        // Step 2: Update variant prices to winning bid amount
+        // productCreate automatically creates a default variant, so we update its price
+        // First, get the product with its variants
+        const getProductQuery = `
+            query getProduct($id: ID!) {
+                product(id: $id) {
+                    id
+                    variants(first: 10) {
+                        edges {
+                            node {
+                                id
+                                price
+                                title
+                            }
+                        }
                     }
                 }
             }
         `;
 
-        const createdVariants = [];
-        for (const edge of variants) {
-            const variantInput = {
-                productId: productId,
-                price: winningBidAmount.toString(),
-                title: edge.node?.title || 'Default Title',
-                sku: edge.node?.sku || `auction-winner-${Date.now()}-${createdVariants.length}`,
-                inventoryPolicy: 'DENY'
-            };
+        const productData = await this.executeGraphQL(storeDomain, accessToken, getProductQuery, {
+            id: productId
+        });
 
-            const variantResult = await this.executeGraphQL(storeDomain, accessToken, variantQuery, {
-                input: variantInput
+        const variants = productData.product.variants?.edges || [];
+        if (variants.length === 0) {
+            throw new Error('Product created but no variants found');
+        }
+
+        // Update each variant's price using productVariantUpdate (which we know works)
+        for (const variantEdge of variants) {
+            const variantId = variantEdge.node.id;
+            const updateVariantQuery = `
+                mutation productVariantUpdate($input: ProductVariantInput!) {
+                    productVariantUpdate(input: $input) {
+                        productVariant {
+                            id
+                            price
+                            title
+                        }
+                        userErrors {
+                            field
+                            message
+                        }
+                    }
+                }
+            `;
+
+            const updateVariantResult = await this.executeGraphQL(storeDomain, accessToken, updateVariantQuery, {
+                input: {
+                    id: variantId,
+                    price: winningBidAmount.toString(),
+                    inventoryPolicy: 'DENY'
+                }
             });
 
-            if (variantResult.productVariantCreate.userErrors.length > 0) {
-                throw new Error(`Variant creation failed: ${variantResult.productVariantCreate.userErrors[0].message}`);
+            if (updateVariantResult.productVariantUpdate.userErrors.length > 0) {
+                throw new Error(`Variant price update failed: ${updateVariantResult.productVariantUpdate.userErrors[0].message}`);
             }
-
-            createdVariants.push(variantResult.productVariantCreate.productVariant);
         }
 
         // Step 3: Add images using productCreateMedia
