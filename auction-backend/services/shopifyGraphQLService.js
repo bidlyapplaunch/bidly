@@ -157,27 +157,18 @@ class ShopifyGraphQLService {
         const productId = newProduct.id;
 
         // Step 2: Add variants with winning bid price
+        // Use productVariantCreate for each variant (simpler and more reliable than bulk)
         const variants = originalProduct.variants?.edges || [];
         if (variants.length === 0) {
             // Create a default variant if no variants exist
             variants.push({ node: { title: 'Default Title', sku: null } });
         }
 
-        const variantInputs = variants.map((edge, index) => ({
-            price: winningBidAmount.toString(),
-            title: edge.node?.title || 'Default Title',
-            sku: edge.node?.sku || `auction-winner-${Date.now()}-${index}`,
-            inventoryPolicy: 'DENY',
-            inventoryQuantity: 0,
-            inventoryManagement: null
-        }));
-
-        // Use productVariantsBulkCreate to add all variants at once
-        // productId is a top-level argument, not inside each variant
-        const variantsQuery = `
-            mutation productVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-                productVariantsBulkCreate(productId: $productId, variants: $variants) {
-                    productVariants {
+        // Create each variant individually
+        const variantQuery = `
+            mutation productVariantCreate($input: ProductVariantInput!) {
+                productVariantCreate(input: $input) {
+                    productVariant {
                         id
                         price
                         title
@@ -190,13 +181,25 @@ class ShopifyGraphQLService {
             }
         `;
 
-        const variantsResult = await this.executeGraphQL(storeDomain, accessToken, variantsQuery, {
-            productId: productId,
-            variants: variantInputs
-        });
+        const createdVariants = [];
+        for (const edge of variants) {
+            const variantInput = {
+                productId: productId,
+                price: winningBidAmount.toString(),
+                title: edge.node?.title || 'Default Title',
+                sku: edge.node?.sku || `auction-winner-${Date.now()}-${createdVariants.length}`,
+                inventoryPolicy: 'DENY'
+            };
 
-        if (variantsResult.productVariantsBulkCreate.userErrors.length > 0) {
-            throw new Error(`Variant creation failed: ${variantsResult.productVariantsBulkCreate.userErrors[0].message}`);
+            const variantResult = await this.executeGraphQL(storeDomain, accessToken, variantQuery, {
+                input: variantInput
+            });
+
+            if (variantResult.productVariantCreate.userErrors.length > 0) {
+                throw new Error(`Variant creation failed: ${variantResult.productVariantCreate.userErrors[0].message}`);
+            }
+
+            createdVariants.push(variantResult.productVariantCreate.productVariant);
         }
 
         // Step 3: Add images using productCreateMedia
