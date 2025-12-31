@@ -185,36 +185,37 @@ class ShopifyGraphQLService {
             throw new Error('Product created but no variants found');
         }
 
-        // Update each variant's price using productVariantUpdate (which we know works)
-        for (const variantEdge of variants) {
-            const variantId = variantEdge.node.id;
-            const updateVariantQuery = `
-                mutation productVariantUpdate($input: ProductVariantInput!) {
-                    productVariantUpdate(input: $input) {
-                        productVariant {
-                            id
-                            price
-                            title
-                        }
-                        userErrors {
-                            field
-                            message
-                        }
+        // Update variant prices using productVariantsBulkUpdate
+        // productVariantUpdate is deprecated - use productVariantsBulkUpdate even for single variants
+        const variantUpdates = variants.map(variantEdge => ({
+            id: variantEdge.node.id,
+            price: winningBidAmount.toString(),
+            inventoryPolicy: 'DENY'
+        }));
+
+        const updateVariantsQuery = `
+            mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+                productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                    productVariants {
+                        id
+                        price
+                        title
+                    }
+                    userErrors {
+                        field
+                        message
                     }
                 }
-            `;
-
-            const updateVariantResult = await this.executeGraphQL(storeDomain, accessToken, updateVariantQuery, {
-                input: {
-                    id: variantId,
-                    price: winningBidAmount.toString(),
-                    inventoryPolicy: 'DENY'
-                }
-            });
-
-            if (updateVariantResult.productVariantUpdate.userErrors.length > 0) {
-                throw new Error(`Variant price update failed: ${updateVariantResult.productVariantUpdate.userErrors[0].message}`);
             }
+        `;
+
+        const updateVariantsResult = await this.executeGraphQL(storeDomain, accessToken, updateVariantsQuery, {
+            productId: productId,
+            variants: variantUpdates
+        });
+
+        if (updateVariantsResult.productVariantsBulkUpdate.userErrors.length > 0) {
+            throw new Error(`Variant price update failed: ${updateVariantsResult.productVariantsBulkUpdate.userErrors[0].message}`);
         }
 
         // Step 3: Add images using fileCreate + productUpdate
