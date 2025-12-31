@@ -9,7 +9,8 @@ export const action = async ({ request }) => {
   // Webhook requests can trigger multiple times and after an app has already been uninstalled.
   // If this webhook already ran, the session may have been deleted previously.
   if (session) {
-    await db.session.deleteMany({ where: { shop } });
+    // Prisma deleteMany doesn't use 'where', it takes the filter directly
+    await db.session.deleteMany({ shop });
   }
 
   return new Response();

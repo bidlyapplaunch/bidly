@@ -106,11 +106,10 @@ export const action = async ({ request }) => {
     }
 
     // 2. Delete session data from Prisma
+    // Prisma deleteMany doesn't use 'where', it takes the filter directly
     await db.session.deleteMany({
-      where: {
-        shop: normalizedShop,
-        userId: BigInt(shopifyCustomerId)
-      }
+      shop: normalizedShop,
+      userId: BigInt(shopifyCustomerId)
     });
 
     console.log(`✅ Deleted session data for customer ${shopifyCustomerId} in shop ${shop}`);
