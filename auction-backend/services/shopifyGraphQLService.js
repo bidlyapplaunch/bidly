@@ -115,9 +115,11 @@ class ShopifyGraphQLService {
 
     /**
      * Create a product manually (fallback when duplication fails)
+     * Uses the new API structure: create product first, then add variants and images separately
      */
     async createProductManually(storeDomain, accessToken, originalProduct, winnerData, winningBidAmount) {
-        const query = `
+        // Step 1: Create the product without variants and images
+        const createQuery = `
             mutation productCreate($input: ProductInput!) {
                 productCreate(input: $input) {
                     product {
@@ -134,46 +136,105 @@ class ShopifyGraphQLService {
             }
         `;
 
-        // Get images from original product
-        const imageInputs = originalProduct.images?.edges?.map(edge => ({
-            src: edge.node.url,
-            altText: edge.node.altText || originalProduct.title
-        })) || [];
-
-        // Create variants with winning bid price
-        const variantInputs = originalProduct.variants?.edges?.map(edge => ({
-            price: winningBidAmount.toString(),
-            title: edge.node.title || 'Default Title',
-            sku: edge.node.sku || `auction-winner-${Date.now()}`,
-            inventoryPolicy: 'DENY',
-            inventoryManagement: null // No inventory tracking for auction winner products
-        })) || [{
-            price: winningBidAmount.toString(),
-            title: 'Default Title',
-            inventoryPolicy: 'DENY',
-            inventoryManagement: null
-        }];
-
-        const variables = {
+        const createVariables = {
             input: {
                 title: `${originalProduct.title} (Auction Winner - ${winnerData.bidder})`,
                 descriptionHtml: originalProduct.description || '',
                 status: 'UNLISTED',
                 productType: originalProduct.productType || '',
                 vendor: originalProduct.vendor || '',
-                tags: [...(originalProduct.tags || []), 'auction-winner'],
-                images: imageInputs,
-                variants: variantInputs
+                tags: [...(originalProduct.tags || []), 'auction-winner']
             }
         };
 
-        const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
+        const createResult = await this.executeGraphQL(storeDomain, accessToken, createQuery, createVariables);
 
-        if (result.productCreate.userErrors.length > 0) {
-            throw new Error(`Product creation failed: ${result.productCreate.userErrors[0].message}`);
+        if (createResult.productCreate.userErrors.length > 0) {
+            throw new Error(`Product creation failed: ${createResult.productCreate.userErrors[0].message}`);
         }
 
-        return result.productCreate.product;
+        const newProduct = createResult.productCreate.product;
+        const productId = newProduct.id;
+
+        // Step 2: Add variants with winning bid price
+        const variants = originalProduct.variants?.edges || [];
+        if (variants.length === 0) {
+            // Create a default variant if no variants exist
+            variants.push({ node: { title: 'Default Title', sku: null } });
+        }
+
+        const variantInputs = variants.map((edge, index) => ({
+            productId: productId,
+            price: winningBidAmount.toString(),
+            title: edge.node?.title || 'Default Title',
+            sku: edge.node?.sku || `auction-winner-${Date.now()}-${index}`,
+            inventoryPolicy: 'DENY',
+            inventoryQuantity: 0,
+            inventoryManagement: null
+        }));
+
+        // Use productVariantsBulkCreate to add all variants at once
+        const variantsQuery = `
+            mutation productVariantsBulkCreate($variants: [ProductVariantsBulkInput!]!) {
+                productVariantsBulkCreate(variants: $variants) {
+                    productVariants {
+                        id
+                        price
+                        title
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        `;
+
+        const variantsResult = await this.executeGraphQL(storeDomain, accessToken, variantsQuery, {
+            variants: variantInputs
+        });
+
+        if (variantsResult.productVariantsBulkCreate.userErrors.length > 0) {
+            throw new Error(`Variant creation failed: ${variantsResult.productVariantsBulkCreate.userErrors[0].message}`);
+        }
+
+        // Step 3: Add images using productCreateMedia
+        const images = originalProduct.images?.edges || [];
+        if (images.length > 0) {
+            const mediaInputs = images.map(edge => ({
+                alt: edge.node.altText || originalProduct.title,
+                mediaContentType: 'IMAGE',
+                originalSource: edge.node.url
+            }));
+
+            const mediaQuery = `
+                mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
+                    productCreateMedia(productId: $productId, media: $media) {
+                        media {
+                            id
+                        }
+                        userErrors {
+                            field
+                            message
+                        }
+                    }
+                }
+            `;
+
+            const mediaResult = await this.executeGraphQL(storeDomain, accessToken, mediaQuery, {
+                productId: productId,
+                media: mediaInputs
+            });
+
+            if (mediaResult.productCreateMedia.userErrors.length > 0) {
+                // Log warning but don't fail - images are non-critical
+                console.warn(`⚠️ Failed to add images to product: ${mediaResult.productCreateMedia.userErrors[0].message}`);
+            } else {
+                console.log(`✅ Added ${images.length} images to product`);
+            }
+        }
+
+        return newProduct;
     }
 
     /**
