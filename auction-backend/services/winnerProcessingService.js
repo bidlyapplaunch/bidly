@@ -288,7 +288,6 @@ class WinnerProcessingService {
                     });
                     throw new Error(`Failed to create draft order: ${draftOrderError.message}`);
                 }
-            }
 
             if (!invoiceSent) {
                 const invoiceSubject = `Congratulations! You Won the Auction for ${privateProduct.productTitle || claimedAuction.productTitle || 'the auction item'}`;
