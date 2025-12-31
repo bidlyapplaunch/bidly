@@ -335,72 +335,22 @@ class ShopifyGraphQLService {
      * Create a private product for auction winner
      */
     async createPrivateProductForWinner(storeDomain, accessToken, originalProduct, winnerData, winningBidAmount) {
-        let newProduct;
-
-        try {
-            // First, try to duplicate the product
-            const duplicateResult = await this.duplicateProductForWinner(storeDomain, accessToken, originalProduct.id, {
-                productTitle: originalProduct.title,
-                winnerName: winnerData.bidder
-            });
-
-            if (duplicateResult.productDuplicate.userErrors.length > 0) {
-                throw new Error(`Product duplication failed: ${duplicateResult.productDuplicate.userErrors[0].message}`);
-            }
-
-            newProduct = duplicateResult.productDuplicate.newProduct;
-
-            // productDuplicate automatically preserves images - no manual copying needed
-            // Get the duplicated product details for price updates
-            const productDetails = await this.getProduct(storeDomain, accessToken, newProduct.id.split('/').pop());
-
-            // Update all variant prices to the winning bid amount (non-blocking)
-            // Draft order will use customPrice anyway, but try to set product price correctly
-            if (productDetails.product.variants.edges.length > 0) {
-                try {
-                    const priceUpdateResult = await this.updateProductVariantPrices(
-                        storeDomain, 
-                        accessToken, 
-                        newProduct.id,
-                        productDetails.product.variants.edges,
-                        winningBidAmount
-                    );
-                    
-                    // Check if any variant updates failed
-                    const failedUpdates = priceUpdateResult.variantUpdates.filter(v => !v.success);
-                    if (failedUpdates.length > 0) {
-                        console.warn('⚠️ Some variant price updates failed (draft order will still use correct price):', failedUpdates);
-                        // Don't throw - draft order uses customPrice which is correct
-                    } else {
-                        console.log('✅ Variant prices updated successfully to $' + winningBidAmount);
-                    }
-                } catch (variantError) {
-                    console.warn('⚠️ Variant price update failed (non-critical, draft order will use correct price):', variantError.message);
-                    // Don't throw - continue with product creation, draft order will use customPrice
-                }
-            }
-        } catch (error) {
-            // If duplication fails due to permissions, fallback to manual creation
-            if (error.isPermissionError || error.message.includes('ACCESS_DENIED') || error.message.includes('write_products') || error.message.includes('permission')) {
-                console.log('⚠️ Product duplication failed due to permissions, falling back to manual creation...');
-                
-                // originalProduct should already be a full product object from getProduct
-                // But if it's missing title or other fields, fetch it again
-                let fullProduct = originalProduct;
-                if (!fullProduct.title || !fullProduct.variants) {
-                    console.log('⚠️ Fetching full product details for manual creation...');
-                    const productId = typeof originalProduct === 'string' ? originalProduct : originalProduct.id.split('/').pop();
-                    const productData = await this.getProduct(storeDomain, accessToken, productId);
-                    fullProduct = productData.product;
-                }
-
-                // Create product manually with winning bid price already set
-                newProduct = await this.createProductManually(storeDomain, accessToken, fullProduct, winnerData, winningBidAmount);
-            } else {
-                // Re-throw if it's a different error
-                throw error;
-            }
+        // Use manual product creation instead of duplication
+        // This ensures prices and images are set correctly from the start
+        // productDuplicate preserves original prices and may have issues with images
+        console.log(`🔄 Creating product manually with correct price $${winningBidAmount} from the start...`);
+        
+        // Ensure we have full product data
+        let fullProduct = originalProduct;
+        if (!fullProduct.title || !fullProduct.variants || !fullProduct.images) {
+            console.log('⚠️ Fetching full product details for manual creation...');
+            const productId = typeof originalProduct === 'string' ? originalProduct : originalProduct.id.split('/').pop();
+            const productData = await this.getProduct(storeDomain, accessToken, productId);
+            fullProduct = productData.product;
         }
+
+        // Create product manually with winning bid price and images set correctly
+        const newProduct = await this.createProductManually(storeDomain, accessToken, fullProduct, winnerData, winningBidAmount);
 
         return {
             productId: newProduct.id,
