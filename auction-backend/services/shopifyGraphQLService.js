@@ -217,39 +217,90 @@ class ShopifyGraphQLService {
             }
         }
 
-        // Step 3: Add images using productCreateMedia
+        // Step 3: Add images using fileCreate + productUpdate
+        // According to Shopify docs: https://shopify.dev/docs/apps/build/product-merchandising/products-and-collections
+        // Product media mutations: productSet, productCreate, productUpdate, productReorderMedia, productDeleteMedia
+        // productCreateMedia does NOT exist - use fileCreate to upload, then productUpdate to associate
         const images = originalProduct.images?.edges || [];
         if (images.length > 0) {
-            const mediaInputs = images.map(edge => ({
-                alt: edge.node.altText || originalProduct.title,
-                mediaContentType: 'IMAGE',
-                originalSource: edge.node.url
-            }));
-
-            const mediaQuery = `
-                mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
-                    productCreateMedia(productId: $productId, media: $media) {
-                        media {
-                            id
+            const mediaIds = [];
+            
+            // Create file records for each image using fileCreate
+            for (const edge of images) {
+                try {
+                    const fileCreateQuery = `
+                        mutation fileCreate($files: [FileCreateInput!]!) {
+                            fileCreate(files: $files) {
+                                files {
+                                    id
+                                    ... on MediaImage {
+                                        image {
+                                            url
+                                            altText
+                                        }
+                                    }
+                                }
+                                userErrors {
+                                    field
+                                    message
+                                }
+                            }
                         }
-                        userErrors {
-                            field
-                            message
+                    `;
+
+                    const fileCreateResult = await this.executeGraphQL(storeDomain, accessToken, fileCreateQuery, {
+                        files: [{
+                            originalSource: edge.node.url,
+                            alt: edge.node.altText || originalProduct.title,
+                            contentType: 'IMAGE'
+                        }]
+                    });
+
+                    if (fileCreateResult.fileCreate.userErrors.length === 0 && fileCreateResult.fileCreate.files.length > 0) {
+                        mediaIds.push(fileCreateResult.fileCreate.files[0].id);
+                    } else {
+                        console.warn(`⚠️ Failed to create file for image: ${fileCreateResult.fileCreate.userErrors[0]?.message || 'Unknown error'}`);
+                    }
+                } catch (fileError) {
+                    console.warn(`⚠️ Error creating file for image ${edge.node.url}:`, fileError.message);
+                }
+            }
+
+            // Associate created files with product using productUpdate
+            if (mediaIds.length > 0) {
+                const productUpdateQuery = `
+                    mutation productUpdate($input: ProductInput!) {
+                        productUpdate(input: $input) {
+                            product {
+                                id
+                                media(first: 10) {
+                                    edges {
+                                        node {
+                                            id
+                                        }
+                                    }
+                                }
+                            }
+                            userErrors {
+                                field
+                                message
+                            }
                         }
                     }
+                `;
+
+                const productUpdateResult = await this.executeGraphQL(storeDomain, accessToken, productUpdateQuery, {
+                    input: {
+                        id: productId,
+                        media: mediaIds
+                    }
+                });
+
+                if (productUpdateResult.productUpdate.userErrors.length > 0) {
+                    console.warn(`⚠️ Failed to associate images with product: ${productUpdateResult.productUpdate.userErrors[0].message}`);
+                } else {
+                    console.log(`✅ Associated ${mediaIds.length} images with product`);
                 }
-            `;
-
-            const mediaResult = await this.executeGraphQL(storeDomain, accessToken, mediaQuery, {
-                productId: productId,
-                media: mediaInputs
-            });
-
-            if (mediaResult.productCreateMedia.userErrors.length > 0) {
-                // Log warning but don't fail - images are non-critical
-                console.warn(`⚠️ Failed to add images to product: ${mediaResult.productCreateMedia.userErrors[0].message}`);
-            } else {
-                console.log(`✅ Added ${images.length} images to product`);
             }
         }
 
