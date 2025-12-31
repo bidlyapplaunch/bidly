@@ -1418,7 +1418,7 @@ class ShopifyService {
         throw new Error(`Invalid custom price for draft order: ${customPrice} (must be a positive number)`);
       }
 
-      console.log(`💰 Creating draft order with custom price: $${priceValue} (original: ${customPrice}, type: ${typeof customPrice})`);
+      console.log(`💰 Creating draft order with custom price: $${priceValue.toFixed(2)} (original: ${customPrice}, type: ${typeof customPrice})`);
 
       const draftOrderResponse = await client.post(
         '/draft_orders.json',
@@ -1428,7 +1428,7 @@ class ShopifyService {
               {
                 variant_id: variantId,
                 quantity: 1,
-                price: priceValue.toString()
+                price: priceValue.toFixed(2) // Ensure exactly 2 decimal places
               }
             ],
             customer: {
@@ -1441,12 +1441,15 @@ class ShopifyService {
       );
 
       const createdOrderId = draftOrderResponse.data.draft_order.id;
-      const createdOrderPrice = draftOrderResponse.data.draft_order.line_items?.[0]?.price || 'unknown';
-      console.log(`✅ Draft order created: ${createdOrderId} with price: $${createdOrderPrice} (expected: $${priceValue})`);
+      const createdTotalPrice = parseFloat(draftOrderResponse.data.draft_order.total_price || 0);
+      const createdLineItemPrice = parseFloat(draftOrderResponse.data.draft_order.line_items?.[0]?.price || 0);
+      console.log(`✅ Draft order created: ${createdOrderId}`);
+      console.log(`💰 Price verification - Expected: $${priceValue.toFixed(2)}, Line item price: $${createdLineItemPrice.toFixed(2)}, Total: $${createdTotalPrice.toFixed(2)}`);
       
       // Verify the price was set correctly
-      if (parseFloat(createdOrderPrice) !== priceValue) {
-        console.warn(`⚠️ WARNING: Draft order price mismatch! Expected: $${priceValue}, Got: $${createdOrderPrice}`);
+      if (Math.abs(createdLineItemPrice - priceValue) > 0.01) {
+        console.error(`❌ CRITICAL: Draft order line item price mismatch! Expected: $${priceValue.toFixed(2)}, Got: $${createdLineItemPrice.toFixed(2)}`);
+        throw new Error(`Draft order price mismatch: expected $${priceValue.toFixed(2)} but got $${createdLineItemPrice.toFixed(2)}`);
       }
       
       return draftOrderResponse.data.draft_order;

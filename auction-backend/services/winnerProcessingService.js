@@ -68,13 +68,32 @@ class WinnerProcessingService {
             // 2. Determine winner
             const winner = this.determineWinner(claimedAuction);
             
-            // 3. Check reserve price
-            const reservePrice = claimedAuction.reservePrice || 0;
-            const highestBid = claimedAuction.currentBid || 0;
+            if (!winner) {
+                console.log(`⚠️ No winner found for auction ${auctionId}`);
+                await Auction.findByIdAndUpdate(auctionId, {
+                    $set: {
+                        winnerProcessingLock: false,
+                        updatedAt: new Date()
+                    }
+                });
+                return;
+            }
             
-            if (reservePrice > 0 && highestBid < reservePrice) {
+            // CRITICAL: Use winner.amount from bidHistory, NOT currentBid which may be stale
+            const winningBidAmount = winner.amount;
+            console.log(`🏆 Winner determined: ${winner.bidder} with bid amount: $${winningBidAmount}`);
+            console.log(`📊 Auction currentBid: $${claimedAuction.currentBid}, Winner amount from bidHistory: $${winner.amount}`);
+            
+            if (!winningBidAmount || winningBidAmount <= 0) {
+                throw new Error(`Invalid winning bid amount: $${winningBidAmount}. Winner: ${JSON.stringify(winner)}`);
+            }
+            
+            // 3. Check reserve price (use winningBidAmount, not currentBid)
+            const reservePrice = claimedAuction.reservePrice || 0;
+            
+            if (reservePrice > 0 && winningBidAmount < reservePrice) {
                 // Reserve price not met - mark auction as reserve_not_met
-                console.log(`⚠️ Reserve price not met for auction ${auctionId}. Reserve: $${reservePrice}, Highest bid: $${highestBid}`);
+                console.log(`⚠️ Reserve price not met for auction ${auctionId}. Reserve: $${reservePrice}, Winning bid: $${winningBidAmount}`);
                 await Auction.findByIdAndUpdate(auctionId, {
                     status: 'reserve_not_met',
                     winner: null,
@@ -84,17 +103,6 @@ class WinnerProcessingService {
                     updatedAt: new Date()
                 });
                 console.log(`✅ Auction ${auctionId} marked as reserve_not_met`);
-                return;
-            }
-            
-            if (!winner) {
-                console.log(`⚠️ No winner found for auction ${auctionId}`);
-                await Auction.findByIdAndUpdate(auctionId, {
-                    $set: {
-                        winnerProcessingLock: false,
-                        updatedAt: new Date()
-                    }
-                });
                 return;
             }
 
@@ -144,16 +152,15 @@ class WinnerProcessingService {
             }
 
             if (!privateProduct) {
-                // Use winner.amount to ensure we use the actual winning bid, not currentBid which might be stale
-                const winningBidForProduct = winner.amount || claimedAuction.currentBid || 0;
-                console.log(`💰 Product creation pricing - Winner amount: $${winner.amount}, Current bid: $${claimedAuction.currentBid}, Using: $${winningBidForProduct}`);
+                // Use winningBidAmount (already validated above) - this is the CORRECT winning bid from bidHistory
+                console.log(`💰 Creating product with winning bid amount: $${winningBidAmount}`);
                 
                 try {
                     privateProduct = await this.createPrivateProductForWinner(
                         store,
                         originalProduct,
                         enrichedWinner,
-                        winningBidForProduct
+                        winningBidAmount
                     );
 
                     const duplicatedProductId = privateProduct.productId.includes('gid://')
@@ -225,32 +232,25 @@ class WinnerProcessingService {
             let draftOrder = null;
             let invoiceSent = Boolean(claimedAuction.invoiceSent);
             
-            // Get the winning bid amount (should be currentBid, but double-check from winner)
-            const winningBidAmount = winner.amount || claimedAuction.currentBid || 0;
-            console.log(`💰 Draft order pricing - Winner amount: $${winner.amount}, Current bid: $${claimedAuction.currentBid}, Using: $${winningBidAmount}`);
+            // winningBidAmount is already validated above - use it directly
+            console.log(`💰 Creating draft order with winning bid amount: $${winningBidAmount} (from bidHistory)`);
             
-            if (winningBidAmount <= 0) {
-                throw new Error(`Invalid winning bid amount: $${winningBidAmount}. Winner amount: $${winner.amount}, Current bid: $${claimedAuction.currentBid}`);
-            }
-            
-            if (claimedAuction.draftOrderId) {
-                console.log(`ℹ️ Existing draft order ${claimedAuction.draftOrderId} found for auction ${auctionId}, skipping creation.`);
-                draftOrder = { id: claimedAuction.draftOrderId };
-            } else {
-                try {
-                    const draftOrderKey = this.buildIdempotencyKey('draft-order', claimedAuction._id, shopDomain);
-                    console.log(`📦 Creating draft order for auction ${auctionId} with price $${winningBidAmount}...`);
-                    draftOrder = await shopifyService.createDraftOrder(
-                        shopDomain,
-                        shopifyCustomer.id.toString(),
-                        duplicatedProductId,
-                        winningBidAmount, // Use winner.amount to ensure correct price
-                        `Generated automatically by Bidly Auction App for auction #${auctionId}`,
-                        {
-                            idempotencyKey: draftOrderKey,
-                            maxAttempts: 3
-                        }
-                    );
+            // NEVER reuse existing draft orders - they may have wrong prices
+            // Always create a fresh one with the correct price
+            try {
+                const draftOrderKey = this.buildIdempotencyKey('draft-order', claimedAuction._id, shopDomain);
+                console.log(`📦 Creating draft order for auction ${auctionId} with CORRECT price $${winningBidAmount}...`);
+                draftOrder = await shopifyService.createDraftOrder(
+                    shopDomain,
+                    shopifyCustomer.id.toString(),
+                    duplicatedProductId,
+                    winningBidAmount, // This is the validated winning bid from bidHistory
+                    `Generated automatically by Bidly Auction App for auction #${auctionId}`,
+                    {
+                        idempotencyKey: draftOrderKey,
+                        maxAttempts: 3
+                    }
+                );
                     
                     // Save draft order ID immediately to prevent duplicate creation on retry
                     await Auction.findByIdAndUpdate(auctionId, {
