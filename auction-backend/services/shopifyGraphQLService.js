@@ -406,68 +406,89 @@ class ShopifyGraphQLService {
     }
 
     /**
-     * Copy product images from original to duplicated product (GraphQL)
-     * Note: Product duplication should preserve images automatically, but this method
-     * can be used if needed. However, updating product images via GraphQL is complex
-     * and may require using Files API. For now, we'll skip this as duplication preserves images.
+     * Attach images to a product using productUpdate with media field
+     * Uses the original image URLs - Shopify will re-attach the same media files
+     * According to Shopify: "Duplicate image" = attach the same media again using the URL
      */
-    async copyProductImages(storeDomain, accessToken, productId, originalImages) {
-        try {
-            if (!originalImages || originalImages.length === 0) {
-                console.log('ℹ️ No original images to copy');
-                return { success: true, message: 'No images to copy' };
+    async attachImagesToProduct(storeDomain, accessToken, productId, originalImageEdges) {
+        if (!originalImageEdges || originalImageEdges.length === 0) {
+            console.log('ℹ️ No images to attach');
+            return { success: true, message: 'No images to attach' };
+        }
+
+        // Build media inputs using originalSource URLs (Shopify will re-attach the same files)
+        const mediaInputs = originalImageEdges.map(edge => {
+            const imageUrl = edge.node.url || edge.node.src;
+            const altText = edge.node.altText || '';
+            
+            if (!imageUrl) {
+                console.warn('⚠️ Skipping image without URL');
+                return null;
             }
+            
+            return {
+                originalSource: imageUrl,
+                alt: altText,
+                mediaContentType: 'IMAGE'
+            };
+        }).filter(Boolean); // Remove any null entries
 
-            // Build image inputs for productUpdate mutation
-            const imageInputs = originalImages.map(edge => ({
-                src: edge.node.url,
-                altText: edge.node.altText || ''
-            }));
+        if (mediaInputs.length === 0) {
+            console.log('ℹ️ No valid image URLs to attach');
+            return { success: true, message: 'No valid images to attach' };
+        }
 
-            const query = `
-                mutation productUpdate($input: ProductInput!) {
-                    productUpdate(input: $input) {
-                        product {
-                            id
-                            images(first: 10) {
-                                edges {
-                                    node {
+        const query = `
+            mutation productUpdate($input: ProductInput!) {
+                productUpdate(input: $input) {
+                    product {
+                        id
+                        media(first: 10) {
+                            edges {
+                                node {
+                                    ... on MediaImage {
                                         id
-                                        url
+                                        image {
+                                            url
+                                        }
                                     }
                                 }
                             }
                         }
-                        userErrors {
-                            field
-                            message
-                        }
+                    }
+                    userErrors {
+                        field
+                        message
                     }
                 }
-            `;
-
-            const variables = {
-                input: {
-                    id: productId,
-                    images: imageInputs
-                }
-            };
-
-            const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
-            
-            if (result.productUpdate.userErrors.length > 0) {
-                const errorMsg = result.productUpdate.userErrors[0].message;
-                console.error('Failed to copy images:', errorMsg);
-                return { success: false, error: errorMsg };
             }
+        `;
 
-            console.log(`✅ Successfully copied ${imageInputs.length} images to duplicated product`);
-            return { success: true, message: `Copied ${imageInputs.length} images` };
-        } catch (error) {
-            console.warn('Error copying images:', error.message);
-            // Don't throw - this is non-critical, product was still created
-            return { success: false, error: error.message };
+        const variables = {
+            input: {
+                id: productId,
+                media: mediaInputs
+            }
+        };
+
+        const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
+        
+        if (result.productUpdate.userErrors.length > 0) {
+            const errorMsg = result.productUpdate.userErrors[0].message;
+            throw new Error(`Failed to attach images: ${errorMsg}`);
         }
+
+        console.log(`✅ Successfully attached ${mediaInputs.length} images to product`);
+        return { success: true, message: `Attached ${mediaInputs.length} images` };
+    }
+
+    /**
+     * Copy product images from original to duplicated product (GraphQL)
+     * @deprecated Use attachImagesToProduct instead - this method uses deprecated approach
+     */
+    async copyProductImages(storeDomain, accessToken, productId, originalImages) {
+        console.warn('⚠️ copyProductImages is deprecated, use attachImagesToProduct instead');
+        return this.attachImagesToProduct(storeDomain, accessToken, productId, originalImages);
     }
 
     /**
