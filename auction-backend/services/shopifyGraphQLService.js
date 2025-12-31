@@ -218,9 +218,8 @@ class ShopifyGraphQLService {
         }
 
         // Step 3: Add images using fileCreate + productUpdate
-        // According to Shopify docs: https://shopify.dev/docs/apps/build/product-merchandising/products-and-collections
-        // Product media mutations: productSet, productCreate, productUpdate, productReorderMedia, productDeleteMedia
-        // productCreateMedia does NOT exist - use fileCreate to upload, then productUpdate to associate
+        // According to Shopify docs: https://shopify.dev/docs/apps/build/product-merchandising/products-and-collections/manage-media
+        // Files are processed asynchronously - must poll for fileStatus: READY before associating
         const images = originalProduct.images?.edges || [];
         if (images.length > 0) {
             const mediaIds = [];
@@ -233,12 +232,8 @@ class ShopifyGraphQLService {
                             fileCreate(files: $files) {
                                 files {
                                     id
-                                    ... on MediaImage {
-                                        image {
-                                            url
-                                            altText
-                                        }
-                                    }
+                                    fileStatus
+                                    alt
                                 }
                                 userErrors {
                                     field
@@ -256,17 +251,70 @@ class ShopifyGraphQLService {
                         }]
                     });
 
-                    if (fileCreateResult.fileCreate.userErrors.length === 0 && fileCreateResult.fileCreate.files.length > 0) {
-                        mediaIds.push(fileCreateResult.fileCreate.files[0].id);
+                    if (fileCreateResult.fileCreate.userErrors.length > 0) {
+                        console.warn(`⚠️ Failed to create file for image: ${fileCreateResult.fileCreate.userErrors[0].message}`);
+                        continue;
+                    }
+
+                    if (fileCreateResult.fileCreate.files.length === 0) {
+                        console.warn(`⚠️ No file returned from fileCreate for image: ${edge.node.url}`);
+                        continue;
+                    }
+
+                    const fileId = fileCreateResult.fileCreate.files[0].id;
+                    const fileStatus = fileCreateResult.fileCreate.files[0].fileStatus;
+
+                    // Poll for file readiness (files are processed asynchronously)
+                    // According to docs: https://shopify.dev/docs/apps/build/product-merchandising/products-and-collections/manage-media#step-2-poll-for-file-readiness
+                    let isReady = fileStatus === 'READY';
+                    let pollAttempts = 0;
+                    const maxPollAttempts = 10; // Poll up to 10 times (10 seconds max)
+                    
+                    while (!isReady && pollAttempts < maxPollAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+                        
+                        const fileStatusQuery = `
+                            query getFileStatus($id: ID!) {
+                                node(id: $id) {
+                                    ... on MediaImage {
+                                        fileStatus
+                                    }
+                                }
+                            }
+                        `;
+
+                        try {
+                            const statusResult = await this.executeGraphQL(storeDomain, accessToken, fileStatusQuery, {
+                                id: fileId
+                            });
+                            
+                            if (statusResult.node?.fileStatus === 'READY') {
+                                isReady = true;
+                            } else if (statusResult.node?.fileStatus === 'FAILED') {
+                                console.warn(`⚠️ File processing failed for ${edge.node.url}`);
+                                break;
+                            }
+                        } catch (statusError) {
+                            console.warn(`⚠️ Error checking file status: ${statusError.message}`);
+                            break;
+                        }
+                        
+                        pollAttempts++;
+                    }
+
+                    if (isReady) {
+                        mediaIds.push(fileId);
+                        console.log(`✅ File ready: ${fileId}`);
                     } else {
-                        console.warn(`⚠️ Failed to create file for image: ${fileCreateResult.fileCreate.userErrors[0]?.message || 'Unknown error'}`);
+                        console.warn(`⚠️ File not ready after ${maxPollAttempts} attempts: ${fileId}`);
                     }
                 } catch (fileError) {
                     console.warn(`⚠️ Error creating file for image ${edge.node.url}:`, fileError.message);
                 }
             }
 
-            // Associate created files with product using productUpdate
+            // Associate ready files with product using productUpdate
+            // According to docs: https://shopify.dev/docs/apps/build/product-merchandising/products-and-collections/manage-media#step-3-add-media-to-products
             if (mediaIds.length > 0) {
                 const productUpdateQuery = `
                     mutation productUpdate($input: ProductInput!) {
@@ -301,6 +349,8 @@ class ShopifyGraphQLService {
                 } else {
                     console.log(`✅ Associated ${mediaIds.length} images with product`);
                 }
+            } else {
+                console.warn(`⚠️ No files were ready to associate with product`);
             }
         }
 
