@@ -214,13 +214,58 @@ class ShopifyGraphQLService {
      */
     async copyProductImages(storeDomain, accessToken, productId, originalImages) {
         try {
-            // Product duplication in GraphQL should automatically preserve images
-            // If images are missing, they can be added via Files API, but that's complex
-            // For now, we'll just log that images should be preserved by duplication
-            console.log('ℹ️ Product duplication should preserve images automatically');
-            return { success: true, message: 'Images should be preserved by product duplication' };
+            if (!originalImages || originalImages.length === 0) {
+                console.log('ℹ️ No original images to copy');
+                return { success: true, message: 'No images to copy' };
+            }
+
+            // Build image inputs for productUpdate mutation
+            const imageInputs = originalImages.map(edge => ({
+                src: edge.node.url,
+                altText: edge.node.altText || ''
+            }));
+
+            const query = `
+                mutation productUpdate($input: ProductInput!) {
+                    productUpdate(input: $input) {
+                        product {
+                            id
+                            images(first: 10) {
+                                edges {
+                                    node {
+                                        id
+                                        url
+                                    }
+                                }
+                            }
+                        }
+                        userErrors {
+                            field
+                            message
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                input: {
+                    id: productId,
+                    images: imageInputs
+                }
+            };
+
+            const result = await this.executeGraphQL(storeDomain, accessToken, query, variables);
+            
+            if (result.productUpdate.userErrors.length > 0) {
+                const errorMsg = result.productUpdate.userErrors[0].message;
+                console.error('Failed to copy images:', errorMsg);
+                return { success: false, error: errorMsg };
+            }
+
+            console.log(`✅ Successfully copied ${imageInputs.length} images to duplicated product`);
+            return { success: true, message: `Copied ${imageInputs.length} images` };
         } catch (error) {
-            console.warn('Note about images:', error.message);
+            console.warn('Error copying images:', error.message);
             // Don't throw - this is non-critical, product was still created
             return { success: false, error: error.message };
         }
@@ -317,17 +362,27 @@ class ShopifyGraphQLService {
             // Update all variant prices to the winning bid amount using productUpdate
             if (productDetails.product.variants.edges.length > 0) {
                 try {
-                    await this.updateProductVariantPrices(
+                    const priceUpdateResult = await this.updateProductVariantPrices(
                         storeDomain, 
                         accessToken, 
                         newProduct.id,
                         productDetails.product.variants.edges,
                         winningBidAmount
                     );
-                    console.log('✅ Variant prices updated successfully');
+                    
+                    // Check if any variant updates failed
+                    const failedUpdates = priceUpdateResult.variantUpdates.filter(v => !v.success);
+                    if (failedUpdates.length > 0) {
+                        console.error('❌ Some variant price updates failed:', failedUpdates);
+                        throw new Error(`Failed to update ${failedUpdates.length} variant price(s): ${failedUpdates.map(v => v.error).join('; ')}`);
+                    }
+                    
+                    console.log('✅ Variant prices updated successfully to $' + winningBidAmount);
                 } catch (variantError) {
-                    console.warn('⚠️ Failed to update variant prices, but product was created:', variantError.message);
-                    // Continue anyway - product was created successfully
+                    console.error('❌ Failed to update variant prices:', variantError.message);
+                    // Don't continue silently - this is critical for correct pricing
+                    // The draft order will use customPrice, but the product price should match
+                    throw new Error(`Product duplicated but failed to set price to winning bid ($${winningBidAmount}): ${variantError.message}`);
                 }
             }
         } catch (error) {

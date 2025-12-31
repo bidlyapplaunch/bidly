@@ -1413,6 +1413,13 @@ class ShopifyService {
         ? { headers: { 'Idempotency-Key': idempotencyKey } }
         : undefined;
 
+      const priceValue = typeof customPrice === 'number' ? customPrice : parseFloat(customPrice);
+      if (isNaN(priceValue) || priceValue <= 0) {
+        throw new Error(`Invalid custom price for draft order: ${customPrice} (must be a positive number)`);
+      }
+
+      console.log(`💰 Creating draft order with custom price: $${priceValue} (original: ${customPrice}, type: ${typeof customPrice})`);
+
       const draftOrderResponse = await client.post(
         '/draft_orders.json',
         {
@@ -1421,7 +1428,7 @@ class ShopifyService {
               {
                 variant_id: variantId,
                 quantity: 1,
-                price: customPrice.toString()
+                price: priceValue.toString()
               }
             ],
             customer: {
@@ -1433,7 +1440,15 @@ class ShopifyService {
         requestConfig
       );
 
-      console.log(`✅ Draft order created: ${draftOrderResponse.data.draft_order.id}`);
+      const createdOrderId = draftOrderResponse.data.draft_order.id;
+      const createdOrderPrice = draftOrderResponse.data.draft_order.line_items?.[0]?.price || 'unknown';
+      console.log(`✅ Draft order created: ${createdOrderId} with price: $${createdOrderPrice} (expected: $${priceValue})`);
+      
+      // Verify the price was set correctly
+      if (parseFloat(createdOrderPrice) !== priceValue) {
+        console.warn(`⚠️ WARNING: Draft order price mismatch! Expected: $${priceValue}, Got: $${createdOrderPrice}`);
+      }
+      
       return draftOrderResponse.data.draft_order;
     };
 

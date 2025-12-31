@@ -29,7 +29,7 @@ const PLAN_LEVELS = {
 
 const PLAN_DISPLAY_ORDER = ['free', 'basic', 'pro', 'enterprise'];
 
-function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i18n, planConfig, t, translateHighlights }) {
+function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i18n, planConfig, t, translateHighlights, onShowUpgradeInstructions }) {
   const plan = planConfig[planKey];
   const normalizedCurrent = (currentPlan || 'free').toLowerCase();
   const isCurrent = normalizedCurrent === planKey;
@@ -49,10 +49,16 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i1
   const handleSelect = useCallback(() => {
     // Free plan cannot be selected (it's the default)
     if (planKey === 'free') return;
-    if (!isCurrent && !isPending) {
+    if (isCurrent || isPending) return;
+    
+    // With managed pricing, show instructions instead of calling API
+    if (onShowUpgradeInstructions) {
+      onShowUpgradeInstructions(planKey, isUpgrade);
+    } else {
+      // Fallback to old behavior if handler not provided
       onSelect(planKey);
     }
-  }, [isCurrent, isPending, onSelect, planKey]);
+  }, [isCurrent, isPending, onSelect, planKey, onShowUpgradeInstructions, isUpgrade]);
 
   return (
     <LegacyCard>
@@ -105,6 +111,7 @@ const PlansPage = () => {
   const [downgradeModal, setDowngradeModal] = useState({ open: false, targetPlan: null, info: null });
   const [cancelModal, setCancelModal] = useState({ open: false });
   const [cancelling, setCancelling] = useState(false);
+  const [upgradeInstructionsModal, setUpgradeInstructionsModal] = useState({ open: false, planKey: null, isUpgrade: true });
 
   // Block rendering until i18n is ready
   if (!i18n || !i18n.translate) {
@@ -327,27 +334,21 @@ const PlansPage = () => {
     loadPlan();
   }, []);
 
+  // Show upgrade/downgrade instructions for managed pricing
+  const showUpgradeInstructions = useCallback((planKey, isUpgrade) => {
+    setUpgradeInstructionsModal({ open: true, planKey, isUpgrade });
+  }, []);
+
+  const closeUpgradeInstructionsModal = useCallback(() => {
+    setUpgradeInstructionsModal({ open: false, planKey: null, isUpgrade: true });
+  }, []);
+
   const startSubscription = useCallback(async (planKey) => {
-    try {
-      setLoadingPlan(planKey);
-      const response = await billingAPI.subscribe(planKey);
-      if (response.success && response.confirmationUrl) {
-        window.location.href = response.confirmationUrl;
-      } else {
-        setError(response.message || t('admin.billing.errors.subscribeError'));
-      }
-    } catch (err) {
-      console.error('Subscribe error', err);
-      // Handle billing not available error gracefully
-      if (err.response?.status === 403 && err.response?.data?.code === 'BILLING_PARTNER_REQUIRED') {
-        setError(err.response?.data?.message || 'Billing is not available for this app yet. Please move the app into a Shopify Partners organization to enable paid plans.');
-      } else {
-        setError(err.response?.data?.message || err.message || t('admin.billing.errors.subscribeError'));
-      }
-    } finally {
-      setLoadingPlan(null);
-    }
-  }, [i18n, t]);
+    // This function is kept for backward compatibility but shouldn't be called with managed pricing
+    // With managed pricing, showUpgradeInstructions should be used instead
+    const isUpgrade = PLAN_LEVELS[planKey] > PLAN_LEVELS[(planData.plan || 'free').toLowerCase()];
+    showUpgradeInstructions(planKey, isUpgrade);
+  }, [showUpgradeInstructions, planData.plan]);
 
   const buildDowngradeInfo = useCallback(
     (targetPlanKey) => {
@@ -517,6 +518,21 @@ const PlansPage = () => {
     return null;
   }, [loading, planData.plan, t, navigate, location.search]);
 
+  // Managed pricing info banner
+  const managedPricingBanner = useMemo(() => {
+    return (
+      <Banner
+        tone="info"
+        title="Plan changes are managed through Shopify"
+      >
+        <p>
+          To upgrade or downgrade your plan, please go to <strong>Settings → Apps and sales channels</strong> in your Shopify admin, 
+          then click on Bidly and select <strong>"Change plan"</strong>. Your plan will be updated automatically.
+        </p>
+      </Banner>
+    );
+  }, []);
+
 
   return (
     <>
@@ -536,6 +552,10 @@ const PlansPage = () => {
           {previewModeBanner && (
             <Layout.Section>{previewModeBanner}</Layout.Section>
           )}
+
+          <Layout.Section>
+            {managedPricingBanner}
+          </Layout.Section>
 
           <Layout.Section>
             <LegacyCard>
@@ -587,6 +607,7 @@ const PlansPage = () => {
                   currentPlan={planData.plan}
                   pendingPlan={planData.pendingPlan}
                   onSelect={handlePlanSelection}
+                  onShowUpgradeInstructions={showUpgradeInstructions}
                   loadingPlan={loadingPlan}
                   i18n={i18n}
                   planConfig={PLAN_CONFIG}
@@ -598,6 +619,51 @@ const PlansPage = () => {
           </Layout.Section>
         </Layout>
       </Page>
+
+      {/* Upgrade/Downgrade Instructions Modal for Managed Pricing */}
+      {upgradeInstructionsModal.open && upgradeInstructionsModal.planKey && (
+        <Modal
+          open
+          onClose={closeUpgradeInstructionsModal}
+          title={upgradeInstructionsModal.isUpgrade ? 'How to upgrade your plan' : 'How to downgrade your plan'}
+          primaryAction={{
+            content: 'Got it',
+            onAction: closeUpgradeInstructionsModal
+          }}
+        >
+          <Modal.Section>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Text variant="bodyMd">
+                {upgradeInstructionsModal.isUpgrade 
+                  ? `To upgrade to the ${PLAN_CONFIG[upgradeInstructionsModal.planKey]?.title || upgradeInstructionsModal.planKey} plan:`
+                  : `To downgrade to the ${PLAN_CONFIG[upgradeInstructionsModal.planKey]?.title || upgradeInstructionsModal.planKey} plan:`
+                }
+              </Text>
+              <List type="number">
+                <List.Item>
+                  Go to <strong>Settings</strong> → <strong>Apps and sales channels</strong> in your Shopify admin
+                </List.Item>
+                <List.Item>
+                  Find and click on <strong>Bidly</strong> in your installed apps
+                </List.Item>
+                <List.Item>
+                  Click <strong>"Change plan"</strong> or <strong>"Manage subscription"</strong>
+                </List.Item>
+                <List.Item>
+                  Select the {PLAN_CONFIG[upgradeInstructionsModal.planKey]?.title || upgradeInstructionsModal.planKey} plan and confirm
+                </List.Item>
+                <List.Item>
+                  Your plan will be updated automatically and reflected here
+                </List.Item>
+              </List>
+              <Text variant="bodyMd" tone="subdued">
+                <strong>Note:</strong> Plan changes are processed by Shopify. Upgrades take effect immediately, 
+                while downgrades take effect at the end of your current billing period.
+              </Text>
+            </div>
+          </Modal.Section>
+        </Modal>
+      )}
 
       {downgradeModal.open && downgradeModal.info && (
         <Modal

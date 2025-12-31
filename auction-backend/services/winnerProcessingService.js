@@ -144,11 +144,15 @@ class WinnerProcessingService {
             }
 
             if (!privateProduct) {
+                // Use winner.amount to ensure we use the actual winning bid, not currentBid which might be stale
+                const winningBidForProduct = winner.amount || claimedAuction.currentBid || 0;
+                console.log(`💰 Product creation pricing - Winner amount: $${winner.amount}, Current bid: $${claimedAuction.currentBid}, Using: $${winningBidForProduct}`);
+                
                 privateProduct = await this.createPrivateProductForWinner(
                     store,
                     originalProduct,
                     enrichedWinner,
-                    claimedAuction.currentBid
+                    winningBidForProduct
                 );
 
                 const duplicatedProductId = privateProduct.productId.includes('gid://')
@@ -205,6 +209,15 @@ class WinnerProcessingService {
             // 8. Create draft order with duplicated product
             let draftOrder = null;
             let invoiceSent = Boolean(claimedAuction.invoiceSent);
+            
+            // Get the winning bid amount (should be currentBid, but double-check from winner)
+            const winningBidAmount = winner.amount || claimedAuction.currentBid || 0;
+            console.log(`💰 Draft order pricing - Winner amount: $${winner.amount}, Current bid: $${claimedAuction.currentBid}, Using: $${winningBidAmount}`);
+            
+            if (winningBidAmount <= 0) {
+                throw new Error(`Invalid winning bid amount: $${winningBidAmount}. Winner amount: $${winner.amount}, Current bid: $${claimedAuction.currentBid}`);
+            }
+            
             if (claimedAuction.draftOrderId) {
                 console.log(`ℹ️ Existing draft order ${claimedAuction.draftOrderId} found for auction ${auctionId}, skipping creation.`);
                 draftOrder = { id: claimedAuction.draftOrderId };
@@ -214,7 +227,7 @@ class WinnerProcessingService {
                     shopDomain,
                     shopifyCustomer.id.toString(),
                     duplicatedProductId,
-                    claimedAuction.currentBid,
+                    winningBidAmount, // Use winner.amount instead of currentBid to ensure correct price
                     `Generated automatically by Bidly Auction App for auction #${auctionId}`,
                     {
                         idempotencyKey: draftOrderKey,

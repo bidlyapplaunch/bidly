@@ -30,18 +30,15 @@ export const subscribeToPlan = async (req, res, next) => {
       throw new AppError('Invalid plan selection', 400);
     }
 
-    const returnUrl = new URL('/api/billing/confirm', APP_URL);
-    returnUrl.searchParams.set('shop', req.shopDomain);
-    returnUrl.searchParams.set('plan', planKey);
-
-    const result = await createSubscription(req.store, planKey, returnUrl.toString());
-
-    return res.json({
-      success: true,
-      confirmationUrl: result.confirmationUrl,
-      subscriptionId: result.subscriptionId,
-      pendingPlan: planKey
-    });
+    // Managed Pricing: This app uses Shopify's managed pricing configured in Partner Dashboard
+    // Subscriptions are handled automatically by Shopify during app installation/upgrade
+    // Merchants cannot subscribe through the app - they must upgrade via Shopify's billing interface
+    const error = new AppError(
+      'Managed Pricing Apps cannot use the Billing API (to create charges). Please upgrade your plan through Shopify\'s app settings or during app installation.',
+      400
+    );
+    error.code = 'MANAGED_PRICING_NOT_SUPPORTED';
+    return next(error);
   } catch (error) {
     console.error('❌ Billing subscribe error:', error.message);
 
@@ -65,6 +62,16 @@ export const getCurrentPlan = async (req, res, next) => {
       throw new AppError('Store context required', 400);
     }
 
+    // With managed pricing, sync from Shopify to get the latest plan status
+    // This ensures the plan in our DB matches what Shopify has
+    // If sync fails, we use the cached plan from DB (non-blocking)
+    try {
+      await syncStorePlanFromShopify(req.store);
+    } catch (syncError) {
+      // Log sync error but don't fail the request - use cached plan from DB
+      console.warn('⚠️ Failed to sync plan from Shopify, using cached plan:', syncError.message);
+    }
+
     const planKey = sanitizePlan(req.store.plan || DEFAULT_PLAN);
     const plan = BILLING_PLANS[planKey] || BILLING_PLANS.none;
     const pendingPlanRaw = req.store.pendingPlan;
@@ -77,7 +84,8 @@ export const getCurrentPlan = async (req, res, next) => {
       planDetails: getPlanCapabilities(planKey),
       pendingPlanDetails: pendingPlan ? getPlanCapabilities(pendingPlan) : null,
       trialEndsAt: req.store.trialEndsAt || null,
-      planActivatedAt: req.store.planActiveAt || null
+      planActivatedAt: req.store.planActiveAt || null,
+      managedPricing: true // Indicate that managed pricing is in use
     };
 
     return res.json(response);
