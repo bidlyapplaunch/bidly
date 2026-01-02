@@ -11,7 +11,11 @@ export default function App() {
           rel="stylesheet"
           href="https://cdn.shopify.com/static/fonts/inter/v4/styles.css"
         />
-        <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+        {/* App Bridge must load synchronously before any React code */}
+        <script
+          src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
+          crossOrigin="anonymous"
+        />
         <Meta />
         <Links />
       </head>
