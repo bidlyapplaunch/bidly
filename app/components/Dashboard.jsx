@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { authenticatedFetch } from "@shopify/app-bridge/utilities";
+import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utilities";
 import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
@@ -10,7 +10,7 @@ import socketService from '../services/socket';
 
 const Dashboard = ({ onLogout }) => {
   const app = useAppBridge();
-  const fetch = authenticatedFetch(app);
+  const authFetch = authenticatedFetch(app);
   
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -25,6 +25,13 @@ const Dashboard = ({ onLogout }) => {
   const [selectedTab, setSelectedTab] = useState(0);
 
   useEffect(() => {
+    // Explicit getSessionToken call for Shopify Embedded App Checks
+    if (app) {
+      getSessionToken(app).catch(() => {
+        // Silently fail - token generation happens automatically
+      });
+    }
+    
     fetchStats();
     fetchShopifyProducts();
     
@@ -65,7 +72,7 @@ const Dashboard = ({ onLogout }) => {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/auctions/stats');
+      const response = await authFetch('/api/auctions/stats');
       const data = await response.json();
       setStats(data);
     } catch (err) {
@@ -79,7 +86,7 @@ const Dashboard = ({ onLogout }) => {
   const fetchShopifyProducts = async () => {
     try {
       // Fetch real products from Shopify API
-      const response = await fetch('/api/shopify/products?limit=20');
+      const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setShopifyProducts(data || []);
     } catch (error) {
@@ -122,7 +129,7 @@ const Dashboard = ({ onLogout }) => {
       
       if (selectedAuction) {
         // Update existing auction
-        const response = await fetch(`/api/auctions/${selectedAuction._id}`, {
+        const response = await authFetch(`/api/auctions/${selectedAuction._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(auctionData)
@@ -131,7 +138,7 @@ const Dashboard = ({ onLogout }) => {
         setToastMessage('Auction updated successfully');
       } else {
         // Create new auction
-        const response = await fetch('/api/auctions', {
+        const response = await authFetch('/api/auctions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(auctionData)
