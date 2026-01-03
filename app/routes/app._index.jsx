@@ -95,7 +95,7 @@ export default function Index() {
 
   return (
     <s-page heading="React Router app template">
-      <s-button slot="primary-action" onClick={generateProduct}>
+      <s-button slot="primary-action" variant="primary" onClick={generateProduct}>
         Generate a product
       </s-button>
 

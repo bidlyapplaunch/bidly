@@ -13,8 +13,12 @@ export default function App() {
         />
         {/* App Bridge must load synchronously before any React code */}
         <script
+          dangerouslySetInnerHTML={{
+            __html: `if (!window.shopify) { window.shopify = {}; }`
+          }}
+        />
+        <script
           src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
-          crossOrigin="anonymous"
         />
         <Meta />
         <Links />
