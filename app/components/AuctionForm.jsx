@@ -27,25 +27,25 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
     });
     
     fetchProducts();
-      if (auction) {
-        setFormData({
-          shopifyProductId: auction.shopifyProductId || '',
-          startingBid: auction.startingBid || '',
-          buyNowPrice: auction.buyNowPrice || '',
-          startTime: auction.startTime ? new Date(auction.startTime).toISOString().slice(0, 16) : '',
-          endTime: auction.endTime ? new Date(auction.endTime).toISOString().slice(0, 16) : '',
-          status: auction.status || 'draft'
-        });
-      } else {
-        setFormData({
-          shopifyProductId: '',
-          startingBid: '',
-          buyNowPrice: '',
-          startTime: '',
-          endTime: '',
-          status: 'draft'
-        });
-      }
+    
+    if (auction) {
+      setFormData({
+        shopifyProductId: auction.shopifyProductId || '',
+        startingBid: auction.startingBid || '',
+        buyNowPrice: auction.buyNowPrice || '',
+        startTime: auction.startTime ? new Date(auction.startTime).toISOString().slice(0, 16) : '',
+        endTime: auction.endTime ? new Date(auction.endTime).toISOString().slice(0, 16) : '',
+        status: auction.status || 'draft'
+      });
+    } else {
+      setFormData({
+        shopifyProductId: '',
+        startingBid: '',
+        buyNowPrice: '',
+        startTime: '',
+        endTime: '',
+        status: 'draft'
+      });
     }
   }, [isOpen, auction, app]);
 
