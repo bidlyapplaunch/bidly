@@ -4,7 +4,6 @@ import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utiliti
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const app = useAppBridge();
-  const authFetch = authenticatedFetch(app);
   
   const [formData, setFormData] = useState({
     shopifyProductId: '',

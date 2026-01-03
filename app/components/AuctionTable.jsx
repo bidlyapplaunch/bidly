@@ -6,7 +6,6 @@ import { auctionAPI } from '../services/api';
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const app = useAppBridge();
-  const authFetch = authenticatedFetch(app);
   
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
