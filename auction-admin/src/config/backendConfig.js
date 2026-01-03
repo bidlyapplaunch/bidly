@@ -9,7 +9,7 @@
 // Store-to-backend mapping
 const STORE_BACKEND_MAP = {
   // Default store
-  'bidly-2.myshopify.com': 'https://bidly-auction-backend.onrender.com',
+  'bidly-2.myshopify.com': 'https://bidly-backend.hiiiiiiiiiii.com',
   
   // New store with second backend
   '6sb15z-k1.myshopify.com': 'https://bidly-auction-backend-2.onrender.com',
@@ -17,7 +17,7 @@ const STORE_BACKEND_MAP = {
 };
 
 // Default backend URL (fallback for stores not in the map)
-const DEFAULT_BACKEND = 'https://bidly-auction-backend.onrender.com';
+const DEFAULT_BACKEND = 'https://bidly-backend.hiiiiiiiiiii.com';
 
 /**
  * Get backend URL for a given shop domain

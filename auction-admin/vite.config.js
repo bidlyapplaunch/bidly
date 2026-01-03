@@ -72,7 +72,7 @@ export default defineConfig({
     port: 3001,
     proxy: {
       '/api': {
-        target: 'https://bidly-auction-backend.onrender.com/',
+        target: 'https://bidly-backend.hiiiiiiiiiii.com/',
         changeOrigin: true
       }
     },
