@@ -1,12 +1,16 @@
 /**
- * @deprecated WebSocket connections are disabled. All backend calls must go through
+ * @deprecated THIS FILE IS DISABLED
+ * 
+ * WebSocket connections are disabled. All backend calls must go through
  * authenticated Remix routes under /api/* using authenticatedFetch from App Bridge.
  * 
  * This is required to pass Shopify's embedded app session token check.
  * Use polling instead for real-time updates.
+ * 
+ * DO NOT USE THIS FILE - Use authenticatedFetch('/api/...') with polling instead.
  */
 
-import { io } from 'socket.io-client';
+// Removed socket.io-client import - WebSockets disabled
 
 class SocketService {
   constructor() {
