@@ -1,3 +1,11 @@
+/**
+ * @deprecated This file is deprecated. Authentication is handled by Shopify's
+ * OAuth flow and session tokens. All API calls must go through authenticated
+ * Remix routes under /api/* using authenticatedFetch from App Bridge.
+ * 
+ * DO NOT USE THIS FILE - Use Shopify's built-in authentication instead.
+ */
+
 import axios from 'axios';
 
 const API_BASE_URL = (process.env.AUCTION_BACKEND_URL || 'https://bidly-backend.hiiiiiiiiiii.com') + '/api';

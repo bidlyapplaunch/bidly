@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 import { format } from 'date-fns';
-import { auctionAPI } from '../services/api';
+// Removed direct backend API imports - all calls now go through authenticated /api/* routes
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const app = useAppBridge();

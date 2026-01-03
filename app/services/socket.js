@@ -1,3 +1,11 @@
+/**
+ * @deprecated WebSocket connections are disabled. All backend calls must go through
+ * authenticated Remix routes under /api/* using authenticatedFetch from App Bridge.
+ * 
+ * This is required to pass Shopify's embedded app session token check.
+ * Use polling instead for real-time updates.
+ */
+
 import { io } from 'socket.io-client';
 
 class SocketService {
@@ -7,27 +15,10 @@ class SocketService {
   }
 
   connect() {
-    if (!this.socket) {
-      this.socket = io(process.env.AUCTION_BACKEND_URL || 'https://bidly-backend.hiiiiiiiiiii.com', {
-        transports: ['websocket', 'polling']
-      });
-
-      this.socket.on('connect', () => {
-        console.log('🔌 Admin WebSocket connected');
-        this.isConnected = true;
-      });
-
-      this.socket.on('disconnect', () => {
-        console.log('🔌 Admin WebSocket disconnected');
-        this.isConnected = false;
-      });
-
-      this.socket.on('connect_error', (error) => {
-        console.error('Admin WebSocket connection error:', error);
-        this.isConnected = false;
-      });
-    }
-    return this.socket;
+    // WebSocket connections disabled - all backend calls must go through authenticated /api/* routes
+    // This is required to pass Shopify's embedded app session token check
+    console.warn('WebSocket connections are disabled. Use authenticated /api/* routes instead.');
+    return null;
   }
 
   disconnect() {

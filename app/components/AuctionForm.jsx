@@ -44,6 +44,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   }, [isOpen, auction]);
 
   const fetchProducts = async () => {
+    if (!fetch) return; // Ensure authenticatedFetch is ready
     try {
       const response = await fetch('/api/shopify/products?limit=20');
       const data = await response.json();

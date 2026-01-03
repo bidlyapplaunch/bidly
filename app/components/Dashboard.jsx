@@ -5,8 +5,7 @@ import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
-import { auctionAPI, shopifyAPI, analyticsAPI } from '../services/api';
-import socketService from '../services/socket';
+// Removed direct backend API imports - all calls now go through authenticated /api/* routes
 
 const Dashboard = ({ onLogout }) => {
   const app = useAppBridge();
@@ -35,37 +34,15 @@ const Dashboard = ({ onLogout }) => {
     fetchStats();
     fetchShopifyProducts();
     
-    // Set up WebSocket connection for real-time updates
-    const socket = socketService.connect();
-    
-    // Listen for auction status updates
-    const handleStatusUpdate = (statusData) => {
-      console.log('📡 Admin received status update:', statusData);
-      
-      // Refresh stats and auction list when status changes
+    // WebSocket connections disabled - all backend calls must go through authenticated /api/* routes
+    // Using polling instead for real-time updates
+    const pollingInterval = setInterval(() => {
       fetchStats();
       setRefreshTrigger(prev => prev + 1);
-      
-      // Show notification for status changes
-      setToastMessage(`🔄 Auction status updated: ${statusData.newStatus}`);
-      setShowToast(true);
-    };
-    
-    // Listen for bid updates
-    const handleBidUpdate = (bidData) => {
-      console.log('📡 Admin received bid update:', bidData);
-      
-      // Refresh stats and auction list when bids are placed
-      fetchStats();
-      setRefreshTrigger(prev => prev + 1);
-    };
-    
-    socketService.onStatusUpdate(handleStatusUpdate);
-    socketService.onBidUpdate(handleBidUpdate);
+    }, 30000); // Poll every 30 seconds
     
     return () => {
-      socketService.offStatusUpdate(handleStatusUpdate);
-      socketService.offBidUpdate(handleBidUpdate);
+      clearInterval(pollingInterval);
     };
   }, []);
 

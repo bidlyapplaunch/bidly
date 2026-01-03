@@ -1,3 +1,12 @@
+/**
+ * @deprecated This file is deprecated. All backend API calls must now go through
+ * authenticated Remix routes under /api/* using authenticatedFetch from App Bridge.
+ * 
+ * This ensures Shopify session token validation and passes the embedded app check.
+ * 
+ * DO NOT USE THIS FILE - Use authenticatedFetch('/api/...') instead.
+ */
+
 import axios from 'axios';
 
 const API_BASE_URL = (process.env.AUCTION_BACKEND_URL || 'https://bidly-backend.hiiiiiiiiiii.com') + '/api';
