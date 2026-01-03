@@ -1,18 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Modal,
-  Card,
-  Text,
-  Button,
-  DataTable,
-  Badge,
-  Banner,
-  Frame,
-  Toast,
-  ButtonGroup,
-  Divider,
-  TextContainer
-} from '@shopify/polaris';
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
 
@@ -78,7 +64,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       active: { status: 'success', children: 'Active' },
       closed: { status: 'critical', children: 'Closed' }
     };
-    return <Badge {...statusMap[status]} />;
+    return <s-badge status={statusMap[status]?.status || 'info'}>{statusMap[status]?.children || status}</s-badge>;
   };
 
   const getTimeStatus = () => {
@@ -89,11 +75,11 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     const end = new Date(auctionData.endTime);
     
     if (now < start) {
-      return <Badge status="info">Not Started</Badge>;
+      return <s-badge status="info">Not Started</s-badge>;
     } else if (now > end) {
-      return <Badge status="critical">Ended</Badge>;
+      return <s-badge status="critical">Ended</s-badge>;
     } else {
-      return <Badge status="success">Live</Badge>;
+      return <s-badge status="success">Live</s-badge>;
     }
   };
 
@@ -118,140 +104,159 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
 
   const bidHistoryRows = getBidHistoryRows();
 
+  if (!isOpen) return null;
+
   return (
-    <Frame>
-      <Modal
+    <>
+      <s-modal
         open={isOpen}
         onClose={onClose}
         title="Auction Details"
-        primaryAction={{
-          content: 'Close',
-          onAction: onClose
-        }}
-        large
+        size="large"
       >
-        <Modal.Section>
+        <s-modal-content>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Auction Overview */}
-            <Card sectioned>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <Text variant="headingMd">Auction Overview</Text>
+            <s-card>
+              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <s-text variant="headingMd">Auction Overview</s-text>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Product ID</Text>
-                    <Text variant="bodyLg">{auctionData.shopifyProductId}</Text>
+                    <s-text variant="bodyMd" tone="subdued">Product ID</s-text>
+                    <s-text variant="bodyLg">{auctionData.shopifyProductId}</s-text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Status</Text>
+                    <s-text variant="bodyMd" tone="subdued">Status</s-text>
                     <div>{getStatusBadge(auctionData.status)}</div>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Time Status</Text>
+                    <s-text variant="bodyMd" tone="subdued">Time Status</s-text>
                     <div>{getTimeStatus()}</div>
                   </div>
                 </div>
               </div>
-            </Card>
+            </s-card>
 
             {/* Auction Details */}
-            <Card sectioned>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <Text variant="headingMd">Auction Details</Text>
+            <s-card>
+              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <s-text variant="headingMd">Auction Details</s-text>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Start Time</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.startTime)}</Text>
+                    <s-text variant="bodyMd" tone="subdued">Start Time</s-text>
+                    <s-text variant="bodyLg">{formatDate(auctionData.startTime)}</s-text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">End Time</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.endTime)}</Text>
+                    <s-text variant="bodyMd" tone="subdued">End Time</s-text>
+                    <s-text variant="bodyLg">{formatDate(auctionData.endTime)}</s-text>
                   </div>
                 </div>
-                <Divider />
+                <s-divider />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Starting Bid</Text>
-                    <Text variant="bodyLg">{formatCurrency(auctionData.startingBid)}</Text>
+                    <s-text variant="bodyMd" tone="subdued">Starting Bid</s-text>
+                    <s-text variant="bodyLg">{formatCurrency(auctionData.startingBid)}</s-text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Current Bid</Text>
-                    <Text variant="bodyLg" fontWeight="bold">
+                    <s-text variant="bodyMd" tone="subdued">Current Bid</s-text>
+                    <s-text variant="bodyLg" fontWeight="semibold">
                       {formatCurrency(auctionData.currentBid)}
-                    </Text>
+                    </s-text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Buy Now Price</Text>
-                    <Text variant="bodyLg">
+                    <s-text variant="bodyMd" tone="subdued">Buy Now Price</s-text>
+                    <s-text variant="bodyLg">
                       {auctionData.buyNowPrice ? formatCurrency(auctionData.buyNowPrice) : 'Not set'}
-                    </Text>
+                    </s-text>
                   </div>
                 </div>
-                <Divider />
+                <s-divider />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Total Bids</Text>
-                    <Text variant="bodyLg">{auctionData.bidHistory?.length || 0}</Text>
+                    <s-text variant="bodyMd" tone="subdued">Total Bids</s-text>
+                    <s-text variant="bodyLg">{auctionData.bidHistory?.length || 0}</s-text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Created</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.createdAt)}</Text>
+                    <s-text variant="bodyMd" tone="subdued">Created</s-text>
+                    <s-text variant="bodyLg">{formatDate(auctionData.createdAt)}</s-text>
                   </div>
                   <div>
-                    <Text variant="bodyMd" color="subdued">Last Updated</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.updatedAt)}</Text>
+                    <s-text variant="bodyMd" tone="subdued">Last Updated</s-text>
+                    <s-text variant="bodyLg">{formatDate(auctionData.updatedAt)}</s-text>
                   </div>
                 </div>
               </div>
-            </Card>
+            </s-card>
 
             {/* Bid History */}
             {bidHistoryRows.length > 0 ? (
-              <Card sectioned>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <Text variant="headingMd">Bid History</Text>
-                  <DataTable
-                    columnContentTypes={['numeric', 'text', 'text', 'text']}
-                    headings={['#', 'Bidder', 'Amount', 'Time']}
-                    rows={bidHistoryRows}
-                  />
+              <s-card>
+                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <s-text variant="headingMd">Bid History</s-text>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #e1e3e5' }}>
+                        <th style={{ padding: '12px', textAlign: 'left' }}><s-text variant="bodyMd">#</s-text></th>
+                        <th style={{ padding: '12px', textAlign: 'left' }}><s-text variant="bodyMd">Bidder</s-text></th>
+                        <th style={{ padding: '12px', textAlign: 'left' }}><s-text variant="bodyMd">Amount</s-text></th>
+                        <th style={{ padding: '12px', textAlign: 'left' }}><s-text variant="bodyMd">Time</s-text></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bidHistoryRows.map((row, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #f1f2f3' }}>
+                          {row.map((cell, cellIdx) => (
+                            <td key={cellIdx} style={{ padding: '12px' }}>
+                              <s-text variant="bodyMd">{cell}</s-text>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </Card>
+              </s-card>
             ) : (
-              <Card sectioned>
-                <TextContainer>
-                  <Text variant="bodyMd" color="subdued">
+              <s-card>
+                <div style={{ padding: '16px' }}>
+                  <s-text variant="bodyMd" tone="subdued">
                     No bids placed yet
-                  </Text>
-                </TextContainer>
-              </Card>
+                  </s-text>
+                </div>
+              </s-card>
             )}
 
             {/* Actions */}
             {auctionData.status === 'active' && (
-              <Card sectioned>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <ButtonGroup>
-                    <Button onClick={fetchAuctionDetails} loading={loading}>
+              <s-card>
+                <div style={{ padding: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <s-button onClick={fetchAuctionDetails} loading={loading}>
                       Refresh
-                    </Button>
-                    <Button onClick={handleCloseAuction} destructive>
+                    </s-button>
+                    <s-button onClick={handleCloseAuction} tone="critical">
                       Close Auction
-                    </Button>
-                  </ButtonGroup>
+                    </s-button>
+                  </div>
                 </div>
-              </Card>
+              </s-card>
             )}
           </div>
-        </Modal.Section>
-      </Modal>
+        </s-modal-content>
+        <s-modal-footer>
+          <s-button variant="secondary" onClick={onClose}>
+            Close
+          </s-button>
+        </s-modal-footer>
+      </s-modal>
 
       {showToast && (
-        <Toast
+        <s-toast
           content={toastMessage}
           onDismiss={() => setShowToast(false)}
         />
       )}
-    </Frame>
+    </>
   );
 };
 
