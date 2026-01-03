@@ -13,6 +13,9 @@ const STATIC_PATH_PREFIXES = [
   '/preview/'
 ];
 
+// Common static file extensions
+const STATIC_FILE_EXTENSIONS = ['.svg', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.css', '.js', '.map'];
+
 const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth', '/auth'];
 
 const cleanDomain = (rawDomain) => {
@@ -103,7 +106,8 @@ export const identifyStore = async (req, res, next) => {
 
     if (
       req.method === 'GET' &&
-      STATIC_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix))
+      (STATIC_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix)) ||
+       STATIC_FILE_EXTENSIONS.some((ext) => req.path.endsWith(ext)))
     ) {
       return next();
     }
