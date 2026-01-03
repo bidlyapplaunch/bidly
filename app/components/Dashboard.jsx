@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utilities";
 import AuctionTable from './AuctionTable';
@@ -9,7 +9,25 @@ import Analytics from './Analytics';
 
 const Dashboard = ({ onLogout }) => {
   const app = useAppBridge();
-  const authFetch = authenticatedFetch(app);
+  const [appBridgeReady, setAppBridgeReady] = useState(false);
+
+  useEffect(() => {
+    if (window.shopify && window.shopify.AppBridge) {
+      setAppBridgeReady(true);
+    }
+  }, []);
+
+  const authFetch = useMemo(() => {
+    if (!app || !appBridgeReady) {
+      return null;
+    }
+    try {
+      return authenticatedFetch(app);
+    } catch (e) {
+      console.error('Failed to create authenticatedFetch:', e);
+      return null;
+    }
+  }, [app, appBridgeReady]);
   
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -25,33 +43,41 @@ const Dashboard = ({ onLogout }) => {
 
   useEffect(() => {
     // Explicit getSessionToken call for Shopify Embedded App Checks
-    if (app) {
+    if (app && appBridgeReady) {
       getSessionToken(app).catch(() => {
         // Silently fail - token generation happens automatically
       });
     }
     
-    fetchStats();
-    fetchShopifyProducts();
-    
-    // WebSocket connections disabled - all backend calls must go through authenticated /api/* routes
-    // Using polling instead for real-time updates
-    const pollingInterval = setInterval(() => {
+    if (authFetch) {
       fetchStats();
-      setRefreshTrigger(prev => prev + 1);
-    }, 30000); // Poll every 30 seconds
-    
-    return () => {
-      clearInterval(pollingInterval);
-    };
-  }, []);
+      fetchShopifyProducts();
+      
+      // WebSocket connections disabled - all backend calls must go through authenticated /api/* routes
+      // Using polling instead for real-time updates
+      const pollingInterval = setInterval(() => {
+        fetchStats();
+        setRefreshTrigger(prev => prev + 1);
+      }, 30000); // Poll every 30 seconds
+      
+      return () => {
+        clearInterval(pollingInterval);
+      };
+    }
+  }, [app, appBridgeReady, authFetch]);
 
   const fetchStats = async () => {
+    if (!authFetch) return; // Ensure authenticatedFetch is ready
     try {
       setLoading(true);
       const response = await authFetch('/api/auctions/stats');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch stats: ${response.status}`);
+      }
+      
       const data = await response.json();
-      setStats(data);
+      setStats(data.data || data); // Handle both response formats
     } catch (err) {
       setError('Failed to load dashboard statistics');
       console.error('Error fetching stats:', err);
@@ -61,9 +87,15 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const fetchShopifyProducts = async () => {
+    if (!authFetch) return; // Ensure authenticatedFetch is ready
     try {
       // Fetch real products from Shopify API
       const response = await authFetch('/api/shopify/products?limit=20');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch products: ${response.status}`);
+      }
+      
       const data = await response.json();
       setShopifyProducts(data || []);
     } catch (error) {
