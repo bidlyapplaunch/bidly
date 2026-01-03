@@ -160,7 +160,21 @@ export const initiateOAuth = async (req, res, next) => {
     // Always use https in production (Render uses proxies, so req.protocol might be http)
     const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
     const finalProtocol = protocol === 'http' && process.env.NODE_ENV === 'production' ? 'https' : protocol;
-    const host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-backend.hiiiiiiiiiii.com';
+    
+    // Prioritize APP_URL environment variable, then try to detect from request
+    let host;
+    if (process.env.APP_URL) {
+      // Extract host from APP_URL if it's a full URL
+      try {
+        const appUrl = new URL(process.env.APP_URL);
+        host = appUrl.host;
+      } catch {
+        host = process.env.APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      }
+    } else {
+      host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-backend.hiiiiiiiiiii.com';
+    }
+    
     const dynamicRedirectUri = `${finalProtocol}://${host}/auth/shopify/callback`;
     
     console.log('🔗 Setting dynamic redirect URI:', dynamicRedirectUri);
