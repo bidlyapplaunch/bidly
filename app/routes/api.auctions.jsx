@@ -2,7 +2,7 @@ import { authenticate } from "../shopify.server";
 
 const BACKEND_URL = process.env.AUCTION_BACKEND_URL || "https://bidly-backend.hiiiiiiiiiii.com";
 
-export const loader = async ({ request }) => {
+export const loader = async ({ request, params }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
   
@@ -10,8 +10,26 @@ export const loader = async ({ request }) => {
   const searchParams = url.searchParams;
   searchParams.set('shop', shopDomain);
   
+  // Check if this is a request for a single auction by ID
+  // React Router may pass params.id for dynamic routes, or we check the pathname
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const auctionId = params.id || (pathParts.length === 3 && pathParts[0] === 'api' && pathParts[1] === 'auctions' ? pathParts[2] : null);
+  const isSingleAuction = auctionId && auctionId !== 'stats';
+  
   try {
-    const response = await fetch(`${BACKEND_URL}/api/auctions?${searchParams}`, {
+    let backendUrl;
+    if (isSingleAuction) {
+      // GET /api/auctions/:id
+      backendUrl = `${BACKEND_URL}/api/auctions/${auctionId}`;
+      const backendUrlObj = new URL(backendUrl);
+      backendUrlObj.searchParams.set('shop', shopDomain);
+      backendUrl = backendUrlObj.toString();
+    } else {
+      // GET /api/auctions (list)
+      backendUrl = `${BACKEND_URL}/api/auctions?${searchParams}`;
+    }
+    
+    const response = await fetch(backendUrl, {
       headers: {
         'Content-Type': 'application/json',
         'x-shopify-shop-domain': shopDomain

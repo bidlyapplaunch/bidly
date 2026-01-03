@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Modal,
   Card,
@@ -14,21 +14,45 @@ import {
   TextContainer
 } from '@shopify/polaris';
 import { format } from 'date-fns';
-import { auctionAPI } from '../services/api';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
+  const app = useAppBridge();
+  const [appBridgeReady, setAppBridgeReady] = useState(false);
+
+  useEffect(() => {
+    if (window.shopify && window.shopify.AppBridge) {
+      setAppBridgeReady(true);
+    }
+  }, []);
+
+  const authFetch = useMemo(() => {
+    if (!app || !appBridgeReady) {
+      return null;
+    }
+    try {
+      return authenticatedFetch(app);
+    } catch (e) {
+      console.error('Failed to create authenticatedFetch:', e);
+      return null;
+    }
+  }, [app, appBridgeReady]);
+
   const [auctionData, setAuctionData] = useState(auction);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    if (auction && isOpen) {
+    if (auction && isOpen && authFetch) {
       fetchAuctionDetails();
     }
-  }, [auction, isOpen]);
+  }, [auction, isOpen, authFetch]);
 
   const fetchAuctionDetails = async () => {
+    if (!authFetch) return;
+    
     const auctionId = auction?.id || auction?._id;
     if (!auctionId) {
       console.log('❌ No auction ID found:', auction);
@@ -38,27 +62,48 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     try {
       setLoading(true);
       console.log('🔍 Fetching auction details for ID:', auctionId);
-      const response = await auctionAPI.getAuctionById(auctionId);
-      console.log('✅ Auction details fetched:', response.data);
-      setAuctionData(response.data);
+      const response = await authFetch(`/api/auctions/${auctionId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch auction: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Auction details fetched:', data);
+      // Handle both response formats: { data: {...} } or direct data object
+      setAuctionData(data.data || data);
     } catch (error) {
       console.error('❌ Error fetching auction details:', error);
-      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCloseAuction = async () => {
+    if (!authFetch) return;
+    
     try {
       const auctionId = auctionData?.id || auctionData?._id;
-      await auctionAPI.closeAuction(auctionId);
+      const response = await authFetch(`/api/auctions/${auctionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'closed' })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to close auction: ${response.status}`);
+      }
+      
       setToastMessage('Auction closed successfully');
       setShowToast(true);
       fetchAuctionDetails();
       onRefresh?.();
     } catch (error) {
       console.error('Error closing auction:', error);
+      setToastMessage('Failed to close auction');
+      setShowToast(true);
     }
   };
 
