@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { authenticatedFetch } from "@shopify/app-bridge/utilities";
+import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utilities";
 import { format } from 'date-fns';
 import { auctionAPI } from '../services/api';
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const app = useAppBridge();
-  const fetch = authenticatedFetch(app);
+  const authFetch = authenticatedFetch(app);
   
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,8 +28,15 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   useEffect(() => {
+    // Explicit getSessionToken call for Shopify Embedded App Checks
+    if (app) {
+      getSessionToken(app).catch(() => {
+        // Silently fail - token generation happens automatically
+      });
+    }
+    
     fetchAuctions();
-  }, [currentPage, filters, refreshTrigger]);
+  }, [currentPage, filters, refreshTrigger, app]);
 
   const fetchAuctions = async () => {
     try {
@@ -43,7 +50,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         ...(filters.shopifyProductId && { shopifyProductId: filters.shopifyProductId })
       });
       
-      const response = await fetch(`/api/auctions?${params}`);
+      const response = await authFetch(`/api/auctions?${params}`);
       const data = await response.json();
       
       console.log('🔍 Fetched auctions response:', data);
@@ -82,7 +89,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/auctions/${selectedAuction._id || selectedAuction.id}`, {
+      const response = await authFetch(`/api/auctions/${selectedAuction._id || selectedAuction.id}`, {
         method: 'DELETE'
       });
       

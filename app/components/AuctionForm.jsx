@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { authenticatedFetch } from "@shopify/app-bridge/utilities";
+import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utilities";
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const app = useAppBridge();
-  const fetch = authenticatedFetch(app);
+  const authFetch = authenticatedFetch(app);
   
   const [formData, setFormData] = useState({
     shopifyProductId: '',
@@ -19,6 +19,13 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Explicit getSessionToken call for Shopify Embedded App Checks
+    if (app) {
+      getSessionToken(app).catch(() => {
+        // Silently fail - token generation happens automatically
+      });
+    }
+    
     if (isOpen) {
       fetchProducts();
       if (auction) {
@@ -41,11 +48,11 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         });
       }
     }
-  }, [isOpen, auction]);
+  }, [isOpen, auction, app]);
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/shopify/products?limit=20');
+      const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setProducts(data || []);
     } catch (error) {

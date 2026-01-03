@@ -857,7 +857,7 @@ class ShopifyService {
           }
         }
       `;
-
+      
       const response = await client.post('/graphql.json', {
         query: gql,
         variables: {
@@ -876,7 +876,7 @@ class ShopifyService {
         const parts = gid.split('/');
         return parts[parts.length - 1];
       };
-
+      
       return productEdges.map(edge => ({
         id: stripGid(edge.node.id),
         title: edge.node.title,
@@ -966,7 +966,7 @@ class ShopifyService {
       if (!productNode) {
         throw new Error(`Product with handle "${handle}" not found`);
       }
-
+      
       const normalized = this.normalizeGraphQLProduct(productNode);
       return this.formatProductData(normalized);
     } catch (error) {
