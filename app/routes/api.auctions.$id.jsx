@@ -2,19 +2,23 @@ import { authenticate } from "../shopify.server";
 
 const BACKEND_URL = process.env.AUCTION_BACKEND_URL || "https://bidly-backend.hiiiiiiiiiii.com";
 
-export const loader = async ({ request }) => {
+export const loader = async ({ request, params }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
+  const auctionId = params.id;
   
-  const url = new URL(request.url);
-  const searchParams = url.searchParams;
-  searchParams.set('shop', shopDomain);
+  if (!auctionId) {
+    return new Response(JSON.stringify({ error: 'Auction ID is required' }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
   
   try {
-    // GET /api/auctions (list only)
-    const backendUrl = `${BACKEND_URL}/api/auctions?${searchParams}`;
+    const backendUrl = new URL(`${BACKEND_URL}/api/auctions/${auctionId}`);
+    backendUrl.searchParams.set('shop', shopDomain);
     
-    const response = await fetch(backendUrl, {
+    const response = await fetch(backendUrl.toString(), {
       headers: {
         'Content-Type': 'application/json',
         'x-shopify-shop-domain': shopDomain
@@ -34,36 +38,35 @@ export const loader = async ({ request }) => {
       headers: { "Content-Type": "application/json" }
     });
   } catch (error) {
-    console.error('Error fetching auctions:', error);
-    return new Response(JSON.stringify({ error: 'Failed to fetch auctions' }), {
+    console.error('Error fetching auction:', error);
+    return new Response(JSON.stringify({ error: 'Failed to fetch auction' }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
     });
   }
 };
 
-export const action = async ({ request }) => {
+export const action = async ({ request, params }) => {
   const { session } = await authenticate.admin(request);
   const shopDomain = session.shop;
-  
+  const auctionId = params.id;
   const method = request.method;
   
+  if (!auctionId) {
+    return new Response(JSON.stringify({ error: 'Auction ID is required' }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+  
   try {
-    // POST /api/auctions (create only)
-    if (method !== 'POST') {
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-    
-    const backendUrl = new URL(`${BACKEND_URL}/api/auctions`);
+    const backendUrl = new URL(`${BACKEND_URL}/api/auctions/${auctionId}`);
     backendUrl.searchParams.set('shop', shopDomain);
     
-    const body = await request.text();
+    const body = method !== 'GET' ? await request.text() : undefined;
     
     const response = await fetch(backendUrl.toString(), {
-      method: 'POST',
+      method,
       headers: {
         'Content-Type': 'application/json',
         'x-shopify-shop-domain': shopDomain
@@ -84,10 +87,11 @@ export const action = async ({ request }) => {
       headers: { "Content-Type": "application/json" }
     });
   } catch (error) {
-    console.error('Error creating auction:', error);
-    return new Response(JSON.stringify({ error: 'Failed to create auction' }), {
+    console.error(`Error ${method.toLowerCase()} auction:`, error);
+    return new Response(JSON.stringify({ error: `Failed to ${method.toLowerCase()} auction` }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
     });
   }
 };
+
