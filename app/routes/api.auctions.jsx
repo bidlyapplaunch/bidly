@@ -1,6 +1,6 @@
 import { authenticate } from "../shopify.server";
 
-const BACKEND_URL = "https://bidly-auction-backend.onrender.com";
+const BACKEND_URL = process.env.AUCTION_BACKEND_URL || "https://bidly-backend.hiiiiiiiiiii.com";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);

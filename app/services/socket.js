@@ -8,7 +8,7 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('https://bidly-auction-backend.onrender.com', {
+      this.socket = io(process.env.AUCTION_BACKEND_URL || 'https://bidly-backend.hiiiiiiiiiii.com', {
         transports: ['websocket', 'polling']
       });
 

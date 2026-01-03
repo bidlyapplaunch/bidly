@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://bidly-auction-backend.onrender.com/api';
+const API_BASE_URL = (process.env.AUCTION_BACKEND_URL || 'https://bidly-backend.hiiiiiiiiiii.com') + '/api';
 
 class AuthService {
   constructor() {
