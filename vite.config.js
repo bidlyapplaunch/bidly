@@ -49,10 +49,13 @@ export default defineConfig({
     },
   },
   plugins: [reactRouter(), tsconfigPaths()],
-  build: {
-    assetsInlineLimit: 0,
-  },
   optimizeDeps: {
     include: ["@shopify/app-bridge-react"],
+  },
+  build: {
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      external: [],
+    },
   },
 });
