@@ -20,7 +20,7 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://bidly-backend.hiiiiiiiiiii.com/auth/callback"
+  "https://bidly-backend.hiiiiiiiiiii.com/auth/shopify/callback"
 ]
 
 [app_proxy]
