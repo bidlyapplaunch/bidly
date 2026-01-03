@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utilities";
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const app = useAppBridge();
+  const authFetch = useMemo(() => {
+    if (!app) return null;
+    return authenticatedFetch(app);
+  }, [app]);
   
   const [formData, setFormData] = useState({
     shopifyProductId: '',
@@ -46,12 +50,11 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         status: 'draft'
       });
     }
-  }, [isOpen, auction, app]);
+  }, [isOpen, auction, app, authFetch]);
 
   const fetchProducts = async () => {
-    if (!app) return;
+    if (!authFetch) return;
     try {
-      const authFetch = authenticatedFetch(app);
       const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setProducts(data || []);

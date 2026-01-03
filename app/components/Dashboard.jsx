@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utilities";
 import AuctionTable from './AuctionTable';
@@ -10,6 +10,10 @@ import socketService from '../services/socket';
 
 const Dashboard = ({ onLogout }) => {
   const app = useAppBridge();
+  const authFetch = useMemo(() => {
+    if (!app) return null;
+    return authenticatedFetch(app);
+  }, [app]);
   
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -66,13 +70,12 @@ const Dashboard = ({ onLogout }) => {
       socketService.offStatusUpdate(handleStatusUpdate);
       socketService.offBidUpdate(handleBidUpdate);
     };
-  }, [app]);
+  }, [app, authFetch]);
 
   const fetchStats = async () => {
-    if (!app) return;
+    if (!authFetch) return;
     try {
       setLoading(true);
-      const authFetch = authenticatedFetch(app);
       const response = await authFetch('/api/auctions/stats');
       const data = await response.json();
       setStats(data);
@@ -85,10 +88,9 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const fetchShopifyProducts = async () => {
-    if (!app) return;
+    if (!authFetch) return;
     try {
       // Fetch real products from Shopify API
-      const authFetch = authenticatedFetch(app);
       const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setShopifyProducts(data || []);
@@ -130,8 +132,7 @@ const Dashboard = ({ onLogout }) => {
       
       // Use regular fetch for now
       
-      if (!app) throw new Error('App Bridge not initialized');
-      const authFetch = authenticatedFetch(app);
+      if (!authFetch) throw new Error('App Bridge not initialized');
       
       if (selectedAuction) {
         // Update existing auction
