@@ -1,22 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { analyticsAPI } from '../services/api';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 
 const Analytics = () => {
+  const app = useAppBridge();
+  const [appBridgeReady, setAppBridgeReady] = useState(false);
+
+  useEffect(() => {
+    if (window.shopify && window.shopify.AppBridge) {
+      setAppBridgeReady(true);
+    }
+  }, []);
+
+  const authFetch = useMemo(() => {
+    if (!app || !appBridgeReady) {
+      return null;
+    }
+    try {
+      return authenticatedFetch(app);
+    } catch (e) {
+      console.error('Failed to create authenticatedFetch:', e);
+      return null;
+    }
+  }, [app, appBridgeReady]);
+
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('30d');
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [period]);
+    if (authFetch) {
+      fetchAnalytics();
+    }
+  }, [period, authFetch]);
 
   const fetchAnalytics = async () => {
+    if (!authFetch) return;
+    
     try {
       setLoading(true);
       setError(null);
-      const response = await analyticsAPI.getAnalytics(period);
-      setAnalytics(response.data);
+      const response = await authFetch(`/api/analytics?period=${period}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch analytics: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      // Handle both response formats: { data: {...} } or direct data object
+      setAnalytics(data.data || data);
     } catch (err) {
       setError('Failed to fetch analytics');
       console.error('Error fetching analytics:', err);
@@ -90,7 +123,7 @@ const Analytics = () => {
           <div style={{ padding: '16px', textAlign: 'center' }}>
             <s-text variant="bodyMd" tone="subdued">Total Revenue</s-text>
             <s-text variant="heading2xl">
-              {formatCurrency(analytics.totalRevenue || 0)}
+              {formatCurrency(analytics.revenue?.totalRevenue || analytics.totalRevenue || 0)}
             </s-text>
           </div>
         </s-card>
@@ -99,7 +132,7 @@ const Analytics = () => {
           <div style={{ padding: '16px', textAlign: 'center' }}>
             <s-text variant="bodyMd" tone="subdued">Total Auctions</s-text>
             <s-text variant="heading2xl">
-              {analytics.totalAuctions || 0}
+              {analytics.summary?.totalAuctions || analytics.totalAuctions || 0}
             </s-text>
           </div>
         </s-card>
@@ -108,7 +141,7 @@ const Analytics = () => {
           <div style={{ padding: '16px', textAlign: 'center' }}>
             <s-text variant="bodyMd" tone="subdued">Average Bid</s-text>
             <s-text variant="heading2xl">
-              {formatCurrency(analytics.averageBid || 0)}
+              {formatCurrency(analytics.revenue?.averageBidAmount || analytics.averageBid || 0)}
             </s-text>
           </div>
         </s-card>
@@ -117,14 +150,14 @@ const Analytics = () => {
           <div style={{ padding: '16px', textAlign: 'center' }}>
             <s-text variant="bodyMd" tone="subdued">Active Bidders</s-text>
             <s-text variant="heading2xl">
-              {analytics.activeBidders || 0}
+              {analytics.summary?.activeUsers || analytics.activeBidders || 0}
             </s-text>
           </div>
         </s-card>
       </div>
 
       {/* Top Performing Auctions */}
-      {analytics.topAuctions && analytics.topAuctions.length > 0 && (
+      {(analytics.topAuctions || analytics.data?.topAuctions) && (analytics.topAuctions || analytics.data?.topAuctions)?.length > 0 && (
         <s-card>
           <div style={{ padding: '16px' }}>
             <s-text variant="headingMd" style={{ marginBottom: '16px' }}>Top Performing Auctions</s-text>
@@ -147,7 +180,7 @@ const Analytics = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {analytics && Array.isArray(analytics.topAuctions) && analytics.topAuctions.map((auction, index) => (
+                  {analytics && Array.isArray(analytics.topAuctions || analytics.data?.topAuctions) && (analytics.topAuctions || analytics.data?.topAuctions).map((auction, index) => (
                     <tr key={auction.id || index} style={{ borderBottom: '1px solid #f1f2f3' }}>
                       <td style={{ padding: '12px' }}>
                         <s-text variant="bodyMd">
