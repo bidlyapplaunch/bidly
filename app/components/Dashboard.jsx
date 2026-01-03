@@ -10,7 +10,6 @@ import socketService from '../services/socket';
 
 const Dashboard = ({ onLogout }) => {
   const app = useAppBridge();
-  const authFetch = authenticatedFetch(app);
   
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -25,12 +24,12 @@ const Dashboard = ({ onLogout }) => {
   const [selectedTab, setSelectedTab] = useState(0);
 
   useEffect(() => {
+    if (!app) return;
+    
     // Explicit getSessionToken call for Shopify Embedded App Checks
-    if (app) {
-      getSessionToken(app).catch(() => {
-        // Silently fail - token generation happens automatically
-      });
-    }
+    getSessionToken(app).catch(() => {
+      // Silently fail - token generation happens automatically
+    });
     
     fetchStats();
     fetchShopifyProducts();
@@ -67,11 +66,13 @@ const Dashboard = ({ onLogout }) => {
       socketService.offStatusUpdate(handleStatusUpdate);
       socketService.offBidUpdate(handleBidUpdate);
     };
-  }, []);
+  }, [app]);
 
   const fetchStats = async () => {
+    if (!app) return;
     try {
       setLoading(true);
+      const authFetch = authenticatedFetch(app);
       const response = await authFetch('/api/auctions/stats');
       const data = await response.json();
       setStats(data);
@@ -84,8 +85,10 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const fetchShopifyProducts = async () => {
+    if (!app) return;
     try {
       // Fetch real products from Shopify API
+      const authFetch = authenticatedFetch(app);
       const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setShopifyProducts(data || []);
@@ -126,6 +129,9 @@ const Dashboard = ({ onLogout }) => {
       });
       
       // Use regular fetch for now
+      
+      if (!app) throw new Error('App Bridge not initialized');
+      const authFetch = authenticatedFetch(app);
       
       if (selectedAuction) {
         // Update existing auction

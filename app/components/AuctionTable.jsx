@@ -39,6 +39,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   }, [currentPage, filters, refreshTrigger, app]);
 
   const fetchAuctions = async () => {
+    if (!app) return;
     try {
       setLoading(true);
       setError(null);
@@ -50,6 +51,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         ...(filters.shopifyProductId && { shopifyProductId: filters.shopifyProductId })
       });
       
+      const authFetch = authenticatedFetch(app);
       const response = await authFetch(`/api/auctions?${params}`);
       const data = await response.json();
       
@@ -88,7 +90,9 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   };
 
   const handleDelete = async () => {
+    if (!app) return;
     try {
+      const authFetch = authenticatedFetch(app);
       const response = await authFetch(`/api/auctions/${selectedAuction._id || selectedAuction.id}`, {
         method: 'DELETE'
       });

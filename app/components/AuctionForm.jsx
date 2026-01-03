@@ -19,15 +19,14 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Explicit getSessionToken call for Shopify Embedded App Checks
-    if (app) {
-      getSessionToken(app).catch(() => {
-        // Silently fail - token generation happens automatically
-      });
-    }
+    if (!app || !isOpen) return;
     
-    if (isOpen) {
-      fetchProducts();
+    // Explicit getSessionToken call for Shopify Embedded App Checks
+    getSessionToken(app).catch(() => {
+      // Silently fail - token generation happens automatically
+    });
+    
+    fetchProducts();
       if (auction) {
         setFormData({
           shopifyProductId: auction.shopifyProductId || '',
@@ -51,7 +50,9 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   }, [isOpen, auction, app]);
 
   const fetchProducts = async () => {
+    if (!app) return;
     try {
+      const authFetch = authenticatedFetch(app);
       const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setProducts(data || []);
