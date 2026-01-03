@@ -10,7 +10,7 @@ import {
 } from '../services/billingService.js';
 import { BILLING_PLANS, DEFAULT_PLAN, getPlanCapabilities, sanitizePlan } from '../config/billingPlans.js';
 
-const APP_URL = process.env.APP_URL || 'https://bidly-auction-backend.onrender.com';
+const APP_URL = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
 const ADMIN_APP_URL = process.env.ADMIN_APP_URL || 'https://bidly-auction-admin.onrender.com';
 
 export const subscribeToPlan = async (req, res, next) => {

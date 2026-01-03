@@ -160,7 +160,7 @@ export const initiateOAuth = async (req, res, next) => {
     // Always use https in production (Render uses proxies, so req.protocol might be http)
     const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
     const finalProtocol = protocol === 'http' && process.env.NODE_ENV === 'production' ? 'https' : protocol;
-    const host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-auction-backend.onrender.com';
+    const host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-backend.hiiiiiiiiiii.com';
     const dynamicRedirectUri = `${finalProtocol}://${host}/auth/shopify/callback`;
     
     console.log('🔗 Setting dynamic redirect URI:', dynamicRedirectUri);

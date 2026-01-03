@@ -42,7 +42,7 @@ class ShopifyOAuthService {
                this._redirectUri = process.env.SHOPIFY_REDIRECT_URI;
              } else {
                // Fallback: construct from APP_URL or default
-               const appUrl = process.env.APP_URL || 'https://bidly-auction-backend.onrender.com';
+               const appUrl = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
                this._redirectUri = `${appUrl}/auth/shopify/callback`;
                console.log('⚠️ SHOPIFY_REDIRECT_URI not set, using constructed URL:', this._redirectUri);
              }
@@ -68,7 +68,7 @@ class ShopifyOAuthService {
 
   get webhookBaseUrl() {
     if (this._webhookBaseUrl === null) {
-      const fallback = process.env.APP_URL || 'https://bidly-auction-backend.onrender.com';
+      const fallback = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
       this._webhookBaseUrl = (process.env.SHOPIFY_WEBHOOK_BASE_URL || fallback).replace(/\/$/, '');
     }
     return this._webhookBaseUrl;
