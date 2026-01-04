@@ -94,13 +94,13 @@ api.interceptors.request.use(
   (config) => {
     // Get shop domain and determine backend URL
     const shopDomain = getShopFromURL();
-    const apiBaseUrl = getApiBaseUrl(shopDomain);
+    const apiBaseUrl = getApiBaseUrl(shopDomain); // returns "/api" (relative)
     
-    // Set dynamic baseURL for this request
-    config.baseURL = apiBaseUrl;
+    // Force relative base URL; frontend must never know backend domain
+    config.baseURL = apiBaseUrl || '';
     
-    console.log(`Making ${config.method?.toUpperCase()} request to ${apiBaseUrl}${config.url}`);
-    console.log('🔗 Backend URL:', apiBaseUrl, 'for shop:', shopDomain);
+    console.log(`Making ${config.method?.toUpperCase()} request to ${config.baseURL}${config.url}`);
+    console.log('🔗 Backend URL (relative only):', config.baseURL, 'for shop:', shopDomain);
     
     // Add shop parameter to all requests
     if (shopDomain && !config.params?.shop) {
