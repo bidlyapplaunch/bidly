@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 import { format } from 'date-fns';
@@ -6,7 +6,25 @@ import { format } from 'date-fns';
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const app = useAppBridge();
-  const fetch = authenticatedFetch(app);
+  const [appBridgeReady, setAppBridgeReady] = useState(false);
+
+  useEffect(() => {
+    if (window.shopify && window.shopify.AppBridge) {
+      setAppBridgeReady(true);
+    }
+  }, []);
+
+  const authFetch = useMemo(() => {
+    if (!app || !appBridgeReady) {
+      return null;
+    }
+    try {
+      return authenticatedFetch(app);
+    } catch (e) {
+      console.error('Failed to create authenticatedFetch:', e);
+      return null;
+    }
+  }, [app, appBridgeReady]);
   
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +46,13 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchAuctions();
-  }, [currentPage, filters, refreshTrigger]);
+    if (authFetch) {
+      fetchAuctions();
+    }
+  }, [currentPage, filters, refreshTrigger, authFetch]);
 
   const fetchAuctions = async () => {
+    if (!authFetch) return; // Ensure authenticatedFetch is ready
     try {
       setLoading(true);
       setError(null);
@@ -43,7 +64,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         ...(filters.shopifyProductId && { shopifyProductId: filters.shopifyProductId })
       });
       
-      const response = await fetch(`/api/auctions?${params}`);
+      const response = await authFetch(`/api/auctions?${params}`);
       const data = await response.json();
       
       console.log('🔍 Fetched auctions response:', data);
@@ -81,8 +102,9 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   };
 
   const handleDelete = async () => {
+    if (!authFetch) return; // Ensure authenticatedFetch is ready
     try {
-      const response = await fetch(`/api/auctions/${selectedAuction._id || selectedAuction.id}`, {
+      const response = await authFetch(`/api/auctions/${selectedAuction._id || selectedAuction.id}`, {
         method: 'DELETE'
       });
       

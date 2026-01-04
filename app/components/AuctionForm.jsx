@@ -1,10 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const app = useAppBridge();
-  const fetch = authenticatedFetch(app);
+  const [appBridgeReady, setAppBridgeReady] = useState(false);
+
+  useEffect(() => {
+    if (window.shopify && window.shopify.AppBridge) {
+      setAppBridgeReady(true);
+    }
+  }, []);
+
+  const authFetch = useMemo(() => {
+    if (!app || !appBridgeReady) {
+      return null;
+    }
+    try {
+      return authenticatedFetch(app);
+    } catch (e) {
+      console.error('Failed to create authenticatedFetch:', e);
+      return null;
+    }
+  }, [app, appBridgeReady]);
   
   const [formData, setFormData] = useState({
     shopifyProductId: '',
@@ -19,7 +37,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && authFetch) {
       fetchProducts();
       if (auction) {
         setFormData({
@@ -41,12 +59,12 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         });
       }
     }
-  }, [isOpen, auction]);
+  }, [isOpen, auction, authFetch]);
 
   const fetchProducts = async () => {
-    if (!fetch) return; // Ensure authenticatedFetch is ready
+    if (!authFetch) return; // Ensure authenticatedFetch is ready
     try {
-      const response = await fetch('/api/shopify/products?limit=20');
+      const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setProducts(data || []);
     } catch (error) {
