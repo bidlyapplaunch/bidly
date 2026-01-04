@@ -123,6 +123,11 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const handleFormSave = async (auctionData) => {
+    if (!authFetch) {
+      console.error('authFetch not ready');
+      return;
+    }
+    
     try {
       console.log('💾 Saving auction:', auctionData);
       console.log('💾 Data types:', {
@@ -134,11 +139,16 @@ const Dashboard = ({ onLogout }) => {
         status: typeof auctionData.status
       });
       
-      // Use regular fetch for now
+      // Ensure relative URL - never use absolute URLs
+      const relativePath = selectedAuction 
+        ? `/api/auctions/${selectedAuction._id}`
+        : '/api/auctions';
+      
+      console.log('🔗 Making request to relative path:', relativePath);
       
       if (selectedAuction) {
         // Update existing auction
-        const response = await authFetch(`/api/auctions/${selectedAuction._id}`, {
+        const response = await authFetch(relativePath, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(auctionData)
@@ -146,8 +156,8 @@ const Dashboard = ({ onLogout }) => {
         if (!response.ok) throw new Error('Failed to update auction');
         setToastMessage('Auction updated successfully');
       } else {
-        // Create new auction
-        const response = await authFetch('/api/auctions', {
+        // Create new auction - ensure relative URL
+        const response = await authFetch(relativePath, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(auctionData)

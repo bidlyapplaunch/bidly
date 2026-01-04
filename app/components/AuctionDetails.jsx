@@ -84,7 +84,16 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     
     try {
       const auctionId = auctionData?.id || auctionData?._id;
-      const response = await authFetch(`/api/auctions/${auctionId}`, {
+      if (!auctionId) {
+        console.error('No auction ID found');
+        return;
+      }
+      
+      // Ensure relative URL - never use absolute URLs
+      const relativePath = `/api/auctions/${auctionId}`;
+      console.log('🔗 Making PUT request to relative path:', relativePath);
+      
+      const response = await authFetch(relativePath, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
