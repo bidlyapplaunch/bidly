@@ -10,10 +10,12 @@ export const loader = async ({ request }) => {
     const url = new URL(`${BACKEND_URL}/api/auctions/stats`);
     url.searchParams.set('shop', shopDomain);
     
+    // DO NOT forward Authorization header - backend trusts x-shopify-shop-domain only
     const response = await fetch(url.toString(), {
       headers: {
         'Content-Type': 'application/json',
         'x-shopify-shop-domain': shopDomain
+        // Explicitly NOT forwarding Authorization header
       }
     });
     

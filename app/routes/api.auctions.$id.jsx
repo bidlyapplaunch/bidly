@@ -18,10 +18,12 @@ export const loader = async ({ request, params }) => {
     const backendUrl = new URL(`${BACKEND_URL}/api/auctions/${auctionId}`);
     backendUrl.searchParams.set('shop', shopDomain);
     
+    // DO NOT forward Authorization header - backend trusts x-shopify-shop-domain only
     const response = await fetch(backendUrl.toString(), {
       headers: {
         'Content-Type': 'application/json',
         'x-shopify-shop-domain': shopDomain
+        // Explicitly NOT forwarding Authorization header
       }
     });
     
@@ -65,11 +67,13 @@ export const action = async ({ request, params }) => {
     
     const body = method !== 'GET' ? await request.text() : undefined;
     
+    // DO NOT forward Authorization header - backend trusts x-shopify-shop-domain only
     const response = await fetch(backendUrl.toString(), {
       method,
       headers: {
         'Content-Type': 'application/json',
         'x-shopify-shop-domain': shopDomain
+        // Explicitly NOT forwarding Authorization header
       },
       body
     });

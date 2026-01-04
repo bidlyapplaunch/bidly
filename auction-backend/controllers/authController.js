@@ -46,6 +46,8 @@ export const register = async (req, res, next) => {
 
     await user.save();
 
+    // NOTE: JWT tokens are ONLY for the separate admin app (auction-admin), NOT for the Shopify embedded app.
+    // The Shopify app uses Shopify session tokens (RS256) via authenticatedFetch, not backend JWTs (HS256).
     // Generate token
     const token = generateToken(user._id);
 
@@ -100,6 +102,8 @@ export const login = async (req, res, next) => {
     user.lastLogin = new Date();
     await user.save();
 
+    // NOTE: JWT tokens are ONLY for the separate admin app (auction-admin), NOT for the Shopify embedded app.
+    // The Shopify app uses Shopify session tokens (RS256) via authenticatedFetch, not backend JWTs (HS256).
     // Generate token
     const token = generateToken(user._id);
 

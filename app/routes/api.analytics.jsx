@@ -17,10 +17,12 @@ export const loader = async ({ request }) => {
       url.searchParams.set('period', period);
     }
     
+    // DO NOT forward Authorization header - backend trusts x-shopify-shop-domain only
     const response = await fetch(url.toString(), {
       headers: {
         'Content-Type': 'application/json',
         'x-shopify-shop-domain': shopDomain
+        // Explicitly NOT forwarding Authorization header
       }
     });
     
