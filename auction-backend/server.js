@@ -9,6 +9,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { createRequestHandler as createReactRouterRequestHandler } from '@react-router/express';
+import * as remixBuild from '../build/server/index.js';
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -427,6 +429,12 @@ app.use('/auth/shopify', oauthRoutes);
 app.use('/webhooks/shopify', oauthRoutes);
 app.use('/webhooks/app', oauthRoutes);
 
+// Minimal compliance webhook endpoint (configured via shopify.app.bidly.toml)
+app.all('/webhooks', (req, res) => {
+  console.log('📨 Received compliance webhook ping/topic:', req.headers['x-shopify-topic']);
+  return res.status(200).json({ success: true });
+});
+
 // App Bridge routes for embedded app functionality
 app.use('/app-bridge', appBridgeRoutes);
 
@@ -436,7 +444,7 @@ app.use('/apps/bidly', appProxyRoutes);
 // Debug routes (development only)
 app.use('/api/debug', debugRoutes);
 
-// Serve static files from the admin frontend build (after API routes)
+// Serve static files from the admin frontend build under /admin only
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
 console.log('📁 Serving admin frontend from:', frontendDistPath);
 
@@ -444,20 +452,16 @@ console.log('📁 Serving admin frontend from:', frontendDistPath);
 const FRONTEND_VERSION = Date.now() + Math.random();
 console.log('🔄 Frontend version (cache-busting):', FRONTEND_VERSION);
 
-// Only serve static files for non-API routes
-app.use((req, res, next) => {
-  // Skip static file serving for API routes
-  if (req.path.startsWith('/api/') || req.path.startsWith('/app-bridge/') || req.path.startsWith('/auth/')) {
-    return next();
-  }
-  
-  // Add cache-busting headers for all static files
+const ADMIN_BASE_PATH = '/admin';
+
+app.use(ADMIN_BASE_PATH, (req, res, next) => {
+  // Add cache-busting headers for admin static files
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('X-Frontend-Version', FRONTEND_VERSION.toString());
-  
-  console.log('📁 Serving static file:', req.path, 'from admin frontend');
+
+  // Serve admin assets
   express.static(frontendDistPath)(req, res, next);
 });
 
@@ -494,24 +498,28 @@ const serveAdminIndex = (req, res) => {
   }
 };
 
-app.get('/', serveAdminIndex);
-app.get('/plans', serveAdminIndex);
-app.get('/customization/widget', serveAdminIndex);
-app.get('/customization/marketplace', serveAdminIndex);
-app.get('/analytics', serveAdminIndex);
-app.get('/auctions', serveAdminIndex);
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/auth/') || req.path.startsWith('/app-bridge/') || req.path.startsWith('/apps/')) {
+app.get(ADMIN_BASE_PATH, serveAdminIndex);
+app.get(`${ADMIN_BASE_PATH}/*`, serveAdminIndex);
+
+// Remix app handler for everything else (non-API, non-admin)
+const remixRequestHandler = createReactRouterRequestHandler({
+  build: remixBuild,
+  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+});
+
+app.all('*', (req, res, next) => {
+  if (
+    req.path.startsWith('/api/') ||
+    req.path.startsWith('/auth/') ||
+    req.path.startsWith('/app-bridge/') ||
+    req.path.startsWith('/apps/') ||
+    req.path.startsWith(ADMIN_BASE_PATH)
+  ) {
     return next();
   }
 
-  if (req.method === 'GET' && req.accepts('html')) {
-    return serveAdminIndex(req, res);
-  }
-
-  return next();
+  return remixRequestHandler(req, res, next);
 });
-
 
 // 404 handler
 app.use(notFound);

@@ -104,6 +104,21 @@ export const identifyStore = async (req, res, next) => {
       return next();
     }
 
+    // Skip store validation for admin SPA paths (served separately)
+    if (req.path.startsWith('/admin')) {
+      return next();
+    }
+
+    // Only enforce store validation for API/app-proxy/app-bridge paths
+    const requiresStoreValidation =
+      req.path.startsWith('/api/') ||
+      req.path.startsWith('/apps/') ||
+      req.path.startsWith('/app-bridge/');
+
+    if (!requiresStoreValidation) {
+      return next();
+    }
+
     if (
       req.method === 'GET' &&
       (STATIC_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix)) ||

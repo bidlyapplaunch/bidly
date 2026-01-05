@@ -14,6 +14,7 @@
     "test-oauth": "node scripts/testOAuth.js"
   },
   "dependencies": {
+    "@react-router/express": "^7.9.1",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",

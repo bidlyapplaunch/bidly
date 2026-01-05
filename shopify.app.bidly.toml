@@ -10,7 +10,7 @@ api_version = "2025-10"
 
 [[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-uri = "https://bidly-backend.hiiiiiiiiiii.com"
+uri = "https://bidly-backend.hiiiiiiiiiii.com/webhooks"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
