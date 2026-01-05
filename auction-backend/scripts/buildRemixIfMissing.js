@@ -36,7 +36,8 @@ const env = {
   NODE_OPTIONS: `${process.env.NODE_OPTIONS || ''} --max_old_space_size=2048`.trim(),
 };
 
-const install = spawnSync('npm', ['install', '--production=false'], {
+// Prefer npm ci on Render for deterministic installs (repo root has package-lock.json)
+const install = spawnSync('npm', ['ci', '--include=dev'], {
   cwd: repoRoot,
   stdio: 'inherit',
   shell: true,

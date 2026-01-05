@@ -147,6 +147,51 @@ app.use('/api', (req, res, next) => {
   return next();
 });
 
+// Always-available diagnostics (must NOT depend on Remix build)
+app.get('/diagnostics/remix-assets', (req, res) => {
+  const commit =
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.GIT_COMMIT ||
+    process.env.COMMIT_SHA ||
+    null;
+
+  const assetsDir = remixClientPath ? path.join(remixClientPath, 'assets') : null;
+
+  const serverCandidates = [
+    path.resolve(__dirname, '../build/server/index.js'),
+    path.resolve(process.cwd(), 'build/server/index.js'),
+    path.resolve(process.cwd(), '../build/server/index.js'),
+  ];
+
+  const serverPathChecks = serverCandidates.map((p) => ({ path: p, exists: fs.existsSync(p) }));
+
+  const clientCandidates = [
+    path.resolve(__dirname, '../build/client'),
+    path.resolve(process.cwd(), 'build/client'),
+    path.resolve(process.cwd(), '../build/client'),
+  ];
+
+  const clientPathChecks = clientCandidates.map((p) => ({
+    path: p,
+    exists: fs.existsSync(p),
+    hasAssets: fs.existsSync(path.join(p, 'assets')),
+  }));
+
+  res.json({
+    commit,
+    cwd: process.cwd(),
+    __dirname,
+    remixServerBuildPath,
+    hasRemixServerBuild: Boolean(remixServerBuildPath && fs.existsSync(remixServerBuildPath)),
+    remixClientPath,
+    hasRemixClient: Boolean(remixClientPath && fs.existsSync(remixClientPath)),
+    assetsDir,
+    hasAssetsDir: Boolean(assetsDir && fs.existsSync(assetsDir)),
+    serverPathChecks,
+    clientPathChecks,
+  });
+});
+
 const fixCustomerIndexes = async () => {
   try {
     const indexes = await Customer.collection.indexes();
@@ -665,6 +710,8 @@ app.all('*', (req, res, next) => {
     req.path.startsWith('/app-bridge/') ||
     req.path.startsWith('/apps/') ||
     req.path.startsWith('/assets/') ||
+    req.path.startsWith('/diagnostics/') ||
+    req.path.startsWith('/_diag/') ||
     req.path.startsWith(ADMIN_BASE_PATH)
   ) {
     return next();
