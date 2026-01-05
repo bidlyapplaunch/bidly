@@ -1,7 +1,6 @@
 import Dashboard from "../components/Dashboard";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { json } from "react-router";
 
 const BACKEND_URL = process.env.AUCTION_BACKEND_URL || "https://bidly-backend.hiiiiiiiiiii.com";
 
@@ -38,11 +37,12 @@ export const loader = async ({ request }) => {
     auctions = auctionsData.data;
   }
 
-  return json({
+  // React Router/Remix loaders can return plain objects; framework will serialize.
+  return {
     stats: stats?.data || stats || { totalAuctions: 0, activeAuctions: 0, totalBids: 0 },
     auctions,
     shopDomain
-  });
+  };
 };
 
 export default function Index() {
