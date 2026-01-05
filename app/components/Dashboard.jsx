@@ -9,16 +9,9 @@ import Analytics from './Analytics';
 
 const Dashboard = ({ onLogout }) => {
   const app = useAppBridge();
-  const [appBridgeReady, setAppBridgeReady] = useState(false);
-
-  useEffect(() => {
-    if (window.shopify && window.shopify.AppBridge) {
-      setAppBridgeReady(true);
-    }
-  }, []);
 
   const authFetch = useMemo(() => {
-    if (!app || !appBridgeReady) {
+    if (!app) {
       return null;
     }
     try {
@@ -27,7 +20,7 @@ const Dashboard = ({ onLogout }) => {
       console.error('Failed to create authenticatedFetch:', e);
       return null;
     }
-  }, [app, appBridgeReady]);
+  }, [app]);
   
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -43,7 +36,7 @@ const Dashboard = ({ onLogout }) => {
 
   useEffect(() => {
     // Explicit getSessionToken call for Shopify Embedded App Checks
-    if (app && appBridgeReady) {
+    if (app) {
       getSessionToken(app).catch(() => {
         // Silently fail - token generation happens automatically
       });
@@ -64,7 +57,7 @@ const Dashboard = ({ onLogout }) => {
         clearInterval(pollingInterval);
       };
     }
-  }, [app, appBridgeReady, authFetch]);
+  }, [app, authFetch]);
 
   const fetchStats = async () => {
     if (!authFetch) return; // Ensure authenticatedFetch is ready

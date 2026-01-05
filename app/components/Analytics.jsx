@@ -4,16 +4,9 @@ import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 
 const Analytics = () => {
   const app = useAppBridge();
-  const [appBridgeReady, setAppBridgeReady] = useState(false);
-
-  useEffect(() => {
-    if (window.shopify && window.shopify.AppBridge) {
-      setAppBridgeReady(true);
-    }
-  }, []);
 
   const authFetch = useMemo(() => {
-    if (!app || !appBridgeReady) {
+    if (!app) {
       return null;
     }
     try {
@@ -22,7 +15,7 @@ const Analytics = () => {
       console.error('Failed to create authenticatedFetch:', e);
       return null;
     }
-  }, [app, appBridgeReady]);
+  }, [app]);
 
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);

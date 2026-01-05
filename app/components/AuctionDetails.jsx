@@ -19,16 +19,9 @@ import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const app = useAppBridge();
-  const [appBridgeReady, setAppBridgeReady] = useState(false);
-
-  useEffect(() => {
-    if (window.shopify && window.shopify.AppBridge) {
-      setAppBridgeReady(true);
-    }
-  }, []);
 
   const authFetch = useMemo(() => {
-    if (!app || !appBridgeReady) {
+    if (!app) {
       return null;
     }
     try {
@@ -37,7 +30,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       console.error('Failed to create authenticatedFetch:', e);
       return null;
     }
-  }, [app, appBridgeReady]);
+  }, [app]);
 
   const [auctionData, setAuctionData] = useState(auction);
   const [loading, setLoading] = useState(false);

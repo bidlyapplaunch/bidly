@@ -6,16 +6,9 @@ import { format } from 'date-fns';
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const app = useAppBridge();
-  const [appBridgeReady, setAppBridgeReady] = useState(false);
-
-  useEffect(() => {
-    if (window.shopify && window.shopify.AppBridge) {
-      setAppBridgeReady(true);
-    }
-  }, []);
 
   const authFetch = useMemo(() => {
-    if (!app || !appBridgeReady) {
+    if (!app) {
       return null;
     }
     try {
@@ -24,7 +17,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       console.error('Failed to create authenticatedFetch:', e);
       return null;
     }
-  }, [app, appBridgeReady]);
+  }, [app]);
   
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
