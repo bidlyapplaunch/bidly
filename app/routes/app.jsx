@@ -1,4 +1,5 @@
 import { Outlet, useLoaderData, useRouteError } from "react-router";
+import { useEffect } from "react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
@@ -92,6 +93,12 @@ export const loader = async ({ request }) => {
 
 export default function App() {
   const { apiKey } = useLoaderData();
+
+  useEffect(() => {
+    // Expose API key for client-side App Bridge initialization (public key)
+    // eslint-disable-next-line no-undef
+    window.__SHOPIFY_API_KEY__ = apiKey;
+  }, [apiKey]);
 
   return (
     <AppProvider embedded apiKey={apiKey} forceRedirect>

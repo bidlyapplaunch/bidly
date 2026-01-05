@@ -6,7 +6,6 @@ import {
   Button,
   DataTable,
   Badge,
-  Banner,
   Frame,
   Toast,
   ButtonGroup,
@@ -14,11 +13,11 @@ import {
   TextContainer
 } from '@shopify/polaris';
 import { format } from 'date-fns';
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch } from "@shopify/app-bridge/utilities";
+import { getEmbeddedAppBridgeApp } from "../utils/appBridgeClient";
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
-  const app = useAppBridge();
+  const app = useMemo(() => getEmbeddedAppBridgeApp(), []);
 
   const authFetch = useMemo(() => {
     if (!app) {

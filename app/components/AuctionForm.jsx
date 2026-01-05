@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch } from "@shopify/app-bridge/utilities";
+import { getEmbeddedAppBridgeApp } from "../utils/appBridgeClient";
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
-  const app = useAppBridge();
+  const app = useMemo(() => getEmbeddedAppBridgeApp(), []);
 
   const authFetch = useMemo(() => {
     if (!app) {

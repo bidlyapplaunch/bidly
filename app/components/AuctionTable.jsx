@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 import { format } from 'date-fns';
+import { getEmbeddedAppBridgeApp } from "../utils/appBridgeClient";
 // Removed direct backend API imports - all calls now go through authenticated /api/* routes
 
 const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
-  const app = useAppBridge();
+  const app = useMemo(() => getEmbeddedAppBridgeApp(), []);
 
   const authFetch = useMemo(() => {
     if (!app) {

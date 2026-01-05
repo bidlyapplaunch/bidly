@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticatedFetch, getSessionToken } from "@shopify/app-bridge/utilities";
 import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
+import { getEmbeddedAppBridgeApp } from "../utils/appBridgeClient";
 // Removed direct backend API imports - all calls now go through authenticated /api/* routes
 
 const Dashboard = ({ onLogout }) => {
-  const app = useAppBridge();
+  const app = useMemo(() => getEmbeddedAppBridgeApp(), []);
 
   const authFetch = useMemo(() => {
     if (!app) {
@@ -36,11 +36,7 @@ const Dashboard = ({ onLogout }) => {
 
   useEffect(() => {
     // Explicit getSessionToken call for Shopify Embedded App Checks
-    if (app) {
-      getSessionToken(app).catch(() => {
-        // Silently fail - token generation happens automatically
-      });
-    }
+    if (app) getSessionToken(app).catch(() => {});
     
     if (authFetch) {
       fetchStats();
