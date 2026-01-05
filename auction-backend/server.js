@@ -721,6 +721,12 @@ app.all('*', (req, res, next) => {
     return res.status(503).send('Remix build missing on server');
   }
 
+  // Prevent CDN/browser caching of the HTML document.
+  // Stale HTML can reference old hashed asset filenames, causing hydration mismatches.
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   return remixRequestHandler(req, res, next);
 });
 
