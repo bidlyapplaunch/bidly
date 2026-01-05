@@ -1,13 +1,16 @@
-import { Outlet, useRouteError } from "react-router";
+import { useRouteError } from "react-router";
 import { AppProvider as ShopifyAppProvider } from "@shopify/shopify-app-react-router/react";
-import { AppProvider as PolarisProvider } from "@shopify/polaris";
+import { AppProvider as PolarisProvider, Page } from "@shopify/polaris";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import Dashboard from "../components/Dashboard";
 
 export default function App() {
   return (
     <ShopifyAppProvider embedded>
       <PolarisProvider i18n={{}}>
-        <Outlet />
+        <Page fullWidth>
+          <Dashboard />
+        </Page>
       </PolarisProvider>
     </ShopifyAppProvider>
   );
