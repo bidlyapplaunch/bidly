@@ -1,47 +1,37 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { authenticatedFetch } from "@shopify/app-bridge/utilities";
-import { getEmbeddedAppBridgeApp } from "../utils/appBridgeClient";
+import React, { useState, useEffect } from 'react';
+import {
+  Card,
+  Text,
+  Select,
+  Button,
+  Banner,
+  Layout,
+  BlockStack,
+  InlineStack,
+  IndexTable
+} from '@shopify/polaris';
 
 const Analytics = () => {
-  const app = useMemo(() => getEmbeddedAppBridgeApp(), []);
-
-  const authFetch = useMemo(() => {
-    if (!app) {
-      return null;
-    }
-    try {
-      return authenticatedFetch(app);
-    } catch (e) {
-      console.error('Failed to create authenticatedFetch:', e);
-      return null;
-    }
-  }, [app]);
-
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('30d');
 
   useEffect(() => {
-    if (authFetch) {
-      fetchAnalytics();
-    }
-  }, [period, authFetch]);
+    fetchAnalytics();
+  }, [period]);
 
   const fetchAnalytics = async () => {
-    if (!authFetch) return;
-    
     try {
       setLoading(true);
       setError(null);
-      const response = await authFetch(`/api/analytics?period=${period}`);
+      const response = await fetch(`/api/analytics?period=${period}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch analytics: ${response.status}`);
       }
       
       const data = await response.json();
-      // Handle both response formats: { data: {...} } or direct data object
       setAnalytics(data.data || data);
     } catch (err) {
       setError('Failed to fetch analytics');
@@ -60,152 +50,142 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <s-card>
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <s-text variant="bodyMd">Loading analytics...</s-text>
-        </div>
-      </s-card>
+      <Card>
+        <BlockStack gap="200">
+          <Text variant="bodyMd">Loading analytics...</Text>
+        </BlockStack>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <s-banner status="critical">
-        <s-text variant="bodyMd">{error}</s-text>
-      </s-banner>
+      <Banner status="critical">
+        <p>{error}</p>
+      </Banner>
     );
   }
 
   if (!analytics) {
     return (
-      <s-card>
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <s-text variant="bodyMd">No analytics data available</s-text>
-        </div>
-      </s-card>
+      <Card>
+        <Text variant="bodyMd" tone="subdued">
+          No analytics data available
+        </Text>
+      </Card>
     );
   }
 
+  const topAuctions = analytics.topAuctions || analytics.data?.topAuctions || [];
+
+  const topAuctionsRows = topAuctions.map((auction, index) => (
+    <IndexTable.Row id={auction.id || index} key={auction.id || index} position={index}>
+      <IndexTable.Cell>
+        <Text variant="bodyMd" as="span">
+          {auction.productName || `Product ${auction.shopifyProductId}`}
+        </Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text variant="bodyMd" fontWeight="semibold" as="span">
+          {formatCurrency(auction.finalPrice || auction.currentBid || auction.startingBid)}
+        </Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text variant="bodyMd" as="span">{auction.totalBids || 0}</Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Badge status={auction.status === 'ended' ? 'success' : 'info'}>
+          {auction.status?.toUpperCase() || 'UNKNOWN'}
+        </Badge>
+      </IndexTable.Cell>
+    </IndexTable.Row>
+  ));
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <BlockStack gap="400">
       {/* Period Selector */}
-      <s-card>
-        <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <s-text variant="headingMd">Analytics</s-text>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <s-select
-              value={period}
-              onChange={setPeriod}
+      <Card>
+        <InlineStack align="space-between" blockAlign="center">
+          <Text variant="headingMd" as="h2">Analytics</Text>
+          <InlineStack gap="200">
+            <Select
               options={[
                 { label: 'Last 7 days', value: '7d' },
                 { label: 'Last 30 days', value: '30d' },
                 { label: 'Last 90 days', value: '90d' },
                 { label: 'Last year', value: '1y' }
               ]}
+              value={period}
+              onChange={setPeriod}
             />
-            <s-button variant="secondary" onClick={fetchAnalytics}>
-              Refresh
-            </s-button>
-          </div>
-        </div>
-      </s-card>
+            <Button onClick={fetchAnalytics}>Refresh</Button>
+          </InlineStack>
+        </InlineStack>
+      </Card>
 
       {/* Key Metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-        <s-card>
-          <div style={{ padding: '16px', textAlign: 'center' }}>
-            <s-text variant="bodyMd" tone="subdued">Total Revenue</s-text>
-            <s-text variant="heading2xl">
-              {formatCurrency(analytics.revenue?.totalRevenue || analytics.totalRevenue || 0)}
-            </s-text>
-          </div>
-        </s-card>
-
-        <s-card>
-          <div style={{ padding: '16px', textAlign: 'center' }}>
-            <s-text variant="bodyMd" tone="subdued">Total Auctions</s-text>
-            <s-text variant="heading2xl">
-              {analytics.summary?.totalAuctions || analytics.totalAuctions || 0}
-            </s-text>
-          </div>
-        </s-card>
-
-        <s-card>
-          <div style={{ padding: '16px', textAlign: 'center' }}>
-            <s-text variant="bodyMd" tone="subdued">Average Bid</s-text>
-            <s-text variant="heading2xl">
-              {formatCurrency(analytics.revenue?.averageBidAmount || analytics.averageBid || 0)}
-            </s-text>
-          </div>
-        </s-card>
-
-        <s-card>
-          <div style={{ padding: '16px', textAlign: 'center' }}>
-            <s-text variant="bodyMd" tone="subdued">Active Bidders</s-text>
-            <s-text variant="heading2xl">
-              {analytics.summary?.activeUsers || analytics.activeBidders || 0}
-            </s-text>
-          </div>
-        </s-card>
-      </div>
+      <Layout>
+        <Layout.Section oneThird>
+          <Card>
+            <BlockStack gap="200" align="center">
+              <Text variant="bodyMd" tone="subdued">Total Revenue</Text>
+              <Text variant="heading2xl">
+                {formatCurrency(analytics.revenue?.totalRevenue || analytics.totalRevenue || 0)}
+              </Text>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+        <Layout.Section oneThird>
+          <Card>
+            <BlockStack gap="200" align="center">
+              <Text variant="bodyMd" tone="subdued">Total Auctions</Text>
+              <Text variant="heading2xl">
+                {analytics.summary?.totalAuctions || analytics.totalAuctions || 0}
+              </Text>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+        <Layout.Section oneThird>
+          <Card>
+            <BlockStack gap="200" align="center">
+              <Text variant="bodyMd" tone="subdued">Average Bid</Text>
+              <Text variant="heading2xl">
+                {formatCurrency(analytics.revenue?.averageBidAmount || analytics.averageBid || 0)}
+              </Text>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+      </Layout>
 
       {/* Top Performing Auctions */}
-      {(analytics.topAuctions || analytics.data?.topAuctions) && (analytics.topAuctions || analytics.data?.topAuctions)?.length > 0 && (
-        <s-card>
-          <div style={{ padding: '16px' }}>
-            <s-text variant="headingMd" style={{ marginBottom: '16px' }}>Top Performing Auctions</s-text>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #e1e3e5' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>
-                      <s-text variant="bodyMd">Product</s-text>
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>
-                      <s-text variant="bodyMd">Final Price</s-text>
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>
-                      <s-text variant="bodyMd">Total Bids</s-text>
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>
-                      <s-text variant="bodyMd">Status</s-text>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analytics && Array.isArray(analytics.topAuctions || analytics.data?.topAuctions) && (analytics.topAuctions || analytics.data?.topAuctions).map((auction, index) => (
-                    <tr key={auction.id || index} style={{ borderBottom: '1px solid #f1f2f3' }}>
-                      <td style={{ padding: '12px' }}>
-                        <s-text variant="bodyMd">
-                          {auction.productName || `Product ${auction.shopifyProductId}`}
-                        </s-text>
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <s-text variant="bodyMd" fontWeight="semibold">
-                          {formatCurrency(auction.finalPrice || auction.currentBid || auction.startingBid)}
-                        </s-text>
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <s-text variant="bodyMd">{auction.totalBids || 0}</s-text>
-                      </td>
-                      <td style={{ padding: '12px' }}>
-                        <s-badge status={auction.status === 'ended' ? 'success' : 'info'}>
-                          {auction.status?.toUpperCase() || 'UNKNOWN'}
-                        </s-badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </s-card>
+      {topAuctions.length > 0 && (
+        <Card>
+          <BlockStack gap="300">
+            <Text variant="headingMd" as="h2">Top Performing Auctions</Text>
+            <IndexTable
+              resourceName={{
+                singular: 'auction',
+                plural: 'auctions',
+              }}
+              itemCount={topAuctions.length}
+              headings={[
+                { title: 'Product' },
+                { title: 'Final Price' },
+                { title: 'Total Bids' },
+                { title: 'Status' }
+              ]}
+              selectable={false}
+            >
+              {topAuctionsRows}
+            </IndexTable>
+          </BlockStack>
+        </Card>
       )}
 
       {/* Revenue Chart Placeholder */}
-      <s-card>
-        <div style={{ padding: '16px' }}>
-          <s-text variant="headingMd" style={{ marginBottom: '16px' }}>Revenue Trend</s-text>
+      <Card>
+        <BlockStack gap="200">
+          <Text variant="headingMd" as="h2">Revenue Trend</Text>
           <div style={{ 
             height: '200px', 
             display: 'flex', 
@@ -214,11 +194,11 @@ const Analytics = () => {
             backgroundColor: '#f6f6f7',
             borderRadius: '8px'
           }}>
-            <s-text variant="bodyMd" tone="subdued">Chart visualization would go here</s-text>
+            <Text variant="bodyMd" tone="subdued">Chart visualization would go here</Text>
           </div>
-        </div>
-      </s-card>
-    </div>
+        </BlockStack>
+      </Card>
+    </BlockStack>
   );
 };
 

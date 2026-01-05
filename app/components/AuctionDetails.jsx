@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Card,
@@ -6,90 +6,52 @@ import {
   Button,
   DataTable,
   Badge,
-  Frame,
-  Toast,
   ButtonGroup,
   Divider,
-  TextContainer
+  BlockStack,
+  InlineStack
 } from '@shopify/polaris';
 import { format } from 'date-fns';
-import { authenticatedFetch } from "@shopify/app-bridge/utilities";
-import { getEmbeddedAppBridgeApp } from "../utils/appBridgeClient";
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
-  const app = useMemo(() => getEmbeddedAppBridgeApp(), []);
-
-  const authFetch = useMemo(() => {
-    if (!app) {
-      return null;
-    }
-    try {
-      return authenticatedFetch(app);
-    } catch (e) {
-      console.error('Failed to create authenticatedFetch:', e);
-      return null;
-    }
-  }, [app]);
-
   const [auctionData, setAuctionData] = useState(auction);
   const [loading, setLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    if (auction && isOpen && authFetch) {
+    if (auction && isOpen) {
       fetchAuctionDetails();
     }
-  }, [auction, isOpen, authFetch]);
+  }, [auction, isOpen]);
 
   const fetchAuctionDetails = async () => {
-    if (!authFetch) return;
-    
     const auctionId = auction?.id || auction?._id;
-    if (!auctionId) {
-      console.log('❌ No auction ID found:', auction);
-      return;
-    }
+    if (!auctionId) return;
     
     try {
       setLoading(true);
-      console.log('🔍 Fetching auction details for ID:', auctionId);
-      const response = await authFetch(`/api/auctions/${auctionId}`);
+      const response = await fetch(`/api/auctions/${auctionId}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch auction: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('✅ Auction details fetched:', data);
-      // Handle both response formats: { data: {...} } or direct data object
       setAuctionData(data.data || data);
     } catch (error) {
-      console.error('❌ Error fetching auction details:', error);
+      console.error('Error fetching auction details:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCloseAuction = async () => {
-    if (!authFetch) return;
-    
     try {
       const auctionId = auctionData?.id || auctionData?._id;
-      if (!auctionId) {
-        console.error('No auction ID found');
-        return;
-      }
+      if (!auctionId) return;
       
-      // Ensure relative URL - never use absolute URLs
-      const relativePath = `/api/auctions/${auctionId}`;
-      console.log('🔗 Making PUT request to relative path:', relativePath);
-      
-      const response = await authFetch(relativePath, {
+      const response = await fetch(`/api/auctions/${auctionId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'closed' })
       });
       
@@ -97,14 +59,10 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
         throw new Error(`Failed to close auction: ${response.status}`);
       }
       
-      setToastMessage('Auction closed successfully');
-      setShowToast(true);
       fetchAuctionDetails();
       onRefresh?.();
     } catch (error) {
       console.error('Error closing auction:', error);
-      setToastMessage('Failed to close auction');
-      setShowToast(true);
     }
   };
 
@@ -116,15 +74,23 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   };
 
   const formatDate = (date) => {
-    return format(new Date(date), 'MMM dd, yyyy HH:mm:ss');
+    if (!date) return 'N/A';
+    try {
+      return format(new Date(date), 'MMM dd, yyyy HH:mm:ss');
+    } catch {
+      return 'Invalid Date';
+    }
   };
 
   const getStatusBadge = (status) => {
     const statusMap = {
       active: { status: 'success', children: 'Active' },
-      closed: { status: 'critical', children: 'Closed' }
+      closed: { status: 'critical', children: 'Closed' },
+      ended: { status: 'info', children: 'Ended' },
+      draft: { status: 'warning', children: 'Draft' }
     };
-    return <Badge {...statusMap[status]} />;
+    const config = statusMap[status] || { status: 'info', children: status?.toUpperCase() || 'UNKNOWN' };
+    return <Badge {...config} />;
   };
 
   const getTimeStatus = () => {
@@ -152,7 +118,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .map((bid, index) => [
         index + 1,
-        bid.bidder,
+        bid.bidder || 'Anonymous',
         formatCurrency(bid.amount),
         formatDate(bid.timestamp)
       ]);
@@ -165,139 +131,128 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const bidHistoryRows = getBidHistoryRows();
 
   return (
-    <Frame>
-      <Modal
-        open={isOpen}
-        onClose={onClose}
-        title="Auction Details"
-        primaryAction={{
-          content: 'Close',
-          onAction: onClose
-        }}
-        large
-      >
-        <Modal.Section>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Auction Overview */}
-            <Card sectioned>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <Text variant="headingMd">Auction Overview</Text>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Product ID</Text>
-                    <Text variant="bodyLg">{auctionData.shopifyProductId}</Text>
-                  </div>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Status</Text>
-                    <div>{getStatusBadge(auctionData.status)}</div>
-                  </div>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Time Status</Text>
-                    <div>{getTimeStatus()}</div>
-                  </div>
-                </div>
-              </div>
-            </Card>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title="Auction Details"
+      primaryAction={{
+        content: 'Close',
+        onAction: onClose
+      }}
+      large
+    >
+      <Modal.Section>
+        <BlockStack gap="400">
+          {/* Auction Overview */}
+          <Card>
+            <BlockStack gap="200">
+              <Text variant="headingMd" as="h2">Auction Overview</Text>
+              <InlineStack gap="400" align="space-between">
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Product ID</Text>
+                  <Text variant="bodyLg">{auctionData.shopifyProductId}</Text>
+                </BlockStack>
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Status</Text>
+                  {getStatusBadge(auctionData.status)}
+                </BlockStack>
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Time Status</Text>
+                  {getTimeStatus()}
+                </BlockStack>
+              </InlineStack>
+            </BlockStack>
+          </Card>
 
-            {/* Auction Details */}
-            <Card sectioned>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <Text variant="headingMd">Auction Details</Text>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Start Time</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.startTime)}</Text>
-                  </div>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">End Time</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.endTime)}</Text>
-                  </div>
-                </div>
-                <Divider />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Starting Bid</Text>
-                    <Text variant="bodyLg">{formatCurrency(auctionData.startingBid)}</Text>
-                  </div>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Current Bid</Text>
-                    <Text variant="bodyLg" fontWeight="bold">
-                      {formatCurrency(auctionData.currentBid)}
-                    </Text>
-                  </div>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Buy Now Price</Text>
-                    <Text variant="bodyLg">
-                      {auctionData.buyNowPrice ? formatCurrency(auctionData.buyNowPrice) : 'Not set'}
-                    </Text>
-                  </div>
-                </div>
-                <Divider />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Total Bids</Text>
-                    <Text variant="bodyLg">{auctionData.bidHistory?.length || 0}</Text>
-                  </div>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Created</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.createdAt)}</Text>
-                  </div>
-                  <div>
-                    <Text variant="bodyMd" color="subdued">Last Updated</Text>
-                    <Text variant="bodyLg">{formatDate(auctionData.updatedAt)}</Text>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Bid History */}
-            {bidHistoryRows.length > 0 ? (
-              <Card sectioned>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <Text variant="headingMd">Bid History</Text>
-                  <DataTable
-                    columnContentTypes={['numeric', 'text', 'text', 'text']}
-                    headings={['#', 'Bidder', 'Amount', 'Time']}
-                    rows={bidHistoryRows}
-                  />
-                </div>
-              </Card>
-            ) : (
-              <Card sectioned>
-                <TextContainer>
-                  <Text variant="bodyMd" color="subdued">
-                    No bids placed yet
+          {/* Auction Details */}
+          <Card>
+            <BlockStack gap="300">
+              <Text variant="headingMd" as="h2">Auction Details</Text>
+              <InlineStack gap="400" align="space-between">
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Start Time</Text>
+                  <Text variant="bodyLg">{formatDate(auctionData.startTime)}</Text>
+                </BlockStack>
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">End Time</Text>
+                  <Text variant="bodyLg">{formatDate(auctionData.endTime)}</Text>
+                </BlockStack>
+              </InlineStack>
+              <Divider />
+              <InlineStack gap="400" align="space-between">
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Starting Bid</Text>
+                  <Text variant="bodyLg">{formatCurrency(auctionData.startingBid)}</Text>
+                </BlockStack>
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Current Bid</Text>
+                  <Text variant="bodyLg" fontWeight="bold">
+                    {formatCurrency(auctionData.currentBid || auctionData.startingBid)}
                   </Text>
-                </TextContainer>
-              </Card>
-            )}
+                </BlockStack>
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Buy Now Price</Text>
+                  <Text variant="bodyLg">
+                    {auctionData.buyNowPrice ? formatCurrency(auctionData.buyNowPrice) : 'Not set'}
+                  </Text>
+                </BlockStack>
+              </InlineStack>
+              <Divider />
+              <InlineStack gap="400" align="space-between">
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Total Bids</Text>
+                  <Text variant="bodyLg">{auctionData.bidHistory?.length || 0}</Text>
+                </BlockStack>
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Created</Text>
+                  <Text variant="bodyLg">{formatDate(auctionData.createdAt)}</Text>
+                </BlockStack>
+                <BlockStack gap="050">
+                  <Text variant="bodyMd" tone="subdued">Last Updated</Text>
+                  <Text variant="bodyLg">{formatDate(auctionData.updatedAt)}</Text>
+                </BlockStack>
+              </InlineStack>
+            </BlockStack>
+          </Card>
 
-            {/* Actions */}
-            {auctionData.status === 'active' && (
-              <Card sectioned>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <ButtonGroup>
-                    <Button onClick={fetchAuctionDetails} loading={loading}>
-                      Refresh
-                    </Button>
-                    <Button onClick={handleCloseAuction} destructive>
-                      Close Auction
-                    </Button>
-                  </ButtonGroup>
-                </div>
-              </Card>
-            )}
-          </div>
-        </Modal.Section>
-      </Modal>
+          {/* Bid History */}
+          {bidHistoryRows.length > 0 ? (
+            <Card>
+              <BlockStack gap="200">
+                <Text variant="headingMd" as="h2">Bid History</Text>
+                <DataTable
+                  columnContentTypes={['numeric', 'text', 'text', 'text']}
+                  headings={['#', 'Bidder', 'Amount', 'Time']}
+                  rows={bidHistoryRows}
+                />
+              </BlockStack>
+            </Card>
+          ) : (
+            <Card>
+              <Text variant="bodyMd" tone="subdued">
+                No bids placed yet
+              </Text>
+            </Card>
+          )}
 
-      {showToast && (
-        <Toast
-          content={toastMessage}
-          onDismiss={() => setShowToast(false)}
-        />
-      )}
-    </Frame>
+          {/* Actions */}
+          {auctionData.status === 'active' && (
+            <Card>
+              <InlineStack align="end">
+                <ButtonGroup>
+                  <Button onClick={fetchAuctionDetails} loading={loading}>
+                    Refresh
+                  </Button>
+                  <Button onClick={handleCloseAuction} destructive>
+                    Close Auction
+                  </Button>
+                </ButtonGroup>
+              </InlineStack>
+            </Card>
+          )}
+        </BlockStack>
+      </Modal.Section>
+    </Modal>
   );
 };
 
