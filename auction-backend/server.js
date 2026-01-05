@@ -10,7 +10,20 @@ import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createRequestHandler as createReactRouterRequestHandler } from '@react-router/express';
-import * as remixBuild from '../build/server/index.js';
+
+// IMPORTANT:
+// Render deployments do not include /build by default (it's .gitignored).
+// We load the Remix build dynamically so the backend can still start even if the build isn't present.
+let remixBuild;
+try {
+  remixBuild = await import('../build/server/index.js');
+} catch (e) {
+  console.error(
+    '❌ Remix build not found at ../build/server/index.js. ' +
+    'This service must be built during deploy so build/server and build/client exist.',
+  );
+  remixBuild = null;
+}
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -446,8 +459,12 @@ app.use('/apps/bidly', appProxyRoutes);
 app.use('/api/debug', debugRoutes);
 
 // Serve Remix client assets (required for embedded app hydration)
-app.use('/assets', express.static(path.join(remixClientPath, 'assets')));
-app.use(express.static(remixClientPath));
+if (fs.existsSync(remixClientPath)) {
+  app.use('/assets', express.static(path.join(remixClientPath, 'assets')));
+  app.use(express.static(remixClientPath));
+} else {
+  console.warn('⚠️ Remix client build not found at:', remixClientPath);
+}
 
 // Serve static files from the admin frontend build under /admin only
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
@@ -507,10 +524,12 @@ app.get(ADMIN_BASE_PATH, serveAdminIndex);
 app.get(`${ADMIN_BASE_PATH}/*`, serveAdminIndex);
 
 // Remix app handler for everything else (non-API, non-admin)
-const remixRequestHandler = createReactRouterRequestHandler({
-  build: remixBuild,
-  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-});
+const remixRequestHandler = remixBuild
+  ? createReactRouterRequestHandler({
+      build: remixBuild,
+      mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+    })
+  : null;
 
 app.all('*', (req, res, next) => {
   if (
@@ -522,6 +541,10 @@ app.all('*', (req, res, next) => {
     req.path.startsWith(ADMIN_BASE_PATH)
   ) {
     return next();
+  }
+
+  if (!remixRequestHandler) {
+    return res.status(503).send('Remix build missing on server');
   }
 
   return remixRequestHandler(req, res, next);
