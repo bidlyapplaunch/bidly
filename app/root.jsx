@@ -15,7 +15,7 @@ export default function App() {
         {/* App Bridge must load synchronously before any React code */}
         <script
           src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
-          crossOrigin="anonymous"
+          crossOrigin="use-credentials"
         />
         <Meta />
         <Links />
