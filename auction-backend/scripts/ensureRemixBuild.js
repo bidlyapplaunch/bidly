@@ -7,11 +7,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const repoRoot = path.resolve(__dirname, '..', '..');
+const remixBuildPath = path.resolve(repoRoot, 'build', 'server', 'index.js');
 
 const shouldSkip = process.env.SKIP_REMIX_BUILD === '1';
 
 if (shouldSkip) {
   console.log('Skipping Remix build because SKIP_REMIX_BUILD=1');
+  process.exit(0);
+}
+
+// If a build already exists, don't rebuild at runtime (avoids Render OOM)
+if (existsSync(remixBuildPath)) {
+  console.log('✅ Remix build already present at:', remixBuildPath);
   process.exit(0);
 }
 
@@ -36,6 +43,11 @@ const child = spawn('npm', ['run', 'build'], {
   cwd: repoRoot,
   shell: true,
   stdio: 'inherit',
+  env: {
+    ...process.env,
+    // Render default heap can be small; bump it for the build process
+    NODE_OPTIONS: `${process.env.NODE_OPTIONS || ''} --max_old_space_size=2048`.trim(),
+  },
 });
 
 child.on('exit', (code) => {
