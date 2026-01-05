@@ -10,7 +10,14 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const serverBuild = path.resolve(repoRoot, 'build', 'server', 'index.js');
 const clientAssets = path.resolve(repoRoot, 'build', 'client', 'assets');
 
+console.log('🔍 Checking for Remix build...');
+console.log('  - Repo root:', repoRoot);
+console.log('  - Server build path:', serverBuild);
+console.log('  - Client assets path:', clientAssets);
+console.log('  - Current working directory:', process.cwd());
+
 const hasBuild = existsSync(serverBuild) && existsSync(clientAssets);
+console.log('  - Build exists:', hasBuild);
 
 if (process.env.SKIP_REMIX_BUILD === '1') {
   console.log('Skipping Remix build because SKIP_REMIX_BUILD=1');

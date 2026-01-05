@@ -40,15 +40,27 @@ const remixServerBuildPath = resolveFirstExistingPath([
 let remixBuild;
 try {
   if (!remixServerBuildPath) {
+    console.error('❌ Remix build path resolution failed. Checked locations:');
+    console.error('  -', path.resolve(__dirname, '../build/server/index.js'));
+    console.error('  -', path.resolve(process.cwd(), 'build/server/index.js'));
+    console.error('  -', path.resolve(process.cwd(), '../build/server/index.js'));
+    console.error('  -', fileURLToPath(new URL('../build/server/index.js', import.meta.url)));
+    console.error('Current working directory:', process.cwd());
+    console.error('Server file location:', __dirname);
     throw new Error('No build/server/index.js found in expected locations');
   }
+  console.log('✅ Found Remix build at:', remixServerBuildPath);
   remixBuild = await import(remixServerBuildPath);
+  console.log('✅ Remix build imported successfully');
 } catch (e) {
-  console.error(
-    '❌ Remix build not found at ../build/server/index.js. ' +
-    'This service must be built during deploy so build/server and build/client exist.',
+  console.error('❌ Remix build import failed:', e.message);
+  console.error('❌ This service must be built during deploy so build/server and build/client exist.');
+  console.error('❌ The prestart script should have built it. Check Render build logs.');
+  // Don't set remixBuild to null - let it throw so server fails to start
+  throw new Error(
+    'Remix build missing. Server cannot start without build. ' +
+    'Check that buildRemixIfMissing.js ran successfully in prestart.'
   );
-  remixBuild = null;
 }
 
 // Create the Remix request handler early so we can route embedded /api/* calls to it
