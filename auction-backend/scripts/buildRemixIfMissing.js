@@ -45,6 +45,29 @@ const build = spawnSync('npm', ['run', 'build'], {
   shell: true,
   env,
 });
-process.exit(build.status ?? 0);
+
+if (build.status !== 0) {
+  console.error('❌ Remix build failed with exit code:', build.status);
+  process.exit(build.status ?? 1);
+}
+
+// Verify build output exists
+const finalServerBuild = path.resolve(repoRoot, 'build', 'server', 'index.js');
+const finalClientAssets = path.resolve(repoRoot, 'build', 'client', 'assets');
+
+if (!existsSync(finalServerBuild)) {
+  console.error('❌ Remix server build not found after build:', finalServerBuild);
+  process.exit(1);
+}
+
+if (!existsSync(finalClientAssets)) {
+  console.error('❌ Remix client assets not found after build:', finalClientAssets);
+  process.exit(1);
+}
+
+console.log('✅ Remix build completed successfully');
+console.log('  - Server build:', finalServerBuild);
+console.log('  - Client assets:', finalClientAssets);
+process.exit(0);
 
 

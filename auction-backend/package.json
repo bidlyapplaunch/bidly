@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "prestart": "node ./scripts/ensurePrismaMigrate.js && node ./scripts/conditionalAdminBuild.js",
+    "prestart": "node ./scripts/buildRemixIfMissing.js && node ./scripts/ensurePrismaMigrate.js && node ./scripts/conditionalAdminBuild.js",
     "build": "cd .. && npm install && npm run build",
     "build-admin": "cd ../auction-admin && npm install && npm run build",
     "postinstall": "node ./scripts/buildRemixIfMissing.js",

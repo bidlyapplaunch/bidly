@@ -11,6 +11,10 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createRequestHandler as createReactRouterRequestHandler } from '@react-router/express';
 
+// ES module equivalent of __dirname (needed for path resolution)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // IMPORTANT:
 // Render deployments do not include /build by default (it's .gitignored).
 // We load the Remix build dynamically so the backend can still start even if the build isn't present.
@@ -24,10 +28,13 @@ const resolveFirstExistingPath = (candidates) => {
 };
 
 const remixServerBuildPath = resolveFirstExistingPath([
-  new URL('../build/server/index.js', import.meta.url).pathname,
-  // fallback candidates (in case cwd/root differs)
+  // Relative to auction-backend/server.js (most common case)
+  path.resolve(__dirname, '../build/server/index.js'),
+  // Fallback: relative to repo root if server.js is in auction-backend/
   path.resolve(process.cwd(), 'build/server/index.js'),
   path.resolve(process.cwd(), '../build/server/index.js'),
+  // Fallback: try URL-based resolution (for Windows compatibility)
+  fileURLToPath(new URL('../build/server/index.js', import.meta.url)),
 ]);
 
 let remixBuild;
@@ -52,9 +59,6 @@ const remixRequestHandler = remixBuild
     })
   : null;
 
-// ES module equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 import connectDB from './config/database.js';
 import Auction from './models/Auction.js';
 import Store from './models/Store.js';
