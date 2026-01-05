@@ -483,7 +483,44 @@ app.use('/api/debug', debugRoutes);
 
 // Serve Remix client assets (required for embedded app hydration)
 if (remixClientPath && fs.existsSync(remixClientPath)) {
-  app.use('/assets', express.static(path.join(remixClientPath, 'assets')));
+  const remixAssetsDir = path.join(remixClientPath, 'assets');
+  app.use(
+    '/assets',
+    express.static(remixAssetsDir, {
+      fallthrough: true,
+      setHeaders(res) {
+        // Assets are content-hashed; safe to cache long-term
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      },
+    }),
+  );
+
+  // Fallback for case-mismatched asset requests (Render/Linux is case-sensitive).
+  // If something downcases the URL, we still serve the correct hashed file.
+  app.get('/assets/*', (req, res, next) => {
+    try {
+      const requested = req.path.replace(/^\/assets\//, '');
+      const safeName = path.basename(requested);
+      if (!safeName || safeName !== requested) {
+        return res.status(400).send('Bad asset path');
+      }
+
+      const directPath = path.join(remixAssetsDir, safeName);
+      if (fs.existsSync(directPath)) {
+        return res.sendFile(directPath);
+      }
+
+      const files = fs.readdirSync(remixAssetsDir);
+      const match = files.find((f) => f.toLowerCase() === safeName.toLowerCase());
+      if (match) {
+        return res.sendFile(path.join(remixAssetsDir, match));
+      }
+
+      return next();
+    } catch (_e) {
+      return next();
+    }
+  });
   app.use(express.static(remixClientPath));
 } else {
   console.warn('⚠️ Remix client build not found at:', remixClientPath);
