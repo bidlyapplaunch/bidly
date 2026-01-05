@@ -1,15 +1,15 @@
-import { Outlet, useRouteError } from "@remix-run/react";
-import { Provider as AppBridgeProvider } from "@shopify/app-bridge-react";
+import { Outlet, useRouteError } from "react-router";
+import { AppProvider as ShopifyAppProvider } from "@shopify/shopify-app-react-router/react";
 import { AppProvider as PolarisProvider } from "@shopify/polaris";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 export default function App() {
   return (
-    <AppBridgeProvider>
+    <ShopifyAppProvider embedded>
       <PolarisProvider i18n={{}}>
         <Outlet />
       </PolarisProvider>
-    </AppBridgeProvider>
+    </ShopifyAppProvider>
   );
 }
 
