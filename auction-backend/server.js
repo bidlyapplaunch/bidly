@@ -44,6 +44,14 @@ try {
   remixBuild = null;
 }
 
+// Create the Remix request handler early so we can route embedded /api/* calls to it
+const remixRequestHandler = remixBuild
+  ? createReactRouterRequestHandler({
+      build: remixBuild,
+      mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+    })
+  : null;
+
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -111,6 +119,19 @@ app.use((req, res, next) => {
     res.setHeader('X-App-Commit', commit);
   }
   next();
+});
+
+// Route embedded app /api/* calls (which include an App Bridge session token) to Remix.
+// Keep existing backend /api/* for storefront/admin callers (no Bearer token).
+app.use('/api', (req, res, next) => {
+  const auth = req.headers.authorization || '';
+  const isBearer = typeof auth === 'string' && auth.startsWith('Bearer ');
+
+  if (isBearer && remixRequestHandler) {
+    return remixRequestHandler(req, res, next);
+  }
+
+  return next();
 });
 
 const fixCustomerIndexes = async () => {
@@ -559,6 +580,7 @@ app.get('/_diag/remix', (req, res) => {
       null,
     remixClientPath,
     remixServerBuildPath,
+    hasRemixServerBuild: Boolean(remixServerBuildPath && fs.existsSync(remixServerBuildPath)),
     hasRemixClient: Boolean(remixClientPath && fs.existsSync(remixClientPath)),
     hasAssetsDir: Boolean(assetsDir && fs.existsSync(assetsDir)),
     assetsSample,
@@ -622,14 +644,6 @@ const serveAdminIndex = (req, res) => {
 
 app.get(ADMIN_BASE_PATH, serveAdminIndex);
 app.get(`${ADMIN_BASE_PATH}/*`, serveAdminIndex);
-
-// Remix app handler for everything else (non-API, non-admin)
-const remixRequestHandler = remixBuild
-  ? createReactRouterRequestHandler({
-      build: remixBuild,
-      mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-    })
-  : null;
 
 app.all('*', (req, res, next) => {
   if (
