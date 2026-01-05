@@ -14,9 +14,28 @@ import { createRequestHandler as createReactRouterRequestHandler } from '@react-
 // IMPORTANT:
 // Render deployments do not include /build by default (it's .gitignored).
 // We load the Remix build dynamically so the backend can still start even if the build isn't present.
+const resolveFirstExistingPath = (candidates) => {
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+};
+
+const remixServerBuildPath = resolveFirstExistingPath([
+  new URL('../build/server/index.js', import.meta.url).pathname,
+  // fallback candidates (in case cwd/root differs)
+  path.resolve(process.cwd(), 'build/server/index.js'),
+  path.resolve(process.cwd(), '../build/server/index.js'),
+]);
+
 let remixBuild;
 try {
-  remixBuild = await import('../build/server/index.js');
+  if (!remixServerBuildPath) {
+    throw new Error('No build/server/index.js found in expected locations');
+  }
+  remixBuild = await import(remixServerBuildPath);
 } catch (e) {
   console.error(
     '❌ Remix build not found at ../build/server/index.js. ' +
@@ -75,7 +94,11 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5000;
 const previewAssetsPath = path.join(__dirname, '../extensions/theme-app-extension/assets');
-const remixClientPath = path.join(__dirname, '../build/client');
+const remixClientPath = resolveFirstExistingPath([
+  path.join(__dirname, '../build/client'),
+  path.resolve(process.cwd(), 'build/client'),
+  path.resolve(process.cwd(), '../build/client'),
+]);
 
 const fixCustomerIndexes = async () => {
   try {
@@ -459,12 +482,34 @@ app.use('/apps/bidly', appProxyRoutes);
 app.use('/api/debug', debugRoutes);
 
 // Serve Remix client assets (required for embedded app hydration)
-if (fs.existsSync(remixClientPath)) {
+if (remixClientPath && fs.existsSync(remixClientPath)) {
   app.use('/assets', express.static(path.join(remixClientPath, 'assets')));
   app.use(express.static(remixClientPath));
 } else {
   console.warn('⚠️ Remix client build not found at:', remixClientPath);
 }
+
+// Diagnostics for troubleshooting asset 404s
+app.get('/_diag/remix', (req, res) => {
+  const assetsDir = remixClientPath ? path.join(remixClientPath, 'assets') : null;
+  let assetsSample = [];
+  try {
+    if (assetsDir && fs.existsSync(assetsDir)) {
+      assetsSample = fs.readdirSync(assetsDir).slice(0, 20);
+    }
+  } catch (_e) {
+    assetsSample = [];
+  }
+
+  return res.json({
+    remixClientPath,
+    remixServerBuildPath,
+    hasRemixClient: Boolean(remixClientPath && fs.existsSync(remixClientPath)),
+    hasAssetsDir: Boolean(assetsDir && fs.existsSync(assetsDir)),
+    assetsSample,
+    cwd: process.cwd(),
+  });
+});
 
 // Serve static files from the admin frontend build under /admin only
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
