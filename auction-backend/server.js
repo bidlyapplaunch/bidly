@@ -100,6 +100,19 @@ const remixClientPath = resolveFirstExistingPath([
   path.resolve(process.cwd(), '../build/client'),
 ]);
 
+// Helpful for debugging which deploy is serving requests
+app.use((req, res, next) => {
+  const commit =
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.GIT_COMMIT ||
+    process.env.COMMIT_SHA ||
+    '';
+  if (commit) {
+    res.setHeader('X-App-Commit', commit);
+  }
+  next();
+});
+
 const fixCustomerIndexes = async () => {
   try {
     const indexes = await Customer.collection.indexes();
@@ -539,6 +552,11 @@ app.get('/_diag/remix', (req, res) => {
   }
 
   return res.json({
+    commit:
+      process.env.RENDER_GIT_COMMIT ||
+      process.env.GIT_COMMIT ||
+      process.env.COMMIT_SHA ||
+      null,
     remixClientPath,
     remixServerBuildPath,
     hasRemixClient: Boolean(remixClientPath && fs.existsSync(remixClientPath)),
