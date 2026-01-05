@@ -11,7 +11,6 @@ import {
   BlockStack,
   InlineStack
 } from '@shopify/polaris';
-import { format } from 'date-fns';
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const [auctionData, setAuctionData] = useState(auction);
@@ -73,10 +72,20 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     }).format(amount);
   };
 
+  // Use a fixed timezone to avoid SSR/client hydration mismatches (Render runs in UTC).
   const formatDate = (date) => {
     if (!date) return 'N/A';
     try {
-      return format(new Date(date), 'MMM dd, yyyy HH:mm:ss');
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'UTC',
+      }).format(new Date(date));
     } catch {
       return 'Invalid Date';
     }

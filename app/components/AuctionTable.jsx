@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useFetcher } from 'react-router';
-import { format } from 'date-fns';
 import {
   IndexTable,
   Text,
@@ -58,10 +57,19 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
     }).format(amount);
   };
 
+  // Use a fixed timezone to avoid SSR/client hydration mismatches (Render runs in UTC).
   const formatDate = (date) => {
     if (!date) return 'N/A';
     try {
-      return format(new Date(date), 'MMM dd, yyyy HH:mm');
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'UTC',
+      }).format(new Date(date));
     } catch {
       return 'Invalid Date';
     }
