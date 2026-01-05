@@ -62,6 +62,7 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 5000;
 const previewAssetsPath = path.join(__dirname, '../extensions/theme-app-extension/assets');
+const remixClientPath = path.join(__dirname, '../build/client');
 
 const fixCustomerIndexes = async () => {
   try {
@@ -444,6 +445,10 @@ app.use('/apps/bidly', appProxyRoutes);
 // Debug routes (development only)
 app.use('/api/debug', debugRoutes);
 
+// Serve Remix client assets (required for embedded app hydration)
+app.use('/assets', express.static(path.join(remixClientPath, 'assets')));
+app.use(express.static(remixClientPath));
+
 // Serve static files from the admin frontend build under /admin only
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
 console.log('📁 Serving admin frontend from:', frontendDistPath);
@@ -513,6 +518,7 @@ app.all('*', (req, res, next) => {
     req.path.startsWith('/auth/') ||
     req.path.startsWith('/app-bridge/') ||
     req.path.startsWith('/apps/') ||
+    req.path.startsWith('/assets/') ||
     req.path.startsWith(ADMIN_BASE_PATH)
   ) {
     return next();
