@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLoaderData, useFetcher, Form } from 'react-router';
+import { useFetcher } from 'react-router';
 import {
   Page,
   Layout,
@@ -16,8 +16,7 @@ import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
 
-const Dashboard = () => {
-  const { stats, auctions: initialAuctions, shopDomain } = useLoaderData();
+const Dashboard = ({ stats, auctions: initialAuctions, shopDomain }) => {
   const fetcher = useFetcher();
   
   const [formModalOpen, setFormModalOpen] = useState(false);
