@@ -56,11 +56,8 @@ try {
   console.error('❌ Remix build import failed:', e.message);
   console.error('❌ This service must be built during deploy so build/server and build/client exist.');
   console.error('❌ The prestart script should have built it. Check Render build logs.');
-  // Don't set remixBuild to null - let it throw so server fails to start
-  throw new Error(
-    'Remix build missing. Server cannot start without build. ' +
-    'Check that buildRemixIfMissing.js ran successfully in prestart.'
-  );
+  console.error('❌ Server will start but return 503 for Remix routes until build exists.');
+  remixBuild = null;
 }
 
 // Create the Remix request handler early so we can route embedded /api/* calls to it
