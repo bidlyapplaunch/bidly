@@ -1,8 +1,8 @@
 import { Outlet, useLoaderData, useRouteError } from "react-router";
-import { boundary } from "@shopify/shopify-app-react-router/server";
-import { AppProvider as ShopifyAppProvider } from "@shopify/shopify-app-react-router/react";
-import { AppProvider as PolarisAppProvider } from "@shopify/polaris";
+import { ShopifyAppProvider } from "@shopify/shopify-app-remix/react";
+import { PolarisProvider } from "@shopify/polaris";
 import polarisEnTranslations from "@shopify/polaris/locales/en.json";
+import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
@@ -96,10 +96,10 @@ export default function App() {
   const { apiKey } = useLoaderData();
 
   return (
-    <ShopifyAppProvider embedded apiKey={apiKey} forceRedirect>
-      <PolarisAppProvider i18n={polarisEnTranslations}>
+    <ShopifyAppProvider apiKey={apiKey} isEmbeddedApp>
+      <PolarisProvider i18n={polarisEnTranslations}>
         <Outlet />
-      </PolarisAppProvider>
+      </PolarisProvider>
     </ShopifyAppProvider>
   );
 }
