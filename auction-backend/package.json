@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "prestart": "node ./scripts/ensurePrismaMigrate.js && node ./scripts/conditionalAdminBuild.js",
+    "build": "cd .. && npm install && npm run build",
     "build-admin": "cd ../auction-admin && npm install && npm run build",
     "start": "node server.js",
     "dev": "nodemon server.js",
