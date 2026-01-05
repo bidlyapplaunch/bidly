@@ -11,6 +11,7 @@ import {
   TextField,
   Select
 } from '@shopify/polaris';
+import { EditIcon, DeleteIcon, ViewIcon, StoreIcon } from '@shopify/polaris-icons';
 
 const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
   const fetcher = useFetcher();
@@ -62,9 +63,8 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
     if (!date) return 'N/A';
     try {
       return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
         day: '2-digit',
-        year: 'numeric',
+        month: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
@@ -75,12 +75,30 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
     }
   };
 
+  const getProductLabel = (auction) => {
+    const title =
+      auction?.productData?.title ||
+      auction?.productName ||
+      auction?.shopifyProductId ||
+      'Unknown product';
+    const short = String(title);
+    return short.length > 30 ? `${short.slice(0, 30)}...` : short;
+  };
+
+  const handleViewInStore = (auction) => {
+    const shop = new URLSearchParams(window.location.search).get('shop');
+    const productId = auction?.shopifyProductId;
+    if (!shop || !productId) return;
+    const url = `https://${shop}/admin/products/${productId}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const rowMarkup = auctions.map((auction, index) => (
     <IndexTable.Row id={auction._id || auction.id || index} key={auction._id || auction.id || index} position={index}>
       <IndexTable.Cell>
         <BlockStack gap="050">
           <Text variant="bodyMd" fontWeight="semibold" as="span">
-            {auction.productName || `Product ${auction.shopifyProductId}`}
+            {getProductLabel(auction)}
           </Text>
           <Text variant="bodySm" tone="subdued" as="span">
             ID: {auction.shopifyProductId}
@@ -88,37 +106,71 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
         </BlockStack>
       </IndexTable.Cell>
       <IndexTable.Cell>
-        {getStatusBadge(auction.status)}
+        <Text as="span" variant="bodyMd">{formatDate(auction.startTime)}</Text>
       </IndexTable.Cell>
       <IndexTable.Cell>
-        <Text variant="bodyMd" as="span">
-          {auction.currentBid ? formatCurrency(auction.currentBid) : formatCurrency(auction.startingBid || 0)}
+        <Text as="span" variant="bodyMd">{formatDate(auction.endTime)}</Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text as="span" variant="bodyMd">{formatCurrency(auction.startingBid || 0)}</Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text as="span" variant="bodyMd">
+          {formatCurrency(auction.currentBid ?? auction.startingBid ?? 0)}
         </Text>
       </IndexTable.Cell>
       <IndexTable.Cell>
-        <Text variant="bodyMd" as="span">
-          {formatDate(auction.endTime)}
+        <Text as="span" variant="bodyMd">
+          {auction.buyNowPrice ? formatCurrency(auction.buyNowPrice) : '-'}
+        </Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text as="span" variant="bodyMd">
+          {auction.reservePrice ? formatCurrency(auction.reservePrice) : '-'}
+        </Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        {getStatusBadge(auction.status)}
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text as="span" variant="bodyMd">
+          {auction.bidHistory?.length || 0}
         </Text>
       </IndexTable.Cell>
       <IndexTable.Cell>
         <InlineStack gap="200">
-          <Button variant="plain" size="micro" onClick={() => onView?.(auction)}>
-            View
-          </Button>
-          <Button variant="plain" size="micro" onClick={() => onEdit?.(auction)}>
-            Edit
-          </Button>
-          <Button 
-            variant="plain" 
-            size="micro" 
+          <Button
+            icon={StoreIcon}
+            variant="plain"
+            size="micro"
+            accessibilityLabel="View in store admin"
+            onClick={() => handleViewInStore(auction)}
+          />
+          <Button
+            icon={ViewIcon}
+            variant="plain"
+            size="micro"
+            accessibilityLabel="View details"
+            onClick={() => onView?.(auction)}
+          />
+          <Button
+            icon={EditIcon}
+            variant="plain"
+            size="micro"
+            accessibilityLabel="Edit"
+            onClick={() => onEdit?.(auction)}
+          />
+          <Button
+            icon={DeleteIcon}
+            variant="plain"
+            size="micro"
             tone="critical"
+            accessibilityLabel="Delete"
             onClick={() => {
               setSelectedAuction(auction);
               setDeleteModalOpen(true);
             }}
-          >
-            Delete
-          </Button>
+          />
         </InlineStack>
       </IndexTable.Cell>
     </IndexTable.Row>
@@ -145,9 +197,14 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
         itemCount={auctions.length}
         headings={[
           { title: 'Product' },
-          { title: 'Status' },
+          { title: 'Start' },
+          { title: 'End' },
+          { title: 'Start Bid' },
           { title: 'Current Bid' },
-          { title: 'End Time' },
+          { title: 'Buy Now' },
+          { title: 'Reserve' },
+          { title: 'Status' },
+          { title: 'Bids' },
           { title: 'Actions' }
         ]}
         selectable={false}

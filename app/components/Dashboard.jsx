@@ -17,7 +17,7 @@ import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
 
 const Dashboard = () => {
-  const { stats, auctions: initialAuctions } = useLoaderData();
+  const { stats, auctions: initialAuctions, shopDomain } = useLoaderData();
   const fetcher = useFetcher();
   
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -88,12 +88,22 @@ const Dashboard = () => {
 
   return (
     <Page
-      title="Bidly"
+      title="Auction Dashboard"
+      subtitle={shopDomain ? `(${shopDomain})` : undefined}
       primaryAction={{
         content: 'Create Auction',
         onAction: handleCreateAuction
       }}
       secondaryActions={[
+        ...(shopDomain
+          ? [
+              {
+                content: 'Auction Marketplace',
+                url: `https://${shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '')}/apps/bidly`,
+                external: true,
+              },
+            ]
+          : []),
         {
           content: 'Refresh',
           onAction: handleRefresh
