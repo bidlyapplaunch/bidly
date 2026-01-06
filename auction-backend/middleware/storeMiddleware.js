@@ -1,5 +1,6 @@
 import Store from '../models/Store.js';
 import { AppError } from './errorHandler.js';
+import { decodeShopifySession } from './auth.js';
 
 const STATIC_PATH_PREFIXES = [
   '/assets/',
@@ -131,7 +132,15 @@ export const identifyStore = async (req, res, next) => {
       return next();
     }
 
-    const requestedDomain = normalizeShopDomain(extractShopDomain(req));
+    let requestedDomain = normalizeShopDomain(extractShopDomain(req));
+    // Prefer Shopify session token (RS256) if present
+    if (!requestedDomain) {
+      const bearer = req.header('Authorization')?.replace('Bearer ', '');
+      const shopifySession = await decodeShopifySession(bearer).catch(() => null);
+      if (shopifySession?.shopDomain) {
+        requestedDomain = shopifySession.shopDomain;
+      }
+    }
     const originDomain = cleanDomain(req.headers?.origin);
     let store = null;
 
