@@ -646,32 +646,56 @@ app.get('/_diag/remix', (req, res) => {
   });
 });
 
-// Serve static files from the admin frontend build under /admin only
+// Serve static files from the legacy admin build at the root
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
-console.log('📁 Serving admin frontend from:', frontendDistPath);
+console.log('📁 Serving legacy admin frontend from:', frontendDistPath);
 
-// Add cache-busting version
+// Add cache-busting version header for troubleshooting
 const FRONTEND_VERSION = Date.now() + Math.random();
-console.log('🔄 Frontend version (cache-busting):', FRONTEND_VERSION);
+console.log('🔄 Legacy frontend version (cache-busting):', FRONTEND_VERSION);
 
-const ADMIN_BASE_PATH = '/admin';
+app.use((req, res, next) => {
+  // Only apply static middleware for non-API-like paths
+  const pathIsApiLike =
+    req.path.startsWith('/api/') ||
+    req.path.startsWith('/auth/') ||
+    req.path.startsWith('/app-bridge/') ||
+    req.path.startsWith('/apps/') ||
+    req.path.startsWith('/assets/') ||
+    req.path.startsWith('/diagnostics/') ||
+    req.path.startsWith('/_diag/');
 
-app.use(ADMIN_BASE_PATH, (req, res, next) => {
-  // Add cache-busting headers for admin static files
+  if (pathIsApiLike) {
+    return next();
+  }
+
+  // Add cache-busting headers for legacy static files
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('X-Frontend-Version', FRONTEND_VERSION.toString());
 
-  // Serve admin assets
-  express.static(frontendDistPath)(req, res, next);
+  return express.static(frontendDistPath)(req, res, next);
 });
 
-// Shopify embedded app entry point - serve the frontend
-const serveAdminIndex = (req, res) => {
+// Shopify embedded app entry point - serve the legacy admin index.html
+const serveLegacyAdmin = (req, res, next) => {
+  // Skip if request is clearly for API or other services
+  if (
+    req.path.startsWith('/api/') ||
+    req.path.startsWith('/auth/') ||
+    req.path.startsWith('/app-bridge/') ||
+    req.path.startsWith('/apps/') ||
+    req.path.startsWith('/assets/') ||
+    req.path.startsWith('/diagnostics/') ||
+    req.path.startsWith('/_diag/')
+  ) {
+    return next();
+  }
+
   const { shop, embedded, hmac, host, id_token, session } = req.query;
-  
-  console.log('🏪 Shopify embedded app access:', {
+
+  console.log('🏪 Legacy Shopify admin access:', {
     shop,
     embedded,
     hasHmac: !!hmac,
@@ -682,53 +706,27 @@ const serveAdminIndex = (req, res) => {
     origin: req.get('origin'),
     userAgent: req.get('user-agent')
   });
-  
-  // Serve the admin frontend index.html with all parameters preserved
+
   const indexPath = path.join(frontendDistPath, 'index.html');
-  console.log('📄 Serving ADMIN index.html from:', indexPath);
-  
-  // Check if file exists before sending
+  console.log('📄 Serving legacy ADMIN index.html from:', indexPath);
+
   if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    console.error('❌ Admin frontend index.html not found at:', indexPath);
-    res.status(503).json({
-      success: false,
-      message: 'Admin frontend not built. Please check build logs.',
-      path: indexPath
-    });
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    return res.sendFile(indexPath);
   }
+
+  console.error('❌ Legacy admin index.html not found at:', indexPath);
+  return res.status(503).json({
+    success: false,
+    message: 'Legacy admin frontend not built. Please check build logs.',
+    path: indexPath
+  });
 };
 
-app.get(ADMIN_BASE_PATH, serveAdminIndex);
-app.get(`${ADMIN_BASE_PATH}/*`, serveAdminIndex);
-
-app.all('*', (req, res, next) => {
-  if (
-    req.path.startsWith('/api/') ||
-    req.path.startsWith('/auth/') ||
-    req.path.startsWith('/app-bridge/') ||
-    req.path.startsWith('/apps/') ||
-    req.path.startsWith('/assets/') ||
-    req.path.startsWith('/diagnostics/') ||
-    req.path.startsWith('/_diag/') ||
-    req.path.startsWith(ADMIN_BASE_PATH)
-  ) {
-    return next();
-  }
-
-  if (!remixRequestHandler) {
-    return res.status(503).send('Remix build missing on server');
-  }
-
-  // Prevent CDN/browser caching of the HTML document.
-  // Stale HTML can reference old hashed asset filenames, causing hydration mismatches.
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-
-  return remixRequestHandler(req, res, next);
-});
+// SPA fallback for legacy admin (root)
+app.get('*', serveLegacyAdmin);
 
 // 404 handler
 app.use(notFound);
