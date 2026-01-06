@@ -134,19 +134,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Route embedded app /api/* calls (which include an App Bridge session token) to Remix.
-// Keep existing backend /api/* for storefront/admin callers (no Bearer token).
-app.use('/api', (req, res, next) => {
-  const auth = req.headers.authorization || '';
-  const isBearer = typeof auth === 'string' && auth.startsWith('Bearer ');
-
-  if (isBearer && remixRequestHandler) {
-    return remixRequestHandler(req, res, next);
-  }
-
-  return next();
-});
-
 // Always-available diagnostics (must NOT depend on Remix build)
 app.get('/diagnostics/remix-assets', (req, res) => {
   const commit =

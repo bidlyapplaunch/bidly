@@ -1,12 +1,10 @@
 import express from 'express';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
-import { requireAuth } from '../middleware/auth.js';
 import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
 router.use(identifyStore);
 
 /**
