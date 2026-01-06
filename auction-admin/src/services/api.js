@@ -1,4 +1,6 @@
 import axios from 'axios';
+import createApp from '@shopify/app-bridge';
+import { getSessionToken } from '@shopify/app-bridge-utils';
 import { getApiBaseUrl } from '../config/backendConfig.js';
 import authService from './auth.js';
 
@@ -88,10 +90,30 @@ const api = axios.create({
 });
 
 let isHandlingAuthError = false;
+let appBridgeInstance = null;
+
+const getAppBridge = () => {
+  if (appBridgeInstance) return appBridgeInstance;
+
+  const params = new URLSearchParams(window.location.search);
+  const apiKey =
+    window.__SHOPIFY_API_KEY__ ||
+    document.querySelector('meta[name="shopify-api-key"]')?.content ||
+    params.get('apiKey') ||
+    params.get('api_key');
+  const host = params.get('host');
+
+  appBridgeInstance = createApp({
+    apiKey,
+    host,
+  });
+
+  return appBridgeInstance;
+};
 
 // Request interceptor for logging, auth, and dynamic backend URL
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // Get shop domain and determine backend URL
     const shopDomain = getShopFromURL();
     const apiBaseUrl = getApiBaseUrl(shopDomain); // returns "/api" (relative)
@@ -108,20 +130,17 @@ api.interceptors.request.use(
       console.log('🏪 Added shop parameter:', shopDomain);
     }
     
-    // Add authentication token if available
-    const token = localStorage.getItem('authToken');
-    console.log('🔐 Auth Debug:', {
-      hasToken: !!token,
-      tokenPreview: token ? token.substring(0, 20) + '...' : 'None',
-      url: config.url,
-      shop: shopDomain
-    });
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('✅ Added auth header to request');
-    } else {
-      console.log('⚠️ No auth token found for request');
+    // Attach Shopify session token (RS256) via App Bridge
+    try {
+      const sessionToken = await getSessionToken(getAppBridge());
+      if (sessionToken) {
+        config.headers.Authorization = `Bearer ${sessionToken}`;
+      } else {
+        delete config.headers.Authorization;
+      }
+    } catch (err) {
+      console.warn('⚠️ Failed to get Shopify session token:', err?.message || err);
+      delete config.headers.Authorization;
     }
     
     return config;
