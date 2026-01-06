@@ -573,6 +573,14 @@ app.use('/apps/bidly', appProxyRoutes);
 // Debug routes (development only)
 app.use('/api/debug', debugRoutes);
 
+// Serve static files from the legacy admin build at the root
+const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
+console.log('📁 Serving legacy admin frontend from:', frontendDistPath);
+
+// Add cache-busting version header for troubleshooting
+const FRONTEND_VERSION = Date.now() + Math.random();
+console.log('🔄 Legacy frontend version (cache-busting):', FRONTEND_VERSION);
+
 // Serve legacy admin assets under /assets (content-hashed from Vite build)
 const adminAssetsDir = path.join(frontendDistPath, 'assets');
 if (fs.existsSync(adminAssetsDir)) {
@@ -646,14 +654,6 @@ app.get('/_diag/remix', (req, res) => {
     cwd: process.cwd(),
   });
 });
-
-// Serve static files from the legacy admin build at the root
-const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
-console.log('📁 Serving legacy admin frontend from:', frontendDistPath);
-
-// Add cache-busting version header for troubleshooting
-const FRONTEND_VERSION = Date.now() + Math.random();
-console.log('🔄 Legacy frontend version (cache-busting):', FRONTEND_VERSION);
 
 app.use((req, res, next) => {
   // Only apply static middleware for non-API-like paths
