@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import '@shopify/shopify-api/adapters/node';
 import { shopifyApi } from '@shopify/shopify-api';
 import User from '../models/User.js';
 import { AppError } from './errorHandler.js';
