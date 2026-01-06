@@ -573,12 +573,12 @@ app.use('/apps/bidly', appProxyRoutes);
 // Debug routes (development only)
 app.use('/api/debug', debugRoutes);
 
-// Serve Remix client assets (required for embedded app hydration)
-if (remixClientPath && fs.existsSync(remixClientPath)) {
-  const remixAssetsDir = path.join(remixClientPath, 'assets');
+// Serve legacy admin assets under /assets (content-hashed from Vite build)
+const adminAssetsDir = path.join(frontendDistPath, 'assets');
+if (fs.existsSync(adminAssetsDir)) {
   app.use(
     '/assets',
-    express.static(remixAssetsDir, {
+    express.static(adminAssetsDir, {
       fallthrough: true,
       setHeaders(res) {
         // Assets are content-hashed; safe to cache long-term
@@ -587,8 +587,7 @@ if (remixClientPath && fs.existsSync(remixClientPath)) {
     }),
   );
 
-  // Fallback for case-mismatched asset requests (Render/Linux is case-sensitive).
-  // If something downcases the URL, we still serve the correct hashed file.
+  // Case-insensitive fallback for asset filenames
   app.get('/assets/*', (req, res, next) => {
     try {
       const requested = req.path.replace(/^\/assets\//, '');
@@ -597,15 +596,15 @@ if (remixClientPath && fs.existsSync(remixClientPath)) {
         return res.status(400).send('Bad asset path');
       }
 
-      const directPath = path.join(remixAssetsDir, safeName);
+      const directPath = path.join(adminAssetsDir, safeName);
       if (fs.existsSync(directPath)) {
         return res.sendFile(directPath);
       }
 
-      const files = fs.readdirSync(remixAssetsDir);
+      const files = fs.readdirSync(adminAssetsDir);
       const match = files.find((f) => f.toLowerCase() === safeName.toLowerCase());
       if (match) {
-        return res.sendFile(path.join(remixAssetsDir, match));
+        return res.sendFile(path.join(adminAssetsDir, match));
       }
 
       return next();
@@ -613,9 +612,11 @@ if (remixClientPath && fs.existsSync(remixClientPath)) {
       return next();
     }
   });
-  app.use(express.static(remixClientPath));
+
+  // Serve other static files in dist (e.g., vite.svg)
+  app.use(express.static(frontendDistPath));
 } else {
-  console.warn('⚠️ Remix client build not found at:', remixClientPath);
+  console.warn('⚠️ Legacy admin assets directory not found at:', adminAssetsDir);
 }
 
 // Diagnostics for troubleshooting asset 404s
