@@ -780,6 +780,31 @@ const serveLegacyAdmin = (req, res, next) => {
   });
 };
 
+// Handle /bidly path - can be either embedded app or app proxy
+// Detect embedded app requests (have embedded=1, host, etc.) and serve admin app
+// Otherwise, redirect to app proxy or serve admin app as fallback
+app.get('/bidly', (req, res, next) => {
+  const { embedded, host, hmac, shop } = req.query;
+  const isEmbeddedApp = embedded === '1' || !!host || !!hmac;
+  
+  // If it looks like an embedded app request, serve the admin app
+  if (isEmbeddedApp) {
+    console.log('🔍 /bidly detected as embedded app request, serving admin app');
+    return serveLegacyAdmin(req, res, next);
+  }
+  
+  // Otherwise, check if it's a storefront request (has shop param but no embedded params)
+  // In this case, redirect to the proper app proxy path
+  if (shop) {
+    console.log('🔍 /bidly detected as storefront request, redirecting to app proxy');
+    return res.redirect(`/apps/bidly?${new URLSearchParams(req.query).toString()}`);
+  }
+  
+  // Default: serve admin app (fallback)
+  console.log('🔍 /bidly defaulting to admin app');
+  return serveLegacyAdmin(req, res, next);
+});
+
 // SPA fallback for legacy admin (root)
 app.get('*', serveLegacyAdmin);
 
