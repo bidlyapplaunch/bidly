@@ -103,10 +103,21 @@ const getAppBridge = () => {
     params.get('api_key');
   const host = params.get('host');
 
-  appBridgeInstance = createApp({
-    apiKey,
-    host,
-  });
+  // Only create App Bridge if both apiKey and host are present
+  if (!apiKey || !host) {
+    console.warn('⚠️ App Bridge: Missing apiKey or host, skipping initialization');
+    return null;
+  }
+
+  try {
+    appBridgeInstance = createApp({
+      apiKey,
+      host,
+    });
+  } catch (err) {
+    console.warn('⚠️ App Bridge initialization failed:', err?.message || err);
+    return null;
+  }
 
   return appBridgeInstance;
 };
@@ -130,16 +141,22 @@ api.interceptors.request.use(
       console.log('🏪 Added shop parameter:', shopDomain);
     }
     
-    // Attach Shopify session token (RS256) via App Bridge
-    try {
-      const sessionToken = await getSessionToken(getAppBridge());
-      if (sessionToken) {
-        config.headers.Authorization = `Bearer ${sessionToken}`;
-      } else {
+    // Attach Shopify session token (RS256) via App Bridge if available
+    const appBridge = getAppBridge();
+    if (appBridge) {
+      try {
+        const sessionToken = await getSessionToken(appBridge);
+        if (sessionToken) {
+          config.headers.Authorization = `Bearer ${sessionToken}`;
+        } else {
+          delete config.headers.Authorization;
+        }
+      } catch (err) {
+        console.warn('⚠️ Failed to get Shopify session token:', err?.message || err);
         delete config.headers.Authorization;
       }
-    } catch (err) {
-      console.warn('⚠️ Failed to get Shopify session token:', err?.message || err);
+    } else {
+      // No App Bridge available (not in embedded context or missing params)
       delete config.headers.Authorization;
     }
     
