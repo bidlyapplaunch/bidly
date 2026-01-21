@@ -385,7 +385,16 @@ const OAuthSetup = ({ onComplete }) => {
     console.log('  - Shop (encoded):', encodedShop);
     console.log('  - Final OAuth URL:', oauthUrl);
     console.log('  - URL includes shop?', oauthUrl.includes('shop='));
-    console.log('  - URL shop param value:', new URL(oauthUrl).searchParams.get('shop'));
+    try {
+      // Only try to parse if it's an absolute URL
+      if (oauthUrl.startsWith('http://') || oauthUrl.startsWith('https://')) {
+        console.log('  - URL shop param value:', new URL(oauthUrl).searchParams.get('shop'));
+      } else {
+        console.log('  - URL is relative, skipping URL parsing');
+      }
+    } catch (e) {
+      console.warn('  - Could not parse URL for logging:', e.message);
+    }
     
     // ONE MORE CHECK: Verify the URL was constructed correctly
     try {
