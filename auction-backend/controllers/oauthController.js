@@ -10,7 +10,8 @@ import { AppError } from '../middleware/errorHandler.js';
  */
 const buildShopifyAdminUrl = (shop, hostParam) => {
   const fallbackAppUrl = process.env.SHOPIFY_APP_EMBED_URL || 'https://bidly-auction-admin.onrender.com';
-  const appHandle = process.env.SHOPIFY_APP_HANDLE || 'bidly';
+  // Use bidly-3 as default since that's the working app instance
+  const appHandle = process.env.SHOPIFY_APP_HANDLE || 'bidly-3';
 
   if (hostParam) {
     try {
