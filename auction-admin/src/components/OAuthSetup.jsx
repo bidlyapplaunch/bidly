@@ -120,7 +120,12 @@ const OAuthSetup = ({ onComplete }) => {
       
       // Get backend URL for this shop
       const { getBackendUrl } = await import('../config/backendConfig.js');
-      const backendUrl = getBackendUrl(shopToUse);
+      let backendUrl = getBackendUrl(shopToUse);
+      
+      // If backendUrl is empty or relative, use window.location.origin
+      if (!backendUrl || !backendUrl.startsWith('http')) {
+        backendUrl = window.location.origin;
+      }
       
       // Use the OAuth status endpoint which doesn't require authentication
       const response = await fetch(`${backendUrl}/auth/shopify/status?shop=${shopToUse}`);
@@ -367,9 +372,17 @@ const OAuthSetup = ({ onComplete }) => {
       return;
     }
 
-    // Get backend URL for this shop
+    // Get backend URL for this shop - for OAuth we need absolute URL
     const { getBackendUrl } = await import('../config/backendConfig.js');
-    const backendUrl = getBackendUrl(cleanedShop);
+    let backendUrl = getBackendUrl(cleanedShop);
+    
+    // If backendUrl is empty or relative, use window.location.origin
+    // This is required for OAuth redirects from iframes
+    if (!backendUrl || !backendUrl.startsWith('http')) {
+      backendUrl = window.location.origin;
+      console.log('🔗 Using current origin as backend URL:', backendUrl);
+    }
+    
     const baseUrl = `${backendUrl}/auth/shopify/install`;
     
     // Redirect to OAuth flow
@@ -385,18 +398,8 @@ const OAuthSetup = ({ onComplete }) => {
     console.log('  - Shop (encoded):', encodedShop);
     console.log('  - Final OAuth URL:', oauthUrl);
     console.log('  - URL includes shop?', oauthUrl.includes('shop='));
-    try {
-      // Only try to parse if it's an absolute URL
-      if (oauthUrl.startsWith('http://') || oauthUrl.startsWith('https://')) {
-        console.log('  - URL shop param value:', new URL(oauthUrl).searchParams.get('shop'));
-      } else {
-        console.log('  - URL is relative, skipping URL parsing');
-      }
-    } catch (e) {
-      console.warn('  - Could not parse URL for logging:', e.message);
-    }
     
-    // ONE MORE CHECK: Verify the URL was constructed correctly
+    // Verify the URL was constructed correctly
     try {
       const testUrl = new URL(oauthUrl);
       const testShop = testUrl.searchParams.get('shop');
@@ -404,6 +407,7 @@ const OAuthSetup = ({ onComplete }) => {
         throw new Error(`URL construction failed! Expected shop="${cleanedShop}", got shop="${testShop}"`);
       }
       console.log('✅ URL construction verified successfully');
+      console.log('  - URL shop param value:', testShop);
     } catch (e) {
       console.error('❌ URL construction verification failed:', e);
       setError(i18n.translate('admin.oauth.setup.errors.urlConstruction'));
