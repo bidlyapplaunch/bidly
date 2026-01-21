@@ -23,6 +23,8 @@ const OAuthSetup = ({ onComplete }) => {
 
   const redirectToShopifyAdmin = useCallback((shop, host) => {
     const cleanShop = (shop || '').trim();
+    // Use bidly-3 as default since that's the working app instance
+    const appHandle = 'bidly-3';
     let adminUrl = null;
 
     if (host) {
@@ -30,7 +32,7 @@ const OAuthSetup = ({ onComplete }) => {
         const decodedHost = window.atob(host);
         if (decodedHost && decodedHost.startsWith('admin.shopify.com')) {
           const hasAppsPath = decodedHost.includes('/apps/');
-          adminUrl = `https://${decodedHost}${hasAppsPath ? '' : '/apps/bidly'}`;
+          adminUrl = `https://${decodedHost}${hasAppsPath ? '' : `/apps/${appHandle}`}`;
         }
       } catch (error) {
         console.warn('⚠️ Failed to decode host parameter:', error);
@@ -39,7 +41,7 @@ const OAuthSetup = ({ onComplete }) => {
 
     if (!adminUrl && cleanShop.endsWith('.myshopify.com')) {
       const storeSlug = cleanShop.replace('.myshopify.com', '');
-      adminUrl = `https://admin.shopify.com/store/${storeSlug}/apps/bidly`;
+      adminUrl = `https://admin.shopify.com/store/${storeSlug}/apps/${appHandle}`;
     }
 
     if (!adminUrl) {
