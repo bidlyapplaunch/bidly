@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -239,6 +240,76 @@ app.use((req, res, next) => {
 
 // Logging middleware
 app.use(morgan('combined'));
+
+// ============================================
+// Webhook endpoint with HMAC validation
+// MUST be before express.json() to access raw body
+// ============================================
+app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
+  const hmacHeader = req.headers['x-shopify-hmac-sha256'];
+  const topic = req.headers['x-shopify-topic'] || 'unknown';
+  
+  console.log('📨 Received webhook:', topic);
+
+  // Get the client secret for HMAC validation
+  const clientSecret = process.env.SHOPIFY_API_SECRET || process.env.SHOPIFY_CLIENT_SECRET;
+  
+  if (!clientSecret) {
+    console.error('❌ SHOPIFY_API_SECRET not configured - cannot validate webhook');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  if (!hmacHeader) {
+    console.warn('⚠️ Missing X-Shopify-Hmac-SHA256 header - rejecting webhook');
+    return res.status(401).json({ error: 'Missing HMAC signature' });
+  }
+
+  // Compute HMAC digest from raw body
+  const rawBody = req.body || Buffer.alloc(0);
+  const computedHmac = crypto
+    .createHmac('sha256', clientSecret)
+    .update(rawBody)
+    .digest('base64');
+
+  // Timing-safe comparison to prevent timing attacks
+  let hmacValid = false;
+  try {
+    const computedBuffer = Buffer.from(computedHmac, 'base64');
+    const headerBuffer = Buffer.from(hmacHeader, 'base64');
+    
+    // timingSafeEqual requires equal length buffers
+    if (computedBuffer.length === headerBuffer.length) {
+      hmacValid = crypto.timingSafeEqual(computedBuffer, headerBuffer);
+    }
+  } catch (e) {
+    console.warn('⚠️ HMAC comparison error:', e.message);
+    hmacValid = false;
+  }
+
+  if (!hmacValid) {
+    console.warn('❌ Invalid HMAC signature - rejecting webhook for topic:', topic);
+    return res.status(401).json({ error: 'Invalid HMAC signature' });
+  }
+
+  console.log('✅ Webhook HMAC validated for topic:', topic);
+
+  // Parse body as JSON for processing (if needed)
+  let payload = {};
+  try {
+    if (rawBody.length > 0) {
+      payload = JSON.parse(rawBody.toString('utf8'));
+    }
+  } catch (e) {
+    console.warn('⚠️ Could not parse webhook body as JSON:', e.message);
+  }
+
+  // Handle compliance webhooks (GDPR)
+  // These are mandatory but can be acknowledged with 200 OK
+  // Actual data handling would go here based on topic
+  console.log('📋 Webhook payload shop:', payload.shop_domain || payload.shop || 'N/A');
+
+  return res.status(200).json({ success: true });
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -545,11 +616,7 @@ app.use('/auth/shopify', oauthRoutes);
 app.use('/webhooks/shopify', oauthRoutes);
 app.use('/webhooks/app', oauthRoutes);
 
-// Minimal compliance webhook endpoint (configured via shopify.app.bidly.toml)
-app.all('/webhooks', (req, res) => {
-  console.log('📨 Received compliance webhook ping/topic:', req.headers['x-shopify-topic']);
-  return res.status(200).json({ success: true });
-});
+// Note: /webhooks endpoint with HMAC validation is defined earlier (before JSON body parser)
 
 // App Bridge routes for embedded app functionality
 app.use('/app-bridge', appBridgeRoutes);
