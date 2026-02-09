@@ -253,24 +253,37 @@
         return;
       }
       
-      // Check if in theme editor
-      const isThemeEditor = window.Shopify && (
-        window.Shopify.designMode || 
+      // Check if in theme editor - improved detection
+      const isThemeEditor = (
+        (window.Shopify && window.Shopify.designMode) ||
+        (window.Shopify && window.Shopify.theme && window.Shopify.theme.editor) ||
         window.location.search.includes('preview_theme_id') ||
-        document.body.classList.contains('shopify-design-mode')
+        window.location.search.includes('themeId') ||
+        document.body.classList.contains('shopify-design-mode') ||
+        document.documentElement.classList.contains('shopify-design-mode')
       );
       
       if (isThemeEditor) {
         const placeholder = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-theme-editor-placeholder`);
         const loading = document.querySelector(`#bidly-loading-${blockId}`);
+        const error = document.querySelector(`#bidly-error-${blockId}`);
+        const container = document.querySelector(`#bidly-featured-container-${blockId}`);
+        
         if (placeholder) placeholder.style.display = 'block';
         if (loading) loading.style.display = 'none';
+        if (error) error.style.display = 'none';
+        if (container) container.style.display = 'none';
         return;
       }
       
-      // Fetch auction data
+      // Fetch auction data with proper error handling
       fetch(`/apps/bidly/api/auctions/${auctionId}?shop=${shopDomain}`)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success && data.data) {
             renderFeaturedAuction(blockId, data.data, shopDomain);
@@ -280,7 +293,14 @@
         })
         .catch(error => {
           console.error('Error loading featured auction:', error);
-          showError(blockId);
+          // Don't show error in theme editor - show placeholder instead
+          const isThemeEditor = (
+            (window.Shopify && window.Shopify.designMode) ||
+            window.location.search.includes('preview_theme_id')
+          );
+          if (!isThemeEditor) {
+            showError(blockId);
+          }
         });
     }
     

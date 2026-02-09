@@ -235,24 +235,37 @@
       const maxAuctions = {{ max_auctions }};
       const showEnded = {{ show_ended }};
       
-      // Check if in theme editor
-      const isThemeEditor = window.Shopify && (
-        window.Shopify.designMode || 
+      // Check if in theme editor - improved detection
+      const isThemeEditor = (
+        (window.Shopify && window.Shopify.designMode) ||
+        (window.Shopify && window.Shopify.theme && window.Shopify.theme.editor) ||
         window.location.search.includes('preview_theme_id') ||
-        document.body.classList.contains('shopify-design-mode')
+        window.location.search.includes('themeId') ||
+        document.body.classList.contains('shopify-design-mode') ||
+        document.documentElement.classList.contains('shopify-design-mode')
       );
       
       if (isThemeEditor) {
         const placeholder = document.querySelector(`#bidly-auction-list-${blockId} .bidly-theme-editor-placeholder`);
         const loading = document.querySelector(`#bidly-loading-${blockId}`);
+        const error = document.querySelector(`#bidly-error-${blockId}`);
+        const container = document.querySelector(`#bidly-auctions-${blockId}`);
+        
         if (placeholder) placeholder.style.display = 'block';
         if (loading) loading.style.display = 'none';
+        if (error) error.style.display = 'none';
+        if (container) container.style.display = 'none';
         return;
       }
       
-      // Fetch auctions
+      // Fetch auctions with proper error handling
       fetch(`/apps/bidly/api/auctions?shop=${shopDomain}&status=active&limit=${maxAuctions}`)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success && data.data && data.data.length > 0) {
             // Filter auctions based on status
@@ -266,14 +279,25 @@
             // Limit to maxAuctions
             auctions = auctions.slice(0, maxAuctions);
             
-            renderAuctions(blockId, auctions, shopDomain);
+            if (auctions.length > 0) {
+              renderAuctions(blockId, auctions, shopDomain);
+            } else {
+              showError(blockId, '{{ "bidly.ui.no_auctions" | t }}');
+            }
           } else {
             showError(blockId, '{{ "bidly.ui.no_auctions" | t }}');
           }
         })
         .catch(error => {
           console.error('Error loading auctions:', error);
-          showError(blockId, error.message);
+          // Don't show error in theme editor - show placeholder instead
+          const isThemeEditor = (
+            (window.Shopify && window.Shopify.designMode) ||
+            window.location.search.includes('preview_theme_id')
+          );
+          if (!isThemeEditor) {
+            showError(blockId, '{{ "bidly.ui.error_load_auctions" | t }}');
+          }
         });
     }
     

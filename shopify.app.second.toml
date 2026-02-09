@@ -21,6 +21,10 @@ api_version = "2025-10"
 compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
 uri = "https://bidly-backend-2.hiiiiiiiiiii.com"
 
+[[webhooks.subscriptions]]
+topics = ["app_subscriptions/update"]
+uri = "https://bidly-backend-2.hiiiiiiiiiii.com"
+
 [pos]
 embedded = false
 

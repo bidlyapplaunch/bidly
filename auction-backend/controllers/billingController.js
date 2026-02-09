@@ -9,6 +9,7 @@ import {
   syncStorePlanFromShopify
 } from '../services/billingService.js';
 import { BILLING_PLANS, DEFAULT_PLAN, getPlanCapabilities, sanitizePlan } from '../config/billingPlans.js';
+import Store from '../models/Store.js';
 
 const APP_URL = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
 const ADMIN_APP_URL = process.env.ADMIN_APP_URL || 'https://bidly-auction-admin.onrender.com';
@@ -67,6 +68,12 @@ export const getCurrentPlan = async (req, res, next) => {
     // If sync fails, we use the cached plan from DB (non-blocking)
     try {
       await syncStorePlanFromShopify(req.store);
+      // CRITICAL: Reload store to get updated plan value
+      // The sync function saves the store, but req.store is still the old object
+      const updatedStore = await Store.findById(req.store._id);
+      if (updatedStore) {
+        req.store = updatedStore;
+      }
     } catch (syncError) {
       // Log sync error but don't fail the request - use cached plan from DB
       console.warn('⚠️ Failed to sync plan from Shopify, using cached plan:', syncError.message);

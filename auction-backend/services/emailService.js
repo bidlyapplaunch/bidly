@@ -33,18 +33,35 @@ function initDefaultTransport() {
   console.log('🔍 Email Service Debug:');
   console.log('  - EMAIL_USER:', process.env.EMAIL_USER ? 'Present' : 'Missing');
   console.log('  - EMAIL_PASS:', process.env.EMAIL_PASS ? 'Present' : 'Missing');
+  console.log('  - EMAIL_HOST:', process.env.EMAIL_HOST ? 'Present' : 'Missing');
+  console.log('  - EMAIL_SERVICE:', process.env.EMAIL_SERVICE || 'gmail (default)');
 
   defaultTransportState.isConfigured = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASS);
 
   if (defaultTransportState.isConfigured) {
-    defaultTransportState.transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE || 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-    console.log('📧 Email service configured with real credentials');
+    // If EMAIL_HOST is set, use custom SMTP configuration (for SendGrid, Mailgun, AWS SES, etc.)
+    if (process.env.EMAIL_HOST) {
+      defaultTransportState.transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT || '587', 10),
+        secure: process.env.EMAIL_SECURE === 'true' || process.env.EMAIL_PORT === '465',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+      console.log('📧 Email service configured with custom SMTP:', process.env.EMAIL_HOST);
+    } else {
+      // Fall back to service-based configuration (Gmail, Outlook, etc.)
+      defaultTransportState.transporter = nodemailer.createTransport({
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+      console.log('📧 Email service configured with service-based credentials:', process.env.EMAIL_SERVICE || 'gmail');
+    }
   } else {
     // Use a stream transport to avoid actual network calls in demo mode
     defaultTransportState.transporter = nodemailer.createTransport({
@@ -55,6 +72,7 @@ function initDefaultTransport() {
     console.log('📧 Email service running in DEMO mode (no real credentials)');
   }
 
+  // Set from email - prioritize EMAIL_FROM, then use EMAIL_USER if available, otherwise default
   const fallbackFrom = process.env.EMAIL_USER ? `Bidly <${process.env.EMAIL_USER}>` : defaultTransportState.fromEmail;
   defaultTransportState.fromEmail = process.env.EMAIL_FROM || fallbackFrom;
   defaultTransportState.initialized = true;

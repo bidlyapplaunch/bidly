@@ -14,7 +14,20 @@ const BILLING_TEST_MODE = process.env.SHOPIFY_BILLING_TEST === 'true';
 
 function getPlanByName(name) {
   if (!name) return null;
-  return Object.values(BILLING_PLANS).find((plan) => plan.name === name) || null;
+  
+  // Try exact match first (backward compatibility)
+  let plan = Object.values(BILLING_PLANS).find((plan) => plan.name === name);
+  if (plan) return plan;
+  
+  // Try matching without "Bidly" prefix (for Managed Pricing)
+  // Shopify uses "Enterprise", "Pro", "Basic" without prefix
+  const nameWithoutPrefix = name.replace(/^Bidly\s+/i, '').trim();
+  plan = Object.values(BILLING_PLANS).find((plan) => {
+    const planNameWithoutPrefix = plan.name.replace(/^Bidly\s+/i, '').trim();
+    return planNameWithoutPrefix.toLowerCase() === nameWithoutPrefix.toLowerCase();
+  });
+  
+  return plan || null;
 }
 
 function buildShopifyGraphQLUrl(shopDomain) {
