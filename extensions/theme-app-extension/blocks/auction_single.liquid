@@ -25,12 +25,12 @@
     <p>{{ 'bidly.ui.error_load_auction' | t }}</p>
   </div>
   
-  {% unless auction_id %}
-  <div class="bidly-config-error" style="padding: 2rem; text-align: center; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; color: #856404;">
-    <h3 style="margin: 0 0 1rem 0;">{{ 'bidly.ui.config_required' | t }}</h3>
-    <p style="margin: 0;">{{ 'bidly.ui.config_required_message' | t }}</p>
+  <div class="bidly-empty-placeholder" id="bidly-empty-placeholder-{{ block_id }}" style="display: none;">
+    <div style="padding: 2rem; text-align: center; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px; color: #6c757d;">
+      <p style="margin: 0; font-size: 1rem;">{{ 'bidly.ui.no_auction_configured' | t }}</p>
+      <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #adb5bd;">{{ 'bidly.ui.configure_auction_id' | t }}</p>
+    </div>
   </div>
-  {% endunless %}
   
   <div class="bidly-auction-detail" id="bidly-auction-detail-{{ block_id }}" style="display: none;">
     <!-- Auction details will be populated by JavaScript -->
@@ -99,11 +99,16 @@
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
     align-items: start;
-    background: white;
+    background: #ffffff !important;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 2rem;
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  }
+  
+  /* Ensure all text inside is visible */
+  .bidly-auction-detail * {
+    color: inherit;
   }
   
   .bidly-auction-image-container {
@@ -128,7 +133,7 @@
     font-weight: 700;
     margin-bottom: 1rem;
     line-height: 1.3;
-    color: #1f2937;
+    color: #1f2937 !important;
   }
   
   .bidly-auction-price {
@@ -137,27 +142,30 @@
   
   .bidly-price-label {
     font-size: 0.9rem;
-    color: #666;
+    color: #4b5563 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 500;
   }
   
   .bidly-price-amount {
     font-size: 2rem;
     font-weight: 700;
-    color: #10b981;
+    color: #059669 !important;
+    margin-top: 0.25rem;
   }
   
   .bidly-starting-bid {
     font-size: 1rem;
-    color: #888;
+    color: #6b7280 !important;
     margin-top: 0.5rem;
   }
   
   .bidly-auction-time {
     font-size: 1.1rem;
-    color: #666;
+    color: #374151 !important;
     margin-bottom: 1rem;
+    font-weight: 500;
   }
   
   .bidly-auction-status {
@@ -171,25 +179,28 @@
   }
   
   .bidly-status-active {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0;
   }
   
   .bidly-status-pending {
-    background-color: #fff3cd;
-    color: #856404;
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a;
   }
   
   .bidly-status-ended {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca;
   }
   
   .bidly-view-product {
     margin-top: 1.5rem;
     padding: 1rem 2rem;
-    background-color: #6366f1;
-    color: white;
+    background-color: #6366f1 !important;
+    color: #ffffff !important;
     border: none;
     border-radius: 8px;
     font-size: 1.1rem;
@@ -199,10 +210,13 @@
     letter-spacing: 0.5px;
     transition: all 0.2s ease;
     cursor: pointer;
+    display: inline-block;
+    text-decoration: none;
   }
   
   .bidly-view-product:hover {
-    background-color: #4f46e5;
+    background-color: #4f46e5 !important;
+    color: #ffffff !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
   }
@@ -235,12 +249,6 @@
       const shopDomain = '{{ shop_domain }}';
       const auctionId = '{{ auction_id }}';
       
-      if (!auctionId) {
-        document.querySelector(`#bidly-error-${blockId}`).style.display = 'block';
-        document.querySelector(`#bidly-loading-${blockId}`).style.display = 'none';
-        return;
-      }
-      
       // Check if in theme editor - improved detection
       const isThemeEditor = (
         (window.Shopify && window.Shopify.designMode) ||
@@ -251,15 +259,38 @@
         document.documentElement.classList.contains('shopify-design-mode')
       );
       
+      // If no auction ID, show placeholder (not error)
+      if (!auctionId) {
+        const loading = document.querySelector(`#bidly-loading-${blockId}`);
+        const error = document.querySelector(`#bidly-error-${blockId}`);
+        const detail = document.querySelector(`#bidly-auction-detail-${blockId}`);
+        const emptyPlaceholder = document.querySelector(`#bidly-empty-placeholder-${blockId}`);
+        const themePlaceholder = document.querySelector(`#bidly-single-auction-${blockId} .bidly-theme-editor-placeholder`);
+        
+        if (loading) loading.style.display = 'none';
+        if (error) error.style.display = 'none';
+        if (detail) detail.style.display = 'none';
+        
+        // Show theme editor placeholder in Theme Editor, otherwise show empty placeholder
+        if (isThemeEditor && themePlaceholder) {
+          themePlaceholder.style.display = 'block';
+        } else if (emptyPlaceholder) {
+          emptyPlaceholder.style.display = 'block';
+        }
+        return;
+      }
+      
       if (isThemeEditor) {
         const placeholder = document.querySelector(`#bidly-single-auction-${blockId} .bidly-theme-editor-placeholder`);
         const loading = document.querySelector(`#bidly-loading-${blockId}`);
         const error = document.querySelector(`#bidly-error-${blockId}`);
         const detail = document.querySelector(`#bidly-auction-detail-${blockId}`);
+        const emptyPlaceholder = document.querySelector(`#bidly-empty-placeholder-${blockId}`);
         if (placeholder) placeholder.style.display = 'block';
         if (loading) loading.style.display = 'none';
         if (error) error.style.display = 'none';
         if (detail) detail.style.display = 'none';
+        if (emptyPlaceholder) emptyPlaceholder.style.display = 'none';
         return;
       }
       
@@ -326,7 +357,7 @@
             ${startingBid > 0 && currentBid === 0 ? `<div class="bidly-starting-bid">{{ "bidly.ui.starting" | t }}: $${startingBid.toFixed(2)}</div>` : ''}
           </div>
               ${auction.endTime && status === 'active' ? `<div class="bidly-auction-time" data-end-time="${auction.endTime}">{{ "bidly.ui.time_left" | t }} ${timeLeft}</div>` : ''}
-              ${bidCount > 0 ? `<div style="color: #666; font-size: 1rem; margin-top: 0.5rem;">${bidCount} ${bidCount !== 1 ? '{{ "bidly.ui.bids" | t }}' : '{{ "bidly.ui.bid" | t }}'}</div>` : ''}
+              ${bidCount > 0 ? `<div style="color: #374151 !important; font-size: 1rem; margin-top: 0.5rem; font-weight: 500;">${bidCount} ${bidCount !== 1 ? '{{ "bidly.ui.bids" | t }}' : '{{ "bidly.ui.bid" | t }}'}</div>` : ''}
               <div class="bidly-view-product">{{ "bidly.ui.view_product" | t }}</div>
         </div>
       `;

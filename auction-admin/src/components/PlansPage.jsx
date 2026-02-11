@@ -570,12 +570,12 @@ const PlansPage = () => {
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <Text tone="subdued">{t('admin.billing.currentPlan.active', { plan: planData.plan || 'free' })}</Text>
+                        <Text tone="subdued">{t('admin.billing.currentPlan.active', { plan: PLAN_CONFIG[planData.plan || 'free']?.title || planData.plan || 'free' })}</Text>
                         {/* Only show Pending if there's a real pending change (cancellation or downgrade) */}
                         {planData.pendingPlan && 
                          planData.pendingPlan !== planData.plan && 
                          (planData.pendingPlan === 'free' || PLAN_LEVELS[planData.pendingPlan] < PLAN_LEVELS[planData.plan]) && (
-                          <Text tone="subdued">{t('admin.billing.currentPlan.pending', { plan: planData.pendingPlan })}</Text>
+                          <Text tone="subdued">{t('admin.billing.currentPlan.pending', { plan: PLAN_CONFIG[planData.pendingPlan]?.title || planData.pendingPlan })}</Text>
                         )}
                       </div>
                     )}
@@ -669,7 +669,7 @@ const PlansPage = () => {
         <Modal
           open
           onClose={closeDowngradeModal}
-          title={t('admin.billing.downgrade.title', { plan: PLAN_CONFIG[downgradeModal.targetPlan].title })}
+          title={t('admin.billing.downgrade.title', { plan: PLAN_CONFIG[downgradeModal.targetPlan]?.title || downgradeModal.targetPlan || 'plan' })}
           primaryAction={{
             content: t('admin.billing.downgrade.confirm'),
             destructive: true,

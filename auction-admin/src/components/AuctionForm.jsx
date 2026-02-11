@@ -373,9 +373,11 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                 placeholder={i18n.translate('admin.auctions.form.search.placeholder')}
               />
               {searchError && <Text color="critical">{searchError}</Text>}
-              <Text variant="bodySm">
-                {i18n.translate('admin.auctions.form.search.debug', { count: searchResults.length })}
-              </Text>
+              {searchResults.length > 0 && (
+                <Text variant="bodySm" tone="subdued">
+                  {i18n.translate('admin.auctions.form.search.resultsCount', { count: searchResults.length })}
+                </Text>
+              )}
               {searchResults.length > 0 && (
                 <Card sectioned>
                   <Text variant="headingMd">{i18n.translate('admin.auctions.form.search.resultsTitle')}</Text>
@@ -384,9 +386,9 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                       <List.Item key={product.id}>
                         <Button plain onClick={() => handleProductSelect(product)}>
                           {i18n.translate('admin.auctions.form.search.resultLabel', {
-                            title: product.title,
-                            id: product.id,
-                            price: product.price
+                            title: product.title || 'Untitled Product',
+                            id: String(product.id || ''),
+                            price: product.price || '$0.00'
                           })}
                         </Button>
                       </List.Item>

@@ -54,7 +54,9 @@
       "no_image": "No Image",
       "config_required": "⚠️ Configuration Required",
       "config_required_message": "Please set an Auction ID in the block settings to display an auction.",
-      "not_set": "Not set"
+      "not_set": "Not set",
+      "no_auction_configured": "No auction configured",
+      "configure_auction_id": "Please configure an Auction ID in the block settings"
     },
     "editor": {
       "auction_list_title": "🎯 Bidly Auction List",

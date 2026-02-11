@@ -25,6 +25,13 @@
     <p>{{ 'bidly.ui.error_load_featured' | t }}</p>
   </div>
   
+  <div class="bidly-empty-placeholder" id="bidly-empty-placeholder-{{ block_id }}" style="display: none;">
+    <div style="padding: 2rem; text-align: center; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px; color: #6c757d;">
+      <p style="margin: 0; font-size: 1rem;">{{ 'bidly.ui.no_auction_configured' | t }}</p>
+      <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #adb5bd;">{{ 'bidly.ui.configure_auction_id' | t }}</p>
+    </div>
+  </div>
+  
   <div class="bidly-featured-container" id="bidly-featured-container-{{ block_id }}" style="display: none;">
     <!-- Auction info will be populated by JavaScript -->
   </div>
@@ -247,12 +254,6 @@
       const shopDomain = '{{ shop_domain }}';
       const auctionId = '{{ auction_id }}';
       
-      if (!auctionId) {
-        document.querySelector(`#bidly-error-${blockId}`).style.display = 'block';
-        document.querySelector(`#bidly-loading-${blockId}`).style.display = 'none';
-        return;
-      }
-      
       // Check if in theme editor - improved detection
       const isThemeEditor = (
         (window.Shopify && window.Shopify.designMode) ||
@@ -263,16 +264,39 @@
         document.documentElement.classList.contains('shopify-design-mode')
       );
       
+      // If no auction ID, show placeholder (not error)
+      if (!auctionId) {
+        const loading = document.querySelector(`#bidly-loading-${blockId}`);
+        const error = document.querySelector(`#bidly-error-${blockId}`);
+        const container = document.querySelector(`#bidly-featured-container-${blockId}`);
+        const emptyPlaceholder = document.querySelector(`#bidly-empty-placeholder-${blockId}`);
+        const themePlaceholder = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-theme-editor-placeholder`);
+        
+        if (loading) loading.style.display = 'none';
+        if (error) error.style.display = 'none';
+        if (container) container.style.display = 'none';
+        
+        // Show theme editor placeholder in Theme Editor, otherwise show empty placeholder
+        if (isThemeEditor && themePlaceholder) {
+          themePlaceholder.style.display = 'block';
+        } else if (emptyPlaceholder) {
+          emptyPlaceholder.style.display = 'block';
+        }
+        return;
+      }
+      
       if (isThemeEditor) {
         const placeholder = document.querySelector(`#bidly-featured-auction-${blockId} .bidly-theme-editor-placeholder`);
         const loading = document.querySelector(`#bidly-loading-${blockId}`);
         const error = document.querySelector(`#bidly-error-${blockId}`);
         const container = document.querySelector(`#bidly-featured-container-${blockId}`);
+        const emptyPlaceholder = document.querySelector(`#bidly-empty-placeholder-${blockId}`);
         
         if (placeholder) placeholder.style.display = 'block';
         if (loading) loading.style.display = 'none';
         if (error) error.style.display = 'none';
         if (container) container.style.display = 'none';
+        if (emptyPlaceholder) emptyPlaceholder.style.display = 'none';
         return;
       }
       

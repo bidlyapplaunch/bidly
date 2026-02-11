@@ -194,7 +194,16 @@ export async function getActiveSubscriptions(store) {
 
   const data = await postShopifyGraphQL(store, query);
   const subscriptions = data?.currentAppInstallation?.activeSubscriptions || [];
-  return subscriptions;
+  
+  // Filter to only include ACTIVE or ACCEPTED subscriptions
+  // In production, cancelled subscriptions may remain in the list until billing period ends
+  // In test mode, cancelled subscriptions are immediately removed
+  const activeOnly = subscriptions.filter(sub => {
+    const status = sub.status?.toUpperCase();
+    return status === 'ACTIVE' || status === 'ACCEPTED';
+  });
+  
+  return activeOnly;
 }
 
 export async function syncStorePlanFromShopify(store) {

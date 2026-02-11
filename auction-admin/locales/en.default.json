@@ -624,7 +624,7 @@
           "label": "Search for Shopify Product",
           "placeholder": "Type product name to search...",
           "loadingLabel": "Searching products",
-          "debug": "Debug: {{count}} results found",
+          "resultsCount": "{{count}} products found",
           "resultsTitle": "Search Results",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
           "apiFallback": "Real API failed: {{message}}. Using demo data."
