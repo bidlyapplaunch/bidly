@@ -437,8 +437,8 @@
         "trialCopy": "Includes a 7-day free trial. You can cancel anytime from your Shopify admin.",
         "currentPlan": "Current plan",
         "pendingActivation": "Pending activation",
-        "downgradeTo": "Downgrade to {{title}}",
-        "upgradeTo": "Upgrade to {{title}}"
+        "downgradeTo": "Downgrade to {title}",
+        "upgradeTo": "Upgrade to {title}"
       },
       "banners": {
         "subscriptionActivated": {
@@ -624,10 +624,10 @@
           "label": "Search for Shopify Product",
           "placeholder": "Type product name to search...",
           "loadingLabel": "Searching products",
-          "resultsCount": "{{count}} products found",
+          "resultsCount": "{count} products found",
           "resultsTitle": "Search Results",
-          "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Real API failed: {{message}}. Using demo data."
+          "resultLabel": "{title} (ID: {id}) - {price}",
+          "noResults": "No products found"
         },
         "selectedProduct": {
           "title": "Selected Product Details",

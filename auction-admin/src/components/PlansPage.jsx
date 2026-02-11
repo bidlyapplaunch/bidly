@@ -42,8 +42,8 @@ function PlanCard({ planKey, currentPlan, pendingPlan, onSelect, loadingPlan, i1
     if (isCurrent) return t('admin.billing.plans.currentPlan');
     if (isPending) return t('admin.billing.plans.pendingActivation');
     if (planKey === 'free') return t('admin.billing.plans.free.actionLabel');
-    if (isDowngrade) return t('admin.billing.plans.downgradeTo', { title: plan.title });
-    return t('admin.billing.plans.upgradeTo', { title: plan.title });
+    if (isDowngrade) return `Downgrade to ${plan.title}`;
+    return `Upgrade to ${plan.title}`;
   }, [isCurrent, isPending, isDowngrade, plan.title, planKey, t]);
 
   const handleSelect = useCallback(() => {

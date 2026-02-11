@@ -227,12 +227,13 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         // Fallback to mock data
         const mockProducts = getMockProducts(value);
         console.log('🔍 Mock products found:', mockProducts);
-        setSearchResults(mockProducts);
-        setSearchError(
-          i18n.translate('admin.auctions.form.search.apiFallback', {
-            message: error.message
-          })
-        );
+        if (mockProducts.length > 0) {
+          setSearchResults(mockProducts);
+          setSearchError(null);
+        } else {
+          setSearchResults([]);
+          setSearchError(null);
+        }
       } finally {
         setSearching(false);
       }
@@ -372,10 +373,12 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                 autoComplete="off"
                 placeholder={i18n.translate('admin.auctions.form.search.placeholder')}
               />
-              {searchError && <Text color="critical">{searchError}</Text>}
+              {!searching && searchResults.length === 0 && productSearchQuery.length > 2 && (
+                <Text tone="subdued">{i18n.translate('admin.auctions.form.search.noResults')}</Text>
+              )}
               {searchResults.length > 0 && (
                 <Text variant="bodySm" tone="subdued">
-                  {i18n.translate('admin.auctions.form.search.resultsCount', { count: searchResults.length })}
+                  {`${searchResults.length} products found`}
                 </Text>
               )}
               {searchResults.length > 0 && (
@@ -385,11 +388,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                     {searchResults.map((product) => (
                       <List.Item key={product.id}>
                         <Button plain onClick={() => handleProductSelect(product)}>
-                          {i18n.translate('admin.auctions.form.search.resultLabel', {
-                            title: product.title || 'Untitled Product',
-                            id: String(product.id || ''),
-                            price: product.price || '$0.00'
-                          })}
+                          {`${product.title || 'Untitled Product'} (ID: ${product.id || ''}) - ${product.price || '$0.00'}`}
                         </Button>
                       </List.Item>
                     ))}
