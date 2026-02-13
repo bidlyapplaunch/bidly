@@ -437,9 +437,14 @@ export const checkInstallationStatus = async (req, res, next) => {
     }
 
     const store = await Store.findByDomain(shop);
-    const isInstalled = store && store.isInstalled;
+    // Store is only truly "installed" if it has both isInstalled flag AND an access token
+    const hasAccessToken = store && store.accessToken;
+    const isInstalled = store && store.isInstalled && hasAccessToken;
     
     console.log('🔍 Installation status for', shop, ':', isInstalled ? 'Installed' : 'Not installed');
+    if (store && store.isInstalled && !hasAccessToken) {
+      console.warn('⚠️ Store marked as installed but missing access token - OAuth incomplete');
+    }
     
     res.json({
       success: true,
