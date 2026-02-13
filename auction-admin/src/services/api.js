@@ -477,21 +477,15 @@ export const billingAPI = {
 
 export const onboardingAPI = {
   async getStatus() {
-    // Reduced timeout to 3 seconds - endpoint should be instant now
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Onboarding status request timed out')), 3000)
-    );
-    
+    // No timeout - let axios handle it with its 10s global timeout
+    // Backend endpoint is instant, but network latency may vary
     try {
       const shop = getShopFromURL();
-      const response = await Promise.race([
-        api.get('/onboarding/status', { params: shop ? { shop } : {} }),
-        timeoutPromise
-      ]);
+      const response = await api.get('/onboarding/status', { params: shop ? { shop } : {} });
       return response.data;
     } catch (error) {
-      // If timeout or other error, return default status to allow dashboard to load
-      console.warn('⚠️ Onboarding status check failed or timed out, proceeding to dashboard:', error.message);
+      // If any error, return default status to allow dashboard to load
+      console.warn('⚠️ Onboarding status check failed, proceeding to dashboard:', error.message);
       return { 
         success: true, 
         onboardingComplete: true,
