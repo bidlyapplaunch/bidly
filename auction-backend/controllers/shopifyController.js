@@ -332,15 +332,6 @@ export const getProductsByTags = async (req, res, next) => {
  */
 export const getServiceStatus = async (req, res, next) => {
   try {
-    console.log('🔍 getServiceStatus called with:', {
-      query: req.query,
-      headers: req.headers,
-      url: req.url,
-      hasStore: !!req.store,
-      shopDomain: req.shopDomain
-    });
-    
-    // Use req.store from identifyStore middleware - it should always be present
     if (!req.store) {
       throw new AppError('Store not found', 404);
     }
@@ -360,21 +351,6 @@ export const getServiceStatus = async (req, res, next) => {
       mockMode: !isInstalled || !hasAccessToken,
       installedAt: req.store.installedAt,
       lastAccessAt: req.store.lastAccessAt
-    });
-    
-    // Fallback to lookup if store not in req (shouldn't happen with identifyStore middleware)
-    const shopDomain = getCurrentShopDomain(req);
-    console.log('🔍 getServiceStatus - shopDomain (fallback):', shopDomain);
-    
-    if (!shopDomain) {
-      throw new AppError('Store context is required', 400);
-    }
-
-    const status = await getShopifyService().getStoreConfigStatus(shopDomain);
-
-    res.json({
-      success: true,
-      ...status
     });
   } catch (error) {
     next(error);
