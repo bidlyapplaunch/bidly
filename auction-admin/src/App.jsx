@@ -199,12 +199,23 @@ function AppContent() {
       try {
         const response = await onboardingAPI.getStatus();
         if (isMounted) {
-          setOnboardingStatus(response);
+          // Ensure response has expected structure
+          setOnboardingStatus({
+            success: response?.success !== false,
+            onboardingComplete: response?.onboardingComplete || response?.data?.onboardingComplete || true,
+            widgetActive: response?.widgetActive || response?.data?.widgetActive || false,
+            ...response
+          });
         }
       } catch (error) {
         console.error('Failed to load onboarding status', error);
         if (isMounted) {
-          setOnboardingStatus({ onboardingComplete: true });
+          // Default to completed so dashboard can load
+          setOnboardingStatus({ 
+            success: true,
+            onboardingComplete: true,
+            widgetActive: false
+          });
         }
       } finally {
         if (isMounted) {

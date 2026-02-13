@@ -87,6 +87,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout for all requests
 });
 
 let isHandlingAuthError = false;
@@ -476,8 +477,27 @@ export const billingAPI = {
 
 export const onboardingAPI = {
   async getStatus() {
-    const response = await api.get('/onboarding/status');
-    return response.data;
+    // Add timeout to prevent hanging - use Promise.race with a timeout
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Onboarding status request timed out')), 8000)
+    );
+    
+    try {
+      const response = await Promise.race([
+        api.get('/onboarding/status'),
+        timeoutPromise
+      ]);
+      return response.data;
+    } catch (error) {
+      // If timeout or other error, return default status to allow dashboard to load
+      console.warn('⚠️ Onboarding status check failed or timed out, proceeding to dashboard:', error.message);
+      return { 
+        success: true, 
+        onboardingComplete: true,
+        widgetActive: false,
+        widgetError: error.message
+      };
+    }
   },
 
   async complete() {
