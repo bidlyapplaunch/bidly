@@ -223,18 +223,22 @@ app.use(helmet({
       mediaSrc: ["'self'"],
       frameSrc: ["'self'", "https://admin.shopify.com", "https://*.myshopify.com"],
       // Allow iframe embedding from Shopify admin
-      frameAncestors: ["'self'", "https://admin.shopify.com", "https://*.myshopify.com"]
+      // Note: CSP frame-ancestors doesn't support wildcards for myshopify.com subdomains
+      // Since Shopify can load apps from various domains, we allow admin.shopify.com
+      // X-Frame-Options is disabled (frameguard: false) to allow embedding
+      frameAncestors: ["'self'", "https://admin.shopify.com"]
     }
   },
-  // Disable X-Frame-Options to allow iframe embedding
+  // Disable X-Frame-Options to allow iframe embedding (we use CSP frame-ancestors instead)
   frameguard: false
 }));
 
 // Middleware to allow iframe embedding for Shopify admin
 app.use((req, res, next) => {
-  // Allow iframe embedding from Shopify admin domains
-  res.setHeader('X-Frame-Options', 'ALLOWALL');
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://admin.shopify.com https://*.myshopify.com");
+  // Remove X-Frame-Options header (invalid 'ALLOWALL' value was causing issues)
+  // CSP frame-ancestors (set by helmet above) is the modern way to control iframe embedding
+  // No need to set X-Frame-Options when using CSP frame-ancestors
+  res.removeHeader('X-Frame-Options');
   next();
 });
 
