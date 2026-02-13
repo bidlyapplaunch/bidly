@@ -223,7 +223,8 @@ app.use(helmet({
       mediaSrc: ["'self'"],
       frameSrc: ["'self'", "https://admin.shopify.com", "https://*.myshopify.com"],
       // Allow form submissions to backend (needed for OAuth flow)
-      formAction: ["'self'", "https://bidly-auction-backend.onrender.com", "https://bidly-auction-backend-2.onrender.com"],
+      // Allow all HTTPS form submissions to support OAuth redirects
+      formAction: ["'self'", "https:"],
       // Allow iframe embedding from Shopify admin
       // Note: CSP frame-ancestors doesn't support wildcards for myshopify.com subdomains
       // Since Shopify can load apps from various domains, we allow admin.shopify.com
