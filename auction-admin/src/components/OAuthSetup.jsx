@@ -424,45 +424,18 @@ const OAuthSetup = ({ onComplete }) => {
     
     try {
       if (window.self !== window.top) {
-        // We're in an iframe - use form submission to break out
-        // This works even with cross-origin restrictions
-        // IMPORTANT: Use base URL and add shop as hidden input to ensure it's included
-        // Note: baseUrl is already set above using dynamic backend URL
-        console.log('📤 Creating form (iframe mode)');
-        console.log('  - Base URL:', baseUrl);
-        console.log('  - Shop parameter:', cleanedShop);
-        
-        const form = document.createElement('form');
-        form.method = 'GET';
-        form.action = baseUrl; // Base URL only
-        form.target = '_top'; // Break out of iframe
-        form.style.display = 'none';
-        
-        // Add shop as hidden input field to ensure it's included in the request
-        const shopInput = document.createElement('input');
-        shopInput.type = 'hidden';
-        shopInput.name = 'shop';
-        shopInput.value = cleanedShop;
-        form.appendChild(shopInput);
-        
-        console.log('📤 Form created with action:', form.action);
-        console.log('📤 Form has shop input:', shopInput.name, '=', shopInput.value);
-        
-        document.body.appendChild(form);
-        console.log('📤 Form appended to body, submitting...');
-        
-        // Verify form structure before submitting
-        const formData = new FormData(form);
-        console.log('📤 FormData contents:', Array.from(formData.entries()));
-        
-        form.submit();
-        console.log('📤 Form submitted');
-        // Don't remove immediately to ensure submission completes
-        setTimeout(() => {
-          if (document.body.contains(form)) {
-            document.body.removeChild(form);
-          }
-        }, 100);
+        // We're in an iframe - use top-level navigation to break out
+        // This bypasses CSP form-action restrictions
+        console.log('📤 Breaking out of iframe with top-level redirect');
+        console.log('  - OAuth URL:', oauthUrl);
+        try {
+          // Try to access top window and redirect
+          window.top.location.href = oauthUrl;
+        } catch (e) {
+          // If we can't access top (cross-origin), try using window.open as fallback
+          console.warn('⚠️ Cannot access window.top, trying window.open:', e);
+          window.open(oauthUrl, '_top');
+        }
       } else {
         // We're not in an iframe - regular redirect
         console.log('📤 Direct redirect to:', oauthUrl);
@@ -475,13 +448,18 @@ const OAuthSetup = ({ onComplete }) => {
         window.location.href = oauthUrl;
       } catch (e) {
         // Last resort: create clickable link
+        console.error('All redirect methods failed, using link click:', e);
         const link = document.createElement('a');
         link.href = oauthUrl;
         link.target = '_top';
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+        }, 100);
       }
     }
   };
