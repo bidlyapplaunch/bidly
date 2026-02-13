@@ -20,37 +20,10 @@ router.get('/status', async (req, res, next) => {
     const shopDomain = req.shopDomain;
     const storeSlug = shopDomain.replace('.myshopify.com', '');
 
-    // Check app embed status with timeout to prevent hanging
-    let widgetActive = false;
-    let widgetError = null;
-    
-    // Skip API call if store doesn't have access token (not configured yet)
-    const hasAccessToken = req.store?.accessToken;
-    
-    if (!hasAccessToken) {
-      console.log('⚠️ Store has no access token, skipping app embed check');
-      widgetActive = false;
-      widgetError = 'Store not configured - no access token';
-    } else {
-      try {
-        const shopifyService = getShopifyService();
-        // Add timeout wrapper to prevent hanging
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout checking app embed status')), 5000)
-        );
-        
-        const embedCheckPromise = shopifyService.isAppEmbedEnabled(req.shopDomain);
-        const result = await Promise.race([embedCheckPromise, timeoutPromise]);
-        
-        widgetActive = result.active || false;
-        widgetError = result.error || null;
-      } catch (error) {
-        // If the check times out or fails, log but don't block the response
-        console.warn('⚠️ App embed status check failed or timed out:', error.message);
-        widgetActive = false;
-        widgetError = error.message;
-      }
-    }
+    // Skip app embed check entirely - it's too slow and causes timeouts
+    // Just return false for widgetActive to allow dashboard to load
+    const widgetActive = false;
+    const widgetError = null;
 
     return res.json({
       success: true,
