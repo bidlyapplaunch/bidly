@@ -8,6 +8,7 @@ embedded = true
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_customers,read_draft_orders,read_inventory,read_product_listings,read_products,write_customers,write_draft_orders,write_products"
+use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
@@ -19,14 +20,11 @@ api_version = "2025-10"
 
 [[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-uri = "https://bidly-backend-2.hiiiiiiiiiii.com"
+uri = "https://bidly-backend-2.hiiiiiiiiiii.com/webhooks"
 
 [[webhooks.subscriptions]]
 topics = ["app_subscriptions/update"]
 uri = "https://bidly-backend-2.hiiiiiiiiiii.com"
-
-[pos]
-embedded = false
 
 [build]
 automatically_update_urls_on_dev = true
