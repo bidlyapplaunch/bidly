@@ -24,23 +24,32 @@ router.get('/status', async (req, res, next) => {
     let widgetActive = false;
     let widgetError = null;
     
-    try {
-      const shopifyService = getShopifyService();
-      // Add timeout wrapper to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout checking app embed status')), 5000)
-      );
-      
-      const embedCheckPromise = shopifyService.isAppEmbedEnabled(req.shopDomain);
-      const result = await Promise.race([embedCheckPromise, timeoutPromise]);
-      
-      widgetActive = result.active || false;
-      widgetError = result.error || null;
-    } catch (error) {
-      // If the check times out or fails, log but don't block the response
-      console.warn('⚠️ App embed status check failed or timed out:', error.message);
+    // Skip API call if store doesn't have access token (not configured yet)
+    const hasAccessToken = req.store?.accessToken;
+    
+    if (!hasAccessToken) {
+      console.log('⚠️ Store has no access token, skipping app embed check');
       widgetActive = false;
-      widgetError = error.message;
+      widgetError = 'Store not configured - no access token';
+    } else {
+      try {
+        const shopifyService = getShopifyService();
+        // Add timeout wrapper to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout checking app embed status')), 5000)
+        );
+        
+        const embedCheckPromise = shopifyService.isAppEmbedEnabled(req.shopDomain);
+        const result = await Promise.race([embedCheckPromise, timeoutPromise]);
+        
+        widgetActive = result.active || false;
+        widgetError = result.error || null;
+      } catch (error) {
+        // If the check times out or fails, log but don't block the response
+        console.warn('⚠️ App embed status check failed or timed out:', error.message);
+        widgetActive = false;
+        widgetError = error.message;
+      }
     }
 
     return res.json({
