@@ -2,7 +2,7 @@
 
 name = "Bidly"
 client_id = "de32970476f2ecf20d98f9d9b6994c89"
-application_url = "https://bidly-backend-2.hiiiiiiiiiii.com"
+application_url = "https://bidly-auction-backend-2.onrender.com"
 embedded = true
 
 [access_scopes]
@@ -11,7 +11,7 @@ scopes = "read_customers,read_draft_orders,read_inventory,read_product_listings,
 
 [auth]
 redirect_urls = [
-  "https://bidly-backend-2.hiiiiiiiiiii.com/auth/shopify/callback"
+  "https://bidly-auction-backend-2.onrender.com/auth/shopify/callback"
 ]
 
 [webhooks]
@@ -19,11 +19,11 @@ api_version = "2025-10"
 
 [[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-uri = "https://bidly-backend-2.hiiiiiiiiiii.com"
+uri = "https://bidly-auction-backend-2.onrender.com"
 
 [[webhooks.subscriptions]]
 topics = ["app_subscriptions/update"]
-uri = "https://bidly-backend-2.hiiiiiiiiiii.com"
+uri = "https://bidly-auction-backend-2.onrender.com"
 
 [pos]
 embedded = false
@@ -33,7 +33,7 @@ automatically_update_urls_on_dev = true
 dev_store_url = "6sb15z-k1.myshopify.com"
 
 [app_proxy]
-url = "https://bidly-backend-2.hiiiiiiiiiii.com/apps/bidly"
+url = "https://bidly-auction-backend-2.onrender.com/apps/bidly"
 subpath = "bidly"
 prefix = "apps"
 
