@@ -129,6 +129,10 @@ export const identifyStore = async (req, res, next) => {
     }
 
     if (DOMAIN_OPTIONAL_PREFIXES.some((prefix) => req.path.startsWith(prefix))) {
+      // Skip store lookup for these paths - they don't need it
+      if (req.path.startsWith('/api/onboarding')) {
+        console.log('⚡ SKIPPING identifyStore for onboarding path:', req.path);
+      }
       return next();
     }
 
