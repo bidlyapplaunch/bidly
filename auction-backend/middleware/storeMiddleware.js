@@ -133,28 +133,37 @@ export const identifyStore = async (req, res, next) => {
     }
 
     let requestedDomain = normalizeShopDomain(extractShopDomain(req));
+    console.log('🔍 identifyStore - extracted domain:', requestedDomain, 'from path:', req.path);
+    
     // Prefer Shopify session token (RS256) if present
     if (!requestedDomain) {
       const bearer = req.header('Authorization')?.replace('Bearer ', '');
       const shopifySession = await decodeShopifySession(bearer).catch(() => null);
       if (shopifySession?.shopDomain) {
         requestedDomain = shopifySession.shopDomain;
+        console.log('🔍 identifyStore - got domain from session token:', requestedDomain);
       }
     }
     const originDomain = cleanDomain(req.headers?.origin);
+    console.log('🔍 identifyStore - origin domain:', originDomain);
+    
     let store = null;
 
     const tryResolveStore = async (domain) => {
       if (!domain) {
         return null;
       }
+      console.log('🔍 identifyStore - trying to resolve store for domain:', domain);
       if (isMyshopifyDomain(domain)) {
         const byCanonical = await Store.findByDomain(domain);
+        console.log('🔍 identifyStore - findByDomain result:', byCanonical ? 'FOUND' : 'NOT FOUND', byCanonical ? { shopDomain: byCanonical.shopDomain, hasAccessToken: !!byCanonical.accessToken } : null);
         if (byCanonical) {
           return byCanonical;
         }
       }
-      return Store.findOne({ knownDomains: domain }).select('+accessToken');
+      const byKnownDomain = await Store.findOne({ knownDomains: domain }).select('+accessToken');
+      console.log('🔍 identifyStore - findOne by knownDomains result:', byKnownDomain ? 'FOUND' : 'NOT FOUND');
+      return byKnownDomain;
     };
 
     if (requestedDomain) {
