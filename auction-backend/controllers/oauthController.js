@@ -156,30 +156,41 @@ export const initiateOAuth = async (req, res, next) => {
       return res.redirect(adminUrl);
     }
 
-    // Dynamically set redirect URI based on the current backend URL
-    // This ensures each backend uses its own callback URL
-    // Always use https in production (Render uses proxies, so req.protocol might be http)
-    const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
-    const finalProtocol = protocol === 'http' && process.env.NODE_ENV === 'production' ? 'https' : protocol;
+    // Set redirect URI based on client ID (for multi-app support)
+    // Second app (client_id: de32970476f2ecf20d98f9d9b6994c89) uses bidly-backend-2
+    const clientId = shopifyOAuthService.clientId;
+    let redirectUri;
     
-    // Prioritize APP_URL environment variable, then try to detect from request
-    let host;
-    if (process.env.APP_URL) {
-      // Extract host from APP_URL if it's a full URL
-      try {
-        const appUrl = new URL(process.env.APP_URL);
-        host = appUrl.host;
-      } catch {
-        host = process.env.APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      }
+    if (clientId === 'de32970476f2ecf20d98f9d9b6994c89') {
+      // Second app - use bidly-backend-2
+      redirectUri = 'https://bidly-backend-2.hiiiiiiiiiii.com/auth/shopify/callback';
+      console.log('🔗 Using redirect URI for second app:', redirectUri);
+    } else if (process.env.SHOPIFY_REDIRECT_URI) {
+      // Use environment variable if set
+      redirectUri = process.env.SHOPIFY_REDIRECT_URI;
+      console.log('🔗 Using redirect URI from environment:', redirectUri);
     } else {
-      host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-backend.hiiiiiiiiiii.com';
+      // Fallback: dynamically construct from request
+      const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
+      const finalProtocol = protocol === 'http' && process.env.NODE_ENV === 'production' ? 'https' : protocol;
+      
+      let host;
+      if (process.env.APP_URL) {
+        try {
+          const appUrl = new URL(process.env.APP_URL);
+          host = appUrl.host;
+        } catch {
+          host = process.env.APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        }
+      } else {
+        host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-backend.hiiiiiiiiiii.com';
+      }
+      
+      redirectUri = `${finalProtocol}://${host}/auth/shopify/callback`;
+      console.log('🔗 Setting dynamic redirect URI:', redirectUri);
     }
     
-    const dynamicRedirectUri = `${finalProtocol}://${host}/auth/shopify/callback`;
-    
-    console.log('🔗 Setting dynamic redirect URI:', dynamicRedirectUri);
-    shopifyOAuthService.setRedirectUri(dynamicRedirectUri);
+    shopifyOAuthService.setRedirectUri(redirectUri);
 
     // Generate a random state parameter for security
     const state = shopifyOAuthService.generateState();
