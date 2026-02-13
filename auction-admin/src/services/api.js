@@ -477,14 +477,15 @@ export const billingAPI = {
 
 export const onboardingAPI = {
   async getStatus() {
-    // Add timeout to prevent hanging - use Promise.race with a timeout
+    // Reduced timeout to 3 seconds - endpoint should be instant now
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Onboarding status request timed out')), 8000)
+      setTimeout(() => reject(new Error('Onboarding status request timed out')), 3000)
     );
     
     try {
+      const shop = getShopFromURL();
       const response = await Promise.race([
-        api.get('/onboarding/status'),
+        api.get('/onboarding/status', { params: shop ? { shop } : {} }),
         timeoutPromise
       ]);
       return response.data;
