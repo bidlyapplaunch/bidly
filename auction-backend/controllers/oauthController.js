@@ -10,8 +10,23 @@ import { AppError } from '../middleware/errorHandler.js';
  */
 const buildShopifyAdminUrl = (shop, hostParam) => {
   const fallbackAppUrl = process.env.SHOPIFY_APP_EMBED_URL || 'https://bidly-auction-admin.onrender.com';
-  // Use bidly-3 as default since that's the working app instance
-  const appHandle = process.env.SHOPIFY_APP_HANDLE || 'bidly-3';
+  
+  // Determine app handle from client ID
+  const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.SHOPIFY_API_KEY;
+  let appHandle = process.env.SHOPIFY_APP_HANDLE;
+  
+  if (!appHandle && clientId) {
+    // Map client IDs to app handles
+    if (clientId === 'de32970476f2ecf20d98f9d9b6994c89') {
+      appHandle = 'bidly-2'; // Second app
+    } else if (clientId === '698a2d663b3718b47b794bfbd6835ef4') {
+      appHandle = 'bidly-3'; // First app
+    } else {
+      appHandle = 'bidly-3'; // Default fallback
+    }
+  }
+  
+  appHandle = appHandle || 'bidly-3'; // Final fallback
 
   if (hostParam) {
     try {

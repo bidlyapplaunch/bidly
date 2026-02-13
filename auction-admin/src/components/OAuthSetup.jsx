@@ -23,8 +23,24 @@ const OAuthSetup = ({ onComplete }) => {
 
   const redirectToShopifyAdmin = useCallback((shop, host) => {
     const cleanShop = (shop || '').trim();
-    // Use bidly-3 as default since that's the working app instance
-    const appHandle = 'bidly-3';
+    
+    // Determine app handle from API key
+    const apiKey = window.__SHOPIFY_API_KEY__ || 
+                   document.querySelector('meta[name="shopify-api-key"]')?.content ||
+                   new URLSearchParams(window.location.search).get('apiKey') ||
+                   new URLSearchParams(window.location.search).get('api_key');
+    
+    let appHandle = 'bidly-3'; // Default fallback
+    
+    if (apiKey) {
+      // Map client IDs to app handles
+      if (apiKey === 'de32970476f2ecf20d98f9d9b6994c89') {
+        appHandle = 'bidly-2'; // Second app
+      } else if (apiKey === '698a2d663b3718b47b794bfbd6835ef4') {
+        appHandle = 'bidly-3'; // First app
+      }
+    }
+    
     let adminUrl = null;
 
     if (host) {
