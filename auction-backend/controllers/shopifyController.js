@@ -340,33 +340,27 @@ export const getServiceStatus = async (req, res, next) => {
       shopDomain: req.shopDomain
     });
     
-    // Use req.store from identifyStore middleware if available
-    if (req.store) {
-      const hasAccessToken = !!req.store.accessToken;
-      const isInstalled = !!req.store.isInstalled;
-      const configured = isInstalled && hasAccessToken;
-      
-      console.log('🔍 getServiceStatus - Using req.store:', {
-        shopDomain: req.store.shopDomain,
-        isInstalled,
-        hasAccessToken,
-        configured,
-        accessTokenLength: req.store.accessToken ? req.store.accessToken.length : 0
-      });
-      
-      return res.json({
-        success: true,
-        configured,
-        shopDomain: req.store.shopDomain,
-        storeName: req.store.storeName,
-        hasAccessToken,
-        isInstalled,
-        apiVersion: '2025-10',
-        mockMode: !isInstalled || !hasAccessToken,
-        installedAt: req.store.installedAt,
-        lastAccessAt: req.store.lastAccessAt
-      });
+    // Use req.store from identifyStore middleware - it should always be present
+    if (!req.store) {
+      throw new AppError('Store not found', 404);
     }
+    
+    const hasAccessToken = !!req.store.accessToken;
+    const isInstalled = !!req.store.isInstalled;
+    const configured = isInstalled && hasAccessToken;
+    
+    return res.json({
+      success: true,
+      configured,
+      shopDomain: req.store.shopDomain,
+      storeName: req.store.storeName,
+      hasAccessToken,
+      isInstalled,
+      apiVersion: '2025-10',
+      mockMode: !isInstalled || !hasAccessToken,
+      installedAt: req.store.installedAt,
+      lastAccessAt: req.store.lastAccessAt
+    });
     
     // Fallback to lookup if store not in req (shouldn't happen with identifyStore middleware)
     const shopDomain = getCurrentShopDomain(req);
