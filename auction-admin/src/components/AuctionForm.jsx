@@ -168,13 +168,11 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     const checkShopifyStatus = async () => {
       try {
         const status = await shopifyAPI.getServiceStatus();
-        console.log('Shopify status:', status);
-        // Only show warning if explicitly false AND has error, otherwise allow search
-        // This prevents false warnings when store just needs OAuth completion
-        const shouldWarn = status.configured === false && status.error && !status.isInstalled;
-        setShopifyConfigured(!shouldWarn); // Allow search unless there's a clear error
+        // Only show warning if store is explicitly not configured (no access token)
+        // If configured is true OR hasAccessToken is true, allow search
+        const isConfigured = status.configured === true || status.hasAccessToken === true;
+        setShopifyConfigured(isConfigured);
       } catch (error) {
-        console.error('Error checking Shopify service status:', error);
         // On error, still allow search (will fallback to mock data if needed)
         setShopifyConfigured(true);
       }
