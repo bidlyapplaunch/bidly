@@ -1237,9 +1237,11 @@ class ShopifyService {
    */
   async getStoreConfigStatus(shopDomain) {
     try {
+      console.log('🔍 getStoreConfigStatus - Looking for store:', shopDomain);
       const store = await Store.findByDomain(shopDomain);
       
       if (!store) {
+        console.log('❌ getStoreConfigStatus - Store not found:', shopDomain);
         return {
           configured: false,
           shopDomain: shopDomain,
@@ -1251,14 +1253,26 @@ class ShopifyService {
         };
       }
 
+      const hasAccessToken = !!store.accessToken;
+      const isInstalled = !!store.isInstalled;
+      const configured = isInstalled && hasAccessToken;
+      
+      console.log('🔍 getStoreConfigStatus - Store found:', {
+        shopDomain: store.shopDomain,
+        isInstalled,
+        hasAccessToken,
+        configured,
+        accessTokenLength: store.accessToken ? store.accessToken.length : 0
+      });
+
       return {
-        configured: store.isInstalled && !!store.accessToken,
+        configured,
         shopDomain: store.shopDomain,
         storeName: store.storeName,
-        hasAccessToken: !!store.accessToken,
-        isInstalled: store.isInstalled,
+        hasAccessToken,
+        isInstalled,
         apiVersion: this.apiVersion,
-        mockMode: !store.isInstalled || !store.accessToken,
+        mockMode: !isInstalled || !hasAccessToken,
         installedAt: store.installedAt,
         lastAccessAt: store.lastAccessAt
       };
