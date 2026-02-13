@@ -11,50 +11,23 @@ const router = express.Router();
 /**
  * GET /api/onboarding/status
  * Returns onboarding completion status and widget activation state
- * OPTIMIZED: Returns immediately without slow store lookups
+ * ULTRA-FAST: Completely synchronous, no async operations
  */
-router.get('/status', async (req, res, next) => {
-  try {
-    // Extract shop from query params directly (fast)
-    const shopDomain = req.query.shop || req.shopDomain;
-    
-    if (!shopDomain) {
-      // If no shop, just return default status to allow dashboard to load
-      return res.json({
-        success: true,
-        onboardingComplete: true,
-        widgetActive: false,
-        widgetError: null,
-        shopDomain: null,
-        storeSlug: null,
-        marketplaceUrl: null
-      });
-    }
-
-    const storeSlug = shopDomain.replace('.myshopify.com', '');
-
-    // Return immediately - no database lookups, no API calls
-    return res.json({
-      success: true,
-      onboardingComplete: true, // Always true to allow dashboard to load
-      widgetActive: false,
-      widgetError: null,
-      shopDomain,
-      storeSlug,
-      marketplaceUrl: `https://${shopDomain}/apps/bidly?shop=${shopDomain}`
-    });
-  } catch (error) {
-    // Even on error, return success to prevent blocking
-    return res.json({
-      success: true,
-      onboardingComplete: true,
-      widgetActive: false,
-      widgetError: error.message,
-      shopDomain: req.query.shop || null,
-      storeSlug: null,
-      marketplaceUrl: null
-    });
-  }
+router.get('/status', (req, res) => {
+  // Extract shop from query params directly (fast)
+  const shopDomain = req.query.shop || req.shopDomain || null;
+  const storeSlug = shopDomain ? shopDomain.replace('.myshopify.com', '') : null;
+  
+  // Return immediately - completely synchronous, zero delay
+  res.json({
+    success: true,
+    onboardingComplete: true, // Always true to allow dashboard to load
+    widgetActive: false,
+    widgetError: null,
+    shopDomain,
+    storeSlug,
+    marketplaceUrl: shopDomain ? `https://${shopDomain}/apps/bidly?shop=${shopDomain}` : null
+  });
 });
 
 /**

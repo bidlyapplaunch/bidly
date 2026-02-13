@@ -17,7 +17,7 @@ const STATIC_PATH_PREFIXES = [
 // Common static file extensions
 const STATIC_FILE_EXTENSIONS = ['.svg', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.css', '.js', '.map'];
 
-const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth', '/auth'];
+const DOMAIN_OPTIONAL_PREFIXES = ['/api/auth', '/auth', '/api/onboarding'];
 
 const cleanDomain = (rawDomain) => {
   if (!rawDomain) {
