@@ -24,7 +24,11 @@ const __dirname = path.dirname(__filename);
 const router = express.Router();
 
 const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || '2025-10';
-const BACKEND_BASE_URL = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
+// Require APP_URL - no hardcoded fallback
+const BACKEND_BASE_URL = process.env.APP_URL;
+if (!BACKEND_BASE_URL) {
+  console.error('❌ APP_URL is not set in appProxyRoutes');
+}
 
 const marketplaceDistPath = path.join(__dirname, '../../auction-customer/dist');
 const marketplaceAssetsPath = path.join(marketplaceDistPath, 'assets');

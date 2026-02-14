@@ -9,7 +9,11 @@ import { AppError } from '../middleware/errorHandler.js';
  * @returns {string} - Fully qualified admin URL
  */
 const buildShopifyAdminUrl = (shop, hostParam) => {
-  const fallbackAppUrl = process.env.SHOPIFY_APP_EMBED_URL || 'https://bidly-auction-admin.onrender.com';
+  // Require SHOPIFY_APP_EMBED_URL - no fallback
+  const fallbackAppUrl = process.env.SHOPIFY_APP_EMBED_URL;
+  if (!fallbackAppUrl) {
+    console.error('❌ SHOPIFY_APP_EMBED_URL is not set');
+  }
   
   // Determine app handle from client ID
   const clientId = process.env.SHOPIFY_CLIENT_ID || process.env.SHOPIFY_API_KEY;
@@ -21,12 +25,15 @@ const buildShopifyAdminUrl = (shop, hostParam) => {
       appHandle = 'bidly-2'; // Second app
     } else if (clientId === '698a2d663b3718b47b794bfbd6835ef4') {
       appHandle = 'bidly-3'; // First app
-    } else {
-      appHandle = 'bidly-3'; // Default fallback
     }
+    // No default fallback - require explicit configuration
   }
   
-  appHandle = appHandle || 'bidly-3'; // Final fallback
+  // Require app handle - fail if not set
+  if (!appHandle) {
+    console.error('❌ SHOPIFY_APP_HANDLE is not set and could not be determined from client ID');
+    throw new Error('App handle is not configured. Please set SHOPIFY_APP_HANDLE environment variable.');
+  }
 
   if (hostParam) {
     try {

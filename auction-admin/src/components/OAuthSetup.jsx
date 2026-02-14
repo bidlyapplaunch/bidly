@@ -30,7 +30,7 @@ const OAuthSetup = ({ onComplete }) => {
                    new URLSearchParams(window.location.search).get('apiKey') ||
                    new URLSearchParams(window.location.search).get('api_key');
     
-    let appHandle = 'bidly-3'; // Default fallback
+    let appHandle = null;
     
     if (apiKey) {
       // Map client IDs to app handles
@@ -39,6 +39,12 @@ const OAuthSetup = ({ onComplete }) => {
       } else if (apiKey === '698a2d663b3718b47b794bfbd6835ef4') {
         appHandle = 'bidly-3'; // First app
       }
+    }
+    
+    // Require app handle - fail if not determined
+    if (!appHandle) {
+      console.error('❌ Could not determine app handle from API key:', apiKey);
+      throw new Error('Unable to determine app handle. API key must match a known app.');
     }
     
     let adminUrl = null;

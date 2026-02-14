@@ -11,8 +11,17 @@ import {
 import { BILLING_PLANS, DEFAULT_PLAN, getPlanCapabilities, sanitizePlan } from '../config/billingPlans.js';
 import Store from '../models/Store.js';
 
-const APP_URL = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
-const ADMIN_APP_URL = process.env.ADMIN_APP_URL || 'https://bidly-auction-admin.onrender.com';
+// Require APP_URL - no hardcoded fallback
+const APP_URL = process.env.APP_URL;
+if (!APP_URL) {
+  console.error('❌ APP_URL is not set');
+}
+
+// Require ADMIN_APP_URL - no hardcoded fallback  
+const ADMIN_APP_URL = process.env.ADMIN_APP_URL;
+if (!ADMIN_APP_URL) {
+  console.error('❌ ADMIN_APP_URL is not set');
+}
 
 export const subscribeToPlan = async (req, res, next) => {
   try {

@@ -40,11 +40,15 @@ class ShopifyOAuthService {
              // Use environment variable if set
              if (process.env.SHOPIFY_REDIRECT_URI) {
                this._redirectUri = process.env.SHOPIFY_REDIRECT_URI;
-             } else {
-               // Fallback: construct from APP_URL or default
-               const appUrl = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
+             } else if (process.env.APP_URL) {
+               // Construct from APP_URL if available
+               const appUrl = process.env.APP_URL;
                this._redirectUri = `${appUrl}/auth/shopify/callback`;
-               console.log('⚠️ SHOPIFY_REDIRECT_URI not set, using constructed URL:', this._redirectUri);
+               console.log('⚠️ SHOPIFY_REDIRECT_URI not set, using constructed URL from APP_URL:', this._redirectUri);
+             } else {
+               // No fallback - require explicit configuration
+               console.error('❌ SHOPIFY_REDIRECT_URI and APP_URL are not set');
+               throw new Error('SHOPIFY_REDIRECT_URI or APP_URL must be set');
              }
            }
            return this._redirectUri;
@@ -68,8 +72,13 @@ class ShopifyOAuthService {
 
   get webhookBaseUrl() {
     if (this._webhookBaseUrl === null) {
-      const fallback = process.env.APP_URL || 'https://bidly-backend.hiiiiiiiiiii.com';
-      this._webhookBaseUrl = (process.env.SHOPIFY_WEBHOOK_BASE_URL || fallback).replace(/\/$/, '');
+      // Use SHOPIFY_WEBHOOK_BASE_URL if set, otherwise APP_URL, but no hardcoded fallback
+      const baseUrl = process.env.SHOPIFY_WEBHOOK_BASE_URL || process.env.APP_URL;
+      if (!baseUrl) {
+        console.error('❌ SHOPIFY_WEBHOOK_BASE_URL and APP_URL are not set');
+        throw new Error('SHOPIFY_WEBHOOK_BASE_URL or APP_URL must be set');
+      }
+      this._webhookBaseUrl = baseUrl.replace(/\/$/, '');
     }
     return this._webhookBaseUrl;
   }
