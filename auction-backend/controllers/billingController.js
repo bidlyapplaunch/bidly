@@ -140,6 +140,9 @@ export const confirmSubscription = async (req, res, next) => {
     const validStatuses = ['ACTIVE', 'ACCEPTED'];
     if (!validStatuses.includes(status)) {
       console.warn('⚠️ Subscription not activated yet:', status);
+      if (!ADMIN_APP_URL) {
+        throw new AppError('ADMIN_APP_URL is not configured', 500);
+      }
       const redirectUrl = new URL('/plans', ADMIN_APP_URL);
       redirectUrl.searchParams.set('shop', shop);
       redirectUrl.searchParams.set('billing', 'pending');
@@ -161,6 +164,9 @@ export const confirmSubscription = async (req, res, next) => {
     await req.store.save();
     await applyPlanChangeEffects(req.store, previousPlan, resolvedPlanKey);
 
+    if (!ADMIN_APP_URL) {
+      throw new AppError('ADMIN_APP_URL is not configured', 500);
+    }
     const redirectUrl = new URL('/plans', ADMIN_APP_URL);
     redirectUrl.searchParams.set('shop', shop);
     redirectUrl.searchParams.set('billing', 'success');
