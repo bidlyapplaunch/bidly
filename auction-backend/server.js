@@ -565,14 +565,27 @@ app.get('/preview/widget', (req, res) => {
     <script src="/preview/widget-assets/auction-app-embed.js?v=${version}" defer></script>
     <script>
       (function() {
+        // For embedded Shopify apps, parent is always admin.shopify.com
+        // Use '*' as fallback for non-Shopify contexts
+        function getTargetOrigin() {
+          // If we're in an iframe (embedded app), parent is Shopify admin
+          if (window.self !== window.top) {
+            return 'https://admin.shopify.com';
+          }
+          // Fallback to wildcard for non-embedded contexts
+          return '*';
+        }
+
         function reportHeight() {
           try {
             var height = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
             if (window.parent && height) {
-              window.parent.postMessage({ type: 'BIDLY_PREVIEW_HEIGHT', height: height }, '*');
+              var targetOrigin = getTargetOrigin();
+              window.parent.postMessage({ type: 'BIDLY_PREVIEW_HEIGHT', height: height }, targetOrigin);
             }
           } catch (error) {
-            console.warn('Bidly preview height reporting failed:', error);
+            // Silently fail - this is just for preview height reporting
+            // Don't log errors to avoid console spam
           }
         }
 
