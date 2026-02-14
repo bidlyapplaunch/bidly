@@ -335,7 +335,7 @@ export const getServiceStatus = async (req, res, next) => {
     if (!req.store) {
       throw new AppError('Store not found', 404);
     }
-    
+
     const hasAccessToken = !!req.store.accessToken;
     const isInstalled = !!req.store.isInstalled;
     const configured = isInstalled && hasAccessToken;

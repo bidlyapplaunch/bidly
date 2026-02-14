@@ -8,9 +8,6 @@ embedded = true
 [webhooks]
 api_version = "2025-10"
 
-J'?
-
-
 [[webhooks.subscriptions]]
 topics = ["app_subscriptions/update"]
 uri = "https://bidly-backend.hiiiiiiiiiii.com"

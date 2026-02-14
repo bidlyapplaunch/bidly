@@ -152,15 +152,25 @@ const OAuthSetup = ({ onComplete }) => {
       }
       
       // Use the OAuth status endpoint which doesn't require authentication
-      const response = await fetch(`${backendUrl}/auth/shopify/status?shop=${shopToUse}`);
+      // Add cache-busting to prevent 304 responses from using stale data
+      const cacheBuster = `?shop=${shopToUse}&_t=${Date.now()}`;
+      const response = await fetch(`${backendUrl}/auth/shopify/status${cacheBuster}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       
-      if (!response.ok) {
+      // 304 Not Modified is a valid response - treat it as success
+      if (!response.ok && response.status !== 304) {
         // If endpoint doesn't exist or returns error, assume OAuth is needed
         console.warn('⚠️ OAuth status check failed:', response.status, response.statusText);
         setNeedsOAuth(true);
         return;
       }
       
+      // For 304, the browser should use cached response body
       const data = await response.json();
       console.log('🔍 OAuth status response:', data);
 
