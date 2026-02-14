@@ -176,6 +176,9 @@ export const confirmSubscription = async (req, res, next) => {
   } catch (error) {
     console.error('❌ Billing confirmation error:', error.message);
     const shop = req.query.shop || req.shopDomain;
+    if (!ADMIN_APP_URL) {
+      return res.status(500).json({ success: false, message: 'ADMIN_APP_URL is not configured' });
+    }
     const redirectUrl = new URL('/plans', ADMIN_APP_URL);
     if (shop) {
       redirectUrl.searchParams.set('shop', shop);

@@ -287,6 +287,13 @@ router.get('/', async (req, res) => {
       }
     }
 
+    if (!BACKEND_BASE_URL) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Backend configuration error: APP_URL is not set' 
+      });
+    }
+    
     const marketplaceConfig = {
       shopDomain,
       appProxyBasePath: baseProxyPath,
