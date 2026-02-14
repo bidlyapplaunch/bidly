@@ -53,6 +53,10 @@ const buildShopifyAdminUrl = (shop, hostParam) => {
     return `https://admin.shopify.com/store/${storeSlug}/apps/${appHandle}`;
   }
 
+  // Require fallbackAppUrl - fail if not set
+  if (!fallbackAppUrl) {
+    throw new Error('SHOPIFY_APP_EMBED_URL is not set and shop parameter is missing');
+  }
   return fallbackAppUrl;
 };
 
@@ -205,7 +209,11 @@ export const initiateOAuth = async (req, res, next) => {
           host = process.env.APP_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
         }
       } else {
-        host = req.get('host') || req.get('x-forwarded-host') || req.hostname || 'bidly-backend.hiiiiiiiiiii.com';
+        // Derive host from request - no hardcoded fallback
+        host = req.get('host') || req.get('x-forwarded-host') || req.hostname;
+        if (!host) {
+          throw new Error('Unable to determine backend host. Please set APP_URL environment variable.');
+        }
       }
       
       redirectUri = `${finalProtocol}://${host}/auth/shopify/callback`;
