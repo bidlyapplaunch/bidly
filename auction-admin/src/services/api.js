@@ -142,10 +142,16 @@ api.interceptors.request.use(
       console.log('🏪 Added shop parameter:', shopDomain);
     }
     
-    // Skip session token for onboarding endpoint to prevent hanging
-    // Onboarding endpoint doesn't require auth
-    if (!config.url?.includes('/onboarding/status')) {
-      // Attach Shopify session token (RS256) via App Bridge if available
+    // Skip session token for endpoints that don't require Shopify auth
+    // - Onboarding endpoint doesn't require auth
+    // - Auth endpoints (login/register) use JWT tokens, not Shopify session tokens
+    const skipShopifyAuth = 
+      config.url?.includes('/onboarding/status') ||
+      config.url?.includes('/auth/login') ||
+      config.url?.includes('/auth/register');
+    
+    if (!skipShopifyAuth) {
+      // Try Shopify session token (RS256) first for embedded apps
       const appBridge = getAppBridge();
       if (appBridge) {
         try {
@@ -158,17 +164,36 @@ api.interceptors.request.use(
           if (sessionToken) {
             config.headers.Authorization = `Bearer ${sessionToken}`;
           } else {
-            delete config.headers.Authorization;
+            // Fall back to JWT token if Shopify session token fails
+            const jwtToken = authService.getToken();
+            if (jwtToken) {
+              config.headers.Authorization = `Bearer ${jwtToken}`;
+            } else {
+              delete config.headers.Authorization;
+            }
           }
         } catch (err) {
-          // Silently fail - don't block the request if token fails
-          delete config.headers.Authorization;
+          // Fall back to JWT token if Shopify session token fails
+          const jwtToken = authService.getToken();
+          if (jwtToken) {
+            config.headers.Authorization = `Bearer ${jwtToken}`;
+          } else {
+            delete config.headers.Authorization;
+          }
         }
       } else {
-        delete config.headers.Authorization;
+        // No App Bridge - use JWT token for non-embedded admin access
+        const jwtToken = authService.getToken();
+        if (jwtToken) {
+          config.headers.Authorization = `Bearer ${jwtToken}`;
+        } else {
+          delete config.headers.Authorization;
+        }
       }
     } else {
-      // Onboarding endpoint - skip auth to prevent hanging
+      // Skip Shopify auth for these endpoints
+      // But for login/register, we might want to include JWT if already logged in
+      // (though typically these endpoints don't need tokens)
       delete config.headers.Authorization;
     }
     

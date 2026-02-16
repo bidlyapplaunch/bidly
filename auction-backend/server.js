@@ -206,7 +206,7 @@ app.use(cors({
   origin: (origin, callback) => callback(null, true),
   credentials: true,
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
-  allowedHeaders: 'Content-Type,Authorization,X-Shopify-Shop-Domain'
+  allowedHeaders: 'Content-Type,Authorization,X-Shopify-Shop-Domain,Cache-Control'
 }));
 
 // Security middleware - Configured for Shopify embedded apps
