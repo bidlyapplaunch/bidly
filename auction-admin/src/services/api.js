@@ -154,14 +154,6 @@ api.interceptors.request.use(
       // Try Shopify session token (RS256) first for embedded apps
       const appBridge = getAppBridge();
       let tokenSet = false;
-      let tokenSource = null;
-      
-      // Always log what we're trying
-      console.log(`🔍 Auth check for ${config.url}:`, {
-        hasAppBridge: !!appBridge,
-        hasJWT: !!authService.getToken(),
-        skipShopifyAuth
-      });
       
       if (appBridge) {
         try {
@@ -175,44 +167,23 @@ api.interceptors.request.use(
           if (sessionToken && typeof sessionToken === 'string' && sessionToken.trim().length > 0) {
             config.headers.Authorization = `Bearer ${sessionToken}`;
             tokenSet = true;
-            tokenSource = 'Shopify session token';
-            console.log(`✅ Set Shopify session token for ${config.url}`);
-          } else {
-            console.warn(`⚠️ Shopify session token was empty/null for ${config.url}`);
           }
         } catch (err) {
           // Session token failed - will fall back to JWT below
-          console.warn('⚠️ Shopify session token failed, falling back to JWT:', err?.message || err);
         }
       }
       
       // Fall back to JWT token if Shopify session token wasn't set
       if (!tokenSet) {
-        const jwtToken = authService.getToken();
+        const jwtToken = authService.getToken() || (typeof window !== 'undefined' ? localStorage.getItem('authToken') : null);
         if (jwtToken && typeof jwtToken === 'string' && jwtToken.trim().length > 0) {
           config.headers.Authorization = `Bearer ${jwtToken}`;
           tokenSet = true;
-          tokenSource = 'JWT token';
-          console.log(`✅ Set JWT token for ${config.url}`);
-        } else {
-          console.warn(`⚠️ JWT token not available for ${config.url}`);
         }
-      }
-      
-      // Final check - ensure token is set
-      if (!tokenSet) {
-        console.error('❌ CRITICAL: No authentication token available for request:', config.url, {
-          hasAppBridge: !!appBridge,
-          hasJWT: !!authService.getToken(),
-          jwtTokenValue: authService.getToken() ? 'exists' : 'null'
-        });
-      } else {
-        console.log(`🔐 Using ${tokenSource} for ${config.url}`);
       }
     } else {
       // Skip Shopify auth for these endpoints
       delete config.headers.Authorization;
-      console.log(`⏭️ Skipping auth for ${config.url}`);
     }
     
     if (typeof window !== 'undefined' && window.console) {
