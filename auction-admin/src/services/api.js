@@ -503,21 +503,36 @@ export const onboardingAPI = {
       const startTime = Date.now();
       if (typeof window !== 'undefined' && window.console) {
         window.console.warn('⏱️ Request started at:', new Date().toISOString());
+        window.console.warn('🌐 Current origin:', window.location.origin);
+        window.console.warn('🌐 Full URL will be:', window.location.origin + '/api/onboarding/status');
       }
       
-      const response = await api.get('/onboarding/status', { 
-        params: shop ? { shop } : {},
-        timeout: 10000 // Explicit timeout
-      });
+      // Add a timeout check
+      const timeoutId = setTimeout(() => {
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.error('⏰ TIMEOUT WARNING: Request has been pending for 5 seconds');
+        }
+      }, 5000);
       
-      const duration = Date.now() - startTime;
-      if (typeof window !== 'undefined' && window.console) {
-        window.console.warn('⏱️ Request completed in', duration, 'ms');
-        window.console.warn('📥 onboardingAPI.getStatus() - response received:', response);
-        window.console.warn('📥 Response status:', response.status);
-        window.console.warn('📥 Response data:', response.data);
+      try {
+        const response = await api.get('/onboarding/status', { 
+          params: shop ? { shop } : {},
+          timeout: 10000 // Explicit timeout
+        });
+        
+        clearTimeout(timeoutId);
+        const duration = Date.now() - startTime;
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.warn('⏱️ Request completed in', duration, 'ms');
+          window.console.warn('📥 onboardingAPI.getStatus() - response received:', response);
+          window.console.warn('📥 Response status:', response.status);
+          window.console.warn('📥 Response data:', response.data);
+        }
+        return response.data;
+      } catch (innerError) {
+        clearTimeout(timeoutId);
+        throw innerError; // Re-throw to be caught by outer catch
       }
-      return response.data;
     } catch (error) {
       // If any error, return default status to allow dashboard to load
       if (typeof window !== 'undefined' && window.console) {
