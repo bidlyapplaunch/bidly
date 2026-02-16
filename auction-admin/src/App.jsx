@@ -1,5 +1,8 @@
 // Admin app entry point
-console.log('🚀🚀🚀 App.jsx MODULE LOADING 🚀🚀🚀');
+// Use window.console directly to bypass debug filter
+if (typeof window !== 'undefined' && window.console) {
+  window.console.warn('🚀🚀🚀 App.jsx MODULE LOADING 🚀🚀🚀');
+}
 import React, { useState, useEffect } from 'react';
 import { AppProvider } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
@@ -243,23 +246,34 @@ function AppContent() {
     color: '#1f2937'
   };
 
-  console.log('🔴 App.jsx render state:', { loading, user: !!user, oauthComplete, onboardingLoading, onboardingStatus: !!onboardingStatus });
+  // Use window.console directly to bypass debug filter
+  if (typeof window !== 'undefined' && window.console) {
+    window.console.warn('🔴 App.jsx render state:', { loading, user: !!user, oauthComplete, onboardingLoading, onboardingStatus: !!onboardingStatus });
+  }
 
   if (loading) {
-    console.log('🔴 App.jsx: Showing loading screen');
+    if (typeof window !== 'undefined' && window.console) {
+      window.console.warn('🔴 App.jsx: Showing loading screen');
+    }
     content = (
       <div style={loadingMarkupStyle}>
         {i18n.translate('admin.common.loadingApp')}
       </div>
     );
   } else if (!user) {
-    console.log('🔴 App.jsx: Showing login screen');
+    if (typeof window !== 'undefined' && window.console) {
+      window.console.warn('🔴 App.jsx: Showing login screen');
+    }
     content = <Login onLogin={handleLogin} />;
   } else if (!oauthComplete) {
-    console.log('🔴 App.jsx: Showing OAuth setup');
+    if (typeof window !== 'undefined' && window.console) {
+      window.console.warn('🔴 App.jsx: Showing OAuth setup');
+    }
     content = <OAuthSetup onComplete={handleOAuthComplete} />;
   } else if (onboardingLoading || !onboardingStatus) {
-    console.log('🔴 App.jsx: Showing preparing dashboard (onboardingLoading:', onboardingLoading, 'onboardingStatus:', onboardingStatus, ')');
+    if (typeof window !== 'undefined' && window.console) {
+      window.console.warn('🔴 App.jsx: Showing preparing dashboard (onboardingLoading:', onboardingLoading, 'onboardingStatus:', onboardingStatus, ')');
+    }
     content = (
       <div style={loadingMarkupStyle}>
         {i18n.translate('admin.common.preparingDashboard')}

@@ -1,20 +1,22 @@
-console.log('🚀🚀🚀 MAIN.JSX LOADING 🚀🚀🚀');
+// Use original console.log before it gets patched
+const originalLog = window.console.log.bind(window.console);
+originalLog('🚀🚀🚀 MAIN.JSX LOADING 🚀🚀🚀');
 import './utils/setupDebugConsole';
-console.log('🚀🚀🚀 setupDebugConsole loaded 🚀🚀🚀');
+originalLog('🚀🚀🚀 setupDebugConsole loaded 🚀🚀🚀');
 import { initAppBridge } from './appBridgeGlobal';
-console.log('🚀🚀🚀 initAppBridge imported 🚀🚀🚀');
+originalLog('🚀🚀🚀 initAppBridge imported 🚀🚀🚀');
 
 initAppBridge();
-console.log('🚀🚀🚀 initAppBridge called 🚀🚀🚀');
+originalLog('🚀🚀🚀 initAppBridge called 🚀🚀🚀');
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
-console.log('🚀🚀🚀 React and App imported 🚀🚀🚀');
+originalLog('🚀🚀🚀 React and App imported 🚀🚀🚀');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
-console.log('🚀🚀🚀 ReactDOM.render called 🚀🚀🚀');
+originalLog('🚀🚀🚀 ReactDOM.render called 🚀🚀🚀');
