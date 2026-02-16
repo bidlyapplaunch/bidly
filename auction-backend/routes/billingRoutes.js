@@ -22,6 +22,53 @@ router.post('/cancel', identifyStore, cancelCurrentSubscription);
 // Shopify return URL after merchant approves billing
 router.get('/confirm', identifyStore, confirmSubscription);
 
+// Manual plan override (admin only - bypasses Shopify sync)
+router.post('/override', identifyStore, async (req, res, next) => {
+  try {
+    if (!req.store) {
+      return res.status(400).json({ success: false, message: 'Store context required' });
+    }
+
+    const { plan } = req.body;
+    if (!plan) {
+      return res.status(400).json({ success: false, message: 'Plan is required' });
+    }
+
+    const validPlans = ['free', 'basic', 'pro', 'enterprise'];
+    const planKey = plan.toLowerCase();
+    if (!validPlans.includes(planKey)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Invalid plan. Must be one of: ${validPlans.join(', ')}` 
+      });
+    }
+
+    const previousPlan = req.store.plan || 'free';
+    req.store.plan = planKey;
+    req.store.planManuallySet = true;
+    req.store.pendingPlan = null;
+    req.store.planActiveAt = new Date();
+    await req.store.save();
+
+    console.log(`✅ Manually set plan for ${req.store.shopDomain}: ${previousPlan} → ${planKey}`);
+
+    res.json({
+      success: true,
+      message: `Plan manually set to ${planKey}`,
+      previousPlan,
+      newPlan: planKey,
+      shopDomain: req.store.shopDomain
+    });
+  } catch (error) {
+    console.error('❌ Error overriding plan:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to override plan',
+      error: error.message 
+    });
+  }
+});
+
 export default router;
 
 

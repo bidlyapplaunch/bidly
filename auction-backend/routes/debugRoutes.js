@@ -186,6 +186,8 @@ router.get('/stores', async (req, res) => {
     const storesInfo = stores.map(store => ({
       domain: store.shopDomain,
       name: store.storeName,
+      plan: store.plan || 'free',
+      planManuallySet: store.planManuallySet || false,
       installed: store.isInstalled,
       hasToken: !!store.accessToken,
       tokenLength: store.accessToken ? store.accessToken.length : 0,
@@ -203,6 +205,100 @@ router.get('/stores', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error listing stores:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
+// Manually set store plan (bypasses Shopify sync)
+router.post('/set-plan/:shopDomain', async (req, res) => {
+  try {
+    const { shopDomain } = req.params;
+    const { plan } = req.body;
+    
+    if (!plan) {
+      return res.status(400).json({
+        success: false,
+        message: 'Plan is required in request body'
+      });
+    }
+    
+    const validPlans = ['free', 'basic', 'pro', 'enterprise'];
+    const planKey = plan.toLowerCase();
+    if (!validPlans.includes(planKey)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid plan. Must be one of: ${validPlans.join(', ')}`
+      });
+    }
+    
+    const store = await Store.findByDomain(shopDomain);
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: `Store ${shopDomain} not found`
+      });
+    }
+    
+    const previousPlan = store.plan || 'free';
+    store.plan = planKey;
+    store.planManuallySet = true;
+    store.pendingPlan = null;
+    store.planActiveAt = new Date();
+    await store.save();
+    
+    console.log(`✅ Manually set plan for ${shopDomain}: ${previousPlan} → ${planKey}`);
+    
+    res.json({
+      success: true,
+      message: `Plan manually set to ${planKey} for ${shopDomain}`,
+      shopDomain,
+      previousPlan,
+      newPlan: planKey,
+      planManuallySet: true
+    });
+    
+  } catch (error) {
+    console.error('❌ Error setting plan:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
+// Clear manual plan override (allow Shopify sync again)
+router.post('/clear-plan-override/:shopDomain', async (req, res) => {
+  try {
+    const { shopDomain } = req.params;
+    
+    const store = await Store.findByDomain(shopDomain);
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: `Store ${shopDomain} not found`
+      });
+    }
+    
+    store.planManuallySet = false;
+    await store.save();
+    
+    console.log(`✅ Cleared manual plan override for ${shopDomain}`);
+    
+    res.json({
+      success: true,
+      message: `Manual plan override cleared for ${shopDomain}`,
+      shopDomain,
+      planManuallySet: false,
+      note: 'Plan will now sync from Shopify subscriptions'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error clearing plan override:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

@@ -207,6 +207,16 @@ export async function getActiveSubscriptions(store) {
 }
 
 export async function syncStorePlanFromShopify(store) {
+  // Skip sync if plan was manually set
+  if (store.planManuallySet) {
+    console.log(`⏭️ Skipping plan sync for ${store.shopDomain} - plan is manually set to ${store.plan}`);
+    return {
+      activePlan: store.plan || DEFAULT_PLAN,
+      changed: false,
+      skipped: true
+    };
+  }
+
   const subscriptions = await getActiveSubscriptions(store);
 
   if (!subscriptions.length) {

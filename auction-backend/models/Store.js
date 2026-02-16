@@ -88,6 +88,12 @@ const storeSchema = new mongoose.Schema({
   trialEndsAt: {
     type: Date
   },
+
+  // Flag to prevent automatic sync from overriding manually set plans
+  planManuallySet: {
+    type: Boolean,
+    default: false
+  },
   
   // OAuth and authentication
   accessToken: {
