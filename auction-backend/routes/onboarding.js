@@ -5,6 +5,12 @@ import { identifyStore } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
+// Test endpoint to verify route is accessible
+router.get('/test', (req, res) => {
+  console.log('✅ /api/onboarding/test - Route is accessible!');
+  res.json({ success: true, message: 'Onboarding route is working' });
+});
+
 // Don't use identifyStore middleware - it can be slow
 // We'll extract shop from query params directly
 
