@@ -421,7 +421,7 @@
             buttons: {
                 placeBid: "Place Bid",
                 buyNow: "Buy Now",
-                loginShopify: "Log in with Shopify",
+                loginShopify: "Log in to bid",
                 continueGuest: "Continue as Guest (View Only)",
                 logout: "Logout",
                 chatBox: "Chat Box",
