@@ -153,7 +153,6 @@ api.interceptors.request.use(
     if (!skipShopifyAuth) {
       // Try Shopify session token (RS256) first for embedded apps
       const appBridge = getAppBridge();
-      let tokenSet = false;
       
       if (appBridge) {
         try {
@@ -166,19 +165,17 @@ api.interceptors.request.use(
           // Check if token is valid (non-empty string)
           if (sessionToken && typeof sessionToken === 'string' && sessionToken.trim().length > 0) {
             config.headers.Authorization = `Bearer ${sessionToken}`;
-            tokenSet = true;
           }
         } catch (err) {
-          // Session token failed - will fall back to JWT below
+          // Session token failed - fall back to JWT
         }
       }
       
-      // Fall back to JWT token if Shopify session token wasn't set
-      if (!tokenSet) {
+      // Fall back to JWT token if no Authorization header was set
+      if (!config.headers.Authorization) {
         const jwtToken = authService.getToken() || (typeof window !== 'undefined' ? localStorage.getItem('authToken') : null);
         if (jwtToken && typeof jwtToken === 'string' && jwtToken.trim().length > 0) {
           config.headers.Authorization = `Bearer ${jwtToken}`;
-          tokenSet = true;
         }
       }
     } else {
