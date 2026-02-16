@@ -143,22 +143,35 @@ api.interceptors.request.use(
     }
     
     // Attach Shopify session token (RS256) via App Bridge if available
+    // Add timeout to prevent hanging
     const appBridge = getAppBridge();
     if (appBridge) {
       try {
-        const sessionToken = await getSessionToken(appBridge);
+        // Add 2 second timeout to prevent hanging
+        const sessionTokenPromise = getSessionToken(appBridge);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session token timeout')), 2000)
+        );
+        const sessionToken = await Promise.race([sessionTokenPromise, timeoutPromise]);
         if (sessionToken) {
           config.headers.Authorization = `Bearer ${sessionToken}`;
         } else {
           delete config.headers.Authorization;
         }
       } catch (err) {
-        console.warn('⚠️ Failed to get Shopify session token:', err?.message || err);
+        // Silently fail - don't block the request if token fails
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.warn('⚠️ Failed to get Shopify session token (continuing without it):', err?.message || err);
+        }
         delete config.headers.Authorization;
       }
     } else {
       // No App Bridge available (not in embedded context or missing params)
       delete config.headers.Authorization;
+    }
+    
+    if (typeof window !== 'undefined' && window.console) {
+      window.console.warn('📤 Request interceptor completed, sending request:', config.method, config.baseURL + config.url);
     }
     
     return config;
