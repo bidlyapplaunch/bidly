@@ -142,31 +142,33 @@ api.interceptors.request.use(
       console.log('🏪 Added shop parameter:', shopDomain);
     }
     
-    // Attach Shopify session token (RS256) via App Bridge if available
-    // Add timeout to prevent hanging
-    const appBridge = getAppBridge();
-    if (appBridge) {
-      try {
-        // Add 2 second timeout to prevent hanging
-        const sessionTokenPromise = getSessionToken(appBridge);
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session token timeout')), 2000)
-        );
-        const sessionToken = await Promise.race([sessionTokenPromise, timeoutPromise]);
-        if (sessionToken) {
-          config.headers.Authorization = `Bearer ${sessionToken}`;
-        } else {
+    // Skip session token for onboarding endpoint to prevent hanging
+    // Onboarding endpoint doesn't require auth
+    if (!config.url?.includes('/onboarding/status')) {
+      // Attach Shopify session token (RS256) via App Bridge if available
+      const appBridge = getAppBridge();
+      if (appBridge) {
+        try {
+          // Add 1 second timeout to prevent hanging
+          const sessionTokenPromise = getSessionToken(appBridge);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Session token timeout')), 1000)
+          );
+          const sessionToken = await Promise.race([sessionTokenPromise, timeoutPromise]);
+          if (sessionToken) {
+            config.headers.Authorization = `Bearer ${sessionToken}`;
+          } else {
+            delete config.headers.Authorization;
+          }
+        } catch (err) {
+          // Silently fail - don't block the request if token fails
           delete config.headers.Authorization;
         }
-      } catch (err) {
-        // Silently fail - don't block the request if token fails
-        if (typeof window !== 'undefined' && window.console) {
-          window.console.warn('⚠️ Failed to get Shopify session token (continuing without it):', err?.message || err);
-        }
+      } else {
         delete config.headers.Authorization;
       }
     } else {
-      // No App Bridge available (not in embedded context or missing params)
+      // Onboarding endpoint - skip auth to prevent hanging
       delete config.headers.Authorization;
     }
     
