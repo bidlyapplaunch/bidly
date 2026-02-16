@@ -481,10 +481,23 @@ export const onboardingAPI = {
     // Backend endpoint is instant, but network latency may vary
     try {
       const shop = getShopFromURL();
+      if (typeof window !== 'undefined' && window.console) {
+        window.console.warn('📞 onboardingAPI.getStatus() - shop:', shop);
+        window.console.warn('📞 Making request to /onboarding/status with params:', shop ? { shop } : {});
+      }
       const response = await api.get('/onboarding/status', { params: shop ? { shop } : {} });
+      if (typeof window !== 'undefined' && window.console) {
+        window.console.warn('📥 onboardingAPI.getStatus() - response received:', response);
+        window.console.warn('📥 Response data:', response.data);
+      }
       return response.data;
     } catch (error) {
       // If any error, return default status to allow dashboard to load
+      if (typeof window !== 'undefined' && window.console) {
+        window.console.error('❌ onboardingAPI.getStatus() - ERROR:', error);
+        window.console.error('❌ Error message:', error.message);
+        window.console.error('❌ Error response:', error.response);
+      }
       console.warn('⚠️ Onboarding status check failed, proceeding to dashboard:', error.message);
       return { 
         success: true, 

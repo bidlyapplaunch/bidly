@@ -197,32 +197,57 @@ function AppContent() {
     let isMounted = true;
     const loadOnboardingStatus = async () => {
       if (!user || !oauthComplete) {
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.warn('⏸️ Skipping onboarding check - user:', !!user, 'oauthComplete:', oauthComplete);
+        }
         return;
+      }
+      if (typeof window !== 'undefined' && window.console) {
+        window.console.warn('🟢 Starting onboarding status check...');
       }
       setOnboardingLoading(true);
       try {
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.warn('📡 Calling onboardingAPI.getStatus()...');
+        }
         const response = await onboardingAPI.getStatus();
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.warn('✅ onboardingAPI.getStatus() response:', response);
+        }
         if (isMounted) {
           // Ensure response has expected structure
-          setOnboardingStatus({
+          const status = {
             success: response?.success !== false,
             onboardingComplete: response?.onboardingComplete || response?.data?.onboardingComplete || true,
             widgetActive: response?.widgetActive || response?.data?.widgetActive || false,
             ...response
-          });
+          };
+          if (typeof window !== 'undefined' && window.console) {
+            window.console.warn('📝 Setting onboardingStatus to:', status);
+          }
+          setOnboardingStatus(status);
         }
       } catch (error) {
-        console.error('Failed to load onboarding status', error);
+        if (typeof window !== 'undefined' && window.console) {
+          window.console.error('❌ Failed to load onboarding status', error);
+        }
         if (isMounted) {
           // Default to completed so dashboard can load
-          setOnboardingStatus({ 
+          const fallbackStatus = { 
             success: true,
             onboardingComplete: true,
             widgetActive: false
-          });
+          };
+          if (typeof window !== 'undefined' && window.console) {
+            window.console.warn('🔄 Using fallback status:', fallbackStatus);
+          }
+          setOnboardingStatus(fallbackStatus);
         }
       } finally {
         if (isMounted) {
+          if (typeof window !== 'undefined' && window.console) {
+            window.console.warn('🏁 Setting onboardingLoading to false');
+          }
           setOnboardingLoading(false);
         }
       }
