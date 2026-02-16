@@ -153,6 +153,9 @@ api.interceptors.request.use(
     if (!skipShopifyAuth) {
       // Try Shopify session token (RS256) first for embedded apps
       const appBridge = getAppBridge();
+      let tokenSet = false;
+      let tokenSource = null;
+      
       if (appBridge) {
         try {
           // Add 1 second timeout to prevent hanging
@@ -161,39 +164,43 @@ api.interceptors.request.use(
             setTimeout(() => reject(new Error('Session token timeout')), 1000)
           );
           const sessionToken = await Promise.race([sessionTokenPromise, timeoutPromise]);
-          if (sessionToken) {
+          // Check if token is valid (non-empty string)
+          if (sessionToken && typeof sessionToken === 'string' && sessionToken.trim().length > 0) {
             config.headers.Authorization = `Bearer ${sessionToken}`;
-          } else {
-            // Fall back to JWT token if Shopify session token fails
-            const jwtToken = authService.getToken();
-            if (jwtToken) {
-              config.headers.Authorization = `Bearer ${jwtToken}`;
-            } else {
-              delete config.headers.Authorization;
-            }
+            tokenSet = true;
+            tokenSource = 'Shopify session token';
           }
         } catch (err) {
-          // Fall back to JWT token if Shopify session token fails
-          const jwtToken = authService.getToken();
-          if (jwtToken) {
-            config.headers.Authorization = `Bearer ${jwtToken}`;
-          } else {
-            delete config.headers.Authorization;
+          // Session token failed - will fall back to JWT below
+          if (typeof window !== 'undefined' && window.console) {
+            window.console.warn('⚠️ Shopify session token failed, falling back to JWT:', err?.message || err);
           }
         }
-      } else {
-        // No App Bridge - use JWT token for non-embedded admin access
+      }
+      
+      // Fall back to JWT token if Shopify session token wasn't set
+      if (!tokenSet) {
         const jwtToken = authService.getToken();
-        if (jwtToken) {
+        if (jwtToken && typeof jwtToken === 'string' && jwtToken.trim().length > 0) {
           config.headers.Authorization = `Bearer ${jwtToken}`;
+          tokenSet = true;
+          tokenSource = 'JWT token';
+        }
+      }
+      
+      // Log token status for debugging
+      if (typeof window !== 'undefined' && window.console) {
+        if (tokenSet) {
+          window.console.warn(`🔐 Using ${tokenSource} for ${config.url}`);
         } else {
-          delete config.headers.Authorization;
+          window.console.error('❌ No authentication token available for request:', config.url, {
+            hasAppBridge: !!appBridge,
+            hasJWT: !!authService.getToken()
+          });
         }
       }
     } else {
       // Skip Shopify auth for these endpoints
-      // But for login/register, we might want to include JWT if already logged in
-      // (though typically these endpoints don't need tokens)
       delete config.headers.Authorization;
     }
     
