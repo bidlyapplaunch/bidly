@@ -171,9 +171,24 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
+    if (typeof window !== 'undefined' && window.console) {
+      window.console.warn('✅ API Response:', response.config?.url, response.status, response.data);
+    }
     return response;
   },
   (error) => {
+    if (typeof window !== 'undefined' && window.console) {
+      window.console.error('❌ API Error Interceptor:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.message,
+        code: error.code,
+        response: error.response?.data
+      });
+    }
+    
     const status = error.response?.status;
     const message = error.response?.data?.message || '';
     const lowercaseMessage = typeof message === 'string' ? message.toLowerCase() : '';
@@ -485,18 +500,34 @@ export const onboardingAPI = {
         window.console.warn('📞 onboardingAPI.getStatus() - shop:', shop);
         window.console.warn('📞 Making request to /onboarding/status with params:', shop ? { shop } : {});
       }
-      const response = await api.get('/onboarding/status', { params: shop ? { shop } : {} });
+      const startTime = Date.now();
       if (typeof window !== 'undefined' && window.console) {
+        window.console.warn('⏱️ Request started at:', new Date().toISOString());
+      }
+      
+      const response = await api.get('/onboarding/status', { 
+        params: shop ? { shop } : {},
+        timeout: 10000 // Explicit timeout
+      });
+      
+      const duration = Date.now() - startTime;
+      if (typeof window !== 'undefined' && window.console) {
+        window.console.warn('⏱️ Request completed in', duration, 'ms');
         window.console.warn('📥 onboardingAPI.getStatus() - response received:', response);
+        window.console.warn('📥 Response status:', response.status);
         window.console.warn('📥 Response data:', response.data);
       }
       return response.data;
     } catch (error) {
       // If any error, return default status to allow dashboard to load
       if (typeof window !== 'undefined' && window.console) {
-        window.console.error('❌ onboardingAPI.getStatus() - ERROR:', error);
+        window.console.error('❌ onboardingAPI.getStatus() - ERROR CAUGHT:', error);
+        window.console.error('❌ Error name:', error.name);
         window.console.error('❌ Error message:', error.message);
+        window.console.error('❌ Error code:', error.code);
         window.console.error('❌ Error response:', error.response);
+        window.console.error('❌ Error config:', error.config);
+        window.console.error('❌ Is timeout?', error.code === 'ECONNABORTED' || error.message?.includes('timeout'));
       }
       console.warn('⚠️ Onboarding status check failed, proceeding to dashboard:', error.message);
       return { 
