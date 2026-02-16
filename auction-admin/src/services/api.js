@@ -156,6 +156,13 @@ api.interceptors.request.use(
       let tokenSet = false;
       let tokenSource = null;
       
+      // Always log what we're trying
+      console.log(`🔍 Auth check for ${config.url}:`, {
+        hasAppBridge: !!appBridge,
+        hasJWT: !!authService.getToken(),
+        skipShopifyAuth
+      });
+      
       if (appBridge) {
         try {
           // Add 1 second timeout to prevent hanging
@@ -169,12 +176,13 @@ api.interceptors.request.use(
             config.headers.Authorization = `Bearer ${sessionToken}`;
             tokenSet = true;
             tokenSource = 'Shopify session token';
+            console.log(`✅ Set Shopify session token for ${config.url}`);
+          } else {
+            console.warn(`⚠️ Shopify session token was empty/null for ${config.url}`);
           }
         } catch (err) {
           // Session token failed - will fall back to JWT below
-          if (typeof window !== 'undefined' && window.console) {
-            window.console.warn('⚠️ Shopify session token failed, falling back to JWT:', err?.message || err);
-          }
+          console.warn('⚠️ Shopify session token failed, falling back to JWT:', err?.message || err);
         }
       }
       
@@ -185,23 +193,26 @@ api.interceptors.request.use(
           config.headers.Authorization = `Bearer ${jwtToken}`;
           tokenSet = true;
           tokenSource = 'JWT token';
+          console.log(`✅ Set JWT token for ${config.url}`);
+        } else {
+          console.warn(`⚠️ JWT token not available for ${config.url}`);
         }
       }
       
-      // Log token status for debugging
-      if (typeof window !== 'undefined' && window.console) {
-        if (tokenSet) {
-          window.console.warn(`🔐 Using ${tokenSource} for ${config.url}`);
-        } else {
-          window.console.error('❌ No authentication token available for request:', config.url, {
-            hasAppBridge: !!appBridge,
-            hasJWT: !!authService.getToken()
-          });
-        }
+      // Final check - ensure token is set
+      if (!tokenSet) {
+        console.error('❌ CRITICAL: No authentication token available for request:', config.url, {
+          hasAppBridge: !!appBridge,
+          hasJWT: !!authService.getToken(),
+          jwtTokenValue: authService.getToken() ? 'exists' : 'null'
+        });
+      } else {
+        console.log(`🔐 Using ${tokenSource} for ${config.url}`);
       }
     } else {
       // Skip Shopify auth for these endpoints
       delete config.headers.Authorization;
+      console.log(`⏭️ Skipping auth for ${config.url}`);
     }
     
     if (typeof window !== 'undefined' && window.console) {
