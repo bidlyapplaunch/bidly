@@ -12,6 +12,7 @@ import { useAppBridgeActions } from '../hooks/useAppBridge';
 import useAdminI18n from '../hooks/useAdminI18n';
 
 const OAuthSetup = ({ onComplete }) => {
+  console.log('🔵 OAuthSetup component rendered');
   const i18n = useAdminI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -193,10 +194,13 @@ const OAuthSetup = ({ onComplete }) => {
   }, [getShopInfo, onComplete, redirectToShopifyAdmin, shopDomain, i18n]);
 
   useEffect(() => {
+    console.log('🔵 OAuthSetup useEffect running, initialCheckDone:', initialCheckDone.current);
     if (initialCheckDone.current) {
+      console.log('🔵 OAuthSetup useEffect: already done, skipping');
       return;
     }
     initialCheckDone.current = true;
+    console.log('🔵 OAuthSetup useEffect: calling checkOAuthStatus');
 
     const urlParams = new URLSearchParams(window.location.search);
     const shopFromUrl = urlParams.get('shop');
