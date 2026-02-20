@@ -545,7 +545,7 @@
 
             try {
                 const response = await fetchWithTimeout(
-                    `/apps/bidly/assets/locales/${targetLocale}.json?v=206`,
+                    `/apps/bidly/assets/locales/${targetLocale}.json?v=207`,
                     {},
                     3500
                 );
