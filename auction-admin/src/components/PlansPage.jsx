@@ -191,7 +191,7 @@ const PlansPage = () => {
     const proHighlights = translateHighlights('admin.billing.plans.pro');
     const enterpriseHighlights = translateHighlights('admin.billing.plans.enterprise');
     return {
-      removeBranding: proHighlights[1] || 'Remove Bidly branding',
+      removeBranding: proHighlights[1] || 'Custom SMTP settings',
       customization: proHighlights[2] || 'Widget & marketplace customization',
       popcorn: proHighlights[3] || 'Popcorn bidding',
       chat: enterpriseHighlights[3] || 'Live bidder chatbox'
