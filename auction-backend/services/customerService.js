@@ -60,7 +60,7 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
   if (!customer) {
     // Create new per-store customer profile
     // Always generate a random displayName for new store profiles
-    const displayName = generateRandomName();
+    const displayName = generateRandomName(normalizedEmail);
     
     customer = new Customer({
       globalCustomerId: globalCustomer._id,
@@ -104,7 +104,7 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
     
     // Ensure displayName exists (should always exist, but safety check)
     if (!customer.displayName || customer.displayName.trim() === '') {
-      customer.displayName = generateRandomName();
+      customer.displayName = generateRandomName(normalizedEmail);
       shouldUpdate = true;
       console.log(`⚠️ Customer ${normalizedEmail} in shop ${shopDomain} had no displayName, generated: ${customer.displayName}`);
     }

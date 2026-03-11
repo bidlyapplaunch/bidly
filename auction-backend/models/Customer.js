@@ -29,7 +29,7 @@ const normalizeDisplayNameInput = (value) => {
   return value.trim();
 };
 
-const resolveDisplayName = ({ firstName, lastName, displayName, existingDisplayName }) => {
+const resolveDisplayName = ({ firstName, lastName, displayName, existingDisplayName, email }) => {
   if (typeof displayName !== 'undefined') {
     if (displayName) {
       return displayName;
@@ -46,7 +46,7 @@ const resolveDisplayName = ({ firstName, lastName, displayName, existingDisplayN
     return existingDisplayName.trim();
   }
 
-  return generateRandomName();
+  return generateRandomName(email);
 };
 
 const customerSchema = new mongoose.Schema({
@@ -268,7 +268,8 @@ customerSchema.statics.findOrCreate = async function(customerData, shopDomain) {
       firstName: candidateFirst,
       lastName: candidateLast,
       displayName: normalizedDisplay,
-      existingDisplayName: customer.displayName
+      existingDisplayName: customer.displayName,
+      email: customer.email
     });
 
     if (nextDisplayName !== customer.displayName) {
@@ -302,7 +303,8 @@ customerSchema.statics.findOrCreate = async function(customerData, shopDomain) {
     firstName: firstValue,
     lastName: lastValue,
     displayName: normalizedDisplay,
-    existingDisplayName: null
+    existingDisplayName: null,
+    email: email?.toLowerCase()
   });
 
   customer = new this({

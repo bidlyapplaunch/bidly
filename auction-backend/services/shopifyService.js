@@ -1583,7 +1583,7 @@ function buildShopifyCustomerName(firstName, lastName, email) {
     trimmedLast.toLowerCase() !== 'customer';
 
   if (!hasValidFirst) {
-    const alias = generateRandomName();
+    const alias = generateRandomName(email);
     return {
       firstName: alias,
       lastName: hasValidLast ? trimmedLast : ''
