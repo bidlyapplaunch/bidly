@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const repoRoot = resolve(__dirname, '../..');
 const adminDir = resolve(repoRoot, 'auction-admin');
+const customerDir = resolve(repoRoot, 'auction-customer');
 const backendDir = resolve(__dirname, '..');
 
 console.log('🏗️ Building admin frontend...');
@@ -20,8 +21,24 @@ adminBuild.on('exit', (code) => {
     console.error('❌ Admin build failed');
     process.exit(code ?? 1);
   }
-  
   console.log('✅ Admin build completed');
+  console.log('🏗️ Building customer marketplace...');
+  const customerBuild = spawn('npm', ['run', 'build'], {
+    cwd: customerDir,
+    shell: true,
+    stdio: 'inherit'
+  });
+  customerBuild.on('exit', (custCode) => {
+    if (custCode !== 0) {
+      console.error('❌ Customer build failed');
+      process.exit(custCode ?? 1);
+    }
+    console.log('✅ Customer build completed');
+    runRemixBuild();
+  });
+});
+
+function runRemixBuild() {
   console.log('🏗️ Building Remix app...');
   
   const remixBuild = spawn('npm', ['run', 'build'], {
