@@ -64,6 +64,7 @@ const AppNavigationMenu = () => {
       { label: i18n.translate('admin.nav.dashboard'), destination: withQuery('/') },
       { label: i18n.translate('admin.nav.widgetStyles'), destination: withQuery('/customization/widget') },
       { label: i18n.translate('admin.nav.marketplaceStyles'), destination: withQuery('/customization/marketplace') },
+      { label: i18n.translate('admin.nav.chatMonitor'), destination: withQuery('/chat-monitor') },
       { label: i18n.translate('admin.nav.mailService'), destination: withQuery('/mail-service') },
       { label: i18n.translate('admin.nav.plans'), destination: withQuery('/plans') }
     ];

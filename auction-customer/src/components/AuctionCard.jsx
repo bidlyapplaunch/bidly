@@ -13,7 +13,10 @@ import CountdownTimer from './CountdownTimer';
 import BidForm from './BidForm';
 import { t } from '../i18n';
 
-const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
+const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) => {
+  const productUrl = shopDomain && (auction.productData?.handle || auction.shopifyProductId)
+    ? `https://${shopDomain}/products/${auction.productData?.handle || auction.shopifyProductId}`
+    : null;
   const [detailsModalOpen, setDetailsModalOpen] = React.useState(false);
   const [bidModalOpen, setBidModalOpen] = React.useState(false);
 
@@ -65,7 +68,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           </Badge>
         </div>
 
-        {/* Product Image */}
+        {/* Product Image - clickable to product page */}
         {auction.productData?.image?.src ? (
           <div
             style={{
@@ -75,20 +78,39 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
               marginBottom: 'var(--bidly-marketplace-spacing, 1rem)'
             }}
           >
-            <img
-              src={auction.productData.image.src}
-              alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
-              style={{ 
-                maxWidth: '100%',
-                maxHeight: '250px',
-                width: 'auto',
-                height: 'auto',
-                objectFit: 'contain',
-                borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
-                border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
-                backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
-              }}
-            />
+            {productUrl ? (
+              <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', cursor: 'pointer' }}>
+                <img
+                  src={auction.productData.image.src}
+                  alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
+                  style={{ 
+                    maxWidth: '100%',
+                    maxHeight: '250px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
+                    border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
+                    backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
+                  }}
+                />
+              </a>
+            ) : (
+              <img
+                src={auction.productData.image.src}
+                alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
+                style={{ 
+                  maxWidth: '100%',
+                  maxHeight: '250px',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
+                  border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
+                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
+                }}
+              />
+            )}
           </div>
         ) : (
           <div style={{ 
@@ -160,7 +182,7 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           </Text>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Button 
             primary 
             onClick={() => setBidModalOpen(true)}
@@ -174,6 +196,14 @@ const AuctionCard = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           >
             {t('marketplace.auction_card.viewDetails')}
           </Button>
+          {productUrl && (
+            <Button 
+              url={productUrl}
+              external
+            >
+              {t('marketplace.auction_card.viewProduct')}
+            </Button>
+          )}
         </div>
       </Card>
 

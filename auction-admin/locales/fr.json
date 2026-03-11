@@ -1,4 +1,4 @@
-﻿{
+{
   "admin": {
     "common": {
       "loadingApp": "Chargement de Bidly…",
@@ -30,6 +30,7 @@
       "marketplace": "Place de marché",
       "widgetStyles": "Styles du widget",
       "marketplaceStyles": "Styles de la place de marché",
+      "chatMonitor": "Moniteur de chat",
       "mailService": "Service mail",
       "plans": "Plans"
     },

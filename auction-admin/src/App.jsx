@@ -17,6 +17,7 @@ import authService from './services/auth';
 import MarketplaceCustomizationSettings from './components/MarketplaceCustomizationSettings';
 import WidgetCustomizationSettings from './components/WidgetCustomizationSettings';
 import MailServicePage from './pages/MailServicePage';
+import ChatMonitorPage from './pages/ChatMonitorPage';
 import PlansPage from './components/PlansPage';
 import AppNavigationMenu from './components/AppNavigationMenu';
 import OnboardingPage from './components/OnboardingPage';
@@ -321,6 +322,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
         <Route path="/customization/marketplace" element={<MarketplaceCustomizationSettings />} />
+        <Route path="/chat-monitor" element={<ChatMonitorPage />} />
         <Route path="/customization/widget" element={<WidgetCustomizationSettings />} />
         <Route path="/mail-service" element={<MailServicePage />} />
         <Route path="/plans" element={<PlansPage />} />

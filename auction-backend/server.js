@@ -85,6 +85,7 @@ import billingRoutes from './routes/billingRoutes.js';
 import onboardingRoutes from './routes/onboarding.js';
 import marketplaceCustomizationRoutes from './routes/marketplaceCustomization.js';
 import emailSettingsRoutes from './routes/emailSettings.js';
+import chatRoutes from './routes/chatRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
 import identifyStore from './middleware/storeMiddleware.js';
@@ -351,6 +352,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/marketplace-customization', marketplaceCustomizationRoutes);
 app.use('/api/email-settings', emailSettingsRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Load customer routes synchronously to ensure availability for widget login
 try {
@@ -914,8 +916,13 @@ io.on('connection', (socket) => {
     socket.join(`chat-${productId}`);
     console.log(`💬 Client ${socket.id} joined chat room for product ${productId}`);
     
-    // Send existing messages for this room
-    const messages = chatRooms.get(productId) || [];
+    // Send existing messages for this room (ensure all have id for future deletion)
+    const messages = (chatRooms.get(productId) || []).map((msg) => {
+      if (!msg.id) {
+        msg.id = `chat-${productId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      }
+      return msg;
+    });
     socket.emit('chat-history', { productId, messages });
   });
   
@@ -941,6 +948,7 @@ io.on('connection', (socket) => {
     // Add message to room (keep last 100 messages per room)
     const messages = chatRooms.get(productId);
     const newMessage = {
+      id: `chat-${productId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       username,
       message: message.trim(),
       timestamp: new Date().toISOString()
@@ -973,10 +981,11 @@ io.on('connection', (socket) => {
 
 // ===== CHAT FUNCTIONALITY =====
 // In-memory store for chat messages (per product room) - shared across all connections
-const chatRooms = new Map(); // productId -> [{ username, message, timestamp }]
+const chatRooms = new Map(); // productId -> [{ id, username, message, timestamp }]
 
-// Make io available to other modules
+// Make io and chatRooms available to other modules (e.g. chat routes)
 app.set('io', io);
+app.set('chatRooms', chatRooms);
 
 // Global function to broadcast auction status updates
 global.broadcastAuctionStatusUpdate = (auctionId, newStatus, auctionData) => {

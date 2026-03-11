@@ -545,7 +545,7 @@
 
             try {
                 const response = await fetchWithTimeout(
-                    `/apps/bidly/assets/locales/${targetLocale}.json?v=207`,
+                    `/apps/bidly/assets/locales/${targetLocale}.json?v=208`,
                     {},
                     3500
                 );
@@ -3794,6 +3794,27 @@
                 console.error('Bidly: Chat error:', message);
             });
 
+            // Listen for message deleted by merchant
+            chatSocket.on('chat-message-deleted', ({ productId, messageId }) => {
+                const roomId = deriveChatRoomId(productId) || (productId ? productId.toString() : null);
+                if (roomId === currentProductId) {
+                    const el = document.querySelector(`[data-message-id="${messageId}"]`);
+                    if (el) el.remove();
+                    const container = document.getElementById('bidly-chat-messages');
+                    if (container && !container.querySelector('.bidly-chat-message')) {
+                        container.innerHTML = `<div class="bidly-chat-empty">${t('widget.chat.empty')}</div>`;
+                    }
+                }
+            });
+
+            // Listen for all messages cleared by merchant
+            chatSocket.on('chat-messages-cleared', ({ productId }) => {
+                const roomId = deriveChatRoomId(productId) || (productId ? productId.toString() : null);
+                if (roomId === currentProductId) {
+                    displayChatMessages([]);
+                }
+            });
+
             // Join room if already connected
             if (chatSocket.connected && currentProductId) {
                 chatSocket.emit('join-chat-room', currentProductId);
@@ -3951,6 +3972,9 @@
                 const matchedEntry = pendingLocalChatMessages.splice(matchedIndex, 1)[0];
                 if (matchedEntry?.element) {
                     matchedEntry.element.dataset.pending = '0';
+                    if (messageData.id) {
+                        matchedEntry.element.dataset.messageId = messageData.id;
+                    }
                     const timestampEl = matchedEntry.element.querySelector('.timestamp');
                     if (timestampEl) {
                         timestampEl.textContent = new Date(messageData.timestamp || now).toLocaleTimeString([], {
@@ -3965,6 +3989,9 @@
 
         const messageDiv = document.createElement('div');
         messageDiv.className = 'bidly-chat-message';
+        if (messageData.id) {
+            messageDiv.dataset.messageId = messageData.id;
+        }
         if (messageData.__local) {
             messageDiv.dataset.pending = '1';
         }

@@ -30,8 +30,26 @@
       "marketplace": "Auction Marketplace",
       "widgetStyles": "Widget styles",
       "marketplaceStyles": "Marketplace styles",
+      "chatMonitor": "Chat Monitor",
       "mailService": "Mail service",
       "plans": "Plans"
+    },
+    "chatMonitor": {
+      "title": "Chat Monitor",
+      "description": "Monitor and moderate chat messages for auctions with chat enabled. Delete inappropriate messages or clear all messages for an auction.",
+      "empty": "No auctions with chat enabled.",
+      "emptyDescription": "Create auctions with the Chat Box feature enabled (Enterprise plan) to see chat activity here.",
+      "auction": "Auction",
+      "product": "Product",
+      "status": "Status",
+      "messages": "Messages",
+      "deleteMessage": "Delete",
+      "clearAll": "Clear all",
+      "clearAllConfirm": "Clear all messages for this auction?",
+      "clearAllSuccess": "All messages cleared.",
+      "deleteSuccess": "Message deleted.",
+      "loadError": "Failed to load chat data.",
+      "autoRefresh": "Auto-refreshing every 10 seconds"
     },
     "auth": {
       "title": "🔐 Bidly Admin Login",
@@ -752,8 +770,8 @@
           "productId": "Product ID",
           "status": "Status",
           "timeStatus": "Time Status",
-          "chat": "Live Chat"
-        },
+        "chat": "Live Chat"
+      },
         "timeStatus": {
           "notStarted": "Not Started",
           "live": "Live"

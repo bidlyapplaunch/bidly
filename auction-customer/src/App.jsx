@@ -607,6 +607,7 @@ function App() {
                 <Layout.Section oneHalf key={auction._id || auction.id}>
                   <AuctionCard 
                     auction={auction} 
+                    shopDomain={resolvedShopDomain}
                     onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
                     onBuyNow={() => handleBuyNow({ auctionId: auction._id || auction.id })}
                     isLoading={bidLoading || customerSyncing}

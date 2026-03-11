@@ -516,6 +516,21 @@ export const billingAPI = {
   }
 };
 
+export const chatAPI = {
+  getMonitor: async () => {
+    const response = await api.get('/chat/monitor');
+    return response.data;
+  },
+  deleteMessage: async (productId, messageId) => {
+    const response = await api.delete(`/chat/${productId}/${messageId}`);
+    return response.data;
+  },
+  clearAllMessages: async (productId) => {
+    const response = await api.delete(`/chat/${productId}`);
+    return response.data;
+  }
+};
+
 export const onboardingAPI = {
   async getStatus() {
     // No timeout - let axios handle it with its 10s global timeout
