@@ -1712,7 +1712,8 @@
             startTime: auction.startTime,
             bidCount: auction.bidHistory?.length || 0,
             buyNowPrice: Number(auction.buyNowPrice) || 0,
-            chatEnabled: allowChat && auction.chatEnabled !== false
+            chatEnabled: allowChat && auction.chatEnabled !== false,
+            minBidIncrement: Number(auction.minBidIncrement) || 1
         };
     }
 

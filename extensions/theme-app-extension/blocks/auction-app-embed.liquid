@@ -107,8 +107,33 @@ window.BidlyAuctionEmbed = {
         });
     },
     
+    enrichWithMinBidIncrement: async function(auctionCheck) {
+        if (!auctionCheck || !auctionCheck.hasAuction || !auctionCheck.auctionId) return auctionCheck;
+        if (auctionCheck.minBidIncrement != null && auctionCheck.minBidIncrement >= 1) return auctionCheck;
+        try {
+            const backendUrl = window.BidlyBackendConfig ? window.BidlyBackendConfig.getBackendUrl('{{ shop.domain }}') : 'https://bidly-auction-backend.onrender.com';
+            const shopDomain = '{{ shop.domain }}';
+            const res = await fetch(`${backendUrl}/api/auctions/${auctionCheck.auctionId}?shop=${shopDomain}`);
+            if (res.ok) {
+                const data = await res.json();
+                const auction = data.data || data.auction;
+                if (auction && auction.minBidIncrement != null) {
+                    auctionCheck.minBidIncrement = Math.max(1, parseInt(auction.minBidIncrement, 10) || 1);
+                } else {
+                    auctionCheck.minBidIncrement = 1;
+                }
+            } else {
+                auctionCheck.minBidIncrement = 1;
+            }
+        } catch (e) {
+            auctionCheck.minBidIncrement = 1;
+        }
+        return auctionCheck;
+    },
+    
     checkProductMetafields: async function() {
         try {
+            let auctionCheck = null;
             // Try to get product data from Shopify's global objects
             if (window.Shopify?.analytics?.meta?.product) {
                 const product = window.Shopify.analytics.meta.product;
@@ -119,7 +144,7 @@ window.BidlyAuctionEmbed = {
                     const isAuction = mf.is_auction?.value === true || mf.is_auction?.value === 'true' || mf.is_auction === true || mf.is_auction === 'true';
                     const auctionId = mf.auction_id?.value || mf.auction_id;
                     if (isAuction && auctionId) {
-                        return {
+                        auctionCheck = {
                             hasAuction: true,
                             auctionId: auctionId,
                             status: mf.status?.value || mf.status || 'pending',
@@ -136,32 +161,38 @@ window.BidlyAuctionEmbed = {
             }
 
             // Fallback: try to get from product JSON script tag
-            const productJson = document.querySelector('script[type="application/json"][data-product-json]');
-            if (productJson) {
-                try {
-                    const product = JSON.parse(productJson.textContent);
-                    if (product.metafields && product.metafields.auction) {
-                        const mf = product.metafields.auction;
-                        const isAuction = mf.is_auction?.value === true || mf.is_auction?.value === 'true' || mf.is_auction === true || mf.is_auction === 'true';
-                        const auctionId = mf.auction_id?.value || mf.auction_id;
-                        if (isAuction && auctionId) {
-                            return {
-                                hasAuction: true,
-                                auctionId: auctionId,
-                                status: mf.status?.value || mf.status || 'pending',
-                                currentBid: parseFloat(mf.current_bid?.value ?? mf.current_bid ?? 0) || 0,
-                                startingBid: parseFloat(mf.starting_bid?.value ?? mf.starting_bid ?? 0) || 0,
-                                reservePrice: parseFloat(mf.reserve_price?.value ?? mf.reserve_price ?? 0) || 0,
-                                endTime: mf.end_time?.value || mf.end_time,
-                                startTime: mf.start_time?.value || mf.start_time,
-                                bidCount: parseInt(mf.bid_count?.value ?? mf.bid_count ?? 0) || 0,
-                                buyNowPrice: parseFloat(mf.buy_now_price?.value ?? mf.buy_now_price ?? 0) || 0
-                            };
+            if (!auctionCheck) {
+                const productJson = document.querySelector('script[type="application/json"][data-product-json]');
+                if (productJson) {
+                    try {
+                        const product = JSON.parse(productJson.textContent);
+                        if (product.metafields && product.metafields.auction) {
+                            const mf = product.metafields.auction;
+                            const isAuction = mf.is_auction?.value === true || mf.is_auction?.value === 'true' || mf.is_auction === true || mf.is_auction === 'true';
+                            const auctionId = mf.auction_id?.value || mf.auction_id;
+                            if (isAuction && auctionId) {
+                                auctionCheck = {
+                                    hasAuction: true,
+                                    auctionId: auctionId,
+                                    status: mf.status?.value || mf.status || 'pending',
+                                    currentBid: parseFloat(mf.current_bid?.value ?? mf.current_bid ?? 0) || 0,
+                                    startingBid: parseFloat(mf.starting_bid?.value ?? mf.starting_bid ?? 0) || 0,
+                                    reservePrice: parseFloat(mf.reserve_price?.value ?? mf.reserve_price ?? 0) || 0,
+                                    endTime: mf.end_time?.value || mf.end_time,
+                                    startTime: mf.start_time?.value || mf.start_time,
+                                    bidCount: parseInt(mf.bid_count?.value ?? mf.bid_count ?? 0) || 0,
+                                    buyNowPrice: parseFloat(mf.buy_now_price?.value ?? mf.buy_now_price ?? 0) || 0
+                                };
+                            }
                         }
+                    } catch (e) {
+                        console.warn('Bidly: Error parsing product JSON:', e);
                     }
-                } catch (e) {
-                    console.warn('Bidly: Error parsing product JSON:', e);
                 }
+            }
+            
+            if (auctionCheck) {
+                return await this.enrichWithMinBidIncrement(auctionCheck);
             }
 
             // If metafields not found, fallback to API call
@@ -202,7 +233,8 @@ window.BidlyAuctionEmbed = {
                             endTime: data.auction.endTime,
                             startTime: data.auction.startTime,
                             bidCount: data.auction.bidHistory?.length || 0,
-                            buyNowPrice: parseFloat(data.auction.buyNowPrice) || 0
+                            buyNowPrice: parseFloat(data.auction.buyNowPrice) || 0,
+                            minBidIncrement: parseInt(data.auction.minBidIncrement, 10) || 1
                         };
                     }
                 }

@@ -916,22 +916,11 @@ export const placeBid = async (req, res, next) => {
       }
     }
     
-    // Check if bid matches buy now price
-    if (amount >= auction.buyNowPrice) {
-      updatedAuction.status = 'ended';
-      updatedAuction.endTime = new Date(); // End immediately
-      await updatedAuction.save();
-      auctionEnded = true;
-      
-      // Process the ended auction (duplicate product, create draft order, notify winner)
-      try {
-        await processEndedAuctions();
-      } catch (error) {
-        console.error('❌ Error processing ended auction:', error);
-        // Don't fail the bid if auction processing fails
-      }
-    }
-    
+    // Note: Bidding the buy-now amount does NOT end the auction. Only the explicit
+    // "Buy Now" button/action should end the auction. Otherwise a user placing a
+    // normal bid (e.g. $600 when min bid is $600 and buy now is $600) would
+    // unexpectedly end the auction after one bid.
+
     // Update product metafields for auction widget (non-blocking - don't await)
     // This allows the bid response to return immediately while metafields update in background
     updateProductMetafields(updatedAuction, shopDomain).catch(error => {
