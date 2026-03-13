@@ -1394,7 +1394,8 @@
         const displayBid = bidCount > 0 ? currentBid : startingBid;
         // Calculate minimum bid in USD (backend currency)
         // TODO: Multi-currency - Currently using USD directly, no conversion
-        const minBidAmount = bidCount > 0 ? Math.max(currentBid + 1, startingBid) : startingBid;
+        const increment = auctionData.minBidIncrement || 1;
+        const minBidAmount = bidCount > 0 ? Math.max(currentBid + increment, startingBid) : startingBid;
         
         // Check if user is logged in and if they're a Shopify customer
         const loggedIn = isUserLoggedIn();
@@ -1446,7 +1447,7 @@
         const isGuestViewOnly = isGuest;
         
         return `
-        <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}">
+        <div id="bidly-auction-widget-${auctionId}" class="${CONFIG.widgetClass}" data-auction-id="${auctionId}" data-chat-enabled="${chatEnabled ? 'true' : 'false'}" data-min-bid-increment="${increment}">
                 <div class="bidly-widget-responsive">
                     <div class="bidly-widget-container">
                     <div class="bidly-widget-header">
@@ -1517,6 +1518,11 @@
                                                    placeholder="Min: ${formatCurrency(minBidAmount)}"
                                                    ${isGuestViewOnly ? 'disabled' : 'required'}>
                                             <button type="submit" class="bidly-submit-bid" ${isGuestViewOnly ? 'disabled' : ''}>${t('widget.buttons.placeBid')}</button>
+                                        </div>
+                                        <div class="bidly-quick-bid-buttons">
+                                            <button type="button" class="bidly-quick-bid-btn" data-amount="${minBidAmount}" ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.quickBid('${auctionId}', ${minBidAmount})"`}>${formatCurrency(minBidAmount)}</button>
+                                            <button type="button" class="bidly-quick-bid-btn" data-amount="${minBidAmount + increment}" ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.quickBid('${auctionId}', ${minBidAmount + increment})"`}>${formatCurrency(minBidAmount + increment)}</button>
+                                            <button type="button" class="bidly-quick-bid-btn" data-amount="${minBidAmount + 2 * increment}" ${isGuestViewOnly ? 'disabled' : `onclick="window.BidlyAuctionWidget.quickBid('${auctionId}', ${minBidAmount + 2 * increment})"`}>${formatCurrency(minBidAmount + 2 * increment)}</button>
                                         </div>
                                     </form>
                                 </div>
@@ -2317,7 +2323,8 @@
                             
                             // Update minimum bid (in USD from backend)
                             // TODO: Multi-currency - Currently using USD directly, no conversion
-                            const minBid = data.currentBid + 1;
+                            const increment = parseFloat(widget.getAttribute('data-min-bid-increment')) || (data.minBidIncrement || 1);
+                            const minBid = data.currentBid + increment;
                             const minBidElement = widget.querySelector('[data-min-bid]') || widget.querySelector('.bidly-minimum-bid .bidly-amount');
                             if (minBidElement) {
                                 minBidElement.textContent = formatCurrency(minBid);
@@ -2330,6 +2337,20 @@
                                 bidInput.min = Math.ceil(minBid);
                                 bidInput.step = '1';
                                 bidInput.placeholder = `Min: ${formatCurrency(minBid)}`;
+                            }
+                            
+                            // Update quick bid buttons
+                            const quickBtns = widget.querySelectorAll('.bidly-quick-bid-btn');
+                            if (quickBtns.length >= 3 && window.BidlyAuctionWidget) {
+                                quickBtns[0].textContent = formatCurrency(minBid);
+                                quickBtns[0].setAttribute('data-amount', minBid);
+                                quickBtns[0].onclick = () => window.BidlyAuctionWidget.quickBid(auctionId, minBid);
+                                quickBtns[1].textContent = formatCurrency(minBid + increment);
+                                quickBtns[1].setAttribute('data-amount', minBid + increment);
+                                quickBtns[1].onclick = () => window.BidlyAuctionWidget.quickBid(auctionId, minBid + increment);
+                                quickBtns[2].textContent = formatCurrency(minBid + 2 * increment);
+                                quickBtns[2].setAttribute('data-amount', minBid + 2 * increment);
+                                quickBtns[2].onclick = () => window.BidlyAuctionWidget.quickBid(auctionId, minBid + 2 * increment);
                             }
                         }
                     }
@@ -2563,8 +2584,10 @@
         if (minBidElement) {
             // Use same logic as widget creation (calculate in USD)
             // TODO: Multi-currency - Currently using USD directly, no conversion
+            const increment = auctionData.minBidIncrement || 1;
+            widget.setAttribute('data-min-bid-increment', increment);
             const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
-            const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
+            const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + increment, auctionData.startingBid) : auctionData.startingBid;
             minBidElement.textContent = formatCurrency(minBidAmount);
             minBidElement.setAttribute('data-min-bid', minBidAmount);
         }
@@ -2589,10 +2612,28 @@
             
             if (bidInput) {
                 // Use same logic as widget creation
+                const increment = auctionData.minBidIncrement || 1;
                 const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
-                const newMinBid = bidCount > 0 ? Math.max(auctionData.currentBid + 1, auctionData.startingBid) : auctionData.startingBid;
+                const newMinBid = bidCount > 0 ? Math.max(auctionData.currentBid + increment, auctionData.startingBid) : auctionData.startingBid;
                 bidInput.min = newMinBid;
                 bidInput.placeholder = `Min: ${formatCurrency(newMinBid)}`;
+            }
+            
+            // Update quick bid buttons
+            const increment = auctionData.minBidIncrement || 1;
+            const bidCount = auctionData.bidCount || auctionData.bidHistory?.length || 0;
+            const minBidAmount = bidCount > 0 ? Math.max(auctionData.currentBid + increment, auctionData.startingBid) : auctionData.startingBid;
+            const quickBtns = bidForm.querySelectorAll('.bidly-quick-bid-btn');
+            if (quickBtns.length >= 3 && window.BidlyAuctionWidget) {
+                quickBtns[0].textContent = formatCurrency(minBidAmount);
+                quickBtns[0].setAttribute('data-amount', minBidAmount);
+                quickBtns[0].onclick = () => window.BidlyAuctionWidget.quickBid(auctionId, minBidAmount);
+                quickBtns[1].textContent = formatCurrency(minBidAmount + increment);
+                quickBtns[1].setAttribute('data-amount', minBidAmount + increment);
+                quickBtns[1].onclick = () => window.BidlyAuctionWidget.quickBid(auctionId, minBidAmount + increment);
+                quickBtns[2].textContent = formatCurrency(minBidAmount + 2 * increment);
+                quickBtns[2].setAttribute('data-amount', minBidAmount + 2 * increment);
+                quickBtns[2].onclick = () => window.BidlyAuctionWidget.quickBid(auctionId, minBidAmount + 2 * increment);
             }
             
             // Handle form state based on auction status
@@ -3038,6 +3079,14 @@
             } catch (error) {
                 console.error('Error placing bid:', error);
                 alert('Error placing bid. Please try again.');
+            }
+        },
+
+        quickBid: function(auctionId, amount) {
+            const input = document.getElementById(`bidly-bid-amount-${auctionId}`);
+            if (input) {
+                input.value = amount;
+                input.focus();
             }
         },
 

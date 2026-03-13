@@ -665,7 +665,9 @@
           "startingBidLocked": "Starting bid cannot be changed after a bid has been placed.",
           "buyNow": "Buy Now Price (Optional)",
           "reservePrice": "Reserve Price (Optional)",
-          "reserveHelp": "Minimum bid amount required for auction to have a valid winner. Hidden from bidders."
+          "reserveHelp": "Minimum bid amount required for auction to have a valid winner. Hidden from bidders.",
+          "minBidIncrement": "Minimum Bid Increment",
+          "minBidIncrementHelp": "Minimum increase per bid (e.g. $50). Bidders must bid at least this much above the current bid."
         },
         "popcorn": {
           "title": "🍿 Popcorn Auction Settings (Premium Feature)",

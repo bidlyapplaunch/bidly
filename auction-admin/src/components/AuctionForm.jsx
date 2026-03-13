@@ -87,6 +87,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     startingBid: 0,
     buyNowPrice: '',
     reservePrice: 0,
+    minBidIncrement: 1,
     status: 'pending',
     productData: null,
     // Popcorn auction settings
@@ -130,6 +131,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         startingBid: auction.startingBid || 0,
         buyNowPrice: auction.buyNowPrice || '',
         reservePrice: auction.reservePrice || 0,
+        minBidIncrement: auction.minBidIncrement ?? 1,
         status: auction.status || 'pending',
         productData: auction.productData || null,
         // Popcorn auction settings
@@ -149,6 +151,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
               startingBid: 0,
               buyNowPrice: '',
               reservePrice: 0,
+              minBidIncrement: 1,
               status: 'pending',
               productData: null,
               // Popcorn auction settings
@@ -282,6 +285,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         startingBid: parseFloat(formData.startingBid),
         buyNowPrice: formData.buyNowPrice ? parseFloat(formData.buyNowPrice) : undefined,
         reservePrice: formData.reservePrice ? parseFloat(formData.reservePrice) : 0,
+        minBidIncrement: Math.max(1, parseInt(formData.minBidIncrement, 10) || 1),
       };
 
       if (auction) {
@@ -517,6 +521,16 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
             error={errors.reservePrice}
             helpText={i18n.translate('admin.auctions.form.fields.reserveHelp')}
             min="0"
+          />
+          <TextField
+            label={i18n.translate('admin.auctions.form.fields.minBidIncrement')}
+            type="number"
+            value={String(formData.minBidIncrement)}
+            onChange={(value) => handleChange(value, 'minBidIncrement')}
+            error={errors.minBidIncrement}
+            helpText={i18n.translate('admin.auctions.form.fields.minBidIncrementHelp')}
+            min={1}
+            step={1}
           />
 
           <Card sectioned>

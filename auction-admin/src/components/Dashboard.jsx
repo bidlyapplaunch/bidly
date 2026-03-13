@@ -365,6 +365,9 @@ const Dashboard = ({ onLogout }) => {
                 <Button onClick={() => navigate(`/customization/marketplace${location.search || ''}`)}>
                   {i18n.translate('admin.auctions.dashboard.quickLinkMarketplace')}
                 </Button>
+                <Button onClick={() => navigate(`/chat-monitor${location.search || ''}`)}>
+                  {i18n.translate('admin.auctions.dashboard.quickLinkChatMonitor')}
+                </Button>
                 <Button onClick={() => navigate(`/plans${location.search || ''}`)}>
                   {i18n.translate('admin.auctions.dashboard.quickLinkPlans')}
                 </Button>

@@ -115,6 +115,11 @@ const auctionSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  minBidIncrement: {
+    type: Number,
+    default: 1,
+    min: 1
+  },
   status: {
     type: String,
     enum: ['pending', 'active', 'ended', 'closed', 'reserve_not_met'],

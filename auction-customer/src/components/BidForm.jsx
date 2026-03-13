@@ -17,8 +17,8 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
   const formRef = useRef(null);
 
-  const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
-  const suggestedBid = minBid + 5; // Suggest $5 more than minimum
+  const increment = auction.minBidIncrement || 1;
+  const minBid = auction.currentBid > 0 ? auction.currentBid + increment : auction.startingBid;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -124,7 +124,7 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
               </Button>
               <Button 
                 size="slim" 
-                onClick={() => handleQuickBid(suggestedBid)}
+                onClick={() => handleQuickBid(minBid + increment)}
                 disabled={isLoading}
                 style={{
                   backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
@@ -133,14 +133,14 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
                   fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
                 }}
               >
-                ${suggestedBid}
+                ${minBid + increment}
               </Button>
               <Button 
                 size="slim" 
-                onClick={() => handleQuickBid(minBid + 10)}
+                onClick={() => handleQuickBid(minBid + 2 * increment)}
                 disabled={isLoading}
               >
-                ${minBid + 10}
+                ${minBid + 2 * increment}
               </Button>
             </div>
           </div>

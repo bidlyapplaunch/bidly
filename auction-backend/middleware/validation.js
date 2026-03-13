@@ -67,6 +67,11 @@ export const validateCreateAuction = [
     .withMessage('Buy now price must be a number')
     .isFloat({ min: 0 })
     .withMessage('Buy now price must be a positive number'),
+
+  body('minBidIncrement')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Minimum bid increment must be at least 1'),
   
   handleValidationErrors
 ];
@@ -156,6 +161,11 @@ export const validateUpdateAuction = [
     .optional()
     .isBoolean()
     .withMessage('Chat enabled must be a boolean value'),
+
+  body('minBidIncrement')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Minimum bid increment must be at least 1'),
   
   handleValidationErrors
 ];

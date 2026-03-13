@@ -251,7 +251,8 @@ export const createAuction = async (req, res, next) => {
       ...req.body,
       shopDomain: shopDomain, // Add store domain for isolation
       currentBid: 0, // Ensure currentBid starts at 0
-      productData: productData // Cache the product data
+      productData: productData, // Cache the product data
+      minBidIncrement: Math.max(1, parseInt(req.body.minBidIncrement, 10) || 1)
     });
     
     let savedAuction;
@@ -487,6 +488,7 @@ export const updateAuction = async (req, res, next) => {
       'buyNowPrice',
       'status',
       'reservePrice',
+      'minBidIncrement',
       'popcornEnabled',
       'popcornTriggerSeconds',
       'popcornExtendSeconds',
@@ -546,6 +548,14 @@ export const updateAuction = async (req, res, next) => {
           const parsedValue = parseBooleanInput(rawValue);
           if (parsedValue && !planMeetsRequirement(currentPlan, 'enterprise')) {
             throw new AppError('Live chat is available on the Enterprise plan.', 403);
+          }
+          setUpdates[field] = parsedValue;
+          break;
+        }
+        case 'minBidIncrement': {
+          const parsedValue = parseInt(rawValue, 10);
+          if (Number.isNaN(parsedValue) || parsedValue < 1) {
+            throw new AppError('Minimum bid increment must be at least 1', 400);
           }
           setUpdates[field] = parsedValue;
           break;
@@ -829,10 +839,11 @@ export const placeBid = async (req, res, next) => {
     }
     
     // Validate bid amount
-    const minBid = auction.currentBid > 0 ? auction.currentBid + 1 : auction.startingBid;
+    const increment = auction.minBidIncrement || 1;
+    const minBid = auction.currentBid > 0 ? auction.currentBid + increment : auction.startingBid;
     if (sanitizedAmount < minBid) {
       if (auction.currentBid > 0) {
-        throw new AppError(`Bid must be higher than current bid ($${auction.currentBid})`, 400);
+        throw new AppError(`Bid must be at least $${minBid} (current bid + $${increment} minimum increment)`, 400);
       } else {
         throw new AppError(`Bid must be at least the starting bid ($${auction.startingBid})`, 400);
       }
