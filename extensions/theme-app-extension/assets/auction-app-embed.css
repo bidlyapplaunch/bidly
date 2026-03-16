@@ -505,8 +505,9 @@
 
 .bidly-quick-bid-btn {
     flex: 1;
-    min-width: 0;
+    min-width: 4.5rem;
     padding: 10px 14px;
+    white-space: nowrap;
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
     font-size: 14px;
