@@ -150,7 +150,12 @@ const customerSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  
+
+  unsubscribed: {
+    type: Boolean,
+    default: false
+  },
+
   // Shopify customer metafields (for syncing back to Shopify)
   shopifyMetafields: {
     auctionHistory: [{
