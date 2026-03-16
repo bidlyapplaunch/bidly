@@ -85,9 +85,11 @@ import billingRoutes from './routes/billingRoutes.js';
 import onboardingRoutes from './routes/onboarding.js';
 import marketplaceCustomizationRoutes from './routes/marketplaceCustomization.js';
 import emailSettingsRoutes from './routes/emailSettings.js';
+import blastEmailRoutes from './routes/blastEmailRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import emailService from './services/emailService.js';
+import { resumeInterruptedBlasts } from './services/blastEmailService.js';
 import identifyStore from './middleware/storeMiddleware.js';
 
 // Load environment variables
@@ -101,6 +103,10 @@ connectDB()
   .then(async () => {
     console.log('✅ MongoDB connected');
     await fixCustomerIndexes();
+    // Resume any interrupted blast email sends
+    resumeInterruptedBlasts().catch(err =>
+      console.error('Failed to resume interrupted blasts:', err)
+    );
   })
   .catch(error => {
     console.error('⚠️ MongoDB connection failed:', error.message);
@@ -351,6 +357,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/marketplace-customization', marketplaceCustomizationRoutes);
+app.use('/api/email-settings/blasts', blastEmailRoutes);
 app.use('/api/email-settings', emailSettingsRoutes);
 app.use('/api/chat', chatRoutes);
 

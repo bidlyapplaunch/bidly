@@ -12,6 +12,8 @@ import {
 } from '../constants/emailTemplates.js';
 import { mergeWithDefaultEmailSettings } from '../services/emailSettingsService.js';
 import emailService, { clearEmailTransportCache } from '../services/emailService.js';
+import Customer from '../models/Customer.js';
+import { verifyUnsubscribeToken } from '../services/blastEmailService.js';
 
 const router = express.Router();
 const CUSTOMIZATION_PLAN = 'pro';
@@ -348,6 +350,88 @@ router.post('/test-template', requireAuth, async (req, res) => {
       success: false,
       message: error.message || 'Failed to send template test email.'
     });
+  }
+});
+
+// ── Customer list for blast emails ──────────────────────────────
+router.get('/customers', requireAuth, async (req, res) => {
+  try {
+    const shopDomain = req.shopDomain;
+    if (!shopDomain) {
+      return res.status(400).json({ error: 'Shop domain is required' });
+    }
+
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 25));
+    const search = req.query.search?.trim();
+
+    const query = { shopDomain };
+    if (search) {
+      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      query.$or = [
+        { email: regex },
+        { displayName: regex },
+        { firstName: regex },
+        { lastName: regex }
+      ];
+    }
+
+    const [customers, total] = await Promise.all([
+      Customer.find(query)
+        .select('email displayName firstName lastName totalBids auctionsWon unsubscribed')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Customer.countDocuments(query)
+    ]);
+
+    res.json({ customers, total, page, limit });
+  } catch (error) {
+    console.error('Failed to load customers:', error);
+    res.status(500).json({ error: 'Failed to load customers' });
+  }
+});
+
+// ── Unsubscribe (public, no auth, HMAC-verified) ────────────────
+router.get('/unsubscribe', async (req, res) => {
+  try {
+    const { email, shop, token } = req.query;
+    if (!email || !shop || !token) {
+      return res.status(400).send('<h1>Invalid unsubscribe link</h1>');
+    }
+
+    // Verify HMAC token to prevent unauthorized unsubscribes
+    try {
+      const valid = verifyUnsubscribeToken(email.toLowerCase().trim(), shop, token);
+      if (!valid) {
+        return res.status(403).send('<h1>Invalid unsubscribe link</h1>');
+      }
+    } catch {
+      return res.status(403).send('<h1>Invalid unsubscribe link</h1>');
+    }
+
+    const customer = await Customer.findOneAndUpdate(
+      { email: email.toLowerCase().trim(), shopDomain: shop },
+      { unsubscribed: true },
+      { new: true }
+    );
+
+    if (!customer) {
+      return res.status(404).send('<h1>Subscription not found</h1>');
+    }
+
+    res.send(`
+      <!DOCTYPE html>
+      <html><head><title>Unsubscribed</title></head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 60px;">
+        <h1>You have been unsubscribed</h1>
+        <p>You will no longer receive marketing emails from this store.</p>
+      </body></html>
+    `);
+  } catch (error) {
+    console.error('Unsubscribe error:', error);
+    res.status(500).send('<h1>Something went wrong</h1>');
   }
 });
 
