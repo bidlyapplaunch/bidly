@@ -10,6 +10,7 @@ import {
   FormLayout
 } from '@shopify/polaris';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
+import RichTextEditor from './RichTextEditor';
 import useAdminI18n from '../hooks/useAdminI18n';
 
 const TEMPLATE_METADATA = [
@@ -180,7 +181,7 @@ const createDefaultSettings = (templateDefaults = TEMPLATE_DEFAULTS) => ({
       enabled: true,
       subject: defaults?.subject || '',
       html: defaults?.html || '',
-      mode: defaults?.mode || 'text'
+      mode: defaults?.mode === 'html' ? 'html' : 'rich'
     };
     return acc;
   }, {})
@@ -749,12 +750,12 @@ function MailServiceSettings() {
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <Button
                               size="slim"
-                              primary={(template.mode || 'text') === 'text'}
-                              pressed={(template.mode || 'text') === 'text'}
-                              onClick={() => handleTemplateChange(key, 'mode', 'text')}
+                              primary={(template.mode || 'rich') !== 'html'}
+                              pressed={(template.mode || 'rich') !== 'html'}
+                              onClick={() => handleTemplateChange(key, 'mode', 'rich')}
                               disabled={disabled}
                             >
-                              {i18n.translate('admin.mail_service.templates.editorSimple')}
+                              Rich Editor
                             </Button>
                             <Button
                               size="slim"
@@ -763,24 +764,29 @@ function MailServiceSettings() {
                               onClick={() => handleTemplateChange(key, 'mode', 'html')}
                               disabled={disabled}
                             >
-                              {i18n.translate('admin.mail_service.templates.editorHtml')}
+                              HTML
                             </Button>
                           </div>
                         </div>
-                        <TextField
-                          label={
-                            template.mode === 'html'
-                              ? i18n.translate('admin.mail_service.templates.htmlLabel')
-                              : i18n.translate('admin.mail_service.templates.textLabel')
-                          }
-                          value={template.html}
-                          onChange={(value) => handleTemplateChange(key, 'html', value)}
-                          onFocus={() => handleTemplateFocus(key, 'html')}
-                          multiline={template.mode === 'html' ? 8 : 6}
-                          autoComplete="off"
-                          disabled={disabled}
-                          style={template.mode === 'html' ? { fontFamily: 'monospace' } : undefined}
-                        />
+                        {template.mode === 'html' ? (
+                          <TextField
+                            label="HTML"
+                            value={template.html}
+                            onChange={(value) => handleTemplateChange(key, 'html', value)}
+                            onFocus={() => handleTemplateFocus(key, 'html')}
+                            multiline={8}
+                            autoComplete="off"
+                            disabled={disabled}
+                            monospaced
+                          />
+                        ) : (
+                          <RichTextEditor
+                            value={template.html}
+                            onChange={(value) => handleTemplateChange(key, 'html', value)}
+                            disabled={disabled}
+                            placeholder="Compose your email..."
+                          />
+                        )}
                       </FormLayout>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         <Button size="slim" onClick={() => handleResetTemplate(key)} disabled={disabled}>
