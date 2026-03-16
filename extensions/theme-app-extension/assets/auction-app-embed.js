@@ -545,7 +545,7 @@
 
             try {
                 const response = await fetchWithTimeout(
-                    `/apps/bidly/assets/locales/${targetLocale}.json?v=208`,
+                    `/apps/bidly/assets/locales/${targetLocale}.json?v=209`,
                     {},
                     3500
                 );
@@ -1431,7 +1431,7 @@
                                     ${t('widget.buttons.loginShopify')}
                                 </button>
                                 
-                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.openGuestLogin()">
+                                <button class="bidly-btn bidly-btn-secondary bidly-guest-login" onclick="window.BidlyHybridLogin?.enterGuestView()">
                                     <span class="bidly-btn-icon">👤</span>
                                     ${t('widget.buttons.continueGuest')}
                                 </button>

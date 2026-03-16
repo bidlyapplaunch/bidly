@@ -694,7 +694,17 @@
         window.location.href = loginUrl;
     }
 
-    // Open guest login modal
+    // Enter guest view immediately (no name/email required - view only)
+    function enterGuestView() {
+        const success = guestLogin('Guest User', '');
+        if (success) {
+            window.dispatchEvent(new CustomEvent('bidly-login-success', {
+                detail: { customer: currentCustomer }
+            }));
+        }
+    }
+
+    // Open guest login modal (legacy - for flows that need name/email)
     function openGuestLogin() {
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
@@ -864,6 +874,7 @@
         init,
         detectShopifyCustomer,
         guestLogin,
+        enterGuestView,
         openShopifyLogin,
         openGuestLogin,
         closeGuestLoginModal,
