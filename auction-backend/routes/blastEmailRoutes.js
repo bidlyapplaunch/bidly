@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { identifyStore } from '../middleware/storeMiddleware.js';
-import { attachPlanContext } from '../middleware/planGuard.js';
+import { attachPlanContext, getStorePlan } from '../middleware/planGuard.js';
 import { planMeetsRequirement } from '../config/billingPlans.js';
 import BlastEmail from '../models/BlastEmail.js';
 import { sendBlast, resolveRecipients, getBlastProgress } from '../services/blastEmailService.js';
@@ -16,7 +16,7 @@ const PLAN_REQUIRED = 'pro';
 
 // Plan check middleware
 const requirePlan = (req, res, next) => {
-  const plan = req.storePlan || 'free';
+  const plan = getStorePlan(req);
   if (!planMeetsRequirement(plan, PLAN_REQUIRED)) {
     return res.status(403).json({ error: 'Upgrade to Pro to use blast emails' });
   }
