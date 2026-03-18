@@ -118,7 +118,8 @@ async function sendOneEmail(shopDomain, storeName, blast, recipient, transport) 
 
   // Add unsubscribe footer with HMAC token
   const token = generateUnsubscribeToken(recipient.email, shopDomain);
-  const unsubscribeUrl = `${process.env.BACKEND_URL || ''}/api/email-settings/unsubscribe?email=${encodeURIComponent(recipient.email)}&shop=${encodeURIComponent(shopDomain)}&token=${token}`;
+  const baseUrl = process.env.APP_URL || process.env.BACKEND_URL || '';
+  const unsubscribeUrl = `${baseUrl}/api/email-settings/unsubscribe?email=${encodeURIComponent(recipient.email)}&shop=${encodeURIComponent(shopDomain)}&token=${token}`;
   const bodyWithFooter = renderedBody + `
     <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #999; text-align: center;">
       <a href="${unsubscribeUrl}" style="color: #999;">Unsubscribe</a>
