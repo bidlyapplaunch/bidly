@@ -1,11 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Migration: Update existing customers' display names from the old format
- * (Adjective+Animal, e.g. "CosmicPanda") to the new format (email prefix + word, e.g. "johnbCosmic").
- *
- * Only updates display names that match our old auto-generated pattern.
- * Skips names that look user-set (e.g. "John Smith", custom nicknames).
+ * Migration: Set every customer's displayName to the canonical value from their email:
+ * first 5 alphanumeric chars of the local part (see generateRandomName.js).
  *
  * Usage:
  *   node scripts/migrateDisplayNamesToEmailFormat.js
@@ -15,7 +12,7 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Customer from '../models/Customer.js';
-import generateRandomName, { isLegacyGeneratedName } from '../utils/generateRandomName.js';
+import generateRandomName from '../utils/generateRandomName.js';
 
 dotenv.config({ path: './.env' });
 
@@ -24,7 +21,7 @@ const DRY_RUN = process.argv.includes('--dry-run');
 
 async function migrate() {
   try {
-    console.log('🔄 Migrating customer display names to email-based format\n');
+    console.log('🔄 Syncing customer display names to email-prefix format\n');
     if (DRY_RUN) {
       console.log('⚠️  DRY RUN – no changes will be written\n');
     }
@@ -41,30 +38,19 @@ async function migrate() {
 
     for (const customer of customers) {
       try {
-        if (!customer.displayName?.trim()) {
-          // Empty display name – regenerate
-          const newName = generateRandomName(customer.email);
-          if (!DRY_RUN) {
-            customer.displayName = newName;
-            await customer.save();
-          }
-          console.log(`  ✓ ${customer.email}: (empty) → ${newName}`);
-          migrated++;
+        const newName = generateRandomName(customer.email);
+        const current = (customer.displayName || '').trim();
+
+        if (current === newName) {
+          skipped++;
           continue;
         }
 
-        if (!isLegacyGeneratedName(customer.displayName)) {
-          skipped++;
-          continue; // Don't log every skip to keep output manageable
-        }
-
-        const oldName = customer.displayName;
-        const newName = generateRandomName(customer.email);
         if (!DRY_RUN) {
           customer.displayName = newName;
           await customer.save();
         }
-        console.log(`  ✓ ${customer.email}: ${oldName} → ${newName}`);
+        console.log(`  ✓ ${customer.email}: "${current || '(empty)'}" → ${newName}`);
         migrated++;
       } catch (err) {
         console.error(`  ✗ ${customer.email}: ${err.message}`);
@@ -73,8 +59,8 @@ async function migrate() {
     }
 
     console.log('\n📊 Summary:');
-    console.log(`  - Migrated: ${migrated}`);
-    console.log(`  - Skipped (not old format): ${skipped}`);
+    console.log(`  - Updated: ${migrated}`);
+    console.log(`  - Already correct: ${skipped}`);
     console.log(`  - Errors: ${errors}`);
     if (DRY_RUN && migrated > 0) {
       console.log('\n  Run without --dry-run to apply changes.');
