@@ -56,6 +56,19 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
       return next(new AppError('Missing required customer data: email is required', 400));
     }
 
+    // Validate email format server-side
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return next(new AppError('Invalid email format', 400));
+    }
+
+    // Validate phone format if provided (digits, spaces, dashes, plus, parens)
+    if (phone && typeof phone === 'string') {
+      const trimmedPhone = phone.trim();
+      if (trimmedPhone.length === 0 || !/^[+\d\s\-()]+$/.test(trimmedPhone)) {
+        return next(new AppError('Invalid phone number format', 400));
+      }
+    }
+
     // Ensure customer exists (global + per-store profile)
     const customer = await ensureCustomer(
       shopDomain,

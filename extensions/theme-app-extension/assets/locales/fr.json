@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "Placer une offre",
       "buyNow": "Acheter maintenant",
-      "loginShopify": "Connectez-vous avec Shopify",
+      "loginShopify": "Inscrivez-vous pour enchérir",
       "continueGuest": "Continuer en tant qu'invité (affichage uniquement)",
       "logout": "Déconnexion",
       "chatBox": "Boîte de discussion",
@@ -33,10 +33,10 @@
       "guestUser": "Utilisateur invité"
     },
     "login": {
-      "title": "Connexion requise",
-      "message": "Veuillez vous connecter pour voir cette vente aux enchères",
+      "title": "Inscription requise",
+      "message": "Entrez vos informations pour enchérir",
       "viewOnly": "Afficher uniquement",
-      "viewOnlyMessage": "Connectez-vous à Shopify pour participer à l'enchère"
+      "viewOnlyMessage": "Inscrivez-vous pour participer à l'enchère"
     },
     "loading": {
       "title": "Préparez votre enchère...",

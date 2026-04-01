@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "입찰하기",
       "buyNow": "지금 구매",
-      "loginShopify": "Shopify로 로그인",
+      "loginShopify": "입찰 등록",
       "continueGuest": "게스트로 계속(보기 전용)",
       "logout": "로그아웃",
       "chatBox": "채팅 상자",
@@ -33,10 +33,10 @@
       "guestUser": "게스트 사용자"
     },
     "login": {
-      "title": "로그인 필요",
-      "message": "이 경매를 보려면 로그인하세요.",
+      "title": "등록 필요",
+      "message": "입찰하려면 정보를 입력하세요.",
       "viewOnly": "보기 전용",
-      "viewOnlyMessage": "경매에 참여하려면 Shopify에 로그인하세요."
+      "viewOnlyMessage": "경매에 참여하려면 등록하세요."
     },
     "loading": {
       "title": "경매 준비 중...",

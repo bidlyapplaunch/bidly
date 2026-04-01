@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "Fai un'offerta",
       "buyNow": "Acquista ora",
-      "loginShopify": "Accedi con Shopify",
+      "loginShopify": "Registrati per fare offerte",
       "continueGuest": "Continua come ospite (solo visualizzazione)",
       "logout": "Esci",
       "chatBox": "Casella di chat",
@@ -33,10 +33,10 @@
       "guestUser": "Utente ospite"
     },
     "login": {
-      "title": "Accesso richiesto",
-      "message": "Effettua il login per visualizzare quest'asta",
+      "title": "Registrazione richiesta",
+      "message": "Inserisci i tuoi dati per fare offerte",
       "viewOnly": "Solo visualizzazione",
-      "viewOnlyMessage": "Accedi a Shopify per partecipare all'asta"
+      "viewOnlyMessage": "Registrati per partecipare all'asta"
     },
     "loading": {
       "title": "Preparazione dell'asta...",

@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "Place Bid",
       "buyNow": "Buy Now",
-      "loginShopify": "Log in to bid",
+      "loginShopify": "Register to Bid",
       "continueGuest": "Continue as Guest (View Only)",
       "logout": "Logout",
       "chatBox": "Chat Box",
@@ -33,10 +33,10 @@
       "guestUser": "Guest User"
     },
     "login": {
-      "title": "Login Required",
-      "message": "Please log in to view this auction",
+      "title": "Registration Required",
+      "message": "Enter your details to bid in this auction",
       "viewOnly": "View Only",
-      "viewOnlyMessage": "Login to Shopify to enter the auction"
+      "viewOnlyMessage": "Register to enter the auction"
     },
     "loading": {
       "title": "Preparing your auction...",

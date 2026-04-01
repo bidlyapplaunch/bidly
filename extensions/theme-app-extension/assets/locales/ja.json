@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "入札する",
       "buyNow": "今すぐ購入",
-      "loginShopify": "Shopifyでログイン",
+      "loginShopify": "入札に登録",
       "continueGuest": "ゲストとして続行 (表示のみ)",
       "logout": "ログアウト",
       "chatBox": "チャットボックス",
@@ -33,10 +33,10 @@
       "guestUser": "ゲストユーザー"
     },
     "login": {
-      "title": "ログインが必要です",
-      "message": "このオークションを閲覧するにはログインしてください",
+      "title": "登録が必要です",
+      "message": "入札するには詳細を入力してください",
       "viewOnly": "表示のみ",
-      "viewOnlyMessage": "Shopifyにログインしてオークションに参加してください"
+      "viewOnlyMessage": "登録してオークションに参加してください"
     },
     "loading": {
       "title": "オークションを準備しています...",

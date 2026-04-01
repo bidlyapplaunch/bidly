@@ -1306,12 +1306,7 @@
         if (window.customerData?.id && customer.id === window.customerData.id) {
             return true;
         }
-        
-        // If isTemp is explicitly false, it's a Shopify customer
-        if (customer.isTemp === false) {
-            return true;
-        }
-        
+
         // Otherwise, it's likely a guest
         return false;
     }

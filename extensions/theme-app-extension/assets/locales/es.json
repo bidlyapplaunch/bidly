@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "Realizar Puja",
       "buyNow": "Comprar Ahora",
-      "loginShopify": "Iniciar sesión con Shopify",
+      "loginShopify": "Regístrate para pujar",
       "continueGuest": "Continuar como Invitado (Solo Ver)",
       "logout": "Cerrar sesión",
       "chatBox": "Chat",
@@ -33,10 +33,10 @@
       "guestUser": "Usuario Invitado"
     },
     "login": {
-      "title": "Inicio de Sesión Requerido",
-      "message": "Por favor, inicia sesión para ver esta subasta",
+      "title": "Registro requerido",
+      "message": "Ingresa tus datos para pujar en esta subasta",
       "viewOnly": "Solo Ver",
-      "viewOnlyMessage": "Inicia sesión en Shopify para entrar a la subasta"
+      "viewOnlyMessage": "Regístrate para entrar a la subasta"
     },
     "loading": {
       "title": "Preparando tu subasta...",

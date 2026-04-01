@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "Plaats een bod",
       "buyNow": "Koop nu",
-      "loginShopify": "Log in met Shopify",
+      "loginShopify": "Registreer om te bieden",
       "continueGuest": "Ga verder als gast (alleen bekijken)",
       "logout": "Uitloggen",
       "chatBox": "Chatbox",
@@ -33,10 +33,10 @@
       "guestUser": "Gastgebruiker"
     },
     "login": {
-      "title": "Inloggen vereist",
-      "message": "Log in om deze veiling te bekijken",
+      "title": "Registratie vereist",
+      "message": "Vul uw gegevens in om te bieden",
       "viewOnly": "Alleen bekijken",
-      "viewOnlyMessage": "Log in op Shopify om deel te nemen aan de veiling"
+      "viewOnlyMessage": "Registreer om deel te nemen aan de veiling"
     },
     "loading": {
       "title": "Uw veiling voorbereiden...",

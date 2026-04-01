@@ -10,7 +10,7 @@
     "buttons": {
       "placeBid": "Złóż ofertę",
       "buyNow": "Kup teraz",
-      "loginShopify": "Zaloguj się za pomocą Shopify",
+      "loginShopify": "Zarejestruj się, aby licytować",
       "continueGuest": "Kontynuuj jako gość (tylko wyświetlanie)",
       "logout": "Wyloguj się",
       "chatBox": "Okno czatu",
@@ -33,10 +33,10 @@
       "guestUser": "Użytkownik-Gość"
     },
     "login": {
-      "title": "Wymagane logowanie",
-      "message": "Aby zobaczyć tę aukcję, zaloguj się",
+      "title": "Wymagana rejestracja",
+      "message": "Podaj swoje dane, aby licytować",
       "viewOnly": "Tylko przeglądaj",
-      "viewOnlyMessage": "Zaloguj się do Shopify, aby wziąć udział w aukcji"
+      "viewOnlyMessage": "Zarejestruj się, aby wziąć udział w aukcji"
     },
     "loading": {
       "title": "Przygotowuję aukcję...",
