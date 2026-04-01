@@ -14,7 +14,7 @@ import generateRandomName from '../utils/generateRandomName.js';
  * @param {boolean} isTemp - Whether this is a temporary/guest customer (default: false)
  * @returns {Promise<Customer>} The per-store Customer document with displayName
  */
-export async function ensureCustomer(shopDomain, email, firstName = null, lastName = null, shopifyId = null, isTemp = false) {
+export async function ensureCustomer(shopDomain, email, firstName = null, lastName = null, shopifyId = null, isTemp = false, phone = null) {
   if (!shopDomain || !email) {
     throw new Error('shopDomain and email are required');
   }
@@ -71,6 +71,7 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
       displayName: displayName,
       shopifyId: shopifyId || null,
       isTemp: isTemp,
+      phone: phone || null,
       lastLoginAt: new Date()
     });
     
@@ -94,7 +95,11 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
       customer.lastName = lastName;
       shouldUpdate = true;
     }
-    
+    if (phone !== null && customer.phone !== phone) {
+      customer.phone = phone;
+      shouldUpdate = true;
+    }
+
     // Update shopifyId if provided and different
     if (shopifyId && customer.shopifyId !== shopifyId) {
       customer.shopifyId = shopifyId;

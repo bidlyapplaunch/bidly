@@ -20,12 +20,13 @@ router.post('/saveCustomer', async (req, res, next) => {
     console.log('📧 Request body:', req.body);
     console.log('📧 Request headers:', req.headers);
     
-    const { 
-      shopifyId, 
-      email, 
-      firstName, 
-      lastName, 
-      displayName 
+    const {
+      shopifyId,
+      email,
+      firstName,
+      lastName,
+      displayName,
+      phone
     } = req.body;
     const shopDomain = req.shopDomain;
 
@@ -53,7 +54,8 @@ router.post('/saveCustomer', async (req, res, next) => {
       sanitizeOptionalString(firstName),
       sanitizeOptionalString(lastName),
       shopifyId || null,
-      !shopifyId // isTemp = true if no shopifyId
+      !shopifyId, // isTemp = true if no shopifyId
+      sanitizeOptionalString(phone)
     );
 
     console.log('✅ Customer saved/updated successfully:', {
@@ -73,6 +75,7 @@ router.post('/saveCustomer', async (req, res, next) => {
         fullName: customer.fullName,
         shopifyId: customer.shopifyId,
         isTemp: customer.isTemp,
+        phone: customer.phone,
         totalBids: customer.totalBids,
         auctionsWon: customer.auctionsWon,
         totalBidAmount: customer.totalBidAmount
@@ -184,12 +187,13 @@ router.post('/saveCustomer', async (req, res, next) => {
 // Sync Shopify customer data
 router.post('/sync', async (req, res, next) => {
   try {
-    const { 
-      shopifyId, 
-      email, 
-      firstName, 
-      lastName, 
-      displayName 
+    const {
+      shopifyId,
+      email,
+      firstName,
+      lastName,
+      displayName,
+      phone
     } = req.body;
     const shopDomain = req.shopDomain;
 
@@ -208,7 +212,8 @@ router.post('/sync', async (req, res, next) => {
       sanitizeOptionalString(firstName),
       sanitizeOptionalString(lastName),
       shopifyId || null,
-      !shopifyId // isTemp = true if no shopifyId
+      !shopifyId, // isTemp = true if no shopifyId
+      sanitizeOptionalString(phone)
     );
 
     res.json({
@@ -222,6 +227,7 @@ router.post('/sync', async (req, res, next) => {
         fullName: customer.fullName,
         shopifyId: customer.shopifyId,
         isTemp: customer.isTemp,
+        phone: customer.phone,
         totalBids: customer.totalBids,
         auctionsWon: customer.auctionsWon,
         totalBidAmount: customer.totalBidAmount
