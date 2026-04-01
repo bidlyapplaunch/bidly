@@ -719,6 +719,182 @@
         window.location.href = loginUrl;
     }
 
+    // Register to Bid - inline form (replaces Shopify login redirect)
+    async function registerToBid(name, email, phone) {
+        try {
+            console.log('Bidly: Registering bidder...', { name, email, phone });
+
+            const nameParts = name.trim().split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            // Save to backend
+            const response = await fetch(`${CONFIG.backendUrl}/api/customers/saveCustomer?shop=${encodeURIComponent(CONFIG.shopDomain)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email.trim().toLowerCase(),
+                    firstName,
+                    lastName: lastName || undefined,
+                    displayName: name.trim(),
+                    phone: phone.trim(),
+                    shopDomain: CONFIG.shopDomain
+                })
+            });
+
+            let customerData = null;
+
+            if (response.ok) {
+                const result = await response.json();
+                customerData = result.customer;
+            } else if (response.status === 409) {
+                // Duplicate — use existing customer
+                const errorData = await response.json().catch(() => null);
+                customerData = errorData?.existingCustomer || errorData?.customer;
+            }
+
+            if (!customerData) {
+                console.error('Bidly: Registration failed, no customer data returned');
+                return false;
+            }
+
+            // Set current customer
+            currentCustomer = {
+                id: customerData.id || customerData._id,
+                email: customerData.email,
+                firstName: customerData.firstName || firstName,
+                lastName: customerData.lastName || lastName,
+                fullName: customerData.fullName || customerData.displayName || name.trim(),
+                displayName: customerData.displayName || name.trim(),
+                phone: customerData.phone || phone.trim(),
+                shopifyId: customerData.shopifyId || null,
+                isTemp: false,
+                isBidlyBidder: true
+            };
+            isLoggedIn = true;
+
+            // Persist to localStorage for returning visits
+            try {
+                localStorage.setItem('bidly_bidder', JSON.stringify({
+                    name: name.trim(),
+                    email: customerData.email,
+                    phone: customerData.phone || phone.trim(),
+                    firstName: currentCustomer.firstName,
+                    lastName: currentCustomer.lastName,
+                    customerId: currentCustomer.id,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.warn('Bidly: Could not save bidder to localStorage:', e);
+            }
+
+            console.log('Bidly: Registration successful:', currentCustomer);
+            return true;
+        } catch (error) {
+            console.error('Bidly: Error during registration:', error);
+            return false;
+        }
+    }
+
+    // Show Register to Bid form
+    function showRegisterForm() {
+        const t = window.BidlyTranslate || ((key) => {
+            const fallbacks = {
+                'widget.register.title': 'Register to Bid',
+                'widget.register.fullName': 'Full Name',
+                'widget.register.emailAddress': 'Email Address',
+                'widget.register.phoneNumber': 'Phone Number',
+                'widget.register.submit': 'Register to Bid',
+                'widget.register.cancel': 'Cancel',
+                'widget.register.errorAllFields': 'Please fill in all fields',
+                'widget.register.errorInvalidEmail': 'Please enter a valid email address',
+                'widget.register.errorFailed': 'Registration failed. Please try again.'
+            };
+            return fallbacks[key] || key;
+        });
+
+        const modal = document.createElement('div');
+        modal.className = 'bidly-modal-overlay';
+        modal.id = 'bidly-register-modal';
+        modal.innerHTML = `
+            <div class="bidly-modal-content">
+                <form id="bidly-register-form" onsubmit="window.BidlyHybridLogin.submitRegisterForm(event)">
+                    <h3>${t('widget.register.title')}</h3>
+                    <div class="bidly-form-group">
+                        <label for="bidly-register-name">${t('widget.register.fullName')}</label>
+                        <input type="text" id="bidly-register-name" name="name" autocomplete="name" required placeholder="John Doe">
+                    </div>
+                    <div class="bidly-form-group">
+                        <label for="bidly-register-email">${t('widget.register.emailAddress')}</label>
+                        <input type="email" id="bidly-register-email" name="email" autocomplete="email" required placeholder="john@example.com">
+                    </div>
+                    <div class="bidly-form-group">
+                        <label for="bidly-register-phone">${t('widget.register.phoneNumber')}</label>
+                        <input type="tel" id="bidly-register-phone" name="phone" autocomplete="tel" required placeholder="+1 234 567 890">
+                    </div>
+                    <div class="bidly-form-actions">
+                        <button type="submit" class="bidly-btn bidly-btn-primary">${t('widget.register.submit')}</button>
+                        <button type="button" class="bidly-btn bidly-btn-secondary" onclick="window.BidlyHybridLogin.closeRegisterModal()">${t('widget.register.cancel')}</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Close register modal
+    function closeRegisterModal() {
+        const modal = document.getElementById('bidly-register-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // Submit register form
+    async function submitRegisterForm(event) {
+        event.preventDefault();
+
+        const t = window.BidlyTranslate || ((key) => {
+            const fallbacks = {
+                'widget.register.errorAllFields': 'Please fill in all fields',
+                'widget.register.errorInvalidEmail': 'Please enter a valid email address',
+                'widget.register.errorFailed': 'Registration failed. Please try again.'
+            };
+            return fallbacks[key] || key;
+        });
+
+        const form = event.target;
+        if (!form) {
+            alert(t('widget.register.errorFailed'));
+            return;
+        }
+
+        const name = form.querySelector('#bidly-register-name')?.value?.trim();
+        const email = form.querySelector('#bidly-register-email')?.value?.trim();
+        const phone = form.querySelector('#bidly-register-phone')?.value?.trim();
+
+        if (!name || !email || !phone) {
+            alert(t('widget.register.errorAllFields'));
+            return;
+        }
+
+        // Basic email format check
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert(t('widget.register.errorInvalidEmail'));
+            return;
+        }
+
+        const success = await registerToBid(name, email, phone);
+        if (success) {
+            closeRegisterModal();
+            window.dispatchEvent(new CustomEvent('bidly-login-success', {
+                detail: { customer: currentCustomer }
+            }));
+        } else {
+            alert(t('widget.register.errorFailed'));
+        }
+    }
+
     // Enter guest view immediately (no name/email required - view only)
     function enterGuestView() {
         const success = guestLogin('Guest User', '');
@@ -839,6 +1015,7 @@
             sessionStorage.removeItem('bidly_last_customer_id');
             localStorage.removeItem('shopify_customer');
             localStorage.removeItem('bidly_return_to');
+            localStorage.removeItem('bidly_bidder');
             console.log('Bidly: Cleared all customer data from storage');
         } catch (storageError) {
             console.warn('Bidly: Could not clear storage:', storageError);
@@ -899,7 +1076,37 @@
                 detail: { customer: currentCustomer }
             }));
         } else {
-            // If no Shopify customer, check for guest customer in sessionStorage
+            // If no Shopify customer, check for returning bidder in localStorage
+            try {
+                const bidderStr = localStorage.getItem('bidly_bidder');
+                if (bidderStr) {
+                    const bidder = JSON.parse(bidderStr);
+                    if (bidder.email) {
+                        currentCustomer = {
+                            id: bidder.customerId || ('bidder_' + Date.now()),
+                            email: bidder.email,
+                            firstName: bidder.firstName || null,
+                            lastName: bidder.lastName || null,
+                            fullName: bidder.name || bidder.email,
+                            displayName: bidder.name || bidder.email,
+                            phone: bidder.phone || null,
+                            shopifyId: null,
+                            isTemp: false,
+                            isBidlyBidder: true
+                        };
+                        isLoggedIn = true;
+                        console.log('Bidly: Returning bidder restored from localStorage:', currentCustomer);
+                        window.dispatchEvent(new CustomEvent('bidly-login-success', {
+                            detail: { customer: currentCustomer }
+                        }));
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Bidly: Error reading bidder from localStorage:', e);
+            }
+
+            // If no returning bidder, check for guest customer in sessionStorage
             try {
                 const guestCustomerStr = sessionStorage.getItem('bidly_guest_customer');
                 if (guestCustomerStr) {
@@ -926,6 +1133,10 @@
         openGuestLogin,
         closeGuestLoginModal,
         submitGuestLogin,
+        registerToBid,
+        showRegisterForm,
+        closeRegisterModal,
+        submitRegisterForm,
         logout,
         getCurrentCustomer,
         isUserLoggedIn,
