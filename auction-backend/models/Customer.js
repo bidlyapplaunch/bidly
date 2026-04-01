@@ -90,7 +90,13 @@ const customerSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  
+
+  phone: {
+    type: String,
+    trim: true,
+    default: null
+  },
+
   // Customer type
   isTemp: {
     type: Boolean,
@@ -235,7 +241,8 @@ customerSchema.statics.findOrCreate = async function(customerData, shopDomain) {
     lastName,
     displayName,
     shopifyId,
-    isTemp = false
+    isTemp = false,
+    phone = null
   } = customerData;
 
   if (!email) {
@@ -261,6 +268,11 @@ customerSchema.statics.findOrCreate = async function(customerData, shopDomain) {
 
     if (typeof normalizedLast !== 'undefined' && normalizedLast !== customer.lastName) {
       customer.lastName = normalizedLast;
+      shouldSave = true;
+    }
+
+    if (phone !== null && phone !== undefined && customer.phone !== phone) {
+      customer.phone = phone;
       shouldSave = true;
     }
 
@@ -320,6 +332,7 @@ customerSchema.statics.findOrCreate = async function(customerData, shopDomain) {
     shopifyId: shopifyId || null,
     isTemp,
     shopDomain,
+    phone: phone || null,
     lastLoginAt: new Date()
   });
 
