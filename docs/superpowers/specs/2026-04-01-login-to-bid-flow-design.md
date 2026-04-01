@@ -1,4 +1,4 @@
-# Login to Bid Flow — Design Spec
+# Register to Bid Flow — Design Spec
 
 **Date:** 2026-04-01
 **Status:** Approved
@@ -11,20 +11,23 @@ Shopify's new customer accounts (`account.store.com`) ignore the `return_to` par
 
 Replace the Shopify login redirect with a lightweight inline registration form. Customers enter name, email, and phone number directly on the product page — no redirect, no leaving the page. Shopify login is deferred to checkout (when the winner pays via the draft order invoice).
 
+**Important distinction:** This is self-asserted identity (not Shopify authentication). Anyone can enter any email. The UI copy must say **"Register to Bid"** / **"Enter your details to bid"** — never "Login" — to avoid confusion with Shopify account login and reduce support/trust issues.
+
 ## New Bidding Flow
 
 ### Not Logged In
 Widget shows two buttons:
-- **"Login to Bid"** — opens an inline form: Full Name (required), Email (required), Phone Number (required)
+- **"Register to Bid"** — opens an inline form: Full Name (required), Email (required), Phone Number (required)
 - **"Continue as Guest"** — unchanged, view-only
 
-### Login to Bid Form Submission
-1. Validate all three fields client-side
+### Register to Bid Form Submission
+1. Validate all three fields client-side (name non-empty, email format, phone non-empty)
 2. POST to `/api/customers/saveCustomer` with `{ firstName, lastName, email, phone, displayName, shopDomain }`
-3. Backend creates or updates Customer record in MongoDB
-4. Save customer data to `localStorage` key `bidly_bidder` as `{ name, email, phone, firstName, lastName, customerId, timestamp }`
-5. Set `currentCustomer` in memory, mark `isLoggedIn = true`
-6. Dispatch `bidly-login-success` event — widget refreshes, bidding is enabled
+3. Backend validates and normalizes: email lowercase + trim, phone trim, rate-limit by IP
+4. Backend creates or updates Customer record in MongoDB (matched by email + shopDomain)
+5. Save customer data to `localStorage` key `bidly_bidder` as `{ name, email, phone, firstName, lastName, customerId, timestamp }`
+6. Set `currentCustomer` in memory, mark `isLoggedIn = true`
+7. Dispatch `bidly-login-success` event — widget refreshes, bidding is enabled
 
 ### Returning Bidders
 On page load, `bidly-hybrid-login.js` init checks `localStorage` for `bidly_bidder`. If found, auto-login with stored credentials — no form needed.
@@ -75,15 +78,40 @@ Accept `phone` in `/saveCustomer` and `/sync` endpoints. Save to Customer record
 ### Bid Placement (`auctionController.js`)
 No changes. Phone is stored on the Customer record, not needed at bid time.
 
+## Backend Hardening for `saveCustomer`
+
+This endpoint becomes effectively public (called from the storefront without Shopify auth). It must be hardened:
+
+- **Rate limiting:** Cap requests per IP (e.g. 10 registrations per minute per IP). The existing `express-rate-limit` setup can be extended or a specific limiter added to this route.
+- **Email validation:** Normalize to lowercase, trim whitespace, reject obviously invalid formats server-side (not just client-side).
+- **Phone validation:** Trim whitespace, reject empty strings. Light format check (digits, spaces, dashes, plus sign — no strict international format enforcement since this is global).
+- **Duplicate handling:** Matched by `email + shopDomain` (existing unique index). If a record exists, update name/phone — don't create a duplicate. This handles same customer from different devices.
+- **Scope by shopDomain:** Already enforced by `identifyStore` middleware on all routes. No additional work needed.
+
+## Security & Trust Model
+
+- **This is self-asserted identity, not authenticated.** The server must NOT grant any privilege based solely on `localStorage` or `bidly_bidder` data. All bid placement goes through the existing `placeBid` endpoint which validates against the backend. `localStorage` is a convenience cache for pre-filling — the backend Customer record is the source of truth.
+- **`isShopifyCustomer()` distinction:** The implementation must clearly distinguish between a real Shopify customer (detected via Liquid `window.customerData`) and a bidly_bidder registrant. Bidly bidders must NOT be treated as Shopify customers — they get bidding access only. Any future feature that requires a real Shopify customer session (e.g. loyalty points, account-level actions) must check Liquid/Shopify session, not `bidly_bidder`.
+- **localStorage is user-editable.** Acceptable for this use case since the backend validates all bids independently. If a user tampers with localStorage, the worst case is a display glitch — not a security bypass.
+
+## Privacy & Compliance Note
+
+Collecting email + phone is PII. Merchants using Bidly should:
+- Disclose data collection in their storefront privacy policy
+- Be aware of regional requirements (GDPR, etc.)
+- The existing unsubscribe mechanism covers email opt-out for blast emails
+
+This is a merchant responsibility (Bidly provides the tool, merchants configure their compliance). No code changes needed, but worth noting for documentation.
+
 ## Files Changed
 
 | File | Change |
 |---|---|
 | `auction-backend/models/Customer.js` | Add `phone` field to schema |
-| `auction-backend/routes/customerRoutes.js` | Accept `phone` in `/saveCustomer` and `/sync` |
-| `extensions/theme-app-extension/assets/bidly-hybrid-login.js` | New "Login to Bid" form + submit logic, `localStorage` persistence, init checks `bidly_bidder`, updated logout |
-| `extensions/theme-app-extension/assets/auction-app-embed.js` | Replace "Login with Shopify" buttons with "Login to Bid", update `handleLogout` (no Shopify redirect for bidders), update `isShopifyCustomer()` to recognize bidder customers |
-| `extensions/theme-app-extension/assets/auction-app-embed.css` | Styles for the new login form |
+| `auction-backend/routes/customerRoutes.js` | Accept `phone` in `/saveCustomer` and `/sync`, add rate limiter |
+| `extensions/theme-app-extension/assets/bidly-hybrid-login.js` | New "Register to Bid" form + submit logic, `localStorage` persistence, init checks `bidly_bidder`, updated logout |
+| `extensions/theme-app-extension/assets/auction-app-embed.js` | Replace "Login with Shopify" buttons with "Register to Bid", update `handleLogout` (no Shopify redirect for bidders), update `isShopifyCustomer()` to clearly distinguish bidder vs Shopify customer |
+| `extensions/theme-app-extension/assets/auction-app-embed.css` | Styles for the new registration form |
 
 ## Files NOT Changed
 
