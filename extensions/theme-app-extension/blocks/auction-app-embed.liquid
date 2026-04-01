@@ -2,6 +2,7 @@
   Auction App Embed - Automatically detects and overlays on auction products
   This appears in the "App embeds" section of theme customization
   No manual placement needed - just enable/disable
+  Asset ?v=__BIDLY_ASSET_VERSION__ is replaced with a Unix ms timestamp by npm run deploy (scripts/shopifyDeploy.mjs).
 {% endcomment %}
 
 {% schema %}
@@ -49,7 +50,7 @@
 }
 {% endschema %}
 
-<link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}?v=209">
+<link rel="stylesheet" href="{{ 'auction-app-embed.css' | asset_url }}?v=__BIDLY_ASSET_VERSION__">
 
 <meta id="bidly-product-id" data-product-id="{{ product.id }}">
 
@@ -65,11 +66,11 @@
 </script>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" defer></script>
-<script src="{{ 'bidly-debug-utils.js' | asset_url }}?v=209" defer></script>
-<script src="{{ 'backendConfig.js' | asset_url }}?v=209" defer></script>
-<script src="{{ 'bidly-hybrid-login.js' | asset_url }}?v=209" defer></script>
-<script src="{{ 'auction-widget-simple.js' | asset_url }}?v=209" defer></script>
-<script src="{{ 'auction-app-embed.js' | asset_url }}?v=209" defer></script>
+<script src="{{ 'bidly-debug-utils.js' | asset_url }}?v=__BIDLY_ASSET_VERSION__" defer></script>
+<script src="{{ 'backendConfig.js' | asset_url }}?v=__BIDLY_ASSET_VERSION__" defer></script>
+<script src="{{ 'bidly-hybrid-login.js' | asset_url }}?v=__BIDLY_ASSET_VERSION__" defer></script>
+<script src="{{ 'auction-widget-simple.js' | asset_url }}?v=__BIDLY_ASSET_VERSION__" defer></script>
+<script src="{{ 'auction-app-embed.js' | asset_url }}?v=__BIDLY_ASSET_VERSION__" defer></script>
 
 <script>
 // Initialize the auction app embed
