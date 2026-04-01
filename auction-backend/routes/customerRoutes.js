@@ -2,6 +2,15 @@ import express from 'express';
 import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { ensureCustomer } from '../services/customerService.js';
+import rateLimit from 'express-rate-limit';
+
+const saveCustomerLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many registration attempts. Please try again in a minute.' }
+});
 
 const router = express.Router();
 
@@ -14,7 +23,7 @@ router.get('/test', (req, res) => {
 });
 
 // Save customer data (simplified version of sync)
-router.post('/saveCustomer', async (req, res, next) => {
+router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
   try {
     console.log('📧 Customer save endpoint hit');
     console.log('📧 Request body:', req.body);
