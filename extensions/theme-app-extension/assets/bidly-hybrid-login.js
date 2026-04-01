@@ -674,7 +674,6 @@
 
     // Open Shopify login
     function openShopifyLogin() {
-        const currentUrl = encodeURIComponent(window.location.href);
         let shopDomain = CONFIG.shopDomain;
         
         // Ensure shopDomain has the correct format
@@ -688,7 +687,8 @@
             }
         }
         
-        const loginUrl = `https://${shopDomain}/account/login?return_to=${currentUrl}`;
+        const returnPath = encodeURIComponent(window.location.pathname + window.location.search);
+        const loginUrl = `https://${shopDomain}/account/login?return_to=${returnPath}`;
         console.log('Bidly: Redirecting to Shopify login:', loginUrl);
         console.log('Bidly: Shop domain used:', shopDomain);
         window.location.href = loginUrl;

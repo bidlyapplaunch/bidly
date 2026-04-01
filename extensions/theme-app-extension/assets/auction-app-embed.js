@@ -1321,7 +1321,7 @@
         if (isShopify) {
             // Shopify customer - redirect to Shopify logout with return URL
             const currentUrl = encodeURIComponent(window.location.href);
-            const logoutUrl = `/account/logout?return_url=${currentUrl}`;
+            const logoutUrl = `/account/logout?return_to=${currentUrl}`;
             console.log('Bidly: Redirecting Shopify customer to logout:', logoutUrl);
             window.location.href = logoutUrl;
         } else {
@@ -1426,7 +1426,7 @@
                             </div>
                             
                             <div class="bidly-login-options">
-                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.location.href='/account/login'">
+                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)">
                                     <span class="bidly-btn-icon">🛍️</span>
                                     ${t('widget.buttons.loginShopify')}
                                 </button>
@@ -1495,7 +1495,7 @@
                                     <div class="bidly-guest-message">
                                         <p style="font-weight: 600; margin-bottom: 0.5rem;">${t('widget.login.viewOnly')}</p>
                                         <p style="font-size: 0.9rem; opacity: 0.9;">${t('widget.login.viewOnlyMessage')}</p>
-                                        <button class="bidly-btn bidly-btn-primary" onclick="window.location.href='/account/login'" style="margin-top: 1rem;">
+                                        <button class="bidly-btn bidly-btn-primary" onclick="window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)" style="margin-top: 1rem;">
                                             ${t('widget.buttons.loginShopify')}
                                         </button>
                                     </div>
