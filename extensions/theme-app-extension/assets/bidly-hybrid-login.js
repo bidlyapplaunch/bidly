@@ -674,8 +674,16 @@
 
     // Open Shopify login
     function openShopifyLogin() {
+        // Save current page URL so we can redirect back after login
+        // (Shopify new customer accounts ignore return_to param)
+        try {
+            sessionStorage.setItem('bidly_return_to', window.location.href);
+        } catch (e) {
+            console.warn('Bidly: Could not save return URL:', e);
+        }
+
         let shopDomain = CONFIG.shopDomain;
-        
+
         // Ensure shopDomain has the correct format
         if (!shopDomain.includes('.myshopify.com')) {
             // If it's just the hostname, try to construct the proper domain
@@ -686,7 +694,7 @@
                 shopDomain = shopDomain.replace('.myshopify.com', '') + '.myshopify.com';
             }
         }
-        
+
         const returnPath = encodeURIComponent(window.location.pathname + window.location.search);
         const loginUrl = `https://${shopDomain}/account/login?return_to=${returnPath}`;
         console.log('Bidly: Redirecting to Shopify login:', loginUrl);
@@ -847,9 +855,26 @@
         
         if (shopifyCustomerDetected) {
             console.log('Bidly: Shopify customer detected and synced');
+
+            // Check if we need to redirect back to an auction page after login
+            try {
+                const returnTo = sessionStorage.getItem('bidly_return_to');
+                if (returnTo) {
+                    sessionStorage.removeItem('bidly_return_to');
+                    // Only redirect if we're not already on that page
+                    if (returnTo !== window.location.href) {
+                        console.log('Bidly: Redirecting back to auction page:', returnTo);
+                        window.location.href = returnTo;
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Bidly: Could not check return URL:', e);
+            }
+
             // Dispatch login success event immediately
-            window.dispatchEvent(new CustomEvent('bidly-login-success', { 
-                detail: { customer: currentCustomer } 
+            window.dispatchEvent(new CustomEvent('bidly-login-success', {
+                detail: { customer: currentCustomer }
             }));
         } else {
             // If no Shopify customer, check for guest customer in sessionStorage

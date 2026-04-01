@@ -1426,7 +1426,7 @@
                             </div>
                             
                             <div class="bidly-login-options">
-                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)">
+                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="try{sessionStorage.setItem('bidly_return_to',window.location.href)}catch(e){}; window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)">
                                     <span class="bidly-btn-icon">🛍️</span>
                                     ${t('widget.buttons.loginShopify')}
                                 </button>
@@ -1495,7 +1495,7 @@
                                     <div class="bidly-guest-message">
                                         <p style="font-weight: 600; margin-bottom: 0.5rem;">${t('widget.login.viewOnly')}</p>
                                         <p style="font-size: 0.9rem; opacity: 0.9;">${t('widget.login.viewOnlyMessage')}</p>
-                                        <button class="bidly-btn bidly-btn-primary" onclick="window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)" style="margin-top: 1rem;">
+                                        <button class="bidly-btn bidly-btn-primary" onclick="try{sessionStorage.setItem('bidly_return_to',window.location.href)}catch(e){}; window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)" style="margin-top: 1rem;">
                                             ${t('widget.buttons.loginShopify')}
                                         </button>
                                     </div>
