@@ -1,4 +1,6 @@
-# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+# Second Partner app (e.g. True Nordic) — client_id de32970476f2ecf20d98f9d9b6994c89
+# Deploy extension: npm run deploy -- --force --config truenordic
+# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "Bidly"
 client_id = "de32970476f2ecf20d98f9d9b6994c89"
@@ -6,7 +8,6 @@ application_url = "https://bidly-backend-2.hiiiiiiiiiii.com"
 embedded = true
 
 [access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_customers,read_draft_orders,read_inventory,read_product_listings,read_products,write_customers,write_draft_orders,write_products"
 use_legacy_install_flow = false
 
@@ -34,4 +35,3 @@ dev_store_url = "6sb15z-k1.myshopify.com"
 url = "https://bidly-backend-2.hiiiiiiiiiii.com/apps/bidly"
 subpath = "bidly"
 prefix = "apps"
-
