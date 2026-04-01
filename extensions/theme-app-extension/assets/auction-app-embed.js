@@ -1314,10 +1314,20 @@
     // Logout handler
     function handleLogout() {
         console.log('Bidly: Logout button clicked');
-        
+
+        // Always clear all bidly customer data from storage first
+        try {
+            sessionStorage.removeItem('bidly_guest_customer');
+            sessionStorage.removeItem('bidly_last_customer_id');
+            localStorage.removeItem('shopify_customer');
+            localStorage.removeItem('bidly_return_to');
+        } catch (e) {
+            console.warn('Bidly: Could not clear storage:', e);
+        }
+
         const customer = getCurrentCustomer();
         const isShopify = isShopifyCustomer();
-        
+
         if (isShopify) {
             // Shopify customer - redirect to Shopify logout with return URL
             const currentUrl = encodeURIComponent(window.location.href);
@@ -1329,14 +1339,7 @@
             console.log('Bidly: Logging out guest user');
             if (window.BidlyHybridLogin && window.BidlyHybridLogin.logout) {
                 window.BidlyHybridLogin.logout();
-                // The logout event listener will handle refreshing the widget
             } else {
-                // Fallback: manually clear sessionStorage and reload
-                try {
-                    sessionStorage.removeItem('bidly_guest_customer');
-                } catch (e) {
-                    console.warn('Bidly: Could not clear guest storage:', e);
-                }
                 window.location.reload();
             }
         }
@@ -1426,7 +1429,7 @@
                             </div>
                             
                             <div class="bidly-login-options">
-                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="try{sessionStorage.setItem('bidly_return_to',window.location.href)}catch(e){}; window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)">
+                                <button class="bidly-btn bidly-btn-primary bidly-shopify-login" onclick="try{localStorage.setItem('bidly_return_to',JSON.stringify({url:window.location.href,timestamp:Date.now()}))}catch(e){}; window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)">
                                     <span class="bidly-btn-icon">🛍️</span>
                                     ${t('widget.buttons.loginShopify')}
                                 </button>
@@ -1495,7 +1498,7 @@
                                     <div class="bidly-guest-message">
                                         <p style="font-weight: 600; margin-bottom: 0.5rem;">${t('widget.login.viewOnly')}</p>
                                         <p style="font-size: 0.9rem; opacity: 0.9;">${t('widget.login.viewOnlyMessage')}</p>
-                                        <button class="bidly-btn bidly-btn-primary" onclick="try{sessionStorage.setItem('bidly_return_to',window.location.href)}catch(e){}; window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)" style="margin-top: 1rem;">
+                                        <button class="bidly-btn bidly-btn-primary" onclick="try{localStorage.setItem('bidly_return_to',JSON.stringify({url:window.location.href,timestamp:Date.now()}))}catch(e){}; window.location.href='/account/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search)" style="margin-top: 1rem;">
                                             ${t('widget.buttons.loginShopify')}
                                         </button>
                                     </div>

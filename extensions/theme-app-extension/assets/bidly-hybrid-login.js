@@ -81,6 +81,15 @@
     let proxyPrefetchTimestamp = 0;
 
     function getCustomerIdCandidates() {
+        // If Liquid says no customer is logged in, don't trust stored IDs
+        if (window.customerData && !window.customerData.id) {
+            console.log('Bidly: Liquid reports no customer logged in, clearing stale IDs');
+            try {
+                sessionStorage.removeItem('bidly_last_customer_id');
+            } catch (e) { /* ignore */ }
+            return [];
+        }
+
         const ids = new Set();
         const add = (value) => {
             if (!value) {
@@ -151,6 +160,11 @@
     }
 
     async function fetchCustomerContextViaProxy() {
+        // If Liquid confirms no customer is logged in, skip proxy entirely
+        if (window.customerData && !window.customerData.id) {
+            return null;
+        }
+
         try {
             if (!proxyPrefetchPromise || Date.now() - proxyPrefetchTimestamp > 3000) {
                 proxyPrefetchTimestamp = Date.now();
@@ -677,7 +691,10 @@
         // Save current page URL so we can redirect back after login
         // (Shopify new customer accounts ignore return_to param)
         try {
-            sessionStorage.setItem('bidly_return_to', window.location.href);
+            localStorage.setItem('bidly_return_to', JSON.stringify({
+                url: window.location.href,
+                timestamp: Date.now()
+            }));
         } catch (e) {
             console.warn('Bidly: Could not save return URL:', e);
         }
@@ -815,13 +832,16 @@
     // Logout function
     function logout() {
         console.log('Bidly: Logging out...', { currentCustomer });
-        
-        // Clear guest data from sessionStorage
+
+        // Clear all bidly customer data from storage
         try {
             sessionStorage.removeItem('bidly_guest_customer');
-            console.log('Bidly: Cleared guest customer from sessionStorage');
+            sessionStorage.removeItem('bidly_last_customer_id');
+            localStorage.removeItem('shopify_customer');
+            localStorage.removeItem('bidly_return_to');
+            console.log('Bidly: Cleared all customer data from storage');
         } catch (storageError) {
-            console.warn('Bidly: Could not clear guest storage:', storageError);
+            console.warn('Bidly: Could not clear storage:', storageError);
         }
         
         currentCustomer = null;
@@ -858,13 +878,15 @@
 
             // Check if we need to redirect back to an auction page after login
             try {
-                const returnTo = sessionStorage.getItem('bidly_return_to');
-                if (returnTo) {
-                    sessionStorage.removeItem('bidly_return_to');
-                    // Only redirect if we're not already on that page
-                    if (returnTo !== window.location.href) {
-                        console.log('Bidly: Redirecting back to auction page:', returnTo);
-                        window.location.href = returnTo;
+                const returnData = localStorage.getItem('bidly_return_to');
+                if (returnData) {
+                    localStorage.removeItem('bidly_return_to');
+                    const { url, timestamp } = JSON.parse(returnData);
+                    const thirtyMinutes = 30 * 60 * 1000;
+                    // Only redirect if within 30 min and not already on that page
+                    if (url && (Date.now() - timestamp) < thirtyMinutes && url !== window.location.href) {
+                        console.log('Bidly: Redirecting back to auction page:', url);
+                        window.location.href = url;
                         return;
                     }
                 }
