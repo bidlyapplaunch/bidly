@@ -1745,3 +1745,55 @@
     width: 100% !important;
     max-width: 100% !important;
 }
+
+/* Register to Bid form */
+#bidly-register-modal .bidly-modal-content {
+    max-width: 400px;
+    padding: 30px;
+}
+
+#bidly-register-form h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    text-align: center;
+    color: #000;
+}
+
+#bidly-register-form .bidly-form-group {
+    margin-bottom: 16px;
+}
+
+#bidly-register-form .bidly-form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+#bidly-register-form .bidly-form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+#bidly-register-form .bidly-form-group input:focus {
+    outline: none;
+    border-color: #000;
+    box-shadow: 0 0 0 1px #000;
+}
+
+#bidly-register-form .bidly-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+#bidly-register-form .bidly-form-actions .bidly-btn {
+    flex: 1;
+}
