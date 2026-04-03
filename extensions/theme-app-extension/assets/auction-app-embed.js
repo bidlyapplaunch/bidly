@@ -449,6 +449,17 @@
                 viewOnly: "View Only",
                 viewOnlyMessage: "Register to enter the auction"
             },
+            register: {
+                title: "Register to Bid",
+                fullName: "Full Name",
+                emailAddress: "Email Address",
+                phoneNumber: "Phone Number",
+                submit: "Register to Bid",
+                cancel: "Cancel",
+                errorAllFields: "Please fill in all fields",
+                errorInvalidEmail: "Please enter a valid email address",
+                errorFailed: "Registration failed. Please try again."
+            },
             loading: {
                 title: "Preparing your auction...",
                 message: "Checking your account and syncing live bids."

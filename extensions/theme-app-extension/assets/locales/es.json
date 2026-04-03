@@ -103,6 +103,17 @@
       "bidInputNotFound": "Campo de puja no encontrado. Por favor, actualiza la página.",
       "bidButtonNotFound": "Botón de puja no encontrado. Por favor, actualiza la página.",
       "buyNowButtonNotFound": "Botón de compra inmediata no encontrado. Por favor, actualiza la página."
+    },
+    "register": {
+      "title": "Regístrate para pujar",
+      "fullName": "Nombre completo",
+      "emailAddress": "Correo electrónico",
+      "phoneNumber": "Número de teléfono",
+      "submit": "Regístrate para pujar",
+      "cancel": "Cancelar",
+      "errorAllFields": "Por favor, completa todos los campos",
+      "errorInvalidEmail": "Por favor, ingresa un correo electrónico válido",
+      "errorFailed": "Error en el registro. Inténtalo de nuevo."
     }
   }
 }

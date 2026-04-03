@@ -798,20 +798,21 @@
 
     // Show Register to Bid form
     function showRegisterForm() {
-        const t = window.BidlyTranslate || ((key) => {
-            const fallbacks = {
-                'widget.register.title': 'Register to Bid',
-                'widget.register.fullName': 'Full Name',
-                'widget.register.emailAddress': 'Email Address',
-                'widget.register.phoneNumber': 'Phone Number',
-                'widget.register.submit': 'Register to Bid',
-                'widget.register.cancel': 'Cancel',
-                'widget.register.errorAllFields': 'Please fill in all fields',
-                'widget.register.errorInvalidEmail': 'Please enter a valid email address',
-                'widget.register.errorFailed': 'Registration failed. Please try again.'
-            };
-            return fallbacks[key] || key;
-        });
+        const fallbacks = {
+            'widget.register.title': 'Register to Bid',
+            'widget.register.fullName': 'Full Name',
+            'widget.register.emailAddress': 'Email Address',
+            'widget.register.phoneNumber': 'Phone Number',
+            'widget.register.submit': 'Register to Bid',
+            'widget.register.cancel': 'Cancel',
+            'widget.register.errorAllFields': 'Please fill in all fields',
+            'widget.register.errorInvalidEmail': 'Please enter a valid email address',
+            'widget.register.errorFailed': 'Registration failed. Please try again.'
+        };
+        const t = (key) => {
+            const result = window.BidlyTranslate ? window.BidlyTranslate(key) : key;
+            return (result === key && fallbacks[key]) ? fallbacks[key] : result;
+        };
 
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
@@ -854,14 +855,15 @@
     async function submitRegisterForm(event) {
         event.preventDefault();
 
-        const t = window.BidlyTranslate || ((key) => {
-            const fallbacks = {
-                'widget.register.errorAllFields': 'Please fill in all fields',
-                'widget.register.errorInvalidEmail': 'Please enter a valid email address',
-                'widget.register.errorFailed': 'Registration failed. Please try again.'
-            };
-            return fallbacks[key] || key;
-        });
+        const fallbacks = {
+            'widget.register.errorAllFields': 'Please fill in all fields',
+            'widget.register.errorInvalidEmail': 'Please enter a valid email address',
+            'widget.register.errorFailed': 'Registration failed. Please try again.'
+        };
+        const t = (key) => {
+            const result = window.BidlyTranslate ? window.BidlyTranslate(key) : key;
+            return (result === key && fallbacks[key]) ? fallbacks[key] : result;
+        };
 
         const form = event.target;
         if (!form) {

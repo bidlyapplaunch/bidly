@@ -103,6 +103,17 @@
       "bidInputNotFound": "Bodinvoer niet gevonden. Vernieuw de pagina.",
       "bidButtonNotFound": "Biedknop niet gevonden. Vernieuw de pagina.",
       "buyNowButtonNotFound": "Koop nu-knop niet gevonden. Vernieuw de pagina."
+    },
+    "register": {
+      "title": "Registreer om te bieden",
+      "fullName": "Volledige naam",
+      "emailAddress": "E-mailadres",
+      "phoneNumber": "Telefoonnummer",
+      "submit": "Registreer om te bieden",
+      "cancel": "Annuleren",
+      "errorAllFields": "Vul alle velden in",
+      "errorInvalidEmail": "Voer een geldig e-mailadres in",
+      "errorFailed": "Registratie mislukt. Probeer het opnieuw."
     }
   }
 }

@@ -103,6 +103,17 @@
       "bidInputNotFound": "Inserimento dell'offerta non trovato. Aggiorna la pagina.",
       "bidButtonNotFound": "Pulsante offerta non trovato. Aggiorna la pagina.",
       "buyNowButtonNotFound": "Pulsante Acquista ora non trovato. Aggiorna la pagina."
+    },
+    "register": {
+      "title": "Registrati per fare offerte",
+      "fullName": "Nome completo",
+      "emailAddress": "Indirizzo e-mail",
+      "phoneNumber": "Numero di telefono",
+      "submit": "Registrati per fare offerte",
+      "cancel": "Annulla",
+      "errorAllFields": "Compila tutti i campi",
+      "errorInvalidEmail": "Inserisci un indirizzo e-mail valido",
+      "errorFailed": "Registrazione fallita. Riprova."
     }
   }
 }

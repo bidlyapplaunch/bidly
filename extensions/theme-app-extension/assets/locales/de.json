@@ -103,6 +103,17 @@
       "bidInputNotFound": "Gebotseingabe nicht gefunden. Bitte aktualisieren Sie die Seite.",
       "bidButtonNotFound": "Bieten-Button nicht gefunden. Bitte aktualisieren Sie die Seite.",
       "buyNowButtonNotFound": "Schaltfläche „Jetzt kaufen“ nicht gefunden. Bitte aktualisieren Sie die Seite."
+    },
+    "register": {
+      "title": "Registrieren zum Bieten",
+      "fullName": "Vollständiger Name",
+      "emailAddress": "E-Mail-Adresse",
+      "phoneNumber": "Telefonnummer",
+      "submit": "Registrieren zum Bieten",
+      "cancel": "Abbrechen",
+      "errorAllFields": "Bitte füllen Sie alle Felder aus",
+      "errorInvalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "errorFailed": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut."
     }
   }
 }

@@ -103,6 +103,17 @@
       "bidInputNotFound": "Entrée d'enchère introuvable. Veuillez actualiser la page.",
       "bidButtonNotFound": "Bouton d'enchère introuvable. Veuillez actualiser la page.",
       "buyNowButtonNotFound": "Bouton Acheter maintenant introuvable. Veuillez actualiser la page."
+    },
+    "register": {
+      "title": "S'inscrire pour enchérir",
+      "fullName": "Nom complet",
+      "emailAddress": "Adresse e-mail",
+      "phoneNumber": "Numéro de téléphone",
+      "submit": "S'inscrire pour enchérir",
+      "cancel": "Annuler",
+      "errorAllFields": "Veuillez remplir tous les champs",
+      "errorInvalidEmail": "Veuillez entrer une adresse e-mail valide",
+      "errorFailed": "L'inscription a échoué. Veuillez réessayer."
     }
   }
 }

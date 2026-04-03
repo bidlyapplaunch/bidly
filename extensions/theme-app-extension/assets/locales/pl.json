@@ -103,6 +103,17 @@
       "bidInputNotFound": "Nie znaleziono danych wejściowych dotyczących stawki. Odśwież stronę.",
       "bidButtonNotFound": "Nie znaleziono przycisku licytuj. Odśwież stronę.",
       "buyNowButtonNotFound": "Nie znaleziono przycisku Kup teraz. Odśwież stronę."
+    },
+    "register": {
+      "title": "Zarejestruj się, aby licytować",
+      "fullName": "Imię i nazwisko",
+      "emailAddress": "Adres e-mail",
+      "phoneNumber": "Numer telefonu",
+      "submit": "Zarejestruj się, aby licytować",
+      "cancel": "Anuluj",
+      "errorAllFields": "Wypełnij wszystkie pola",
+      "errorInvalidEmail": "Podaj prawidłowy adres e-mail",
+      "errorFailed": "Rejestracja nie powiodła się. Spróbuj ponownie."
     }
   }
 }
