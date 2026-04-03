@@ -61,6 +61,32 @@ bidly-app/
 - `npm run dev` — Vite dev server
 - `npm run build` — Production build
 
+## Deployment
+
+**Two channels:** Shopify Partners (extensions + app config) vs hosted services (Render). They do not replace each other.
+
+### Theme app extension and Partners app config
+
+- Use the **Shopify CLI**, not Render: `npm run deploy` → `shopify app deploy`.
+- Publishes a new **app version** (extension assets, Liquid, `shopify.app.*` settings in that release). Does **not** deploy the Node/Remix web app.
+- **Two Partner apps** exist (different `client_id`s). Deploy **both** when the extension changes so every merchant listing stays in sync:
+  - `npm run deploy -- --force --config shopify.app.bidly.toml`
+  - `npm run deploy -- --force --config truenordic` (uses `shopify.app.truenordic.toml`)
+- Theme embed cache busting: `extensions/theme-app-extension/blocks/auction-app-embed.liquid` sets `?v=` from Liquid (`now` / date filter) so asset URLs are not stuck on a static number.
+
+### Backend, admin, customer, and other server-hosted code
+
+- **Commit and push** to the branch Render (or CI) watches; **Render runs your build** (e.g. `auction-backend` `prestart` / `build` as configured on the service).
+- Run **`npm run build`** locally first if you want to verify before push.
+- API, static admin/customer builds served by the backend, and env changes all follow this path — **not** `shopify app deploy`.
+
+| Changed area | What to run |
+|--------------|-------------|
+| `extensions/`, `shopify.app.*.toml` | `shopify app deploy` with each relevant `--config` |
+| `auction-backend/`, hosted admin/customer, `.env` on Render | Push → Render redeploy (build on host) |
+
+Longer setup notes (Render, Shopify OAuth, TOML, theme extension): **`docs/reference/`** (see `docs/reference/README.md`).
+
 ## Code Conventions
 
 - ES Modules throughout (`"type": "module"`)
