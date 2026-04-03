@@ -1415,7 +1415,9 @@
         // Check if user is logged in and if they're a Shopify customer
         const loggedIn = isUserLoggedIn();
         const isShopify = isShopifyCustomer();
-        const isGuest = loggedIn && !isShopify;
+        const currentCust = getCurrentCustomer();
+        const isBidlyBidder = currentCust?.isBidlyBidder === true;
+        const isGuest = loggedIn && !isShopify && !isBidlyBidder;
         
         // If not logged in, either show loading placeholder or login prompt
         if (!loggedIn) {
