@@ -34,7 +34,29 @@ api.interceptors.request.use(
       config.params = { ...config.params, shop: shopDomain };
       console.log('🏪 Added shop parameter:', shopDomain);
     }
-    
+
+    // Add auth token to requests if available
+    try {
+      const auth = JSON.parse(sessionStorage.getItem('customerAuth') || '{}');
+      if (auth.token) {
+        config.headers.Authorization = `Bearer ${auth.token}`;
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+
+    // Add customer ID from localStorage if available (for bidly bidders)
+    if (!config.headers.Authorization) {
+      try {
+        const bidder = JSON.parse(localStorage.getItem('bidly_bidder') || '{}');
+        if (bidder.customerId) {
+          config.headers['X-Bidly-Customer-Id'] = bidder.customerId;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     return config;
   },
   (error) => {

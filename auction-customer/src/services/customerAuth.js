@@ -57,7 +57,28 @@ class CustomerAuthService {
         }
       }
 
-      // Fall back to sessionStorage (standalone mode)
+      // Check localStorage for returning bidder (shared with widget)
+      const bidderStr = localStorage.getItem('bidly_bidder');
+      if (bidderStr) {
+        const bidder = JSON.parse(bidderStr);
+        if (bidder.email) {
+          this.customer = {
+            id: bidder.customerId || ('bidder_' + Date.now()),
+            email: bidder.email,
+            name: bidder.name || bidder.email,
+            fullName: bidder.name || bidder.email,
+            firstName: bidder.firstName || null,
+            lastName: bidder.lastName || null,
+            phone: bidder.phone || null,
+            isTemp: false,
+            isBidlyBidder: true
+          };
+          console.log('👤 Returning bidder loaded from localStorage:', this.customer.name);
+          return;
+        }
+      }
+
+      // Fall back to sessionStorage (legacy)
       const stored = sessionStorage.getItem('customerAuth');
       if (stored) {
         this.customer = JSON.parse(stored);
@@ -112,13 +133,6 @@ class CustomerAuthService {
         return true;
       }
 
-      if (marketplaceConfig.enforceShopifyLogin) {
-        if (marketplaceConfig.loginUrl) {
-          window.location.href = marketplaceConfig.loginUrl;
-        }
-        return false;
-      }
-
       // Try shared login system first
       if (window.BidlyHybridLogin) {
         const success = await window.BidlyHybridLogin.guestLogin(
@@ -138,11 +152,20 @@ class CustomerAuthService {
         }
       }
 
-      // Fallback to sessionStorage for non-Shopify environments
+      // Save to localStorage (persistent) and sessionStorage (legacy)
+      localStorage.setItem('bidly_bidder', JSON.stringify({
+        name: customerData.name,
+        email: customerData.email,
+        phone: customerData.phone || null,
+        firstName: customerData.firstName || null,
+        lastName: customerData.lastName || null,
+        customerId: customerData.id,
+        timestamp: Date.now()
+      }));
       sessionStorage.setItem('customerAuth', JSON.stringify(customerData));
       this.customer = customerData;
 
-      console.log('✅ Customer authenticated (fallback):', customerData.name);
+      console.log('✅ Customer authenticated:', customerData.name);
       return true;
     } catch (error) {
       console.error('Error storing customer data:', error);
@@ -160,15 +183,10 @@ class CustomerAuthService {
         window.BidlyHybridLogin.logout();
       }
 
-      // Clear local storage/session
+      // Clear all storage
       sessionStorage.removeItem('customerAuth');
+      localStorage.removeItem('bidly_bidder');
       this.customer = null;
-
-      const marketplaceConfig = getMarketplaceConfig();
-      if (marketplaceConfig.enforceShopifyLogin && marketplaceConfig.logoutUrl) {
-        window.location.href = marketplaceConfig.logoutUrl;
-        return true;
-      }
 
       console.log('👋 Customer logged out');
       return true;

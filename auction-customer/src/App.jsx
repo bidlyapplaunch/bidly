@@ -391,9 +391,11 @@ function App() {
       setError(null);
       
       const auctionId = bidData.auctionId;
+      const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       await auctionAPI.placeBid(auctionId, {
         amount: bidData.amount,
-        customerId: activeProfile.id
+        customerId: activeProfile.id,
+        idempotencyKey
       });
       
       const bidderName = activeProfile.displayName || currentDisplayName;
@@ -525,22 +527,14 @@ function App() {
   };
 
   const handleLoginAction = () => {
-    if (enforceShopifyLogin && shopifyLoginUrl) {
-      window.location.href = shopifyLoginUrl;
-      return;
-    }
     setAuthRequired(true);
     setShowAuthModal(true);
   };
 
   const requireAuth = () => {
     if (!customer) {
-      if (enforceShopifyLogin && shopifyLoginUrl) {
-        window.location.href = shopifyLoginUrl;
-      } else {
-        setAuthRequired(true);
-        setShowAuthModal(true);
-      }
+      setAuthRequired(true);
+      setShowAuthModal(true);
       return false;
     }
     return true;

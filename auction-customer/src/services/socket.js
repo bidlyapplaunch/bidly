@@ -22,8 +22,19 @@ class SocketService {
   connect() {
     if (!this.socket) {
       const backendUrl = getBackendUrl();
+
+      // Read auth token from sessionStorage or localStorage
+      const token = (() => {
+        try {
+          const auth = JSON.parse(sessionStorage.getItem('customerAuth') || '{}');
+          if (auth.token) return auth.token;
+        } catch { /* ignore */ }
+        return null;
+      })();
+
       this.socket = io(backendUrl, {
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        auth: { token }
       });
 
       this.socket.on('connect', () => {

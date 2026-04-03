@@ -8,7 +8,8 @@ const CustomerAuth = ({ onLogin, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    email: ''
+    email: '',
+    phone: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,6 +43,10 @@ const CustomerAuth = ({ onLogin, onClose }) => {
       setError(t('marketplace.auth.emailInvalid'));
       return false;
     }
+    if (!formData.phone.trim()) {
+      setError(t('marketplace.auth.phoneRequired') || 'Phone number is required');
+      return false;
+    }
     return true;
   };
 
@@ -56,19 +61,64 @@ const CustomerAuth = ({ onLogin, onClose }) => {
     setError('');
 
     try {
+      // Get shop domain from config or URL
+      const shopDomain = window.BidlyMarketplaceConfig?.shop
+        || window.BidlyMarketplaceConfig?.shopDomain
+        || new URLSearchParams(window.location.search).get('shop')
+        || '';
+
+      // Register with backend to get server-generated ID and token
+      const backendUrl = window.BidlyBackendConfig?.backendUrl || '';
+      const response = await fetch(`${backendUrl}/api/customers/saveCustomer?shop=${encodeURIComponent(shopDomain)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          firstName: formData.name.trim().split(' ')[0],
+          lastName: formData.name.trim().split(' ').slice(1).join(' ') || '',
+          displayName: formData.name.trim(),
+          phone: formData.phone.trim(),
+          isTemp: true
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
       const customerData = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-        id: Date.now().toString(),
-        loginTime: new Date().toISOString()
+        phone: formData.phone.trim(),
+        id: data.id || data.customer?.id,
+        firstName: formData.name.trim().split(' ')[0],
+        lastName: formData.name.trim().split(' ').slice(1).join(' ') || '',
+        token: data.token,
+        loginTime: new Date().toISOString(),
+        isBidlyBidder: true
       };
 
+      // Save to both localStorage (persistent) and sessionStorage (legacy compat)
+      localStorage.setItem('bidly_bidder', JSON.stringify({
+        name: customerData.name,
+        email: customerData.email,
+        phone: customerData.phone,
+        firstName: customerData.firstName,
+        lastName: customerData.lastName,
+        customerId: customerData.id,
+        timestamp: Date.now()
+      }));
       sessionStorage.setItem('customerAuth', JSON.stringify(customerData));
-      onLogin(customerData);
+
+      if (onLogin) {
+        onLogin(customerData);
+      }
       onClose();
     } catch (err) {
-      setError(t('marketplace.auth.errorGeneric'));
-      console.error('Auth error:', err);
+      console.error('Registration failed:', err);
+      setError(err.message || t('marketplace.auth.errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -77,44 +127,8 @@ const CustomerAuth = ({ onLogin, onClose }) => {
   const switchMode = () => {
     setIsLogin(!isLogin);
     setError('');
-    setFormData({ name: '', email: '' });
+    setFormData({ name: '', email: '', phone: '' });
   };
-
-  if (enforceShopifyLogin) {
-    return (
-      <div className="customer-auth-overlay">
-        <div className="customer-auth-modal">
-          <div className="customer-auth-header">
-            <h2>{t('marketplace.auth.signInTitle')}</h2>
-            <button className="close-btn" onClick={onClose}>×</button>
-          </div>
-
-          <div className="customer-auth-body">
-            <p className="auth-description">
-              {shopName
-                ? t('marketplace.auth.shopifyLoginDescription', { shop: shopName })
-                : t('marketplace.auth.shopifyLoginDescriptionGeneric')}
-            </p>
-
-            <div className="shopify-login-card">
-              <p>{t('marketplace.auth.shopifyLoginCard')}</p>
-              <button
-                type="button"
-                className="auth-submit-btn"
-                onClick={() => {
-                  if (shopifyLoginUrl) {
-                    window.location.href = shopifyLoginUrl;
-                  }
-                }}
-              >
-                {t('marketplace.auth.continueShopifyLogin')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="customer-auth-overlay">
@@ -160,7 +174,21 @@ const CustomerAuth = ({ onLogin, onClose }) => {
                 disabled={loading}
               />
             </div>
-            
+
+            <div className="form-group">
+              <label htmlFor="phone">{t('marketplace.auth.phone') || 'Phone Number'}</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder={t('marketplace.auth.phonePlaceholder') || '+1 234 567 890'}
+                required
+                disabled={loading}
+              />
+            </div>
+
             {error && (
               <div className="error-message">
                 {error}
