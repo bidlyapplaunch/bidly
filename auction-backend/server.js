@@ -31,12 +31,13 @@ const corsOriginCheck = (origin, callback) => {
     // Allow Shopify domains (stores, admin, CDN)
     if (url.hostname.endsWith('.myshopify.com')) return callback(null, true);
     if (url.hostname.endsWith('.shopify.com')) return callback(null, true);
+    // Allow the app's own domain (Cloudflare-proxied)
+    if (url.hostname.endsWith('.hiiiiiiiiiii.com')) return callback(null, true);
     // Allow explicitly whitelisted origins (admin dashboard, custom domains)
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
   } catch {
     // Invalid URL
   }
-  console.error(`CORS blocked origin: ${origin}`);
   callback(new Error('Not allowed by CORS'));
 };
 
