@@ -136,7 +136,7 @@ router.get('/:type', async (req, res) => {
 
     return res.json(response);
   } catch (error) {
-    console.error('❌ Error fetching customization:', error);
+    console.error('Error fetching customization:', error);
     return res.status(error.status || 500).json({
       success: false,
       message: error.message || 'Failed to fetch customization settings'
@@ -202,7 +202,7 @@ router.put(
         ...saved
       });
     } catch (error) {
-      console.error('❌ Error saving customization:', error);
+      console.error('Error saving customization:', error);
       return res.status(error.status || 500).json({
         success: false,
         message: error.message || 'Failed to save customization settings',
@@ -257,7 +257,7 @@ router.get('/:type/preview', requireAuth, async (req, res) => {
       preview
     });
   } catch (error) {
-    console.error('❌ Error generating customization preview:', error);
+    console.error('Error generating customization preview:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to generate customization preview'

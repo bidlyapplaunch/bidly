@@ -4,17 +4,6 @@ import { optionalStoreIdentification } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
-// Add debugging middleware
-router.use((req, res, next) => {
-  console.log('🎨 Widget customization route hit:', {
-    method: req.method,
-    path: req.path,
-    url: req.url,
-    query: req.query
-  });
-  next();
-});
-
 /**
  * GET /api/widget-customization
  * Get widget customization settings for the current shop
@@ -23,11 +12,6 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         
-        console.log('🎨 Widget customization GET request:', {
-            shopDomain,
-            hasStore: !!req.store
-        });
-
         if (!shopDomain) {
             return res.status(400).json({
                 success: false,
@@ -73,7 +57,7 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
             customization
         });
     } catch (error) {
-        console.error('❌ Error fetching widget customization:', error);
+        console.error('Error fetching widget customization:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch widget customization settings',
@@ -90,13 +74,6 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         const { template, font, colors } = req.body;
-
-        console.log('🎨 Widget customization POST request:', {
-            shopDomain,
-            template,
-            font,
-            colors: colors ? Object.keys(colors) : 'none'
-        });
 
         if (!shopDomain) {
             return res.status(400).json({
@@ -146,20 +123,13 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
             { upsert: true, new: true, runValidators: true }
         );
 
-        console.log('✅ Widget customization saved:', {
-            id: customization._id,
-            shopDomain,
-            template: customization.template,
-            font: customization.font
-        });
-
         res.json({
             success: true,
             message: 'Widget customization settings saved successfully',
             customization
         });
     } catch (error) {
-        console.error('❌ Error saving widget customization:', error);
+        console.error('Error saving widget customization:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to save widget customization settings',
@@ -220,7 +190,7 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
         res.setHeader('Content-Type', 'text/css');
         res.send(css);
     } catch (error) {
-        console.error('❌ Error generating widget theme CSS:', error);
+        console.error('Error generating widget theme CSS:', error);
         res.status(500).send('/* Error generating theme CSS */');
     }
 });

@@ -192,7 +192,6 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
 
 
   const handleProductSearchChange = useCallback((value) => {
-    console.log('🔍 Search input changed:', value);
     setProductSearchQuery(value);
     setSearchError(null);
 
@@ -200,7 +199,6 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
     if (value.length > 2) {
-      console.log('🔍 Search query is long enough, debouncing search...');
       setSearching(true);
 
       searchTimeoutRef.current = setTimeout(async () => {
@@ -211,43 +209,27 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
 
         // Try real API first
         try {
-          console.log('🔍 Trying real Shopify API...');
-          console.log('🔍 API call details:', { query: value, endpoint: '/shopify/products/search' });
           const response = await shopifyAPI.searchProducts(value, 10, null, { signal });
-          console.log('🔍 Real API response:', response);
 
           // Check if the response has the expected structure
           if (response && Array.isArray(response)) {
             const products = response;
-            console.log('🔍 Products found:', products.length);
             if (products.length > 0) {
               setSearchResults(products);
-              console.log('✅ Using real Shopify data');
             } else {
               throw new Error('No products found from real API');
             }
           } else {
-            console.log('🔍 Unexpected response structure:', response);
             throw new Error('Invalid response structure from API');
           }
         } catch (error) {
-          // Ignore AbortError — it means a newer search replaced this one
+          // Ignore AbortError -- it means a newer search replaced this one
           if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-            console.log('🔍 Search request aborted (superseded by newer search)');
             return;
           }
-          console.log('❌ Real API failed:', error);
-          console.log('❌ Error details:', {
-            message: error.message,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data
-          });
-          console.log('🔍 Falling back to mock data...');
 
           // Fallback to mock data
           const mockProducts = getMockProducts(value);
-          console.log('🔍 Mock products found:', mockProducts);
           if (mockProducts.length > 0) {
             setSearchResults(mockProducts);
             setSearchError(null);
@@ -260,7 +242,6 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         }
       }, 300); // 300ms debounce
     } else {
-      console.log('🔍 Search query too short, clearing results');
       setSearchResults([]);
     }
   }, [i18n]);

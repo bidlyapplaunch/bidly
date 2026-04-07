@@ -234,7 +234,6 @@ storeSchema.methods.hasPermission = function(requiredScope) {
 
 // Get store's access token (with security logging)
 storeSchema.methods.getAccessToken = function() {
-  console.log(`🔐 Accessing token for store: ${this.shopDomain}`);
   return this.accessToken;
 };
 
@@ -290,7 +289,7 @@ storeSchema.pre('save', function(next) {
  * Post-save middleware
  */
 storeSchema.post('save', function(doc) {
-  console.log(`💾 Store saved: ${doc.shopDomain} (${doc.storeName})`);
+  // Logging removed for production
 });
 
 // Create and export the model

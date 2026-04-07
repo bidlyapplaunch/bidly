@@ -50,7 +50,7 @@ export function initAppBridge() {
   // If still no API key, log warning but don't throw
   // App Bridge might be initialized later in React context
   if (!apiKey) {
-    console.warn('⚠️ Shopify API key not found. App Bridge initialization skipped. It will be initialized when available.');
+    console.warn('Shopify API key not found. App Bridge initialization skipped.');
     return;
   }
 
@@ -62,9 +62,8 @@ export function initAppBridge() {
     });
 
     window.shopify = app;
-    console.log('✅ App Bridge initialized successfully');
   } catch (error) {
-    console.error('❌ Failed to initialize App Bridge:', error);
+    console.error('Failed to initialize App Bridge:', error);
     // Don't throw - let React handle initialization if needed
   }
 }

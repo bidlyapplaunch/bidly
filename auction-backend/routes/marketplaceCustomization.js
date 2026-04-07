@@ -6,17 +6,6 @@ import { getDefaultSettings } from '../services/customizationService.js';
 
 const router = express.Router();
 
-// Add debugging middleware
-router.use((req, res, next) => {
-  console.log('🏪 Marketplace customization route hit:', {
-    method: req.method,
-    path: req.path,
-    url: req.url,
-    query: req.query
-  });
-  next();
-});
-
 /**
  * GET /api/marketplace-customization
  * Get marketplace customization settings for the current shop
@@ -25,11 +14,6 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         
-        console.log('🏪 Marketplace customization GET request:', {
-            shopDomain,
-            hasStore: !!req.store
-        });
-
         if (!shopDomain) {
             return res.status(400).json({
                 success: false,
@@ -70,7 +54,7 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
             customization
         });
     } catch (error) {
-        console.error('❌ Error fetching marketplace customization:', error);
+        console.error('Error fetching marketplace customization:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch marketplace customization settings',
@@ -87,14 +71,6 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         const { template, font, colors, gradientEnabled } = req.body;
-
-        console.log('🏪 Marketplace customization POST request:', {
-            shopDomain,
-            template,
-            font,
-            colors: colors ? Object.keys(colors) : 'none',
-            gradientEnabled
-        });
 
         if (!shopDomain) {
             return res.status(400).json({
@@ -129,7 +105,7 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
                 if (validColorKeys.includes(key)) {
                     acc[key] = value;
                 } else {
-                    console.warn(`⚠️ Ignoring unsupported color key "${key}" for shop ${shopDomain}`);
+                    console.warn(`Ignoring unsupported color key "${key}" for shop ${shopDomain}`);
                 }
                 return acc;
             }, {});
@@ -149,20 +125,13 @@ router.post('/', optionalStoreIdentification, async (req, res) => {
             { upsert: true, new: true, runValidators: true }
         );
 
-        console.log('✅ Marketplace customization saved:', {
-            id: customization._id,
-            shopDomain,
-            template: customization.template,
-            font: customization.font
-        });
-
         res.json({
             success: true,
             message: 'Marketplace customization settings saved successfully',
             customization
         });
     } catch (error) {
-        console.error('❌ Error saving marketplace customization:', error);
+        console.error('Error saving marketplace customization:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to save marketplace customization settings',
@@ -219,7 +188,7 @@ router.get('/theme', optionalStoreIdentification, async (req, res) => {
         res.setHeader('Content-Type', 'text/css');
         res.send(css);
     } catch (error) {
-        console.error('❌ Error generating marketplace theme CSS:', error);
+        console.error('Error generating marketplace theme CSS:', error);
         res.status(500).send('/* Error generating theme CSS */');
     }
 });

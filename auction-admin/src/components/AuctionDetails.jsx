@@ -31,15 +31,12 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const fetchAuctionDetails = async () => {
     const auctionId = auction?.id || auction?._id;
     if (!auctionId) {
-      console.log('❌ No auction ID found:', auction);
       return;
     }
     
     try {
       setLoading(true);
-      console.log('🔍 Fetching auction details for ID:', auctionId);
       const response = await auctionAPI.getAuctionById(auctionId);
-      console.log('✅ Auction details fetched, full response:', response);
       
       // auctionAPI.getAuctionById returns response.data from axios
       // Backend returns: { success: true, data: {...auction object...} }
@@ -54,11 +51,9 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
         data = response;
       }
       
-      console.log('✅ Extracted auction data:', data);
-      console.log('✅ Auction ID in data:', data?._id || data?.id);
       setAuctionData(data);
     } catch (error) {
-      console.error('❌ Error fetching auction details:', error);
+      console.error('Error fetching auction details:', error);
       console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
@@ -70,22 +65,14 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       // Try multiple possible ID fields - prioritize auctionData since it's the fetched data
       const auctionId = auctionData?._id || auctionData?.id || auction?._id || auction?.id;
       
-      console.log('🔍 Attempting to close auction. Available IDs:');
-      console.log('  - auctionData?._id:', auctionData?._id);
-      console.log('  - auctionData?.id:', auctionData?.id);
-      console.log('  - auction?._id:', auction?._id);
-      console.log('  - auction?.id:', auction?.id);
-      console.log('  - Selected ID:', auctionId);
-      
       if (!auctionId) {
-        console.error('❌ No auction ID found. auctionData:', auctionData, 'auction:', auction);
+        console.error('No auction ID found. auctionData:', auctionData, 'auction:', auction);
         setToastMessage(i18n.translate('admin.auctions.details.errors.missingId'));
         setToastError(true);
         setShowToast(true);
         return;
       }
       
-      console.log('🔍 Closing auction with ID:', auctionId);
       await auctionAPI.closeAuction(auctionId);
       setToastMessage(i18n.translate('admin.auctions.details.toast.closed'));
       setToastError(false);

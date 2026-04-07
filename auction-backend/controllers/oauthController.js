@@ -12,7 +12,7 @@ const buildShopifyAdminUrl = (shop, hostParam) => {
   // Require SHOPIFY_APP_EMBED_URL - no fallback
   const fallbackAppUrl = process.env.SHOPIFY_APP_EMBED_URL;
   if (!fallbackAppUrl) {
-    console.error('❌ SHOPIFY_APP_EMBED_URL is not set');
+    console.warn('SHOPIFY_APP_EMBED_URL is not set');
   }
   
   // Determine app handle from client ID
@@ -26,7 +26,7 @@ const buildShopifyAdminUrl = (shop, hostParam) => {
   
   // Require app handle - fail if not set
   if (!appHandle) {
-    console.error('❌ SHOPIFY_APP_HANDLE is not set and could not be determined from client ID');
+    console.error('SHOPIFY_APP_HANDLE is not set and could not be determined from client ID');
     throw new Error('App handle is not configured. Please set SHOPIFY_APP_HANDLE environment variable.');
   }
 
@@ -39,7 +39,7 @@ const buildShopifyAdminUrl = (shop, hostParam) => {
         return `https://${adminPath}`;
       }
     } catch (error) {
-      console.warn('⚠️ Failed to decode host parameter:', error.message);
+      console.warn('Failed to decode host parameter:', error.message);
     }
   }
 
@@ -70,12 +70,6 @@ export const handleCustomAppInstall = async (req, res, next) => {
   try {
     const { client_id, signature, permanent_domain } = req.query;
     
-    console.log('🔧 Custom app installation request:', {
-      client_id,
-      hasSignature: !!signature,
-      permanent_domain
-    });
-    
     // Validate required parameters
     if (!client_id || !signature || !permanent_domain) {
       throw new AppError('Missing required custom app parameters', 400);
@@ -90,7 +84,6 @@ export const handleCustomAppInstall = async (req, res, next) => {
     // The actual token will be obtained through the standard OAuth flow
     const shopDomain = `${permanent_domain}.myshopify.com`;
     
-    console.log('🏪 Processing custom app installation for:', shopDomain);
     
     // Check if store already exists
     let store = await Store.findByDomain(shopDomain);
@@ -110,7 +103,6 @@ export const handleCustomAppInstall = async (req, res, next) => {
       if (!store.timezone) store.timezone = 'UTC';
       
       await store.save();
-      console.log('✅ Updated existing store for custom app');
     } else {
       // Create new store record with all required fields
       store = new Store({
@@ -129,7 +121,6 @@ export const handleCustomAppInstall = async (req, res, next) => {
       });
       
       await store.save();
-      console.log('✅ Created new store record for custom app');
     }
     
     // Redirect to the admin dashboard with shop parameter
@@ -137,11 +128,10 @@ export const handleCustomAppInstall = async (req, res, next) => {
     if (!adminUrl) {
       throw new Error('ADMIN_DASHBOARD_URL environment variable is required');
     }
-    console.log('🔄 Redirecting to admin dashboard (custom app):', `${adminUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
     res.redirect(`${adminUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
     
   } catch (error) {
-    console.error('❌ Error handling custom app installation:', error.message);
+    console.error('Error handling custom app installation:', error.message);
     next(error);
   }
 };
@@ -169,14 +159,10 @@ export const initiateOAuth = async (req, res, next) => {
       throw new AppError('Invalid shop domain format', 400);
     }
 
-    console.log('🚀 Initiating OAuth for shop:', shop);
-
     // Check if store is already installed
     const existingStore = await Store.findByDomain(shop);
     if (existingStore && existingStore.isInstalled) {
-      console.log('✅ Store already installed, redirecting to Shopify admin');
       const adminUrl = buildShopifyAdminUrl(shop, req.query.host);
-      console.log('🔄 Redirecting to Shopify admin (already installed):', adminUrl);
       return res.redirect(adminUrl);
     }
 
@@ -188,11 +174,9 @@ export const initiateOAuth = async (req, res, next) => {
     if (clientId === 'de32970476f2ecf20d98f9d9b6994c89') {
       // Second app - use bidly-backend-2
       redirectUri = 'https://bidly-backend-2.hiiiiiiiiiii.com/auth/shopify/callback';
-      console.log('🔗 Using redirect URI for second app:', redirectUri);
     } else if (process.env.SHOPIFY_REDIRECT_URI) {
       // Use environment variable if set
       redirectUri = process.env.SHOPIFY_REDIRECT_URI;
-      console.log('🔗 Using redirect URI from environment:', redirectUri);
     } else {
       // Fallback: dynamically construct from request
       const protocol = req.get('x-forwarded-proto') || req.protocol || 'https';
@@ -215,7 +199,6 @@ export const initiateOAuth = async (req, res, next) => {
       }
       
       redirectUri = `${finalProtocol}://${host}/auth/shopify/callback`;
-      console.log('🔗 Setting dynamic redirect URI:', redirectUri);
     }
     
     shopifyOAuthService.setRedirectUri(redirectUri);
@@ -227,14 +210,11 @@ export const initiateOAuth = async (req, res, next) => {
     // For now, we'll include it in the redirect URL
     const authUrl = shopifyOAuthService.generateAuthUrl(shop, state);
     
-    console.log('🔗 Redirecting to Shopify OAuth:', authUrl);
-    console.log('🔗 Using redirect URI:', shopifyOAuthService.redirectUri);
-    
     // Redirect the store owner to Shopify's OAuth page
     res.redirect(authUrl);
     
   } catch (error) {
-    console.error('❌ Error initiating OAuth:', error.message);
+    console.error('Error initiating OAuth:', error.message);
     next(error);
   }
 };
@@ -251,11 +231,6 @@ export const handleOAuthCallback = async (req, res, next) => {
     
     const { code, state, shop, hmac } = req.query;
     
-    console.log('🔄 Processing OAuth callback for shop:', shop);
-    console.log('  - Code present:', !!code);
-    console.log('  - State present:', !!state);
-    console.log('  - HMAC present:', !!hmac);
-
     // Validate required parameters
     if (!code || !shop) {
       throw new AppError('Missing required OAuth parameters', 400);
@@ -263,15 +238,13 @@ export const handleOAuthCallback = async (req, res, next) => {
 
     // Verify HMAC signature for security
     const hmacValid = shopifyOAuthService.verifyHmac(req.query);
-    console.log('🔐 HMAC verification result:', hmacValid);
-    console.log('🔍 Query parameters:', req.query);
     
     // For development, we'll be more lenient with HMAC verification
     // In production, you should enforce strict HMAC verification
     if (!hmacValid && process.env.NODE_ENV === 'production') {
       throw new AppError('Invalid HMAC signature', 401);
     } else if (!hmacValid) {
-      console.warn('⚠️ HMAC verification failed, but allowing in development mode');
+      console.warn('HMAC verification failed, but allowing in development mode');
     }
 
     // Exchange authorization code for access token
@@ -280,18 +253,11 @@ export const handleOAuthCallback = async (req, res, next) => {
     // Get additional shop information
     const shopInfo = await shopifyOAuthService.getShopInfo(shop, tokenData.accessToken);
     
-    console.log('🏪 Shop info retrieved:', {
-      name: shopInfo.name,
-      domain: shopInfo.domain,
-      plan: shopInfo.planName
-    });
-
     // Check if store already exists
     let store = await Store.findByDomain(shop);
     
     if (store) {
       // Update existing store with new token
-      console.log('🔄 Updating existing store:', shop);
       store.accessToken = tokenData.accessToken;
       store.scope = tokenData.scope;
       store.isInstalled = true;
@@ -311,7 +277,6 @@ export const handleOAuthCallback = async (req, res, next) => {
       await store.save();
     } else {
       // Create new store record
-      console.log('🆕 Creating new store record:', shop);
       store = new Store({
         shopDomain: shop,
         shopifyStoreId: shopInfo.id,
@@ -331,27 +296,24 @@ export const handleOAuthCallback = async (req, res, next) => {
       await store.save();
     }
 
-    console.log('✅ OAuth flow completed successfully for shop:', shop);
     
     try {
       await shopifyOAuthService.ensureUninstallWebhook(shop, tokenData.accessToken);
     } catch (webhookError) {
-      console.warn('⚠️ Unable to ensure uninstall webhook:', webhookError.message);
+      console.warn('Unable to ensure uninstall webhook:', webhookError.message);
     }
     
     // For embedded apps, redirect to the admin dashboard URL with shop parameter
     // This will be handled by App Bridge in the frontend
     const adminUrl = buildShopifyAdminUrl(shop, req.query.host);
-    console.log('🔄 Redirecting to Shopify admin:', adminUrl);
     res.redirect(adminUrl);
     
   } catch (error) {
-    console.error('❌ Error in OAuth callback:', error.message);
+    console.error('Error in OAuth callback:', error.message);
     
     // Redirect to error page or show error message
     const shop = req.query.shop || 'unknown';
     const adminUrl = buildShopifyAdminUrl(shop, req.query.host);
-    console.log('🔄 Redirecting to Shopify admin (error):', adminUrl);
     res.redirect(`${adminUrl}?error=oauth_failed&message=${encodeURIComponent(error.message)}`);
   }
 };
@@ -369,11 +331,6 @@ export const handleUninstall = async (req, res, next) => {
       payload.myshopify_domain ||
       (payload.domain ? `${payload.domain}` : null);
     
-    console.log('🗑️ Processing uninstall payload:', {
-      shop_domain: payload.shop_domain,
-      myshopify_domain: payload.myshopify_domain,
-      domain: payload.domain
-    });
     
     if (!shopDomain) {
       throw new AppError('Shop domain is required', 400);
@@ -388,16 +345,13 @@ export const handleUninstall = async (req, res, next) => {
     if (store) {
       store.isInstalled = false;
       await store.save();
-      console.log('✅ Store marked as uninstalled:', normalizedDomain);
-    } else {
-      console.log('⚠️ Store not found for uninstall:', normalizedDomain);
     }
 
     // Always return 200 to acknowledge webhook
     res.status(200).json({ success: true, message: 'Uninstall processed' });
     
   } catch (error) {
-    console.error('❌ Error processing uninstall:', error.message);
+    console.error('Error processing uninstall:', error.message);
     // Still return 200 to prevent Shopify from retrying
     res.status(200).json({ success: false, error: error.message });
   }
@@ -425,8 +379,6 @@ export const getCurrentStore = async (req, res, next) => {
     // Update last access time
     await store.updateLastAccess();
 
-    console.log('📊 Returning store info for:', shop);
-    
     res.json({
       success: true,
       data: {
@@ -446,7 +398,7 @@ export const getCurrentStore = async (req, res, next) => {
     });
     
   } catch (error) {
-    console.error('❌ Error getting store info:', error.message);
+    console.error('Error getting store info:', error.message);
     next(error);
   }
 };
@@ -491,7 +443,7 @@ export const checkInstallationStatus = async (req, res, next) => {
     });
     
   } catch (error) {
-    console.error('❌ Error checking installation status:', error.message);
+    console.error('Error checking installation status:', error.message);
     next(error);
   }
 };

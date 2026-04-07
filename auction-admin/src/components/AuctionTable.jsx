@@ -60,11 +60,6 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       };
       
       const response = await auctionAPI.getAllAuctions(params);
-      console.log('🔍 Fetched auctions:', response.data);
-      if (response.data && response.data.length > 0) {
-        console.log('🔍 First auction structure:', response.data[0]);
-        console.log('🔍 First auction ID:', response.data[0]._id || response.data[0].id);
-      }
       setAuctions(response.data || []);
       setTotalPages(response.pagination?.pages || 1);
       setTotalItems(response.pagination?.total || 0);
@@ -78,12 +73,6 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   const handleDelete = async () => {
     try {
-      console.log('🗑️ Delete auction debug:', {
-        selectedAuction,
-        auctionId: selectedAuction?.id,
-        auctionIdAlt: selectedAuction?._id
-      });
-      
       const auctionId = selectedAuction?.id || selectedAuction?._id;
       if (!auctionId) {
         throw new Error('No auction ID found');
@@ -108,12 +97,11 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       const auctionId = selectedAuction?._id || selectedAuction?.id;
       
       if (!auctionId) {
-        console.error('❌ No auction ID found in selectedAuction:', selectedAuction);
+        console.error('No auction ID found in selectedAuction:', selectedAuction);
         setError(i18n.translate('admin.auctions.table.errors.closeMissingId'));
         return;
       }
       
-      console.log('🔍 Closing auction with ID:', auctionId);
       await auctionAPI.closeAuction(auctionId);
       setToastMessage(i18n.translate('admin.auctions.table.toast.closed'));
       setToastError(false);
@@ -249,14 +237,13 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
 
   const handleViewInStore = async (auction) => {
     try {
-      console.log('🏪 Opening product in store for auction:', auction.id);
       
       // Get the shop domain from the current context
       const urlParams = new URLSearchParams(window.location.search);
       const shop = urlParams.get('shop');
       
       if (!shop) {
-        console.error('❌ No shop domain found in URL');
+        console.error('No shop domain found in URL');
         setToastMessage(i18n.translate('admin.auctions.table.errors.noShop'));
         setToastError(true);
         setShowToast(true);
@@ -266,7 +253,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       // Get the Shopify product ID
       const shopifyProductId = auction.shopifyProductId;
       if (!shopifyProductId) {
-        console.error('❌ No Shopify product ID found for auction:', auction.id);
+        console.error('No Shopify product ID found for auction:', auction.id);
         setToastMessage(i18n.translate('admin.auctions.table.errors.noProductId'));
         setToastError(true);
         setShowToast(true);
@@ -281,24 +268,20 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         if (product && product.handle) {
           // Use the product handle to construct the URL
           const productUrl = `https://${shop}/products/${product.handle}`;
-          console.log('🔗 Opening Shopify product URL:', productUrl);
           window.open(productUrl, '_blank');
         } else {
           // Fallback: try to construct URL with product ID
           const productUrl = `https://${shop}/products/${shopifyProductId}`;
-          console.log('🔗 Opening Shopify product URL (fallback):', productUrl);
           window.open(productUrl, '_blank');
         }
       } catch (apiError) {
-        console.warn('⚠️ Could not fetch product details, using fallback URL:', apiError);
         // Fallback: construct URL with product ID
         const productUrl = `https://${shop}/products/${shopifyProductId}`;
-        console.log('🔗 Opening Shopify product URL (fallback):', productUrl);
         window.open(productUrl, '_blank');
       }
       
     } catch (error) {
-      console.error('❌ Error opening product in store:', error);
+      console.error('Error opening product in store:', error);
       setToastMessage(i18n.translate('admin.auctions.table.errors.openInStore'));
       setToastError(true);
       setShowToast(true);

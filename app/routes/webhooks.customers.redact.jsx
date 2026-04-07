@@ -8,7 +8,6 @@ export const action = async ({ request }) => {
     // If verification fails, it will throw an error
     const { shop, topic, payload } = await authenticate.webhook(request);
 
-    console.log(`Received ${topic} webhook for ${shop}`);
     
     // Extract customer ID from payload
     // Shopify sends: { customer: { id: 191167, email: "john@example.com" }, orders_to_redact: [] }
@@ -16,7 +15,7 @@ export const action = async ({ request }) => {
     const shopifyCustomerId = payload?.customer?.id;
     
     if (!shopifyCustomerId) {
-      console.warn('⚠️ No customer ID found in payload');
+      console.warn('No customer ID found in redact payload');
       return new Response(null, { status: 400 });
     }
 
@@ -108,7 +107,6 @@ export const action = async ({ request }) => {
           }
         );
 
-        console.log(`✅ Anonymized customer data for ${shopifyCustomerId} in shop ${shop}`);
       }
     }
 
@@ -127,7 +125,6 @@ export const action = async ({ request }) => {
       userId: shopifyCustomerBigInt
     });
 
-    console.log(`✅ Deleted session data for customer ${shopifyCustomerId} in shop ${shop}`);
 
     return new Response(null, { status: 200 });
   } catch (error) {

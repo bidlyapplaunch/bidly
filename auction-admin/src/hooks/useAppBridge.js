@@ -45,10 +45,6 @@ export const useAppBridgeActions = () => {
       shop = window.shopifyAppBridgeData.shop;
     }
     
-    console.log('🔍 getShopInfo - Found shop:', shop);
-    console.log('🔍 getShopInfo - URL:', window.location.href);
-    console.log('🔍 getShopInfo - Hostname:', window.location.hostname);
-    
     return {
       shop: shop,
       installed: urlParams.get('installed') === 'true',

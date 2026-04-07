@@ -62,10 +62,6 @@ router.get('/test', (req, res) => {
 // Save customer data (simplified version of sync)
 router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
   try {
-    console.log('📧 Customer save endpoint hit');
-    console.log('📧 Request body:', req.body);
-    console.log('📧 Request headers:', req.headers);
-    
     const {
       shopifyId,
       email,
@@ -76,20 +72,12 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
     } = req.body;
     const shopDomain = req.shopDomain;
 
-    console.log('📧 Customer save request:', {
-      shopifyId,
-      email,
-      firstName,
-      lastName,
-      shopDomain
-    });
-
     if (!shopDomain) {
       return next(new AppError('Shop domain is required (middleware)', 400));
     }
 
     if (!email) {
-      console.error('❌ Missing required fields:', { email: !!email, shopDomain: !!shopDomain });
+      console.error('Missing required fields:', { email: !!email, shopDomain: !!shopDomain });
       return next(new AppError('Missing required customer data: email is required', 400));
     }
 
@@ -117,12 +105,6 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
       sanitizeOptionalString(phone)
     );
 
-    console.log('✅ Customer saved/updated successfully:', {
-      id: customer._id,
-      email: customer.email,
-      shopDomain
-    });
-
     const customerToken = generateCustomerToken(customer, shopDomain);
 
     res.json({
@@ -144,7 +126,7 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error saving customer:', error);
+    console.error('Error saving customer:', error);
     console.error('   Error details:', {
       message: error.message,
       stack: error.stack,
@@ -166,17 +148,12 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
         req.query?.domain;
 
       if (!errorEmail || !errorShopDomain) {
-        console.error('❌ Cannot handle duplicate error: missing email or shopDomain', {
+        console.error('Cannot handle duplicate error: missing email or shopDomain', {
           emailPresent: !!errorEmail,
           shopDomainPresent: !!errorShopDomain
         });
         return next(new AppError('Duplicate customer already exists and cannot be resolved', 409));
       }
-
-      console.log('⚠️ Duplicate customer detected, fetching existing customer:', {
-        email: errorEmail,
-        shopDomain: errorShopDomain
-      });
 
       try {
         const existingCustomer = await Customer.findOne({
@@ -185,7 +162,7 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
         });
 
         if (!existingCustomer) {
-          console.error('❌ Customer not found despite duplicate key error', {
+          console.error('Customer not found despite duplicate key error', {
             email: errorEmail,
             shopDomain: errorShopDomain
           });
@@ -210,7 +187,6 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
           await existingCustomer.save();
         }
 
-        console.log('✅ Found existing customer, returning it');
         return res.status(409).json({
           success: false,
           message: 'Customer already exists for this store',
@@ -227,7 +203,7 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
           }
         });
       } catch (findError) {
-        console.error('❌ Error finding existing customer:', findError);
+        console.error('Error finding existing customer:', findError);
         return next(new AppError('Customer with this email already exists in this store', 409));
       }
     }
@@ -384,13 +360,6 @@ router.get('/by-email', verifyCustomerToken, async (req, res, next) => {
     });
 
     if (!customer) {
-      console.log(`❌ Customer not found for email: ${normalizedEmail} in shop: ${normalizedShopDomain}`);
-
-      console.log('🆕 Creating per-store customer via ensureCustomer for', {
-        email: normalizedEmail,
-        shopDomain: normalizedShopDomain
-      });
-
       customer = await ensureCustomer(
         normalizedShopDomain,
         normalizedEmail,

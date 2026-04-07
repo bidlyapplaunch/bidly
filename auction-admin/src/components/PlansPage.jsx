@@ -121,12 +121,10 @@ const PlansPage = () => {
   // Optional: Verify billing namespace is loaded
   useEffect(() => {
     if (i18n && i18n.translations) {
-      console.log('i18n translations loaded:', Object.keys(i18n.translations || {}));
       const hasBilling = i18n.translations && (
         i18n.translations['admin.billing.plans.pro.highlights'] !== undefined ||
         i18n.translations['admin']?.billing?.plans?.pro?.highlights !== undefined
       );
-      console.log('Billing namespace loaded:', hasBilling);
     }
   }, [i18n]);
 

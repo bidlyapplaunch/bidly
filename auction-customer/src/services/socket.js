@@ -40,12 +40,10 @@ class SocketService {
       });
 
       this.socket.on('connect', () => {
-        console.log('🔌 Connected to WebSocket server');
         this.isConnected = true;
       });
 
       this.socket.on('disconnect', () => {
-        console.log('🔌 Disconnected from WebSocket server');
         this.isConnected = false;
       });
 
@@ -68,14 +66,12 @@ class SocketService {
   joinAuction(auctionId) {
     if (this.socket && this.isConnected) {
       this.socket.emit('join-auction', auctionId);
-      console.log(`👥 Joined auction room: ${auctionId}`);
     }
   }
 
   leaveAuction(auctionId) {
     if (this.socket && this.isConnected) {
       this.socket.emit('leave-auction', auctionId);
-      console.log(`👋 Left auction room: ${auctionId}`);
     }
   }
 

@@ -48,7 +48,7 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
 
   const handleTimeUp = () => {
     // Auction has ended, could trigger a refresh or update
-    console.log('Auction ended:', auction.shopifyProductId);
+    // Auction has ended
   };
 
   return (

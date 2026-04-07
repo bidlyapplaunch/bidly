@@ -82,7 +82,7 @@ const extractShopDomain = (req) => {
   const normalized = normalizeShopDomain(rawDomain);
 
   if (!normalized) {
-    console.warn('⚠️ Invalid shop domain format:', rawDomain);
+    console.warn('Invalid shop domain format:', rawDomain);
   }
 
   return normalized;
@@ -130,14 +130,10 @@ export const identifyStore = async (req, res, next) => {
 
     if (DOMAIN_OPTIONAL_PREFIXES.some((prefix) => req.path.startsWith(prefix))) {
       // Skip store lookup for these paths - they don't need it
-      if (req.path.startsWith('/api/onboarding')) {
-        console.log('⚡ SKIPPING identifyStore for onboarding path:', req.path);
-      }
       return next();
     }
 
     let requestedDomain = normalizeShopDomain(extractShopDomain(req));
-    console.log('🔍 identifyStore - extracted domain:', requestedDomain, 'from path:', req.path);
     
     // Prefer Shopify session token (RS256) if present
     if (!requestedDomain) {
@@ -145,11 +141,9 @@ export const identifyStore = async (req, res, next) => {
       const shopifySession = await decodeShopifySession(bearer).catch(() => null);
       if (shopifySession?.shopDomain) {
         requestedDomain = shopifySession.shopDomain;
-        console.log('🔍 identifyStore - got domain from session token:', requestedDomain);
       }
     }
     const originDomain = cleanDomain(req.headers?.origin);
-    console.log('🔍 identifyStore - origin domain:', originDomain);
     
     let store = null;
 
@@ -157,16 +151,13 @@ export const identifyStore = async (req, res, next) => {
       if (!domain) {
         return null;
       }
-      console.log('🔍 identifyStore - trying to resolve store for domain:', domain);
       if (isMyshopifyDomain(domain)) {
         const byCanonical = await Store.findByDomain(domain);
-        console.log('🔍 identifyStore - findByDomain result:', byCanonical ? 'FOUND' : 'NOT FOUND', byCanonical ? { shopDomain: byCanonical.shopDomain, hasAccessToken: !!byCanonical.accessToken } : null);
         if (byCanonical) {
           return byCanonical;
         }
       }
       const byKnownDomain = await Store.findOne({ knownDomains: domain }).select('+accessToken');
-      console.log('🔍 identifyStore - findOne by knownDomains result:', byKnownDomain ? 'FOUND' : 'NOT FOUND');
       return byKnownDomain;
     };
 
@@ -179,18 +170,6 @@ export const identifyStore = async (req, res, next) => {
     }
 
     if (!store) {
-      console.log('❌ Store not found for domains:', {
-        requestedDomain,
-        originDomain,
-        path: req.path,
-        method: req.method,
-        query: req.query,
-        headers: {
-          origin: req.headers?.origin,
-          'x-shopify-shop-domain': req.headers?.['x-shopify-shop-domain'],
-          'x-shop-domain': req.headers?.['x-shop-domain']
-        }
-      });
       return next(
         new AppError(
           'Shop domain is required and must match an installed store',
@@ -200,7 +179,6 @@ export const identifyStore = async (req, res, next) => {
     }
 
     if (!store.isInstalled) {
-      console.log('❌ Store not installed:', store.shopDomain);
       return next(
         new AppError(
           `Store ${store.shopDomain} is not installed. Please reinstall the app.`,
@@ -227,18 +205,12 @@ export const identifyStore = async (req, res, next) => {
       }
       if (changed) {
         await store.save();
-        console.log('🔗 Stored additional custom domains for store:', {
-          store: store.shopDomain,
-          knownDomains: store.knownDomains
-        });
       }
     }
 
-    console.log('✅ Store identified:', store.storeName, `(${store.shopDomain})`);
-
     next();
   } catch (error) {
-    console.error('❌ Error in identifyStore middleware:', error.message);
+    console.error('Error in identifyStore middleware:', error.message);
     next(new AppError('Failed to identify store', 500));
   }
 };
@@ -258,13 +230,11 @@ export const requireStoreInstallation = async (req, res, next) => {
 
     if (!store) {
       const installUrl = `/auth/shopify/install?shop=${shopDomain}`;
-      console.log('🔄 Redirecting to installation:', installUrl);
       return res.redirect(installUrl);
     }
 
     if (!store.isInstalled) {
       const installUrl = `/auth/shopify/install?shop=${shopDomain}`;
-      console.log('🔄 Store not installed, redirecting to installation:', installUrl);
       return res.redirect(installUrl);
     }
 
@@ -273,7 +243,7 @@ export const requireStoreInstallation = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('❌ Error in requireStoreInstallation middleware:', error.message);
+    console.error('Error in requireStoreInstallation middleware:', error.message);
     next(new AppError('Failed to verify store installation', 500));
   }
 };
@@ -294,20 +264,16 @@ export const optionalStoreIdentification = async (req, res, next) => {
         if (store && store.isInstalled) {
           await store.updateLastAccess();
           req.store = store;
-          console.log('✅ Optional store identified:', store.storeName);
-        } else {
-          console.log('⚠️ Store not found or not installed:', shopDomain);
         }
       } catch (storeError) {
-        console.log('⚠️ Error looking up store:', storeError.message);
+        // Non-critical: store lookup failed in optional middleware
       }
     } else {
-      console.log('ℹ️ No shop domain provided - running without store context');
     }
 
     next();
   } catch (error) {
-    console.error('❌ Error in optionalStoreIdentification middleware:', error.message);
+    console.error('Error in optionalStoreIdentification middleware:', error.message);
     next();
   }
 };
@@ -328,7 +294,6 @@ export const requireStorePermissions = (requiredScopes) => {
 
       for (const scope of scopes) {
         if (!req.store.hasPermission(scope)) {
-          console.log(`❌ Store missing permission: ${scope}`);
           return next(
             new AppError(
               `Store missing required permission: ${scope}`,
@@ -338,10 +303,9 @@ export const requireStorePermissions = (requiredScopes) => {
         }
       }
 
-      console.log('✅ Store permissions validated:', scopes.join(', '));
       next();
     } catch (error) {
-      console.error('❌ Error in requireStorePermissions middleware:', error.message);
+      console.error('Error in requireStorePermissions middleware:', error.message);
       next(new AppError('Failed to validate store permissions', 500));
     }
   };

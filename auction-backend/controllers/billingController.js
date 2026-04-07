@@ -14,13 +14,13 @@ import Store from '../models/Store.js';
 // Require APP_URL - no hardcoded fallback
 const APP_URL = process.env.APP_URL;
 if (!APP_URL) {
-  console.error('❌ APP_URL is not set');
+  console.warn('APP_URL is not set');
 }
 
 // Require ADMIN_APP_URL - no hardcoded fallback  
 const ADMIN_APP_URL = process.env.ADMIN_APP_URL;
 if (!ADMIN_APP_URL) {
-  console.error('❌ ADMIN_APP_URL is not set');
+  console.warn('ADMIN_APP_URL is not set');
 }
 
 export const subscribeToPlan = async (req, res, next) => {
@@ -50,7 +50,7 @@ export const subscribeToPlan = async (req, res, next) => {
     error.code = 'MANAGED_PRICING_NOT_SUPPORTED';
     return next(error);
   } catch (error) {
-    console.error('❌ Billing subscribe error:', error.message);
+    console.error('Billing subscribe error:', error.message);
 
     const message = error?.message || '';
     if (message.includes('migrated to the Shopify partners area')) {
@@ -85,7 +85,7 @@ export const getCurrentPlan = async (req, res, next) => {
       }
     } catch (syncError) {
       // Log sync error but don't fail the request - use cached plan from DB
-      console.warn('⚠️ Failed to sync plan from Shopify, using cached plan:', syncError.message);
+      console.warn('Failed to sync plan from Shopify, using cached plan:', syncError.message);
     }
 
     const planKey = sanitizePlan(req.store.plan || DEFAULT_PLAN);
@@ -139,7 +139,7 @@ export const confirmSubscription = async (req, res, next) => {
     const status = subscription.status;
     const validStatuses = ['ACTIVE', 'ACCEPTED'];
     if (!validStatuses.includes(status)) {
-      console.warn('⚠️ Subscription not activated yet:', status);
+      console.warn('Subscription not activated yet:', status);
       if (!ADMIN_APP_URL) {
         throw new AppError('ADMIN_APP_URL is not configured', 500);
       }
@@ -174,7 +174,7 @@ export const confirmSubscription = async (req, res, next) => {
 
     return res.redirect(redirectUrl.toString());
   } catch (error) {
-    console.error('❌ Billing confirmation error:', error.message);
+    console.error('Billing confirmation error:', error.message);
     const shop = req.query.shop || req.shopDomain;
     if (!ADMIN_APP_URL) {
       return res.status(500).json({ success: false, message: 'ADMIN_APP_URL is not configured' });

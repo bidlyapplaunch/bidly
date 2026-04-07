@@ -72,13 +72,6 @@ export const searchProducts = async (req, res, next) => {
     const searchQuery = q || query;
     const shopDomain = getCurrentShopDomain(req);
     
-    console.log('🔍 Search request:', {
-      query: searchQuery,
-      shopDomain,
-      limit,
-      reqQuery: req.query
-    });
-    
     if (!searchQuery || searchQuery.trim().length === 0) {
       throw new AppError('Search query is required', 400);
     }
@@ -89,19 +82,12 @@ export const searchProducts = async (req, res, next) => {
 
     const products = await getShopifyService().searchProducts(shopDomain, searchQuery.trim(), parseInt(limit));
     
-    console.log('✅ Search results:', {
-      query: searchQuery,
-      shopDomain,
-      productCount: products.length
-    });
-    
     res.json({
       success: true,
       data: products,
       count: products.length
     });
   } catch (error) {
-    console.error('❌ Search error:', error.message);
     next(error);
   }
 };
@@ -368,12 +354,9 @@ export const testShopifyConnection = async (req, res, next) => {
       throw new AppError('Store context is required', 400);
     }
 
-    console.log('🧪 Testing Shopify connection for store:', shopDomain);
-    
     const result = await getShopifyService().testStoreConnection(shopDomain);
-    
+
     if (result.success) {
-      console.log('✅ Shopify API test successful for store:', shopDomain);
       res.json({
         success: true,
         message: 'Shopify API connection successful',
@@ -381,7 +364,6 @@ export const testShopifyConnection = async (req, res, next) => {
         shopInfo: result.shopInfo
       });
     } else {
-      console.log('❌ Shopify API test failed for store:', shopDomain);
       res.json({
         success: false,
         message: 'Shopify API connection failed',
@@ -389,7 +371,6 @@ export const testShopifyConnection = async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error('❌ Shopify API test failed:', error.message);
     res.json({
       success: false,
       message: 'Shopify API connection failed',

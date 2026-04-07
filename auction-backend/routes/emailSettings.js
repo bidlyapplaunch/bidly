@@ -138,7 +138,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Failed to load email settings:', error);
+    console.error('Failed to load email settings:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to load email settings'
@@ -193,7 +193,7 @@ router.post('/', requireAuth, async (req, res) => {
       settings: mergeWithDefaultEmailSettings(updated.toObject())
     });
   } catch (error) {
-    console.error('❌ Failed to save email settings:', error);
+    console.error('Failed to save email settings:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to save email settings'
@@ -281,7 +281,7 @@ router.post('/test-smtp', requireAuth, async (req, res) => {
       message: `Test email sent to ${testRecipient}`
     });
   } catch (error) {
-    console.error('❌ SMTP test failed:', error);
+    console.error('SMTP test failed:', error);
     return res.status(400).json({
       success: false,
       message: error.message || 'SMTP test failed'
@@ -345,7 +345,7 @@ router.post('/test-template', requireAuth, async (req, res) => {
       message: `Template test sent to ${recipient}.`
     });
   } catch (error) {
-    console.error('❌ Template test failed:', error);
+    console.error('Template test failed:', error);
     return res.status(400).json({
       success: false,
       message: error.message || 'Failed to send template test email.'

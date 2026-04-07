@@ -27,7 +27,7 @@ const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || '2025-10';
 // Require APP_URL - no hardcoded fallback
 const BACKEND_BASE_URL = process.env.APP_URL;
 if (!BACKEND_BASE_URL) {
-  console.error('❌ APP_URL is not set in appProxyRoutes');
+  console.error('APP_URL is not set in appProxyRoutes');
 }
 
 const marketplaceDistPath = path.join(__dirname, '../../auction-customer/dist');
@@ -38,12 +38,11 @@ let marketplaceTemplate = null;
 try {
   if (fs.existsSync(marketplaceIndexPath)) {
     marketplaceTemplate = fs.readFileSync(marketplaceIndexPath, 'utf8');
-    console.log('✅ Marketplace template loaded for app proxy');
   } else {
-    console.warn('⚠️ Marketplace index.html not found at', marketplaceIndexPath);
+    console.warn('Marketplace index.html not found at', marketplaceIndexPath);
   }
 } catch (error) {
-  console.error('❌ Failed to load marketplace template:', error);
+  console.error('Failed to load marketplace template:', error);
 }
 
 /**
@@ -117,7 +116,7 @@ if (fs.existsSync(marketplaceAssetsPath)) {
     })
   );
 } else {
-  console.warn('⚠️ Marketplace assets directory not found:', marketplaceAssetsPath);
+  console.warn('Marketplace assets directory not found:', marketplaceAssetsPath);
 }
 
 // Health check endpoint (NO AUTHENTICATION REQUIRED)
@@ -159,7 +158,7 @@ const fetchShopifyCustomer = async (shopDomain, accessToken, customerId) => {
 
     if (!response.ok) {
       console.warn(
-        '⚠️ Failed to fetch Shopify customer details:',
+        'Failed to fetch Shopify customer details:',
         response.status,
         await response.text()
       );
@@ -169,7 +168,7 @@ const fetchShopifyCustomer = async (shopDomain, accessToken, customerId) => {
     const payload = await response.json();
     return payload?.customer || null;
   } catch (error) {
-    console.error('❌ Error fetching Shopify customer:', error);
+    console.error('Error fetching Shopify customer:', error);
     return null;
   }
 };
@@ -187,7 +186,7 @@ router.get('/customer/context', async (req, res) => {
     const accessToken = getShopifyAccessToken(req.store);
 
     if (!accessToken) {
-      console.warn('⚠️ No access token available for customer context fetch');
+      console.warn('No access token available for customer context fetch');
       return res.json({ success: true, loggedIn: false });
     }
 
@@ -211,7 +210,7 @@ router.get('/customer/context', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error in customer context endpoint:', error);
+    console.error('Error in customer context endpoint:', error);
     return res.json({ success: false, loggedIn: false });
   }
 });
@@ -276,13 +275,13 @@ router.get('/', async (req, res) => {
             }
           } else {
             console.warn(
-              '⚠️ Failed to fetch customer details from Shopify:',
+              'Failed to fetch customer details from Shopify:',
               response.status,
               await response.text()
             );
           }
         } catch (error) {
-          console.error('❌ Error fetching Shopify customer details:', error);
+          console.error('Error fetching Shopify customer details:', error);
         }
       }
     }
@@ -387,7 +386,7 @@ router.get('/', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     return res.send(finalHtml);
   } catch (error) {
-    console.error('❌ Failed to render marketplace page:', error);
+    console.error('Failed to render marketplace page:', error);
     return res
       .status(500)
       .send('Failed to load the marketplace. Please try again or contact the store owner.');

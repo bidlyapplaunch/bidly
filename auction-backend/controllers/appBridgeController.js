@@ -112,7 +112,6 @@ export const debugStoreStatus = async (req, res, next) => {
   try {
     const { shop } = req.query;
     
-    console.log('🔍 Debug store status request:', { shop });
     
     if (!shop) {
       return res.json({
@@ -146,38 +145,21 @@ export const getAppConfig = async (req, res, next) => {
   try {
     const { shop } = req.query;
     
-    console.log('🔧 App Bridge config request:', { shop, query: req.query });
-    
     if (!shop) {
-      console.log('❌ No shop parameter provided');
       throw new AppError('Shop parameter is required', 400);
     }
 
     // Verify the shop is installed
-    console.log('🔍 Looking up store for domain:', shop);
     const store = await Store.findByDomain(shop);
-    console.log('🏪 Store found:', { 
-      exists: !!store, 
-      isInstalled: store?.isInstalled,
-      shopDomain: store?.shopDomain 
-    });
-    
+
     if (!store || !store.isInstalled) {
-      console.log('❌ Store not found or not installed');
       throw new AppError('Store not found or not installed', 404);
     }
 
     // Get the API key from environment variables (support both old and new naming)
     const apiKey = process.env.SHOPIFY_CLIENT_ID || process.env.SHOPIFY_API_KEY;
     
-    console.log('🔑 API Key configuration:', {
-      SHOPIFY_CLIENT_ID: process.env.SHOPIFY_CLIENT_ID ? 'Present' : 'Missing',
-      SHOPIFY_API_KEY: process.env.SHOPIFY_API_KEY ? 'Present' : 'Missing',
-      resolvedApiKey: apiKey ? 'Present' : 'Missing'
-    });
-    
     if (!apiKey) {
-      console.log('❌ No API key found in environment variables');
       throw new AppError('Shopify API Key is not configured', 500);
     }
 
@@ -192,12 +174,6 @@ export const getAppConfig = async (req, res, next) => {
       shop: store.shopDomain,
       storeName: store.storeName
     };
-
-    console.log('✅ App Bridge config generated successfully:', {
-      shop: store.shopDomain,
-      storeName: store.storeName,
-      apiKey: apiKey ? 'Present' : 'Missing'
-    });
 
     res.json(config);
   } catch (error) {

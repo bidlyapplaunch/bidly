@@ -54,7 +54,6 @@ const Dashboard = ({ onLogout }) => {
     
     // Listen for auction status updates
     const handleStatusUpdate = (statusData) => {
-      console.log('📡 Admin received status update:', statusData);
       
       // Refresh stats and auction list when status changes
       fetchStats();
@@ -69,7 +68,6 @@ const Dashboard = ({ onLogout }) => {
     
     // Listen for bid updates
     const handleBidUpdate = (bidData) => {
-      console.log('📡 Admin received bid update:', bidData);
       
       // Refresh stats and auction list when bids are placed
       fetchStats();
@@ -145,24 +143,12 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const handleViewAuction = (auction) => {
-    console.log('🔍 View auction clicked:', auction);
-    console.log('🔍 Auction ID:', auction?.id || auction?._id);
     setSelectedAuction(auction);
     setDetailsModalOpen(true);
   };
 
   const handleFormSave = async (auctionData) => {
     try {
-      console.log('💾 Saving auction:', auctionData);
-      console.log('💾 Data types:', {
-        shopifyProductId: typeof auctionData.shopifyProductId,
-        startTime: typeof auctionData.startTime,
-        endTime: typeof auctionData.endTime,
-        startingBid: typeof auctionData.startingBid,
-        buyNowPrice: typeof auctionData.buyNowPrice,
-        status: typeof auctionData.status
-      });
-      
       if (selectedAuction) {
         // Update existing auction
         await auctionAPI.updateAuction(selectedAuction._id, auctionData);

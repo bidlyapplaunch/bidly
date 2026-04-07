@@ -46,7 +46,6 @@ const Login = ({ onLogin }) => {
 
       let response;
       if (isRegistering) {
-        console.log('📝 Registering with:', { username, email, passwordLength: password.length });
         response = await authService.register(username, email, password);
       } else {
         response = await authService.login(email, password);

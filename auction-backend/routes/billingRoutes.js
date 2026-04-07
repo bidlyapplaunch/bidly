@@ -50,7 +50,6 @@ router.post('/override', identifyStore, async (req, res, next) => {
     req.store.planActiveAt = new Date();
     await req.store.save();
 
-    console.log(`✅ Manually set plan for ${req.store.shopDomain}: ${previousPlan} → ${planKey}`);
 
     res.json({
       success: true,
@@ -60,7 +59,7 @@ router.post('/override', identifyStore, async (req, res, next) => {
       shopDomain: req.store.shopDomain
     });
   } catch (error) {
-    console.error('❌ Error overriding plan:', error);
+    console.error('Error overriding plan:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to override plan',

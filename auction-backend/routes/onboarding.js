@@ -7,7 +7,6 @@ const router = express.Router();
 
 // Test endpoint to verify route is accessible
 router.get('/test', (req, res) => {
-  console.log('✅ /api/onboarding/test - Route is accessible!');
   res.json({ success: true, message: 'Onboarding route is working' });
 });
 
@@ -20,14 +19,6 @@ router.get('/test', (req, res) => {
  * ULTRA-FAST: Completely synchronous, no async operations
  */
 router.get('/status', (req, res) => {
-  console.log('📥 /api/onboarding/status - Request received');
-  console.log('📥 Query params:', req.query);
-  console.log('📥 Headers:', {
-    'user-agent': req.headers['user-agent'],
-    'origin': req.headers['origin'],
-    'referer': req.headers['referer']
-  });
-  
   // Extract shop from query params directly (fast)
   const shopDomain = req.query.shop || req.shopDomain || null;
   const storeSlug = shopDomain ? shopDomain.replace('.myshopify.com', '') : null;
@@ -42,11 +33,8 @@ router.get('/status', (req, res) => {
     marketplaceUrl: shopDomain ? `https://${shopDomain}/apps/bidly?shop=${shopDomain}` : null
   };
   
-  console.log('📤 /api/onboarding/status - Sending response:', response);
-  
   // Return immediately - completely synchronous, zero delay
   res.json(response);
-  console.log('✅ /api/onboarding/status - Response sent');
 });
 
 /**

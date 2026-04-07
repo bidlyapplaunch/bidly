@@ -167,7 +167,6 @@ function App() {
     // Initialize customer authentication
     if (customerAuthService.isAuthenticated()) {
       setCustomer(customerAuthService.getCustomer());
-      console.log('👤 Customer authenticated:', customerAuthService.getCustomerName());
     }
     
     fetchVisibleAuctions();
@@ -177,12 +176,10 @@ function App() {
     
     // Monitor connection status
     socket.on('connect', () => {
-      console.log('🔌 WebSocket connected');
       setConnectionStatus('connected');
     });
     
     socket.on('disconnect', () => {
-      console.log('🔌 WebSocket disconnected');
       setConnectionStatus('disconnected');
     });
     
@@ -193,7 +190,6 @@ function App() {
     
     // Listen for real-time bid updates
     const handleBidUpdate = (bidData) => {
-      console.log('📡 Received real-time bid update:', bidData);
       const normalizedBidHistory = normalizeBidHistory(bidData.bidHistory || []);
       const normalizedWinner = normalizeWinner(bidData.winner);
       const bidderName = getDisplayName(bidData);
@@ -227,7 +223,6 @@ function App() {
     
     // Listen for auction status updates (pending -> active -> ended)
     const handleStatusUpdate = (statusData) => {
-      console.log('📡 Received status update:', statusData);
       
       // Update the auction in the local state
       setAuctions(prevAuctions => 
@@ -264,7 +259,6 @@ function App() {
     
     // Listen for time extension events (popcorn auctions)
     const handleTimeExtension = (extensionData) => {
-      console.log('🍿 Received time extension:', extensionData);
       
       // Update the auction in the local state with new end time
       setAuctions(prevAuctions => 
@@ -291,7 +285,6 @@ function App() {
     const refreshInterval = setInterval(() => {
       // Only poll if socket is not connected
       if (!socketService.isConnected) {
-        console.log('🔄 Auto-refreshing auctions to check status changes...');
         fetchVisibleAuctionsSilent();
       }
     }, 10000); // 10 seconds
@@ -320,7 +313,6 @@ function App() {
   // Join auction rooms when auctions are loaded or updated
   useEffect(() => {
     if (auctions.length > 0 && socketService.isSocketConnected()) {
-      console.log('🔌 Joining auction rooms for real-time updates...');
       auctions.forEach(auction => {
         const auctionId = auction._id || auction.id;
         if (auctionId) {

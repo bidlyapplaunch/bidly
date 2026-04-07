@@ -76,7 +76,6 @@ const AppNavigationMenu = () => {
       active: activeDestination
     });
 
-    console.log('🧭 Navigation menu dispatched', { items, active: activeDestination });
   }, [app, i18n, location]);
 
   return null;

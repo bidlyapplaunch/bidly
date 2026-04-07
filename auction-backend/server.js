@@ -66,7 +66,7 @@ const remixServerBuildPath = resolveFirstExistingPath([
 let remixBuild;
 try {
   if (!remixServerBuildPath) {
-    console.error('❌ Remix build path resolution failed. Checked locations:');
+    console.error('Remix build path resolution failed. Checked locations:');
     console.error('  -', path.resolve(__dirname, '../build/server/index.js'));
     console.error('  -', path.resolve(process.cwd(), 'build/server/index.js'));
     console.error('  -', path.resolve(process.cwd(), '../build/server/index.js'));
@@ -75,14 +75,12 @@ try {
     console.error('Server file location:', __dirname);
     throw new Error('No build/server/index.js found in expected locations');
   }
-  console.log('✅ Found Remix build at:', remixServerBuildPath);
   remixBuild = await import(remixServerBuildPath);
-  console.log('✅ Remix build imported successfully');
 } catch (e) {
-  console.error('❌ Remix build import failed:', e.message);
-  console.error('❌ This service must be built during deploy so build/server and build/client exist.');
-  console.error('❌ The prestart script should have built it. Check Render build logs.');
-  console.error('❌ Server will start but return 503 for Remix routes until build exists.');
+  console.error('Remix build import failed:', e.message);
+  console.error('This service must be built during deploy so build/server and build/client exist.');
+  console.error('The prestart script should have built it. Check Render build logs.');
+  console.error('Server will start but return 503 for Remix routes until build exists.');
   remixBuild = null;
 }
 
@@ -119,14 +117,9 @@ import identifyStore from './middleware/storeMiddleware.js';
 
 // Load environment variables
 dotenv.config({ path: './.env' });
-console.log('🔍 Environment check:');
-console.log('  - EMAIL_USER:', process.env.EMAIL_USER ? 'Present' : 'Missing');
-console.log('  - EMAIL_PASS:', process.env.EMAIL_PASS ? 'Present' : 'Missing');
-
 // Connect to MongoDB (non-blocking)
 connectDB()
   .then(async () => {
-    console.log('✅ MongoDB connected');
     await fixCustomerIndexes();
     // Resume any interrupted blast email sends
     resumeInterruptedBlasts().catch(err =>
@@ -134,8 +127,8 @@ connectDB()
     );
   })
   .catch(error => {
-    console.error('⚠️ MongoDB connection failed:', error.message);
-    console.log('⚠️ Server will continue without database connection');
+    console.error('MongoDB connection failed:', error.message);
+    console.warn('Server will continue without database connection');
   });
 
 const app = express();
@@ -267,18 +260,15 @@ const fixCustomerIndexes = async () => {
 
     const legacyEmailIndex = indexes.find((idx) => idx.name === 'email_1');
     if (legacyEmailIndex) {
-      console.log('🔧 Dropping legacy customers.email_1 index (email-only unique)...');
       await Customer.collection.dropIndex('email_1');
-      console.log('✅ Dropped legacy email_1 index');
     }
 
     await Customer.collection.createIndex(
       { email: 1, shopDomain: 1 },
       { unique: true }
     );
-    console.log('✅ Ensured compound { email, shopDomain } unique index on customers');
   } catch (err) {
-    console.error('⚠️ Failed to migrate Customer indexes:', err.message);
+    console.error('Failed to migrate Customer indexes:', err.message);
   }
 };
 
@@ -337,18 +327,17 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
   const hmacHeader = req.headers['x-shopify-hmac-sha256'];
   const topic = req.headers['x-shopify-topic'] || 'unknown';
   
-  console.log('📨 Received webhook:', topic);
 
   // Get the client secret for HMAC validation
   const clientSecret = process.env.SHOPIFY_API_SECRET || process.env.SHOPIFY_CLIENT_SECRET;
   
   if (!clientSecret) {
-    console.error('❌ SHOPIFY_API_SECRET not configured - cannot validate webhook');
+    console.error('SHOPIFY_API_SECRET not configured - cannot validate webhook');
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
   if (!hmacHeader) {
-    console.warn('⚠️ Missing X-Shopify-Hmac-SHA256 header - rejecting webhook');
+    console.warn('Missing X-Shopify-Hmac-SHA256 header - rejecting webhook');
     return res.status(401).json({ error: 'Missing HMAC signature' });
   }
 
@@ -370,16 +359,15 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
       hmacValid = crypto.timingSafeEqual(computedBuffer, headerBuffer);
     }
   } catch (e) {
-    console.warn('⚠️ HMAC comparison error:', e.message);
+    console.warn('HMAC comparison error:', e.message);
     hmacValid = false;
   }
 
   if (!hmacValid) {
-    console.warn('❌ Invalid HMAC signature - rejecting webhook for topic:', topic);
+    console.warn('Invalid HMAC signature - rejecting webhook for topic:', topic);
     return res.status(401).json({ error: 'Invalid HMAC signature' });
   }
 
-  console.log('✅ Webhook HMAC validated for topic:', topic);
 
   // Parse body as JSON for processing (if needed)
   let payload = {};
@@ -388,14 +376,12 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
       payload = JSON.parse(rawBody.toString('utf8'));
     }
   } catch (e) {
-    console.warn('⚠️ Could not parse webhook body as JSON:', e.message);
+    console.warn('Could not parse webhook body as JSON:', e.message);
   }
 
   // Handle compliance webhooks (GDPR)
   // These are mandatory but can be acknowledged with 200 OK
   // Actual data handling would go here based on topic
-  console.log('📋 Webhook payload shop:', payload.shop_domain || payload.shop || 'N/A');
-
   return res.status(200).json({ success: true });
 });
 
@@ -439,9 +425,8 @@ app.use('/api/chat', chatRoutes);
 try {
   const { default: customerRoutes } = await import('./routes/customerRoutes.js');
   app.use('/api/customers', customerRoutes);
-  console.log('✅ Customer routes loaded synchronously');
 } catch (error) {
-  console.error('❌ Failed to load customer routes:', error.message);
+  console.error('Failed to load customer routes:', error.message);
   app.use('/api/customers', (req, res) => {
     res.status(500).json({ success: false, message: 'Customer routes not available', error: error.message });
   });
@@ -451,9 +436,8 @@ try {
 try {
   const { default: customizationRoutes } = await import('./routes/customizationSettings.js');
   app.use('/api/customization', customizationRoutes);
-  console.log('✅ Customization settings routes loaded synchronously');
 } catch (error) {
-  console.error('❌ Failed to load customization settings routes:', error.message);
+  console.error('Failed to load customization settings routes:', error.message);
   app.use('/api/customization', (req, res) => {
     res.status(500).json({ success: false, message: 'Customization routes not available', error: error.message });
   });
@@ -463,9 +447,8 @@ try {
 try {
   const { default: metafieldsRoutes } = await import('./routes/metafields.js');
   app.use('/api/metafields', metafieldsRoutes);
-  console.log('✅ Metafields routes loaded synchronously');
 } catch (error) {
-  console.error('❌ Failed to load metafields routes:', error.message);
+  console.error('Failed to load metafields routes:', error.message);
   app.use('/api/metafields', (req, res) => {
     res.status(500).json({ success: false, message: 'Metafields routes not available', error: error.message });
   });
@@ -490,19 +473,13 @@ try {
   const results = await Promise.allSettled(
     routeLoaders.map(async (loader) => {
       try {
-        console.log(`🔄 Loading ${loader.name} routes...`);
         const module = await loader.import();
-        console.log(`📦 ${loader.name} module imported:`, {
-          hasDefault: !!module.default,
-          keys: Object.keys(module)
-        });
-        
+
         if (!module.default) {
           throw new Error(`Module ${loader.name} does not have a default export`);
         }
         
         loader.mount(module);
-        console.log(`✅ ${loader.name} routes loaded and mounted`);
         return { name: loader.name, success: true };
       } catch (error) {
         console.error(`❌ Failed to load ${loader.name} routes:`, error);
@@ -532,20 +509,13 @@ try {
 
   const successful = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
   const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
-  console.log(`📦 Routes loaded: ${successful} successful, ${failed} failed`);
-  
-  // Log detailed results for debugging
-  results.forEach((result, index) => {
-    if (result.status === 'fulfilled') {
-      if (result.value?.success) {
-        console.log(`  ✅ ${routeLoaders[index].name}: Success`);
-      } else {
-        console.log(`  ❌ ${routeLoaders[index].name}: Failed - ${result.value?.error}`);
+  if (failed > 0) {
+    results.forEach((result, index) => {
+      if (result.status === 'rejected' || (result.status === 'fulfilled' && !result.value?.success)) {
+        console.error(`Failed to load ${routeLoaders[index].name} routes:`, result.reason || result.value?.error);
       }
-    } else {
-      console.log(`  ❌ ${routeLoaders[index].name}: Rejected - ${result.reason}`);
-    }
-  });
+    });
+  }
 })();
 
 app.get('/preview/widget-assets/:asset', (req, res) => {
@@ -583,7 +553,7 @@ app.get('/preview/widget-assets/:asset', (req, res) => {
     
     return res.sendFile(assetPath);
   } catch (error) {
-    console.error('❌ Failed to serve preview asset:', error);
+    console.error('Failed to serve preview asset:', error);
     return res.status(500).send('Failed to load preview asset');
   }
 });
@@ -732,11 +702,8 @@ app.use('/api/debug', debugRoutes);
 
 // Serve static files from the legacy admin build at the root
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
-console.log('📁 Serving legacy admin frontend from:', frontendDistPath);
-
 // Add cache-busting version header for troubleshooting
 const FRONTEND_VERSION = Date.now() + Math.random();
-console.log('🔄 Legacy frontend version (cache-busting):', FRONTEND_VERSION);
 
 // Serve legacy admin assets under /assets (content-hashed from Vite build)
 const adminAssetsDir = path.join(frontendDistPath, 'assets');
@@ -781,7 +748,7 @@ if (fs.existsSync(adminAssetsDir)) {
   // Serve other static files in dist (e.g., vite.svg)
   app.use(express.static(frontendDistPath));
 } else {
-  console.warn('⚠️ Legacy admin assets directory not found at:', adminAssetsDir);
+  console.warn('Legacy admin assets directory not found at:', adminAssetsDir);
 }
 
 // Diagnostics for troubleshooting asset 404s
@@ -853,20 +820,7 @@ const serveLegacyAdmin = (req, res, next) => {
 
   const { shop, embedded, hmac, host, id_token, session } = req.query;
 
-  console.log('🏪 Legacy Shopify admin access:', {
-    shop,
-    embedded,
-    hasHmac: !!hmac,
-    hasHost: !!host,
-    hasIdToken: !!id_token,
-    hasSession: !!session,
-    referer: req.get('referer'),
-    origin: req.get('origin'),
-    userAgent: req.get('user-agent')
-  });
-
   const indexPath = path.join(frontendDistPath, 'index.html');
-  console.log('📄 Serving legacy ADMIN index.html from:', indexPath);
 
   if (fs.existsSync(indexPath)) {
     res.setHeader('Cache-Control', 'no-store');
@@ -875,7 +829,7 @@ const serveLegacyAdmin = (req, res, next) => {
     return res.sendFile(indexPath);
   }
 
-  console.error('❌ Legacy admin index.html not found at:', indexPath);
+  console.error('Legacy admin index.html not found at:', indexPath);
   return res.status(503).json({
     success: false,
     message: 'Legacy admin frontend not built. Please check build logs.',
@@ -889,16 +843,6 @@ const serveLegacyAdmin = (req, res, next) => {
 app.all('/bidly', (req, res, next) => {
   const { embedded, host, hmac, shop } = req.query;
   const referer = req.get('referer') || '';
-  
-  console.log('🔍 /bidly request:', {
-    method: req.method,
-    embedded,
-    hasHost: !!host,
-    hasHmac: !!hmac,
-    shop,
-    referer: referer.substring(0, 150),
-    path: req.path
-  });
   
   // Always serve admin app for /bidly - this is the embedded app entry point
   // Storefront requests go to /apps/bidly (app proxy) which is handled separately
@@ -916,7 +860,6 @@ app.use(errorHandler);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log(`🔌 Client connected: ${socket.id}`);
   
   // Store user info if authenticated
   socket.userId = null;
@@ -925,7 +868,6 @@ io.on('connection', (socket) => {
   // Join auction room for real-time updates
   socket.on('join-auction', (auctionId) => {
     socket.join(`auction-${auctionId}`);
-    console.log(`👥 Client ${socket.id} joined auction ${auctionId}`);
     
     // Send current auction status to the newly joined client
     socket.emit('auction-status', {
@@ -937,7 +879,6 @@ io.on('connection', (socket) => {
   // Leave auction room
   socket.on('leave-auction', (auctionId) => {
     socket.leave(`auction-${auctionId}`);
-    console.log(`👋 Client ${socket.id} left auction ${auctionId}`);
   });
   
   // Join admin room for admin notifications
@@ -946,7 +887,6 @@ io.on('connection', (socket) => {
     if (socket.userRole === 'admin') {
       socket.join('admin-room');
       socket.emit('admin-joined', { success: true });
-      console.log(`👑 Admin client ${socket.id} joined admin room`);
     } else {
       socket.emit('admin-joined', { success: false, message: 'Admin authentication required' });
     }
@@ -956,7 +896,6 @@ io.on('connection', (socket) => {
   socket.on('leave-admin', () => {
     socket.leave('admin-room');
     socket.userRole = null;
-    console.log(`👋 Client ${socket.id} left admin room`);
   });
   
   // Set user authentication info
@@ -999,7 +938,6 @@ io.on('connection', (socket) => {
     }
 
     socket.join(`chat-${productId}`);
-    console.log(`💬 Client ${socket.id} joined chat room for product ${productId}`);
     
     // Send existing messages for this room (ensure all have id for future deletion)
     const messages = (chatRooms.get(productId) || []).map((msg) => {
@@ -1014,7 +952,6 @@ io.on('connection', (socket) => {
   // Leave product chat room
   socket.on('leave-chat-room', (productId) => {
     socket.leave(`chat-${productId}`);
-    console.log(`👋 Client ${socket.id} left chat room for product ${productId}`);
   });
   
   // Handle new chat message
@@ -1049,11 +986,9 @@ io.on('connection', (socket) => {
     // Broadcast to all clients in this product's chat room
     io.to(`chat-${productId}`).emit('chat-message', newMessage);
     
-    console.log(`💬 Chat message in product ${productId} from ${username}: ${message}`);
   });
   
   socket.on('disconnect', () => {
-    console.log(`🔌 Client disconnected: ${socket.id} (${socket.userRole || 'guest'})`);
   });
   
   // Send connection confirmation
@@ -1105,7 +1040,6 @@ global.broadcastAuctionStatusUpdate = (auctionId, newStatus, auctionData) => {
     // Also broadcast globally for admin dashboard updates
     io.emit('auction-status-update', statusUpdateData);
     
-    console.log(`📡 Broadcasted status update: Auction ${auctionId} -> ${newStatus}`);
   }
 };
 
@@ -1136,7 +1070,6 @@ const checkAuctionStatusChanges = async () => {
       
       // If the computed status differs from the stored status, broadcast the change
       if (computedStatus !== auction.status) {
-        console.log(`🔄 Status change detected: Auction ${auction._id} ${auction.status} -> ${computedStatus}`);
         
         // Update the auction status in the database
         auction.status = computedStatus;
@@ -1191,7 +1124,6 @@ const checkAuctionStatusChanges = async () => {
               auction
             );
 
-            console.log(`✅ Auction end email notifications sent for auction ${auction._id}`);
           } catch (emailError) {
             console.error(`⚠️ Auction end email notification error for auction ${auction._id}:`, emailError);
             // Don't fail the status update if email fails
@@ -1203,9 +1135,7 @@ const checkAuctionStatusChanges = async () => {
           try {
             // Use the new winner processing service
             const { default: winnerProcessingService } = await import('./services/winnerProcessingService.js');
-            console.log(`🔄 Attempting to process winner for auction ${auction._id}, shopDomain: ${auction.shopDomain}`);
             await winnerProcessingService.processAuctionWinner(auction._id, auction.shopDomain);
-            console.log(`✅ Winner processing completed for auction ${auction._id}`);
           } catch (processingError) {
             console.error(`❌ Error processing ended auction ${auction._id}:`, processingError);
             console.error(`❌ Error stack:`, processingError.stack);
@@ -1235,19 +1165,14 @@ setInterval(checkAuctionStatusChanges, 5000);
 
 // Start server first
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Auction API server running on port ${PORT}`);
-  console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
-  console.log(`🔗 API base URL: http://0.0.0.0:${PORT}/api/auctions`);
-  console.log(`🔌 WebSocket server ready for real-time updates`);
   
   // Start scheduled jobs after server is running
   setTimeout(async () => {
     try {
       const { default: scheduledJobsService } = await import('./services/scheduledJobsService.js');
       scheduledJobsService.start();
-      console.log(`⏰ Scheduled jobs started for winner processing`);
     } catch (error) {
-      console.error('⚠️ Failed to start scheduled jobs:', error.message);
+      console.error('Failed to start scheduled jobs:', error.message);
     }
   }, 2000); // Wait 2 seconds after server starts
 });

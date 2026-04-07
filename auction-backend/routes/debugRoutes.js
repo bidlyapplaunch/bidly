@@ -15,8 +15,6 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
   try {
     const { shopDomain } = req.params;
     
-    console.log(`🔍 Testing OAuth token for: ${shopDomain}`);
-    
     // Get the store record
     const store = await Store.findByDomain(shopDomain);
     
@@ -41,7 +39,6 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
       updatedAt: store.updatedAt
     };
     
-    console.log('🏪 Store info:', storeInfo);
     
     if (!store.accessToken) {
       return res.json({
@@ -52,16 +49,13 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
     }
     
     // Test the token with Shopify API
-    console.log('🧪 Testing token with Shopify API...');
     
     try {
       const shopifyService = getShopifyService();
       const { client } = await shopifyService.getStoreClient(shopDomain);
       
       // Try to get shop info
-      console.log('🔍 Testing shop info API...');
       const shopResponse = await client.get('/shop.json');
-      console.log('✅ Shop info API works!');
       
       const shopData = {
         name: shopResponse.data.shop.name,
@@ -72,7 +66,6 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
       };
       
       // Try to get products using GraphQL
-      console.log('🔍 Testing products API (GraphQL)...');
       const productsResponse = await client.post('/graphql.json', {
         query: `
           query GetProducts($first: Int!) {
@@ -95,7 +88,6 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
         throw new Error(productsResponse.data.errors.map(err => err.message).join('; '));
       }
       
-      console.log('✅ Products API works!');
       
       const productEdges = productsResponse.data?.data?.products?.edges || [];
       const productsData = {
@@ -120,7 +112,6 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
       });
       
     } catch (error) {
-      console.log('❌ Token test failed:', error.response?.data || error.message);
       
       return res.json({
         success: false,
@@ -135,7 +126,7 @@ router.get('/oauth-test/:shopDomain', async (req, res) => {
     }
     
   } catch (error) {
-    console.error('❌ Error in OAuth test:', error);
+    console.error('Error in OAuth test:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -149,12 +140,10 @@ router.delete('/clear-store/:shopDomain', async (req, res) => {
   try {
     const { shopDomain } = req.params;
     
-    console.log(`🗑️ Clearing store record for: ${shopDomain}`);
     
     const result = await Store.deleteOne({ shopDomain });
     
     if (result.deletedCount > 0) {
-      console.log('✅ Successfully deleted store record');
       res.json({
         success: true,
         message: `Store record cleared for ${shopDomain}`,
@@ -169,7 +158,7 @@ router.delete('/clear-store/:shopDomain', async (req, res) => {
     }
     
   } catch (error) {
-    console.error('❌ Error clearing store record:', error);
+    console.error('Error clearing store record:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -204,7 +193,7 @@ router.get('/stores', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error listing stores:', error);
+    console.error('Error listing stores:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -250,7 +239,6 @@ router.post('/set-plan/:shopDomain', async (req, res) => {
     store.planActiveAt = new Date();
     await store.save();
     
-    console.log(`✅ Manually set plan for ${shopDomain}: ${previousPlan} → ${planKey}`);
     
     res.json({
       success: true,
@@ -262,7 +250,7 @@ router.post('/set-plan/:shopDomain', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error setting plan:', error);
+    console.error('Error setting plan:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -287,7 +275,6 @@ router.post('/clear-plan-override/:shopDomain', async (req, res) => {
     store.planManuallySet = false;
     await store.save();
     
-    console.log(`✅ Cleared manual plan override for ${shopDomain}`);
     
     res.json({
       success: true,
@@ -298,7 +285,7 @@ router.post('/clear-plan-override/:shopDomain', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error clearing plan override:', error);
+    console.error('Error clearing plan override:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

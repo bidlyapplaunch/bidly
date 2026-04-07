@@ -135,13 +135,6 @@ const updateProductMetafields = async (auction, shopDomain) => {
       buyNowPrice: auction.buyNowPrice || 0
     };
 
-    console.log('🔍 Debug - updateProductMetafields:', {
-      auctionId: auction._id,
-      startTime: auction.startTime,
-      startTimeType: typeof auction.startTime,
-      auctionDataStartTime: auctionData.startTime
-    });
-
     // Update metafields via API call (server calls itself)
     const baseUrl = API_BASE_URL || 'http://localhost:5000';
     const response = await fetch(`${baseUrl}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
@@ -166,8 +159,6 @@ const updateProductMetafields = async (auction, shopDomain) => {
 // Helper function to process ended auctions
 const processEndedAuctions = async () => {
   try {
-    console.log('🔄 Checking for ended auctions...');
-    
     // Find auctions that have ended but haven't been processed
     // Exclude soft-deleted auctions
     const endedAuctions = await Auction.find({
@@ -176,15 +167,11 @@ const processEndedAuctions = async () => {
       isDeleted: { $ne: true }
     });
 
-    console.log(`📊 Found ${endedAuctions.length} ended auctions to process`);
-
     for (const auction of endedAuctions) {
       try {
-        console.log(`🎯 Processing ended auction: ${auction._id}`);
         const result = await AuctionEndService.processAuctionEnd(auction);
-        
+
         if (result.success) {
-          console.log(`✅ Successfully processed auction ${auction._id}`);
         } else {
           console.error(`❌ Failed to process auction ${auction._id}: ${result.message}`);
         }
@@ -193,7 +180,7 @@ const processEndedAuctions = async () => {
       }
     }
   } catch (error) {
-    console.error('❌ Error in processEndedAuctions:', error);
+    console.error('Error in processEndedAuctions:', error);
   }
 };
 
@@ -710,14 +697,6 @@ export const deleteAuction = async (req, res, next) => {
       throw new AppError('Store domain is required', 400);
     }
     
-    console.log('🗑️ Delete auction request:', {
-      auctionId: req.params.id,
-      shopDomain: shopDomain,
-      method: req.method,
-      url: req.url,
-      params: req.params
-    });
-    
     // Check if ID is provided
     if (!req.params.id || req.params.id === 'undefined') {
       throw new AppError('Auction ID is required', 400);
@@ -730,22 +709,9 @@ export const deleteAuction = async (req, res, next) => {
     });
     
     if (!auction) {
-      console.log('❌ Auction not found:', req.params.id);
       throw new AppError('Auction not found', 404);
     }
-    
-    console.log('📦 Found auction to delete:', {
-      id: auction._id,
-      productId: auction.shopifyProductId,
-      bidCount: auction.bidHistory.length,
-      status: auction.status
-    });
-    
-    // Allow deletion but warn if auction has bids
-    if (auction.bidHistory.length > 0) {
-      console.log(`⚠️ Soft deleting auction with ${auction.bidHistory.length} bids: ${auction._id}`);
-    }
-    
+
     // Soft delete: set isDeleted = true and deletedAt = now
     auction.isDeleted = true;
     auction.deletedAt = new Date();
@@ -763,15 +729,11 @@ export const deleteAuction = async (req, res, next) => {
       
       if (!response.ok) {
         console.warn('Failed to clear product metafields after soft delete:', await response.text());
-      } else {
-        console.log('✅ Cleared product metafields after soft delete');
       }
     } catch (metafieldError) {
       console.warn('Error clearing product metafields:', metafieldError.message);
       // Non-critical, continue
     }
-    
-    console.log('✅ Auction soft deleted successfully:', req.params.id);
     
     const { t } = await import('../services/i18n.js');
     const message = await t(req.shopDomain || null, 'errors.auction_deleted_successfully');
@@ -780,7 +742,7 @@ export const deleteAuction = async (req, res, next) => {
       message
     });
   } catch (error) {
-    console.error('❌ Delete auction error:', error.message);
+    console.error('Delete auction error:', error.message);
     next(error);
   }
 };
@@ -817,7 +779,7 @@ export const placeBid = async (req, res, next) => {
       try {
         customerRecord = await Customer.findOne(lookupQuery);
       } catch (lookupError) {
-        console.warn('⚠️ Failed to load customer for bid placement:', lookupError.message);
+        console.warn('Failed to load customer for bid placement:', lookupError.message);
       }
     }
 
@@ -857,17 +819,6 @@ export const placeBid = async (req, res, next) => {
     
     // Validate auction is active using real-time status
     const realTimeStatus = computeAuctionStatus(auction);
-    console.log('🎯 Bid placement debug:', {
-      auctionId: req.params.id,
-      databaseStatus: auction.status,
-      realTimeStatus: realTimeStatus,
-      startTime: auction.startTime,
-      endTime: auction.endTime,
-      currentTime: new Date(),
-      bidder: effectiveBidder,
-      amount: sanitizedAmount
-    });
-    
     if (realTimeStatus !== 'active') {
       throw new AppError(`Auction is not active (current status: ${realTimeStatus})`, 400);
     }
@@ -972,7 +923,6 @@ export const placeBid = async (req, res, next) => {
         await updatedAuction.save();
         timeExtended = true;
         
-        console.log(`🍿 Popcorn auction extended! New end time: ${newEndTime.toISOString()}`);
         
         // Broadcast time extension to all clients
         const io = req.app.get('io');
@@ -1059,9 +1009,8 @@ export const placeBid = async (req, res, next) => {
         );
       }
 
-      console.log('✅ Email notifications sent successfully');
     } catch (emailError) {
-      console.error('⚠️ Email notification error (non-critical):', emailError);
+      console.error('Email notification error (non-critical):', emailError);
       // Don't fail the bid placement if email fails
     }
 
@@ -1182,7 +1131,7 @@ export const buyNow = async (req, res, next) => {
       try {
         customerRecord = await Customer.findOne(lookupQuery);
       } catch (lookupError) {
-        console.warn('⚠️ Failed to load customer for buy now:', lookupError.message);
+        console.warn('Failed to load customer for buy now:', lookupError.message);
       }
     }
 
@@ -1287,9 +1236,8 @@ export const buyNow = async (req, res, next) => {
         auction
       );
 
-      console.log('✅ Buy now email notifications sent successfully');
     } catch (emailError) {
-      console.error('⚠️ Buy now email notification error (non-critical):', emailError);
+      console.error('Buy now email notification error (non-critical):', emailError);
       // Don't fail the buy now if email fails
     }
     
@@ -2269,16 +2217,9 @@ export const getAllAuctionsPage = async (req, res, next) => {
 // Get auction details page (renders HTML page for individual auction)
 export const getAuctionDetailsPage = async (req, res, next) => {
   try {
-    console.log('🔍 getAuctionDetailsPage called with:', {
-      auctionId: req.params.id,
-      shopDomain: req.shopDomain,
-      query: req.query
-    });
-    
     const auction = await Auction.findById(req.params.id);
     
     if (!auction) {
-      console.log('❌ Auction not found:', req.params.id);
       return res.status(404).send(`
         <!DOCTYPE html>
         <html>
@@ -2300,7 +2241,6 @@ export const getAuctionDetailsPage = async (req, res, next) => {
     
     const shopDomain = req.shopDomain;
     if (!shopDomain) {
-      console.log('❌ No shop domain found in request');
       return res.status(400).send(`
         <!DOCTYPE html>
         <html>
@@ -2321,12 +2261,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
     }
     
     const productTitle = auction.productData?.title || 'Auction Item';
-    console.log('✅ Auction found:', {
-      id: auction._id,
-      title: productTitle,
-      shopDomain: shopDomain
-    });
-    
+
     // Render the auction details page
     res.send(`
       <!DOCTYPE html>
@@ -2839,50 +2774,19 @@ export const getAuctionDetailsPage = async (req, res, next) => {
         
         <script src="/apps/bidly/assets/bidly-widget.js?v=2021&t=${Date.now()}&r=${Math.random()}"></script>
         <script>
-          console.log('🔥 PRODUCT PAGE SCRIPT LOADING...');
-          console.log('🔥 PRODUCT PAGE - Loading widget with cache busting v2021');
-          
-          // Debug auction data directly in HTML
-          console.log('🔍 AUCTION DATA IN HTML:', {
-            auctionId: '${auction._id}',
-            productId: '${auction.shopifyProductId}',
-            hasProductData: ${auction.productData ? 'true' : 'false'},
-            productData: ${JSON.stringify(auction.productData)},
-            hasDescription: ${auction.productData?.description ? 'true' : 'false'},
-            description: ${auction.productData?.description ? `'${auction.productData.description.substring(0, 100)}...'` : 'null'},
-            descriptionLength: ${auction.productData?.description?.length || 0}
-          });
-          
           // Pass auction data to JavaScript
           window.auctionDataFromHTML = ${JSON.stringify(auction)};
-          console.log('✅ Auction data passed to JavaScript:', window.auctionDataFromHTML);
-          console.log('✅ Description in HTML data:', window.auctionDataFromHTML.productData?.description?.substring(0, 100) + '...');
-          
-          // Test if script is running
-          setTimeout(() => {
-            console.log('🔥 SCRIPT TIMEOUT TEST - Widget exists:', !!window.BidlyAuctionWidget);
-            console.log('🔥 PRODUCT PAGE - Widget version check:', window.BidlyAuctionWidget ? 'v2021 loaded' : 'not loaded');
-          }, 1000);
-          
+
           document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Product page DOM loaded');
-            
             const auctionId = document.getElementById('bidly-auction-detail-page').dataset.auctionId;
             const productId = document.getElementById('bidly-auction-detail-page').dataset.productId;
             const shopDomain = document.getElementById('bidly-auction-detail-page').dataset.shop;
-            
-            console.log('📊 Product page data:', { auctionId, productId, shopDomain });
-            console.log('🔍 Widget check:', { 
-              widgetExists: !!window.BidlyAuctionWidget,
-              loadSingleAuctionPageExists: !!(window.BidlyAuctionWidget && window.BidlyAuctionWidget.loadSingleAuctionPage)
-            });
-            
+
             if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.loadSingleAuctionPage) {
-              console.log('✅ Calling loadSingleAuctionPage');
               // Load the specific auction
               window.BidlyAuctionWidget.loadSingleAuctionPage(auctionId, productId, shopDomain);
             } else {
-              console.error('❌ BidlyAuctionWidget not found or loadSingleAuctionPage missing');
+              console.error('BidlyAuctionWidget not found or loadSingleAuctionPage missing');
               if (window.BidlyAuctionWidget && window.BidlyAuctionWidget.debug) {
                 window.BidlyAuctionWidget.debug();
               }
@@ -2891,13 +2795,6 @@ export const getAuctionDetailsPage = async (req, res, next) => {
             }
           });
           
-          // Also try immediate execution
-          console.log('🔥 IMMEDIATE EXECUTION TEST');
-          if (window.BidlyAuctionWidget) {
-            console.log('🔥 Widget found immediately');
-          } else {
-            console.log('🔥 Widget not found immediately, waiting...');
-          }
         </script>
       </body>
       </html>

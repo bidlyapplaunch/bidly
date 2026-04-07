@@ -58,17 +58,14 @@ const getShopFromURL = () => {
   }
   
   if (detectedShop) {
-    console.log(`🔍 Found shop via ${detectedSource}:`, detectedShop);
   }
 
   const userShop = authService.getUser()?.shopDomain;
   if (userShop) {
     if (detectedShop && detectedShop !== userShop) {
       console.warn(
-        `⚠️ Shop mismatch detected (URL: ${detectedShop}, session: ${userShop}). Using session shop domain instead.`
+        `Shop mismatch detected (URL: ${detectedShop}, session: ${userShop}). Using session shop domain instead.`
       );
-    } else if (!detectedShop) {
-      console.log('🔐 Using shop from authenticated session:', userShop);
     }
     return userShop;
   }
@@ -78,7 +75,7 @@ const getShopFromURL = () => {
   }
   
   // Fallback: return null (will use default backend)
-  console.warn('⚠️ Could not detect shop domain, using default backend');
+  console.warn('Could not detect shop domain, using default backend');
   return null;
 };
 
@@ -106,7 +103,7 @@ const getAppBridge = () => {
 
   // Only create App Bridge if both apiKey and host are present
   if (!apiKey || !host) {
-    console.warn('⚠️ App Bridge: Missing apiKey or host, skipping initialization');
+    console.warn('App Bridge: Missing apiKey or host, skipping initialization');
     return null;
   }
 
@@ -116,7 +113,7 @@ const getAppBridge = () => {
       host,
     });
   } catch (err) {
-    console.warn('⚠️ App Bridge initialization failed:', err?.message || err);
+    console.warn('App Bridge initialization failed:', err?.message || err);
     return null;
   }
 
@@ -133,13 +130,9 @@ api.interceptors.request.use(
     // Force relative base URL; frontend must never know backend domain
     config.baseURL = apiBaseUrl || '';
     
-    console.log(`Making ${config.method?.toUpperCase()} request to ${config.baseURL}${config.url}`);
-    console.log('🔗 Backend URL (relative only):', config.baseURL, 'for shop:', shopDomain);
-    
     // Add shop parameter to all requests
     if (shopDomain && !config.params?.shop) {
       config.params = { ...config.params, shop: shopDomain };
-      console.log('🏪 Added shop parameter:', shopDomain);
     }
     
     // Skip session token for endpoints that don't require Shopify auth
@@ -184,9 +177,6 @@ api.interceptors.request.use(
     }
     
     if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('📤 Request interceptor completed, sending request:', config.method, config.baseURL + config.url);
-    }
-    
     return config;
   },
   (error) => {
@@ -197,14 +187,11 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('✅ API Response:', response.config?.url, response.status, response.data);
-    }
     return response;
   },
   (error) => {
     if (typeof window !== 'undefined' && window.console) {
-      window.console.error('❌ API Error Interceptor:', {
+      window.console.error('API Error Interceptor:', {
         url: error.config?.url,
         method: error.config?.method,
         status: error.response?.status,
@@ -226,7 +213,7 @@ api.interceptors.response.use(
     ) {
       isHandlingAuthError = true;
       setTimeout(() => { isHandlingAuthError = false; }, 5000); // Reset after 5s in case reload doesn't happen
-      console.warn('🔐 Detected invalid auth token. Logging out and reloading.');
+      console.warn('Detected invalid auth token. Logging out and reloading.');
       authService.logout();
       const { origin, pathname, search } = window.location;
       window.location.href = `${origin}${pathname}${search}`;
@@ -539,56 +526,17 @@ export const onboardingAPI = {
     // Backend endpoint is instant, but network latency may vary
     try {
       const shop = getShopFromURL();
-      if (typeof window !== 'undefined' && window.console) {
-        window.console.warn('📞 onboardingAPI.getStatus() - shop:', shop);
-        window.console.warn('📞 Making request to /onboarding/status with params:', shop ? { shop } : {});
-      }
-      const startTime = Date.now();
-      if (typeof window !== 'undefined' && window.console) {
-        window.console.warn('⏱️ Request started at:', new Date().toISOString());
-        window.console.warn('🌐 Current origin:', window.location.origin);
-        window.console.warn('🌐 Full URL will be:', window.location.origin + '/api/onboarding/status');
-      }
-      
-      // Add a timeout check
-      const timeoutId = setTimeout(() => {
-        if (typeof window !== 'undefined' && window.console) {
-          window.console.error('⏰ TIMEOUT WARNING: Request has been pending for 5 seconds');
-        }
-      }, 5000);
-      
-      try {
-        const response = await api.get('/onboarding/status', { 
-          params: shop ? { shop } : {},
-          timeout: 10000 // Explicit timeout
-        });
-        
-        clearTimeout(timeoutId);
-        const duration = Date.now() - startTime;
-        if (typeof window !== 'undefined' && window.console) {
-          window.console.warn('⏱️ Request completed in', duration, 'ms');
-          window.console.warn('📥 onboardingAPI.getStatus() - response received:', response);
-          window.console.warn('📥 Response status:', response.status);
-          window.console.warn('📥 Response data:', response.data);
-        }
-        return response.data;
-      } catch (innerError) {
-        clearTimeout(timeoutId);
-        throw innerError; // Re-throw to be caught by outer catch
-      }
+
+      const response = await api.get('/onboarding/status', {
+        params: shop ? { shop } : {},
+        timeout: 10000
+      });
+
+      return response.data;
     } catch (error) {
       // If any error, return default status to allow dashboard to load
-      if (typeof window !== 'undefined' && window.console) {
-        window.console.error('❌ onboardingAPI.getStatus() - ERROR CAUGHT:', error);
-        window.console.error('❌ Error name:', error.name);
-        window.console.error('❌ Error message:', error.message);
-        window.console.error('❌ Error code:', error.code);
-        window.console.error('❌ Error response:', error.response);
-        window.console.error('❌ Error config:', error.config);
-        window.console.error('❌ Is timeout?', error.code === 'ECONNABORTED' || error.message?.includes('timeout'));
-      }
-      console.warn('⚠️ Onboarding status check failed, proceeding to dashboard:', error.message);
-      return { 
+      console.warn('Onboarding status check failed, proceeding to dashboard:', error.message);
+      return {
         success: true, 
         onboardingComplete: true,
         widgetActive: false,

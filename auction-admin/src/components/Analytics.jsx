@@ -41,18 +41,12 @@ const Analytics = () => {
       
       // Debug authentication
       const token = localStorage.getItem('authToken');
-      console.log('🔍 Analytics Debug:');
-      console.log('  - Token exists:', !!token);
-      console.log('  - Token preview:', token ? token.substring(0, 20) + '...' : 'None');
-      console.log('  - Period:', period);
-      
       const response = await analyticsAPI.getAnalytics(period);
-      console.log('✅ Analytics response:', response);
       setAnalytics(response.data);
     } catch (err) {
       setError(i18n.translate('admin.analytics.error'));
-      console.error('❌ Error fetching analytics:', err);
-      console.error('❌ Error details:', {
+      console.error('Error fetching analytics:', err);
+      console.error('Error details:', {
         message: err.message,
         status: err.response?.status,
         statusText: err.response?.statusText,

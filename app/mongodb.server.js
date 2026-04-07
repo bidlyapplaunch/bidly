@@ -23,12 +23,11 @@ export async function connectMongoDB() {
     const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/bidly-auctions';
 
     if (!mongoURI) {
-      console.warn('⚠️ MONGODB_URI not set, GDPR webhooks may not work correctly');
+      console.warn('MONGODB_URI not set, GDPR webhooks may not work correctly');
       return null;
     }
 
     await mongoose.connect(mongoURI);
-    console.log('✅ MongoDB connected for GDPR webhooks');
     return mongoose.connection;
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);

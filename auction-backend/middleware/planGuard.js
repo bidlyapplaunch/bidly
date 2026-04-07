@@ -108,7 +108,7 @@ export function attachPlanContext(req, res, next) {
       req.planContext = getPlanContext(req);
     }
   } catch (error) {
-    console.warn('⚠️ Failed to attach plan context:', error.message);
+    console.warn('Failed to attach plan context:', error.message);
   }
   next();
 }

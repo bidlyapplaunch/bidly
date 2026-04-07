@@ -33,7 +33,6 @@ class ThemeService {
           const theme = normalizeMarketplaceTheme(data.customization);
           this.applyTheme(theme);
           this.themeLoaded = true;
-          console.log('ThemeService: Marketplace theme loaded');
           return theme;
         }
       }

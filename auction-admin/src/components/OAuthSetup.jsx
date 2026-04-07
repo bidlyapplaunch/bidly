@@ -14,10 +14,6 @@ import useAdminI18n from '../hooks/useAdminI18n';
 const APP_HANDLE_MAP = JSON.parse(import.meta.env.VITE_APP_HANDLE_MAP || '{}');
 
 const OAuthSetup = ({ onComplete }) => {
-  // Use window.console directly to bypass debug filter
-  if (typeof window !== 'undefined' && window.console) {
-    window.console.warn('🔵 OAuthSetup component rendered');
-  }
   const i18n = useAdminI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,7 +44,7 @@ const OAuthSetup = ({ onComplete }) => {
           adminUrl = `https://${decodedHost}${hasAppsPath ? '' : `/apps/${appHandle}`}`;
         }
       } catch (error) {
-        console.warn('⚠️ Failed to decode host parameter:', error);
+        console.warn('Failed to decode host parameter:', error);
       }
     }
 
@@ -66,7 +62,7 @@ const OAuthSetup = ({ onComplete }) => {
       target.location.href = adminUrl;
       return true;
     } catch (error) {
-      console.error('❌ Failed to redirect to Shopify admin:', error);
+      console.error('Failed to redirect to Shopify admin:', error);
       return false;
     }
   }, []);
@@ -78,10 +74,6 @@ const OAuthSetup = ({ onComplete }) => {
 
       // Get shop info from App Bridge
       const shopInfo = getShopInfo();
-      console.log('🔍 OAuth Setup - Shop Info:', shopInfo);
-      console.log('🔍 OAuth Setup - Full URL:', window.location.href);
-      console.log('🔍 OAuth Setup - Search Params:', window.location.search);
-      
       if (!shopInfo || !shopInfo.shop) {
         // Try additional methods to get shop
         let shop = null;
@@ -91,10 +83,9 @@ const OAuthSetup = ({ onComplete }) => {
           if (window.self !== window.top) {
             const parentUrl = new URL(window.top.location.href);
             shop = parentUrl.searchParams.get('shop');
-            console.log('🔍 Tried parent window, found shop:', shop);
           }
         } catch (e) {
-          console.log('🔍 Cannot access parent window (cross-origin):', e.message);
+          // Cross-origin, can't access parent
         }
         
         // Method 2: Try document.referrer
@@ -102,16 +93,14 @@ const OAuthSetup = ({ onComplete }) => {
           try {
             const referrerUrl = new URL(document.referrer);
             shop = referrerUrl.searchParams.get('shop');
-            console.log('🔍 Tried referrer, found shop:', shop);
           } catch (e) {
-            console.log('🔍 Cannot parse referrer:', e.message);
+            // Can't parse referrer
           }
         }
         
         // Method 3: Try extracting from hostname
         if (!shop && window.location.hostname.includes('myshopify.com')) {
           shop = window.location.hostname;
-          console.log('🔍 Extracted shop from hostname:', shop);
         }
         
         if (!shop) {
@@ -126,7 +115,6 @@ const OAuthSetup = ({ onComplete }) => {
       }
 
       const shopToUse = shopInfo?.shop || shopDomain;
-      console.log('🔍 OAuth Setup - Using shop:', shopToUse);
 
       // Check if store has completed OAuth installation
       if (!shopToUse) {
@@ -156,23 +144,19 @@ const OAuthSetup = ({ onComplete }) => {
       // 304 Not Modified is a valid response - treat it as success
       if (!response.ok && response.status !== 304) {
         // If endpoint doesn't exist or returns error, assume OAuth is needed
-        console.warn('⚠️ OAuth status check failed:', response.status, response.statusText);
+        console.warn('OAuth status check failed:', response.status, response.statusText);
         setNeedsOAuth(true);
         return;
       }
       
       // For 304, the browser should use cached response body
       const data = await response.json();
-      console.log('🔍 OAuth status response:', data);
-
       // Check if store is installed (has completed OAuth)
       if (data.success && data.data && data.data.isInstalled) {
         // OAuth is complete, proceed to dashboard
-        console.log('✅ Store is already installed, proceeding to dashboard');
         onComplete();
       } else {
         // OAuth is needed
-        console.log('⚠️ Store is not installed, showing OAuth setup');
         setNeedsOAuth(true);
       }
     } catch (error) {
@@ -184,20 +168,10 @@ const OAuthSetup = ({ onComplete }) => {
   }, [getShopInfo, onComplete, redirectToShopifyAdmin, shopDomain, i18n]);
 
   useEffect(() => {
-    // Use window.console directly to bypass debug filter
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('🔵 OAuthSetup useEffect running, initialCheckDone:', initialCheckDone.current);
-    }
     if (initialCheckDone.current) {
-      if (typeof window !== 'undefined' && window.console) {
-        window.console.warn('🔵 OAuthSetup useEffect: already done, skipping');
-      }
       return;
     }
     initialCheckDone.current = true;
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('🔵 OAuthSetup useEffect: calling checkOAuthStatus');
-    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const shopFromUrl = urlParams.get('shop');
@@ -206,14 +180,11 @@ const OAuthSetup = ({ onComplete }) => {
     const host = urlParams.get('host');
 
     if (shopFromUrl) {
-      console.log('✅ Found shop in URL on mount:', shopFromUrl);
       setShopDomain(shopFromUrl);
     } else {
-      console.warn('⚠️ No shop in URL on mount:', window.location.href);
     }
 
     if (installed && success) {
-      console.log('🔁 OAuth completed externally, redirecting back to Shopify admin.');
       const redirected = redirectToShopifyAdmin(shopFromUrl, host);
       if (redirected) {
         return;
@@ -225,22 +196,13 @@ const OAuthSetup = ({ onComplete }) => {
   }, [checkOAuthStatus, redirectToShopifyAdmin]);
 
   const handleCompleteOAuth = async () => {
-    console.log('🚀🚀🚀 handleCompleteOAuth called 🚀🚀🚀');
-    console.log('📍 Initial state check:');
-    console.log('  - shopDomain state:', shopDomain);
-    console.log('  - manualShop state:', manualShop);
-    console.log('  - window.location.href:', window.location.href);
-    console.log('  - window.location.search:', window.location.search);
-    
     // Try to get shop from multiple sources
     let shop = null;
     
     // Method 1: Use stored shop from state (if we found it earlier) - THIS SHOULD WORK
     if (shopDomain) {
       shop = shopDomain;
-      console.log('✅✅✅ Using shop from state (shopDomain):', shop);
     } else {
-      console.warn('⚠️ shopDomain state is empty/null');
     }
     
     // Method 2: Try current URL search params directly (multiple ways)
@@ -250,7 +212,6 @@ const OAuthSetup = ({ onComplete }) => {
         const urlParams = new URLSearchParams(window.location.search);
         shop = urlParams.get('shop');
         if (shop) {
-          console.log('✅ Found shop via URLSearchParams:', shop);
         }
       } catch (e) {
         console.error('Error with URLSearchParams:', e);
@@ -261,7 +222,6 @@ const OAuthSetup = ({ onComplete }) => {
         const match = window.location.search.match(/[?&]shop=([^&]+)/);
         if (match && match[1]) {
           shop = decodeURIComponent(match[1]);
-          console.log('✅ Found shop via regex:', shop);
         }
       }
       
@@ -270,7 +230,6 @@ const OAuthSetup = ({ onComplete }) => {
         const hashMatch = window.location.hash.match(/[?&]shop=([^&]+)/);
         if (hashMatch && hashMatch[1]) {
           shop = decodeURIComponent(hashMatch[1]);
-          console.log('✅ Found shop in hash:', shop);
         }
       }
     }
@@ -280,7 +239,6 @@ const OAuthSetup = ({ onComplete }) => {
       const shopInfo = getShopInfo();
       shop = shopInfo?.shop;
       if (shop) {
-        console.log('🔍 Found shop from getShopInfo:', shop);
       }
     }
     
@@ -291,11 +249,10 @@ const OAuthSetup = ({ onComplete }) => {
           const parentUrl = new URL(window.top.location.href);
           shop = parentUrl.searchParams.get('shop');
           if (shop) {
-            console.log('🔍 Found shop in parent window:', shop);
           }
         }
       } catch (e) {
-        console.log('🔍 Cannot access parent window (cross-origin):', e.message);
+        // Cross-origin, can't access parent
       }
     }
     
@@ -305,44 +262,25 @@ const OAuthSetup = ({ onComplete }) => {
         const referrerUrl = new URL(document.referrer);
         shop = referrerUrl.searchParams.get('shop');
         if (shop) {
-          console.log('🔍 Found shop in referrer:', shop);
         }
       } catch (e) {
-        console.log('🔍 Cannot parse referrer:', e.message);
+        // Can't parse referrer
       }
     }
     
     // Method 6: Try extracting from hostname
     if (!shop && window.location.hostname.includes('myshopify.com')) {
       shop = window.location.hostname;
-      console.log('🔍 Extracted shop from hostname:', shop);
     }
     
     // If still no shop found, check if we have manual input
     if (!shop && manualShop && manualShop.trim()) {
       shop = manualShop.trim();
-      console.log('🔍 Using manually entered shop:', shop);
     }
     
     if (!shop) {
       const errorMsg = i18n.translate('admin.oauth.setup.errors.noShop');
       setError(errorMsg);
-      console.error('❌❌❌ CRITICAL: No shop found after trying all methods ❌❌❌');
-      console.error('  - Full URL:', window.location.href);
-      console.error('  - Search params:', window.location.search);
-      console.error('  - Hash:', window.location.hash);
-      console.error('  - Referrer:', document.referrer);
-      console.error('  - Hostname:', window.location.hostname);
-      console.error('  - Stored shopDomain:', shopDomain);
-      console.error('  - Manual shop:', manualShop);
-      console.error('  - All window.location properties:', {
-        href: window.location.href,
-        search: window.location.search,
-        hash: window.location.hash,
-        hostname: window.location.hostname,
-        pathname: window.location.pathname,
-        origin: window.location.origin
-      });
       // Show manual input field - don't try to redirect
       setNeedsOAuth(true);
       return; // STOP - don't proceed with OAuth URL generation
@@ -351,7 +289,6 @@ const OAuthSetup = ({ onComplete }) => {
     // Validate and encode shop parameter
     if (!shop || typeof shop !== 'string' || shop.trim() === '') {
       setError(i18n.translate('admin.oauth.setup.errors.invalidShop'));
-      console.error('❌ Invalid shop value:', shop);
       return;
     }
     
@@ -360,22 +297,13 @@ const OAuthSetup = ({ onComplete }) => {
     const shopDomainRegex = /^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com$/;
     if (!shopDomainRegex.test(cleanedShop)) {
       setError(i18n.translate('admin.oauth.setup.errors.invalidFormat', { shop: cleanedShop }));
-      console.error('❌ Invalid shop format:', cleanedShop);
       return;
     }
     
-    console.log('✅ OAuth Setup - Using shop for redirect:', cleanedShop);
-
     // CRITICAL: Validate the final shop one more time before building URL
     if (!cleanedShop || cleanedShop.trim() === '' || !cleanedShop.includes('.myshopify.com')) {
       const errorMsg = `Invalid shop domain: ${cleanedShop || 'undefined'}. Please enter a valid shop domain (e.g., store.myshopify.com).`;
       setError(errorMsg);
-      console.error('❌❌❌ CRITICAL VALIDATION FAILED ❌❌❌');
-      console.error('  - cleanedShop value:', cleanedShop);
-      console.error('  - cleanedShop type:', typeof cleanedShop);
-      console.error('  - cleanedShop length:', cleanedShop?.length);
-      console.error('  - Contains .myshopify.com:', cleanedShop?.includes('.myshopify.com'));
-      console.error('  - This shop value CANNOT be used for OAuth');
       setNeedsOAuth(true);
       return; // STOP - absolutely do not generate URL without valid shop
     }
@@ -384,24 +312,12 @@ const OAuthSetup = ({ onComplete }) => {
     if (typeof cleanedShop !== 'string' || cleanedShop.length < 10) {
       const errorMsg = `Shop domain validation failed. Received: ${JSON.stringify(cleanedShop)}`;
       setError(errorMsg);
-      console.error('❌ Type/length validation failed:', {
-        type: typeof cleanedShop,
-        value: cleanedShop,
-        length: cleanedShop?.length
-      });
       setNeedsOAuth(true);
       return;
     }
 
     // FINAL VALIDATION: One last check before URL generation
-    console.log('🔍 FINAL CHECK before generating OAuth URL:');
-    console.log('  - cleanedShop:', cleanedShop);
-    console.log('  - Is string?', typeof cleanedShop === 'string');
-    console.log('  - Length:', cleanedShop.length);
-    console.log('  - Contains .myshopify.com?', cleanedShop.includes('.myshopify.com'));
-    
     if (!cleanedShop || typeof cleanedShop !== 'string' || !cleanedShop.includes('.myshopify.com')) {
-      console.error('❌❌❌ FINAL VALIDATION FAILED - ABORTING URL GENERATION ❌❌❌');
       setError(i18n.translate('admin.oauth.setup.errors.validationFailed', { shop: JSON.stringify(cleanedShop) }));
       setNeedsOAuth(true);
       return;
@@ -415,7 +331,6 @@ const OAuthSetup = ({ onComplete }) => {
     // This is required for OAuth redirects from iframes
     if (!backendUrl || !backendUrl.startsWith('http')) {
       backendUrl = window.location.origin;
-      console.log('🔗 Using current origin as backend URL:', backendUrl);
     }
     
     const baseUrl = `${backendUrl}/auth/shopify/install`;
@@ -425,15 +340,6 @@ const OAuthSetup = ({ onComplete }) => {
     const encodedShop = encodeURIComponent(cleanedShop);
     const oauthUrl = `${baseUrl}?shop=${encodedShop}`;
     
-    console.log('🔗 Using backend URL:', backendUrl, 'for shop:', cleanedShop);
-    
-    console.log('✅✅✅ GENERATING OAUTH URL ✅✅✅');
-    console.log('  - Base URL:', baseUrl);
-    console.log('  - Shop (raw):', cleanedShop);
-    console.log('  - Shop (encoded):', encodedShop);
-    console.log('  - Final OAuth URL:', oauthUrl);
-    console.log('  - URL includes shop?', oauthUrl.includes('shop='));
-    
     // Verify the URL was constructed correctly
     try {
       const testUrl = new URL(oauthUrl);
@@ -441,37 +347,28 @@ const OAuthSetup = ({ onComplete }) => {
       if (!testShop || testShop !== cleanedShop) {
         throw new Error(`URL construction failed! Expected shop="${cleanedShop}", got shop="${testShop}"`);
       }
-      console.log('✅ URL construction verified successfully');
-      console.log('  - URL shop param value:', testShop);
     } catch (e) {
-      console.error('❌ URL construction verification failed:', e);
+      console.error('URL construction verification failed:', e);
       setError(i18n.translate('admin.oauth.setup.errors.urlConstruction'));
       setNeedsOAuth(true);
       return;
     }
     
     // Check if we're in an iframe
-    console.log('🔍 About to redirect/navigate. Final shop value:', cleanedShop);
-    console.log('🔍 Final OAuth URL:', oauthUrl);
-    console.log('🔍 Is in iframe?', window.self !== window.top);
-    
     try {
       if (window.self !== window.top) {
         // We're in an iframe - use top-level navigation to break out
         // This bypasses CSP form-action restrictions
-        console.log('📤 Breaking out of iframe with top-level redirect');
-        console.log('  - OAuth URL:', oauthUrl);
         try {
           // Try to access top window and redirect
           window.top.location.href = oauthUrl;
         } catch (e) {
           // If we can't access top (cross-origin), try using window.open as fallback
-          console.warn('⚠️ Cannot access window.top, trying window.open:', e);
+          // Cannot access window.top (cross-origin), use fallback
           window.open(oauthUrl, '_top');
         }
       } else {
         // We're not in an iframe - regular redirect
-        console.log('📤 Direct redirect to:', oauthUrl);
         window.location.href = oauthUrl;
       }
     } catch (error) {

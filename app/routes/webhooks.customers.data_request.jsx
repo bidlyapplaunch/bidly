@@ -8,7 +8,6 @@ export const action = async ({ request }) => {
     // If verification fails, it will throw an error
     const { shop, topic, payload } = await authenticate.webhook(request);
 
-    console.log(`Received ${topic} webhook for ${shop}`);
     
     // Extract customer ID from payload
     // Shopify sends: { customer: { id: 191167, email: "john@example.com" }, orders_requested: [] }
@@ -16,7 +15,7 @@ export const action = async ({ request }) => {
     const shopifyCustomerId = payload?.customer?.id;
     
     if (!shopifyCustomerId) {
-      console.warn('⚠️ No customer ID found in payload');
+      console.warn('No customer ID found in data request payload');
       return new Response(null, { status: 400 });
     }
 
@@ -42,7 +41,7 @@ export const action = async ({ request }) => {
     try {
       mongoCollections = await getMongoCollections();
     } catch (mongoError) {
-      console.warn('⚠️ MongoDB not available for data request:', mongoError.message);
+      console.warn('MongoDB not available for data request:', mongoError.message);
     }
     
     if (mongoCollections) {
@@ -106,7 +105,6 @@ export const action = async ({ request }) => {
         }));
       } else {
         // Customer not found in our database, but log for reference
-        console.log(`ℹ️ Customer ${shopifyCustomerId} not found in database for shop ${shop}`);
       }
     }
 
@@ -138,7 +136,6 @@ export const action = async ({ request }) => {
     }
 
     // Log the data export (in production, you might want to send this to Shopify or store it)
-    console.log('Customer data export completed for shop:', shop);
 
     // Note: According to GDPR, you should provide this data to the customer
     // This webhook is just a notification - you may need to implement a separate endpoint

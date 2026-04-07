@@ -6,14 +6,6 @@ import emailService from '../services/emailService.js';
 // Register new user
 export const register = async (req, res, next) => {
   try {
-    console.log('📝 Registration request received:', {
-      email: req.body.email,
-      name: req.body.name,
-      role: req.body.role,
-      hasPassword: !!req.body.password,
-      passwordLength: req.body.password?.length
-    });
-
     const { email, password, name, role = 'customer' } = req.body;
 
     // Validate required fields

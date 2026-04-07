@@ -10,7 +10,6 @@ export function useAdminI18n(options = {}) {
     translations: (locale) => {
       const resolved = resolveLocale(locale);
       const translations = getTranslationsForLocale(resolved);
-      console.log(`📦 Loading translations for locale: ${locale} -> ${resolved}`, translations ? '✅' : '❌');
       return translations;
     },
     ...options

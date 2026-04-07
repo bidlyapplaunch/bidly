@@ -5,7 +5,6 @@ import Store from "../../auction-backend/models/Store.js";
 export const action = async ({ request }) => {
   try {
     const { shop, topic, payload } = await authenticate.webhook(request);
-    console.log(`📨 Received ${topic} webhook for ${shop}`);
 
     const normalizedShop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
     
@@ -13,14 +12,13 @@ export const action = async ({ request }) => {
     const store = await Store.findByDomain(normalizedShop);
     
     if (!store) {
-      console.warn(`⚠️ Store not found for ${normalizedShop} in subscription update webhook`);
+      console.warn(`Store not found for ${normalizedShop} in subscription update webhook`);
       return new Response("Store not found", { status: 404 });
     }
 
     // Sync plan from Shopify when subscription updates
     try {
       const result = await syncStorePlanFromShopify(store);
-      console.log(`✅ Successfully synced plan for ${normalizedShop}: ${result.activePlan} (changed: ${result.changed})`);
     } catch (syncError) {
       console.error(`Failed to sync plan for ${normalizedShop}:`, syncError.message);
       throw new Response('Failed to sync billing', { status: 500 });

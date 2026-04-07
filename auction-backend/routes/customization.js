@@ -4,17 +4,6 @@ import { optionalStoreIdentification } from '../middleware/storeMiddleware.js';
 
 const router = express.Router();
 
-// Add debugging middleware
-router.use((req, res, next) => {
-  console.log('🎨 Customization route hit:', {
-    method: req.method,
-    path: req.path,
-    url: req.url,
-    query: req.query
-  });
-  next();
-});
-
 /**
  * GET /api/customization
  * Get customization settings for the current shop
@@ -23,14 +12,7 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
     try {
         const shopDomain = req.shopDomain;
         
-        console.log('🎨 Customization GET request:', {
-            shopDomain,
-            query: req.query,
-            hasStore: !!req.store
-        });
-        
         if (!shopDomain) {
-            console.log('❌ No shop domain found in request');
             return res.status(400).json({
                 success: false,
                 message: 'Shop domain is required'
@@ -41,15 +23,13 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
         
         try {
             customization = await Customization.findOne({ shopDomain });
-            console.log('🔍 Customization lookup result:', !!customization);
         } catch (dbError) {
-            console.error('❌ Database error in customization lookup:', dbError.message);
+            console.error('Database error in customization lookup:', dbError.message);
             // Continue with default settings if database fails
         }
         
         // If no customization exists, return default settings without saving
         if (!customization) {
-            console.log('📝 Using default customization settings');
             customization = {
                 template: 'Classic',
                 font: 'Inter',
@@ -78,7 +58,7 @@ router.get('/', optionalStoreIdentification, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error fetching customization settings:', error);
+        console.error('Error fetching customization settings:', error);
         console.error('   Error message:', error.message);
         console.error('   Error stack:', error.stack);
         res.status(500).json({

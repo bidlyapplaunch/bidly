@@ -19,7 +19,6 @@ class AuthService {
       const shopDomain = getShopFromURL();
       const apiBaseUrl = getApiBaseUrl(shopDomain);
       
-      console.log('🔐 Login using backend:', apiBaseUrl, 'for shop:', shopDomain);
       
       const response = await axios.post(`${apiBaseUrl}/auth/login`, {
         email,
@@ -59,22 +58,12 @@ class AuthService {
       const shopDomain = getShopFromURL();
       const apiBaseUrl = getApiBaseUrl(shopDomain);
       
-      console.log('🔐 Register using backend:', apiBaseUrl, 'for shop:', shopDomain);
-      console.log('🔐 Registration data:', {
-        name: username,
-        email,
-        role,
-        passwordLength: password?.length
-      });
-      
       const requestData = {
         name: username.trim(), // Backend expects 'name' not 'username'
         email: email.trim(),
         password,
         role
       };
-      
-      console.log('🔐 Sending registration request:', requestData);
       
       const response = await axios.post(`${apiBaseUrl}/auth/register`, requestData);
 

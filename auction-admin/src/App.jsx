@@ -1,8 +1,4 @@
 // Admin app entry point
-// Use window.console directly to bypass debug filter
-if (typeof window !== 'undefined' && window.console) {
-  window.console.warn('🚀🚀🚀 App.jsx MODULE LOADING 🚀🚀🚀');
-}
 import React, { useState, useEffect } from 'react';
 import { AppProvider } from '@shopify/polaris';
 import '@shopify/polaris/build/esm/styles.css';
@@ -123,13 +119,11 @@ function LocaleAwareApp() {
     // Re-detect locale when App Bridge becomes available
     const newLocale = detectLocale(appBridge);
     if (newLocale !== locale) {
-      console.log(`🌐 Locale detected: ${newLocale} (was: ${locale})`);
       setLocale(newLocale);
     }
   }, [appBridge, locale]);
 
   useEffect(() => {
-    console.log(`🔄 Updating I18nManager with locale: ${locale}`);
     i18nManager.update({ locale });
 
     if (typeof document !== 'undefined') {
@@ -149,7 +143,6 @@ function LocaleAwareApp() {
   }, [appBridge]);
 
   const polarisTranslations = translations[locale] || translations.en;
-  console.log(`🎨 Using Polaris translations for locale: ${locale}`, Object.keys(polarisTranslations).length > 0 ? '✅' : '❌');
 
   return (
     <I18nContext.Provider value={i18nManager}>
@@ -198,23 +191,11 @@ function AppContent() {
     let isMounted = true;
     const loadOnboardingStatus = async () => {
       if (!user || !oauthComplete) {
-        if (typeof window !== 'undefined' && window.console) {
-          window.console.warn('⏸️ Skipping onboarding check - user:', !!user, 'oauthComplete:', oauthComplete);
-        }
         return;
-      }
-      if (typeof window !== 'undefined' && window.console) {
-        window.console.warn('🟢 Starting onboarding status check...');
       }
       setOnboardingLoading(true);
       try {
-        if (typeof window !== 'undefined' && window.console) {
-          window.console.warn('📡 Calling onboardingAPI.getStatus()...');
-        }
         const response = await onboardingAPI.getStatus();
-        if (typeof window !== 'undefined' && window.console) {
-          window.console.warn('✅ onboardingAPI.getStatus() response:', response);
-        }
         if (isMounted) {
           // Ensure response has expected structure
           const status = {
@@ -223,32 +204,21 @@ function AppContent() {
             widgetActive: response?.widgetActive || response?.data?.widgetActive || false,
             ...response
           };
-          if (typeof window !== 'undefined' && window.console) {
-            window.console.warn('📝 Setting onboardingStatus to:', status);
-          }
           setOnboardingStatus(status);
         }
       } catch (error) {
-        if (typeof window !== 'undefined' && window.console) {
-          window.console.error('❌ Failed to load onboarding status', error);
-        }
+        console.error('Failed to load onboarding status', error);
         if (isMounted) {
           // Default to completed so dashboard can load
-          const fallbackStatus = { 
+          const fallbackStatus = {
             success: true,
             onboardingComplete: true,
             widgetActive: false
           };
-          if (typeof window !== 'undefined' && window.console) {
-            window.console.warn('🔄 Using fallback status:', fallbackStatus);
-          }
           setOnboardingStatus(fallbackStatus);
         }
       } finally {
         if (isMounted) {
-          if (typeof window !== 'undefined' && window.console) {
-            window.console.warn('🏁 Setting onboardingLoading to false');
-          }
           setOnboardingLoading(false);
         }
       }
@@ -272,34 +242,17 @@ function AppContent() {
     color: '#1f2937'
   };
 
-  // Use window.console directly to bypass debug filter
-  if (typeof window !== 'undefined' && window.console) {
-    window.console.warn('🔴 App.jsx render state:', { loading, user: !!user, oauthComplete, onboardingLoading, onboardingStatus: !!onboardingStatus });
-  }
-
   if (loading) {
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('🔴 App.jsx: Showing loading screen');
-    }
     content = (
       <div style={loadingMarkupStyle}>
         {i18n.translate('admin.common.loadingApp')}
       </div>
     );
   } else if (!user) {
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('🔴 App.jsx: Showing login screen');
-    }
     content = <Login onLogin={handleLogin} />;
   } else if (!oauthComplete) {
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('🔴 App.jsx: Showing OAuth setup');
-    }
     content = <OAuthSetup onComplete={handleOAuthComplete} />;
   } else if (onboardingLoading || !onboardingStatus) {
-    if (typeof window !== 'undefined' && window.console) {
-      window.console.warn('🔴 App.jsx: Showing preparing dashboard (onboardingLoading:', onboardingLoading, 'onboardingStatus:', onboardingStatus, ')');
-    }
     content = (
       <div style={loadingMarkupStyle}>
         {i18n.translate('admin.common.preparingDashboard')}

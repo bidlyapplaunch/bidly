@@ -38,7 +38,6 @@ class CustomerAuthService {
       const marketplaceConfig = getMarketplaceConfig();
       if (marketplaceConfig.customer?.logged_in) {
         this.customer = buildCustomerFromConfig(marketplaceConfig.customer);
-        console.log('👤 Customer loaded from Shopify marketplace session:', this.customer.name);
         return;
       }
 
@@ -49,10 +48,6 @@ class CustomerAuthService {
 
         if (isLoggedIn && sharedCustomer) {
           this.customer = sharedCustomer;
-          console.log(
-            '👤 Customer loaded from shared login system:',
-            this.customer.fullName || this.customer.name
-          );
           return;
         }
       }
@@ -73,7 +68,6 @@ class CustomerAuthService {
             isTemp: false,
             isBidlyBidder: true
           };
-          console.log('👤 Returning bidder loaded from localStorage:', this.customer.name);
           return;
         }
       }
@@ -82,7 +76,6 @@ class CustomerAuthService {
       const stored = sessionStorage.getItem('customerAuth');
       if (stored) {
         this.customer = JSON.parse(stored);
-        console.log('👤 Customer loaded from session:', this.customer.name);
       }
     } catch (error) {
       console.error('Error loading customer from storage:', error);
@@ -143,10 +136,6 @@ class CustomerAuthService {
           const sharedCustomer = window.BidlyHybridLogin.getCurrentCustomer();
           if (sharedCustomer) {
             this.customer = sharedCustomer;
-            console.log(
-              '✅ Customer authenticated via shared login system:',
-              sharedCustomer.fullName || sharedCustomer.name
-            );
             return true;
           }
         }
@@ -165,7 +154,6 @@ class CustomerAuthService {
       sessionStorage.setItem('customerAuth', JSON.stringify(customerData));
       this.customer = customerData;
 
-      console.log('✅ Customer authenticated:', customerData.name);
       return true;
     } catch (error) {
       console.error('Error storing customer data:', error);
@@ -188,7 +176,6 @@ class CustomerAuthService {
       localStorage.removeItem('bidly_bidder');
       this.customer = null;
 
-      console.log('👋 Customer logged out');
       return true;
     } catch (error) {
       console.error('Error clearing customer data:', error);

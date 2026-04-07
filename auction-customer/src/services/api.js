@@ -29,13 +29,10 @@ api.interceptors.request.use(
     const backendUrl = getBackendUrl();
     config.baseURL = `${backendUrl}/api`;
 
-    console.log(`Making ${config.method?.toUpperCase()} request to ${backendUrl}${config.url}`);
-    
     // Add shop parameter to all requests
     const shopDomain = getShopFromURL();
     if (shopDomain && !config.params?.shop) {
       config.params = { ...config.params, shop: shopDomain };
-      console.log('🏪 Added shop parameter:', shopDomain);
     }
 
     // Add auth token to requests if available

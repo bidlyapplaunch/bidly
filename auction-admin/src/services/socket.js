@@ -26,13 +26,11 @@ class SocketService {
     
     // If connected to a different backend, disconnect first
     if (this.socket && this.currentBackendUrl !== backendUrl) {
-      console.log('🔄 Shop changed, reconnecting Socket.io to new backend...');
       this.disconnect();
     }
     
     // Create new connection if needed
     if (!this.socket) {
-      console.log('🔌 Connecting Socket.io to:', backendUrl, 'for shop:', shopDomain);
       this.currentBackendUrl = backendUrl;
       
       this.socket = io(backendUrl, {
@@ -40,12 +38,10 @@ class SocketService {
       });
 
       this.socket.on('connect', () => {
-        console.log('🔌 Admin WebSocket connected to:', backendUrl);
         this.isConnected = true;
       });
 
       this.socket.on('disconnect', () => {
-        console.log('🔌 Admin WebSocket disconnected');
         this.isConnected = false;
       });
 

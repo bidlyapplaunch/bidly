@@ -104,7 +104,7 @@ router.get('/by-product/:productId', async (req, res, next) => {
       const planKey = sanitizePlan(store?.plan || DEFAULT_PLAN);
       planContext = getPlanCapabilities(planKey);
     } catch (planError) {
-      console.warn('⚠️ Failed to resolve plan context for store', shopDomain, planError.message);
+      console.warn('Failed to resolve plan context for store', shopDomain, planError.message);
     }
     
     res.json({
