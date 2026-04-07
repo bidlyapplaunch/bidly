@@ -31,7 +31,7 @@ const router = express.Router();
 const bidRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute window
   max: 15, // 15 bids per minute per shop+IP combo
-  keyGenerator: (req) => `${req.shopDomain || 'unknown'}:${req.ip}`,
+  keyGenerator: (req, res) => `${req.shopDomain || 'unknown'}:${rateLimit.ipKeyGenerator(req, res)}`,
   message: { success: false, message: 'Too many bid attempts. Please wait a moment before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
