@@ -1,8 +1,45 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { ensureCustomer } from '../services/customerService.js';
 import rateLimit from 'express-rate-limit';
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+function generateCustomerToken(customer, shopDomain) {
+  return jwt.sign(
+    { customerId: customer._id.toString(), email: customer.email, shopDomain, type: 'customer' },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+}
+
+function verifyCustomerToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'Customer authentication required' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    if (decoded.type !== 'customer') {
+      return res.status(403).json({ success: false, message: 'Invalid token type' });
+    }
+
+    // Verify shop domain matches
+    if (decoded.shopDomain !== req.shopDomain) {
+      return res.status(403).json({ success: false, message: 'Token does not match current shop' });
+    }
+
+    req.customerAuth = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+  }
+}
 
 const saveCustomerLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -86,8 +123,11 @@ router.post('/saveCustomer', saveCustomerLimiter, async (req, res, next) => {
       shopDomain
     });
 
+    const customerToken = generateCustomerToken(customer, shopDomain);
+
     res.json({
       success: true,
+      token: customerToken,
       customer: {
         id: customer._id,
         email: customer.email,
@@ -238,8 +278,11 @@ router.post('/sync', async (req, res, next) => {
       sanitizeOptionalString(phone)
     );
 
+    const customerToken = generateCustomerToken(customer, shopDomain);
+
     res.json({
       success: true,
+      token: customerToken,
       customer: {
         id: customer._id,
         email: customer.email,
@@ -290,8 +333,11 @@ router.post('/temp-login', async (req, res, next) => {
       true  // isTemp = true for temp login
     );
 
+    const customerToken = generateCustomerToken(customer, shopDomain);
+
     res.json({
       success: true,
+      token: customerToken,
       customer: {
         id: customer._id,
         email: customer.email,
@@ -312,7 +358,7 @@ router.post('/temp-login', async (req, res, next) => {
 });
 
 // Get customer by email and shop domain (MUST be before /:id route)
-router.get('/by-email', async (req, res, next) => {
+router.get('/by-email', verifyCustomerToken, async (req, res, next) => {
   try {
     const email = req.query.email;
     const shopDomain = req.shopDomain;
@@ -326,6 +372,10 @@ router.get('/by-email', async (req, res, next) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    if (req.customerAuth.email !== normalizedEmail) {
+      return res.status(403).json({ success: false, message: 'You can only look up your own customer data' });
+    }
     const normalizedShopDomain = shopDomain.toLowerCase().trim();
     
     let customer = await Customer.findOne({ 
@@ -373,7 +423,7 @@ router.get('/by-email', async (req, res, next) => {
 });
 
 // Get customer by ID
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', verifyCustomerToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const shopDomain = req.shopDomain;
@@ -382,9 +432,13 @@ router.get('/:id', async (req, res, next) => {
       return next(new AppError('Shop domain is required (middleware)', 400));
     }
 
-    const customer = await Customer.findOne({ 
-      _id: id, 
-      shopDomain 
+    if (req.customerAuth.customerId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'You can only view your own customer data' });
+    }
+
+    const customer = await Customer.findOne({
+      _id: id,
+      shopDomain
     });
 
     if (!customer) {
@@ -444,7 +498,7 @@ router.post('/:id/bid', async (req, res, next) => {
 });
 
 // Get customer bidding stats
-router.get('/:id/stats', async (req, res, next) => {
+router.get('/:id/stats', verifyCustomerToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const shopDomain = req.shopDomain;
@@ -453,9 +507,13 @@ router.get('/:id/stats', async (req, res, next) => {
       return next(new AppError('Shop domain is required (middleware)', 400));
     }
 
-    const customer = await Customer.findOne({ 
-      _id: id, 
-      shopDomain 
+    if (req.customerAuth.customerId !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'You can only view your own customer data' });
+    }
+
+    const customer = await Customer.findOne({
+      _id: id,
+      shopDomain
     });
 
     if (!customer) {

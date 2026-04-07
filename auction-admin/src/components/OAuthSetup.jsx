@@ -11,6 +11,8 @@ import {
 import { useAppBridgeActions } from '../hooks/useAppBridge';
 import useAdminI18n from '../hooks/useAdminI18n';
 
+const APP_HANDLE_MAP = JSON.parse(import.meta.env.VITE_APP_HANDLE_MAP || '{}');
+
 const OAuthSetup = ({ onComplete }) => {
   // Use window.console directly to bypass debug filter
   if (typeof window !== 'undefined' && window.console) {
@@ -34,22 +36,7 @@ const OAuthSetup = ({ onComplete }) => {
                    new URLSearchParams(window.location.search).get('apiKey') ||
                    new URLSearchParams(window.location.search).get('api_key');
     
-    let appHandle = null;
-    
-    if (apiKey) {
-      // Map client IDs to app handles
-      if (apiKey === 'de32970476f2ecf20d98f9d9b6994c89') {
-        appHandle = 'bidly-2'; // Second app
-      } else if (apiKey === '698a2d663b3718b47b794bfbd6835ef4') {
-        appHandle = 'bidly-3'; // First app
-      }
-    }
-    
-    // Require app handle - fail if not determined
-    if (!appHandle) {
-      console.error('❌ Could not determine app handle from API key:', apiKey);
-      throw new Error('Unable to determine app handle. API key must match a known app.');
-    }
+    const appHandle = APP_HANDLE_MAP[apiKey] || 'bidly';
     
     let adminUrl = null;
 

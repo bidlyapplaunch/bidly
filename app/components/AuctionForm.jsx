@@ -8,8 +8,12 @@ import {
   BlockStack,
   InlineStack
 } from '@shopify/polaris';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch } from "../utils/authenticatedFetch";
 
 const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
+  const app = useAppBridge();
+  const authFetch = useAuthenticatedFetch(app);
   const [formData, setFormData] = useState({
     shopifyProductId: '',
     startingBid: '',
@@ -49,7 +53,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/shopify/products?limit=20');
+      const response = await authFetch('/api/shopify/products?limit=20');
       const data = await response.json();
       setProducts(data || []);
     } catch (error) {

@@ -2,7 +2,10 @@ import Dashboard from "../components/Dashboard";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
-const BACKEND_URL = process.env.AUCTION_BACKEND_URL || "https://bidly-backend.hiiiiiiiiiii.com";
+const BACKEND_URL = process.env.AUCTION_BACKEND_URL;
+if (!BACKEND_URL) {
+  throw new Error('AUCTION_BACKEND_URL environment variable is required');
+}
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);

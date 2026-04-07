@@ -2,7 +2,9 @@ import { io } from 'socket.io-client';
 
 const getShopFromURL = () => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('shop') || 'ezza-auction.myshopify.com';
+  const shop = urlParams.get('shop') || window.BidlyMarketplaceConfig?.shop || window.Shopify?.shop || '';
+  if (!shop) console.warn('Bidly: No shop domain found in URL or config');
+  return shop;
 };
 
 const getBackendUrl = () => {

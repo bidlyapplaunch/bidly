@@ -12,12 +12,12 @@ import useAdminI18n from '../hooks/useAdminI18n';
 
 const Login = ({ onLogin }) => {
   const i18n = useAdminI18n();
-  const [email, setEmail] = useState('test@example.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
-  const [username, setUsername] = useState('testuser');
+  const [username, setUsername] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -157,19 +157,6 @@ const Login = ({ onLogin }) => {
             </FormLayout>
           </form>
 
-          <div style={{ 
-            marginTop: '24px', 
-            padding: '16px', 
-            backgroundColor: '#f6f6f7', 
-            borderRadius: '8px',
-            fontSize: '14px'
-          }}>
-            <Text variant="bodySm" color="subdued">
-              <strong>{i18n.translate('admin.auth.demo.title')}</strong><br />
-              {i18n.translate('admin.auth.demo.email', { value: 'test@example.com' })}<br />
-              {i18n.translate('admin.auth.demo.password', { value: 'password123' })}
-            </Text>
-          </div>
         </div>
       </Card>
     </div>

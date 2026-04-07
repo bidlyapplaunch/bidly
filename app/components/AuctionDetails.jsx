@@ -11,8 +11,12 @@ import {
   BlockStack,
   InlineStack
 } from '@shopify/polaris';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch } from "../utils/authenticatedFetch";
 
 const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
+  const app = useAppBridge();
+  const authFetch = useAuthenticatedFetch(app);
   const [auctionData, setAuctionData] = useState(auction);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +32,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     
     try {
       setLoading(true);
-      const response = await fetch(`/api/auctions/${auctionId}`);
+      const response = await authFetch(`/api/auctions/${auctionId}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch auction: ${response.status}`);
@@ -48,7 +52,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
       const auctionId = auctionData?.id || auctionData?._id;
       if (!auctionId) return;
       
-      const response = await fetch(`/api/auctions/${auctionId}`, {
+      const response = await authFetch(`/api/auctions/${auctionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'closed' })

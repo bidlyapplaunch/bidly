@@ -11,12 +11,16 @@ import {
   InlineStack,
   BlockStack
 } from '@shopify/polaris';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch } from "../utils/authenticatedFetch";
 import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
 
 const Dashboard = () => {
+  const app = useAppBridge();
+  const authFetch = useAuthenticatedFetch(app);
   const { stats, auctions: initialAuctions, shopDomain } = useLoaderData();
   const fetcher = useFetcher();
   
@@ -61,7 +65,7 @@ const Dashboard = () => {
       ? `/api/auctions/${selectedAuction._id || selectedAuction.id}`
       : '/api/auctions';
     
-    const response = await fetch(url, {
+    const response = await authFetch(url, {
       method: selectedAuction ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(auctionData)

@@ -2,7 +2,9 @@ import { buildMarketplaceCSS, normalizeMarketplaceTheme, DEFAULT_MARKETPLACE_THE
 
 const getShopFromURL = () => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('shop') || 'ezza-auction.myshopify.com';
+  const shop = urlParams.get('shop') || window.BidlyMarketplaceConfig?.shop || window.Shopify?.shop || '';
+  if (!shop) console.warn('Bidly: No shop domain found in URL or config');
+  return shop;
 };
 
 const resolveBackendUrl = (shopDomain) => {

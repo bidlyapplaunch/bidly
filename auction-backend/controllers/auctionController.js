@@ -749,7 +749,7 @@ export const deleteAuction = async (req, res, next) => {
 // Place a bid on an auction
 export const placeBid = async (req, res, next) => {
   try {
-    const { bidder, amount, customerEmail, bidderName, bidderEmail, customerId, shopifyCustomerId } = req.body;
+    const { bidder, amount, customerEmail, bidderName, bidderEmail, customerId, shopifyCustomerId, idempotencyKey } = req.body;
     const shopDomain = req.shopDomain; // Get from store middleware
     
     if (!shopDomain) {
@@ -838,39 +838,80 @@ export const placeBid = async (req, res, next) => {
       throw new AppError('Auction is not currently active', 400);
     }
     
-    // Validate bid amount
-    const increment = auction.minBidIncrement || 1;
-    const minBid = auction.currentBid > 0 ? auction.currentBid + increment : auction.startingBid;
-    if (sanitizedAmount < minBid) {
-      if (auction.currentBid > 0) {
-        throw new AppError(`Bid must be at least $${minBid} (current bid + $${increment} minimum increment)`, 400);
-      } else {
-        throw new AppError(`Bid must be at least the starting bid ($${auction.startingBid})`, 400);
+    // Check idempotency — if this bid was already placed, return success
+    if (idempotencyKey) {
+      const existing = await Auction.findOne({
+        _id: req.params.id,
+        'bidHistory.idempotencyKey': idempotencyKey
+      });
+      if (existing) {
+        const decorated = decorateAuction(existing);
+        return res.json({
+          success: true,
+          message: 'Bid already placed',
+          auction: decorated,
+          data: decorated,
+          isWinning: true,
+          duplicate: true
+        });
       }
     }
-    
-    // Temporarily update auction status to 'active' if real-time status is 'active'
-    // This allows the addBid method to work properly
-    const originalStatus = auction.status;
-    if (realTimeStatus === 'active' && auction.status !== 'active') {
-      auction.status = 'active';
-      await auction.save();
-    }
-    
-    try {
-      // Add the bid with customer email
-      await auction.addBid(effectiveBidder, sanitizedAmount, effectiveEmail, effectiveCustomerId);
-    } catch (error) {
-      // Restore original status if bid fails
-      if (originalStatus !== auction.status) {
-        auction.status = originalStatus;
-        await auction.save();
+
+    // Atomic bid placement — validates and updates in a single operation
+    const bidDoc = {
+      bidder: effectiveBidder,
+      displayName: effectiveBidder,
+      customerEmail: effectiveEmail,
+      amount: sanitizedAmount,
+      timestamp: now,
+      customerId: effectiveCustomerId || null,
+      idempotencyKey: idempotencyKey || null
+    };
+
+    const updatedAuction = await Auction.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        shopDomain,
+        isDeleted: { $ne: true },
+        status: 'active',
+        startTime: { $lte: now },
+        endTime: { $gte: now },
+        $expr: {
+          $gte: [
+            sanitizedAmount,
+            {
+              $cond: {
+                if: { $gt: ['$currentBid', 0] },
+                then: { $add: ['$currentBid', '$minBidIncrement'] },
+                else: '$startingBid'
+              }
+            }
+          ]
+        }
+      },
+      {
+        $push: { bidHistory: bidDoc },
+        $set: { currentBid: sanitizedAmount, updatedAt: now }
+      },
+      { new: true }
+    );
+
+    if (!updatedAuction) {
+      // Atomic update failed — bid was too low or auction state changed
+      // Re-fetch to give accurate error message
+      const currentAuction = await Auction.findById(req.params.id);
+      if (!currentAuction || currentAuction.status !== 'active') {
+        throw new AppError('This auction is no longer active', 400);
       }
-      throw error;
+      const minBid = currentAuction.currentBid > 0
+        ? currentAuction.currentBid + (currentAuction.minBidIncrement || 1)
+        : currentAuction.startingBid;
+      throw new AppError(
+        `Bid must be at least ${minBid}. Current highest bid is ${currentAuction.currentBid}.`,
+        400
+      );
     }
-    
-    // Refresh auction data
-    const updatedAuction = await Auction.findById(req.params.id);
+
     const decoratedUpdatedAuction = decorateAuction(updatedAuction);
 
     // Track if auction ended (e.g., via Buy Now) — declare BEFORE any checks that reference it
@@ -1145,8 +1186,12 @@ export const buyNow = async (req, res, next) => {
       await auction.save();
     }
     
+    if (!effectiveEmail) {
+      throw new AppError('A valid email address is required to complete a purchase', 400);
+    }
+    const finalEmail = effectiveEmail;
+
     try {
-      const finalEmail = effectiveEmail || `${effectiveBidder.toLowerCase().replace(/\s+/g, '')}@example.com`;
       // Add the buy now bid with customer email
       await auction.addBid(effectiveBidder, auction.buyNowPrice, finalEmail, effectiveCustomerId);
     } catch (error) {
@@ -1169,8 +1214,6 @@ export const buyNow = async (req, res, next) => {
         plan: req.store?.plan,
         storeName: req.store?.storeName
       };
-      const finalEmail =
-        effectiveEmail || `${effectiveBidder.toLowerCase().replace(/\s+/g, '')}@example.com`;
       // Send auction won notification to the buyer
       await emailService.sendAuctionWonNotification(
         shopDomain,

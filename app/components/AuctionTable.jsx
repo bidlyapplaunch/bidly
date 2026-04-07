@@ -12,8 +12,12 @@ import {
   Select
 } from '@shopify/polaris';
 import { EditIcon, DeleteIcon, ViewIcon, StoreIcon } from '@shopify/polaris-icons';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch } from "../utils/authenticatedFetch";
 
 const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
+  const app = useAppBridge();
+  const authFetch = useAuthenticatedFetch(app);
   const fetcher = useFetcher();
   const auctions = fetcher.data?.auctions || initialAuctions;
   
@@ -25,7 +29,7 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
   const handleDelete = async () => {
     if (!selectedAuction) return;
     
-    const response = await fetch(`/api/auctions/${selectedAuction._id || selectedAuction.id}`, {
+    const response = await authFetch(`/api/auctions/${selectedAuction._id || selectedAuction.id}`, {
       method: 'DELETE'
     });
     

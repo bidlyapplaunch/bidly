@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import {
   createAuction,
   getAllAuctions,
@@ -26,6 +27,15 @@ import { checkPlan, enforceAuctionLimit } from '../middleware/planGuard.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = express.Router();
+
+const bidRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 15, // 15 bids per minute per shop+IP combo
+  keyGenerator: (req) => `${req.shopDomain || 'unknown'}:${req.ip}`,
+  message: { success: false, message: 'Too many bid attempts. Please wait a moment before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Auction listing page route (all auctions) - MUST be first to avoid conflicts
 // This route doesn't need store identification middleware
@@ -112,10 +122,10 @@ router.put('/:id', checkPlan('free'), validateUpdateAuction, updateAuction);
 router.delete('/:id', validateId, deleteAuction);
 
 // Bid placement route
-router.post('/:id/bid', validatePlaceBid, placeBid);
+router.post('/:id/bid', bidRateLimit, validatePlaceBid, placeBid);
 
 // Buy now route
-router.post('/:id/buy-now', validateBuyNow, buyNow);
+router.post('/:id/buy-now', bidRateLimit, validateBuyNow, buyNow);
 
 // Relist auction route
 router.put('/:id/relist', checkPlan('free'), enforceAuctionLimit, validateCreateAuction, relistAuction);

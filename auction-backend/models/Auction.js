@@ -28,7 +28,8 @@ const bidSchema = new mongoose.Schema({
   timestamp: {
     type: Date,
     default: Date.now
-  }
+  },
+  idempotencyKey: { type: String, default: null }
 });
 
 const auctionSchema = new mongoose.Schema({

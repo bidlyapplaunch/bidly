@@ -10,11 +10,33 @@ import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import { createRequestHandler as createReactRouterRequestHandler } from '@react-router/express';
 
 // ES module equivalent of __dirname (needed for path resolution)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// CORS origin validation for public Shopify app
+// Allows any *.myshopify.com store, plus explicit ALLOWED_ORIGINS for admin/custom domains
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
+const corsOriginCheck = (origin, callback) => {
+  // Allow requests with no origin (mobile apps, curl, server-to-server)
+  if (!origin) return callback(null, true);
+  try {
+    const url = new URL(origin);
+    // Allow any Shopify store (public app — any merchant can install)
+    if (url.hostname.endsWith('.myshopify.com')) return callback(null, true);
+    // Allow explicitly whitelisted origins (admin dashboard, custom domains)
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+  } catch {
+    // Invalid URL
+  }
+  callback(new Error('Not allowed by CORS'));
+};
 
 // IMPORTANT:
 // Render deployments do not include /build by default (it's .gitignored).
@@ -117,10 +139,48 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: true, // Allow all origins for ngrok development
+    origin: corsOriginCheck,
     methods: ['GET', 'POST']
   }
 });
+
+// Socket.IO authentication middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+
+  if (!token) {
+    // Allow unauthenticated connections (public auction viewers)
+    socket.userRole = 'guest';
+    socket.userId = null;
+    socket.customerId = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.type === 'customer') {
+      socket.userRole = 'customer';
+      socket.customerId = decoded.customerId;
+      socket.customerEmail = decoded.email;
+      socket.shopDomain = decoded.shopDomain;
+    } else {
+      // Admin/legacy JWT
+      socket.userRole = decoded.role || 'user';
+      socket.userId = decoded.userId;
+    }
+
+    next();
+  } catch (error) {
+    // Invalid token — allow as guest rather than rejecting
+    // (public viewers shouldn't need auth)
+    socket.userRole = 'guest';
+    socket.userId = null;
+    socket.customerId = null;
+    next();
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 const previewAssetsPath = path.join(__dirname, '../extensions/theme-app-extension/assets');
 const remixClientPath = resolveFirstExistingPath([
@@ -210,7 +270,7 @@ const fixCustomerIndexes = async () => {
 
 // CORS must be first middleware so identifyStore/routes see headers
 app.use(cors({
-  origin: (origin, callback) => callback(null, true),
+  origin: corsOriginCheck,
   credentials: true,
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization,X-Shopify-Shop-Domain,Cache-Control'
@@ -222,7 +282,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.shopify.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.shopify.com"],
+      scriptSrc: ["'self'", "https://cdn.shopify.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'", "https:", "wss:", "ws:"],
       fontSrc: ["'self'", "https://cdn.shopify.com"],
@@ -867,11 +927,14 @@ io.on('connection', (socket) => {
   });
   
   // Join admin room for admin notifications
-  socket.on('join-admin', (userRole) => {
-    if (userRole === 'admin') {
+  socket.on('join-admin', () => {
+    // Role was verified server-side during connection via JWT
+    if (socket.userRole === 'admin') {
       socket.join('admin-room');
-      socket.userRole = 'admin';
+      socket.emit('admin-joined', { success: true });
       console.log(`👑 Admin client ${socket.id} joined admin room`);
+    } else {
+      socket.emit('admin-joined', { success: false, message: 'Admin authentication required' });
     }
   });
   
@@ -883,10 +946,11 @@ io.on('connection', (socket) => {
   });
   
   // Set user authentication info
-  socket.on('authenticate', (userData) => {
-    socket.userId = userData.userId;
-    socket.userRole = userData.role;
-    console.log(`🔐 Client ${socket.id} authenticated as ${userData.role}: ${userData.userId}`);
+  socket.on('authenticate', (data) => {
+    // Token already validated in connection middleware
+    // This event is kept for backward compatibility but does nothing
+    // Authentication happens via handshake.auth.token
+    socket.emit('authenticated', { role: socket.userRole });
   });
   
   // Handle ping/pong for connection health

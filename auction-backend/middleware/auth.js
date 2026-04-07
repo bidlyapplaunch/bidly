@@ -4,6 +4,11 @@ import { shopifyApi } from '@shopify/shopify-api';
 import User from '../models/User.js';
 import { AppError } from './errorHandler.js';
 
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+
 // Shopify session decoder (RS256)
 const shopify = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY || process.env.SHOPIFY_CLIENT_ID,
@@ -45,7 +50,7 @@ export const decodeShopifySession = async (token) => {
 
 // Generate JWT token (legacy, non-embedded)
 export const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'fallback-secret', {
+  return jwt.sign({ userId }, JWT_SECRET, {
     expiresIn: '7d'
   });
 };
@@ -78,7 +83,7 @@ export const requireAuth = async (req, res, next) => {
       throw new AppError('Access denied. No token provided.', 401);
     }
 
-    const decodedLegacy = jwt.verify(bearer, process.env.JWT_SECRET || 'fallback-secret');
+    const decodedLegacy = jwt.verify(bearer, JWT_SECRET);
     const user = await User.findById(decodedLegacy.userId);
     if (!user || !user.isActive) {
       throw new AppError('Invalid token or user not found.', 401);

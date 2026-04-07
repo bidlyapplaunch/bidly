@@ -10,8 +10,12 @@ import {
   InlineStack,
   IndexTable
 } from '@shopify/polaris';
+import { useAppBridge } from "@shopify/app-bridge-react";
+import { useAuthenticatedFetch } from "../utils/authenticatedFetch";
 
 const Analytics = () => {
+  const app = useAppBridge();
+  const authFetch = useAuthenticatedFetch(app);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +29,7 @@ const Analytics = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/analytics?period=${period}`);
+      const response = await authFetch(`/api/analytics?period=${period}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch analytics: ${response.status}`);

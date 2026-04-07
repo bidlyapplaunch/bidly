@@ -20,13 +20,8 @@ const buildShopifyAdminUrl = (shop, hostParam) => {
   let appHandle = process.env.SHOPIFY_APP_HANDLE;
   
   if (!appHandle && clientId) {
-    // Map client IDs to app handles
-    if (clientId === 'de32970476f2ecf20d98f9d9b6994c89') {
-      appHandle = 'bidly-2'; // Second app
-    } else if (clientId === '698a2d663b3718b47b794bfbd6835ef4') {
-      appHandle = 'bidly-3'; // First app
-    }
-    // No default fallback - require explicit configuration
+    const APP_HANDLE_MAP = JSON.parse(process.env.APP_HANDLE_MAP || '{}');
+    appHandle = APP_HANDLE_MAP[clientId] || 'bidly';
   }
   
   // Require app handle - fail if not set
@@ -138,7 +133,10 @@ export const handleCustomAppInstall = async (req, res, next) => {
     }
     
     // Redirect to the admin dashboard with shop parameter
-    const adminUrl = 'https://bidly-auction-admin.onrender.com';
+    const adminUrl = process.env.ADMIN_DASHBOARD_URL;
+    if (!adminUrl) {
+      throw new Error('ADMIN_DASHBOARD_URL environment variable is required');
+    }
     console.log('🔄 Redirecting to admin dashboard (custom app):', `${adminUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
     res.redirect(`${adminUrl}?shop=${shopDomain}&installed=true&custom_app=true`);
     

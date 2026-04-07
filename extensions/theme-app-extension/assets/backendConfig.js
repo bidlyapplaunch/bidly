@@ -33,31 +33,14 @@
             .trim();
     };
 
-    // Store-to-backend mapping
-    const STORE_BACKEND_MAP = {
-        // Default store
-        'bidly-2.myshopify.com': 'https://bidly-auction-backend.onrender.com',
-        
-        // New store with second backend
-        '6sb15z-k1.myshopify.com': 'https://bidly-auction-backend-2.onrender.com',
-        'true-nordic-dev.myshopify.com': 'https://bidly-auction-backend-2.onrender.com',
+    // Single backend for all stores (public app)
+    const BACKEND_URL = 'https://bidly-auction-backend.onrender.com';
 
-        // Custom domains that map to the second backend store
-        'true-nordic.com': 'https://bidly-auction-backend-2.onrender.com',
-        'www.true-nordic.com': 'https://bidly-auction-backend-2.onrender.com',
-    };
-
-    // Canonical domain mapping (custom domains -> myshopify domain)
+    // Custom domain -> myshopify.com mapping (add entries when merchants use custom domains)
     const CANONICAL_DOMAIN_MAP = {
-        'bidly-2.myshopify.com': 'bidly-2.myshopify.com',
-        '6sb15z-k1.myshopify.com': '6sb15z-k1.myshopify.com',
-        'true-nordic-dev.myshopify.com': '6sb15z-k1.myshopify.com',
         'true-nordic.com': '6sb15z-k1.myshopify.com',
         'www.true-nordic.com': '6sb15z-k1.myshopify.com'
     };
-
-    // Default backend URL (fallback for stores not in the map)
-    const DEFAULT_BACKEND = 'https://bidly-auction-backend.onrender.com';
 
     /**
      * Get backend URL for a given shop domain
@@ -65,25 +48,7 @@
      * @returns {string} The backend URL for that shop
      */
     function getBackendUrl(shopDomain) {
-        if (!shopDomain) {
-            console.warn('⚠️ Bidly: No shop domain provided, using default backend');
-            return DEFAULT_BACKEND;
-        }
-        
-        // Clean the shop domain (remove protocol, trailing slashes)
-        const cleanShop = cleanDomain(shopDomain);
-        
-        // Check if we have a mapping for this shop
-        const backendUrl = STORE_BACKEND_MAP[cleanShop];
-        
-        if (backendUrl) {
-            console.log(`🔗 Bidly: Mapped shop "${cleanShop}" to backend: ${backendUrl}`);
-            return backendUrl;
-        }
-        
-        // Fallback to default
-        console.log(`⚠️ Bidly: No mapping found for shop "${cleanShop}", using default backend: ${DEFAULT_BACKEND}`);
-        return DEFAULT_BACKEND;
+        return BACKEND_URL;
     }
 
     /**
@@ -108,9 +73,8 @@
         getBackendUrl: getBackendUrl,
         getCanonicalShopDomain: getCanonicalShopDomain,
         cleanDomain: cleanDomain,
-        STORE_BACKEND_MAP: STORE_BACKEND_MAP,
         CANONICAL_DOMAIN_MAP: CANONICAL_DOMAIN_MAP,
-        DEFAULT_BACKEND: DEFAULT_BACKEND
+        BACKEND_URL: BACKEND_URL
     };
 
     console.log('✅ Bidly: Backend config loaded');

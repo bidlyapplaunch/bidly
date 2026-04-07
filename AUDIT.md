@@ -19,48 +19,45 @@
 
 ### Exposed Secrets
 
-- [ ] **SEC-001** — `.env` file committed with MongoDB credentials, Shopify API keys, email passwords, JWT secret in plaintext (`auction-backend/.env`)
-  - Rotate ALL credentials immediately
-  - Add `.env*` to `.gitignore`
-  - Scrub from git history with `git filter-repo` or BFG
-- [ ] **SEC-002** — Shopify Client IDs exposed in `shopify.app.bidly.toml:3`, `shopify.app.truenordic.toml:6`, `shopify(false).app.toml:4`
-- [ ] **SEC-003** — Hardcoded API keys in `auction-admin/src/components/OAuthSetup.jsx:41-45`
-- [ ] **SEC-004** — Hardcoded Client ID mapping in `auction-backend/controllers/oauthController.js:24-28`
-- [ ] **SEC-005** — Hardcoded admin dashboard URL in `auction-backend/controllers/oauthController.js:141`
+- [x] **SEC-001** — `.env` file committed with MongoDB credentials, Shopify API keys, email passwords, JWT secret in plaintext (`auction-backend/.env`) — **RESOLVED:** .env files were already gitignored and not in version control. No credentials in git history.
+- [x] **SEC-002** — Shopify Client IDs exposed in `shopify.app.bidly.toml:3`, `shopify.app.truenordic.toml:6`, `shopify(false).app.toml:4` — **RESOLVED:** TOML client_ids are public (visible in Partner dashboard). Stale shopify(false).app.toml removed.
+- [x] **SEC-003** — Hardcoded API keys in `auction-admin/src/components/OAuthSetup.jsx:41-45` — **FIXED:** Now reads from `VITE_APP_HANDLE_MAP` env var
+- [x] **SEC-004** — Hardcoded Client ID mapping in `auction-backend/controllers/oauthController.js:24-28` — **FIXED:** Now reads from `APP_HANDLE_MAP` env var
+- [x] **SEC-005** — Hardcoded admin dashboard URL in `auction-backend/controllers/oauthController.js:141` — **FIXED:** Now reads from `ADMIN_DASHBOARD_URL` env var
 
 ### Authentication & Authorization
 
-- [ ] **AUTH-001** — Socket.IO admin bypass: anyone can emit `join-admin` with `'admin'` string and join admin room (`server.js:870-876`). Requires server-side JWT validation.
-- [ ] **AUTH-002** — JWT uses fallback secret `'fallback-secret'` if env var missing (`middleware/auth.js:48`). Remove fallback, fail on startup.
-- [ ] **AUTH-003** — No auth on Socket.IO client connections (`auction-customer/src/services/socket.js:22-27`)
-- [ ] **AUTH-004** — Client-side customer ID generated with `Date.now()` — predictable and spoofable (`auction-customer/src/components/CustomerAuth.jsx:62`). Generate server-side only.
-- [ ] **AUTH-005** — Remix app makes client-side `fetch()` without Shopify session tokens, bypassing embedded app auth (`app/components/Dashboard.jsx:64`, `AuctionTable.jsx:28`, `AuctionForm.jsx:52`, `AuctionDetails.jsx:31`, `Analytics.jsx:28`)
-- [ ] **AUTH-006** — Customer auth token stored in plain `sessionStorage` vulnerable to XSS (`auction-customer/src/services/customerAuth.js:61,142`)
-- [ ] **AUTH-007** — Admin dashboard stores JWT in `localStorage` without expiration/rotation (`auction-admin/src/services/auth.js:34-35`)
-- [ ] **AUTH-008** — Plaintext demo credentials hardcoded in Login component (`auction-admin/src/components/Login.jsx:15-16`)
+- [x] **AUTH-001** — Socket.IO admin bypass (`server.js:870-876`) — **FIXED:** JWT validated in connection middleware, join-admin checks server-verified role
+- [x] **AUTH-002** — JWT uses fallback secret `'fallback-secret'` if env var missing (`middleware/auth.js:48`). — **FIXED:** Throws on startup if `JWT_SECRET` missing
+- [x] **AUTH-003** — No auth on Socket.IO client connections — **FIXED:** Connection middleware validates JWT from handshake, customer widget sends token
+- [x] **AUTH-004** — Client-side customer ID generated with `Date.now()` — **FIXED:** Customer widget now calls saveCustomer API, uses server-generated ID + JWT token
+- [x] **AUTH-005** — Remix app makes client-side `fetch()` without Shopify session tokens — **FIXED:** All 5 components now use authenticatedFetch via App Bridge
+- [—] **AUTH-006** — Customer auth token stored in plain `sessionStorage` vulnerable to XSS (`auction-customer/src/services/customerAuth.js:61,142`) — Deferred to P1 per user decision
+- [—] **AUTH-007** — Admin dashboard stores JWT in `localStorage` without expiration/rotation (`auction-admin/src/services/auth.js:34-35`) — Deferred to P1 per user decision
+- [x] **AUTH-008** — Plaintext demo credentials hardcoded in Login component (`auction-admin/src/components/Login.jsx:15-16`) — **FIXED:** Cleared defaults, removed demo hint box
 
 ### Bid System
 
-- [ ] **BID-001** — Race condition: read-then-write on bids allows two users to win same price (`controllers/auctionController.js:808-873`). Use atomic `findOneAndUpdate` with field comparison.
-- [ ] **BID-002** — No rate limiting on bid placement (`routes/auctionRoutes.js:115`). Add per-IP rate limiter.
-- [ ] **BID-003** — No idempotency key on bid submission — double-click = duplicate bid (`auction-customer/src/App.jsx:394`)
-- [ ] **BID-004** — Fake email generation (`@example.com`) when email missing allows auction wins without valid contact (`controllers/auctionController.js:1149,1172-1173`)
+- [x] **BID-001** — Race condition on bids (`controllers/auctionController.js:808-873`) — **FIXED:** Replaced with atomic `findOneAndUpdate` using `$expr` validation
+- [x] **BID-002** — No rate limiting on bid placement (`routes/auctionRoutes.js:115`) — **FIXED:** 15 bids/min per IP on bid and buy-now endpoints
+- [x] **BID-003** — No idempotency key on bid submission — **FIXED:** Client generates UUID, server checks for duplicates before atomic update
+- [x] **BID-004** — Fake email generation in buyNow — **FIXED:** Now throws error if email missing, no more `@example.com` fakes
 
 ### Data Exposure
 
-- [ ] **DATA-001** — IDOR on customer lookup: anyone can query any customer's PII by ObjectId or Shopify ID (`controllers/auctionController.js:75-102`). Add owner verification.
-- [ ] **DATA-002** — Shop domain from URL param not validated — attacker can access other shops' data (`auction-customer/src/App.jsx:74`, `services/api.js:32`)
+- [x] **DATA-001** — IDOR on customer lookup — **FIXED:** GET endpoints (by-email, :id, :id/stats) now require customer JWT, verify owner matches
+- [x] **DATA-002** — Shop domain validation — **FIXED:** Customer JWT includes shopDomain, verified against request's shopDomain in middleware
 
 ### CORS & CSP
 
-- [ ] **CORS-001** — Express CORS allows ALL origins (`server.js:213`). Whitelist specific domains.
-- [ ] **CORS-002** — Socket.IO CORS allows ALL origins (`server.js:120`). Whitelist specific domains.
-- [ ] **CSP-001** — CSP includes `'unsafe-inline'` AND `'unsafe-eval'` in script-src, defeating XSS protection (`server.js:224-225`). Remove both, use nonces.
+- [x] **CORS-001** — Express CORS allows ALL origins (`server.js:213`). — **FIXED:** Now uses `ALLOWED_ORIGINS` env var whitelist
+- [x] **CORS-002** — Socket.IO CORS allows ALL origins (`server.js:120`). — **FIXED:** Now uses same `ALLOWED_ORIGINS` whitelist
+- [x] **CSP-001** — CSP includes `'unsafe-inline'` AND `'unsafe-eval'` in script-src (`server.js:224-225`). — **FIXED:** Removed both from scriptSrc
 
 ### Database Config
 
-- [ ] **DB-001** — Prisma datasource hardcoded to `file:dev.sqlite` instead of `DATABASE_URL` env var (`prisma/schema.prisma:12-14`)
-- [ ] **DB-002** — MongoDB connection race condition: concurrent webhook calls can create duplicate connections (`app/mongodb.server.js:3-11`)
+- [x] **DB-001** — Prisma datasource hardcoded to `file:dev.sqlite` (`prisma/schema.prisma:12-14`) — **FIXED:** Now uses `env("DATABASE_URL")`
+- [x] **DB-002** — MongoDB connection race condition (`app/mongodb.server.js:3-11`) — **FIXED:** Removed boolean flag, uses `readyState` directly with connecting-state handling
 
 ---
 
@@ -107,10 +104,10 @@
 
 ### Environment Config
 
-- [ ] **ENV-001** — `SHOPIFY_API_SECRET` defaults to empty string (`app/shopify.server.js:12`). Should throw on startup.
-- [ ] **ENV-002** — Backend URL fallback to `https://bidly-backend.hiiiiiiiiiii.com` in Remix routes. Should fail if env var missing.
-- [ ] **ENV-003** — Hardcoded default shop domain `ezza-auction.myshopify.com` in customer widget (`auction-customer/src/services/api.js:6`, `socket.js:5`)
-- [ ] **ENV-004** — Hardcoded production backend URL fallback in customer widget (`auction-customer/src/services/api.js:14`, `socket.js:13`, `themeService.js:12`)
+- [x] **ENV-001** — `SHOPIFY_API_SECRET` defaults to empty string (`app/shopify.server.js:12`) — **FIXED:** Throws on startup if missing
+- [x] **ENV-002** — Backend URL fallback to joke domain in Remix routes — **FIXED:** All 4 route files now throw if `AUCTION_BACKEND_URL` missing
+- [x] **ENV-003** — Hardcoded default shop domain `ezza-auction.myshopify.com` in customer widget — **FIXED:** Now falls back to `window.BidlyMarketplaceConfig.shop` / `window.Shopify.shop`, warns if empty
+- [ ] **ENV-004** — Hardcoded production backend URL fallback in customer widget (`auction-customer/src/services/api.js:14`, `socket.js:13`, `themeService.js:12`) — Note: these are hardcoded fallbacks (not secrets); should still be fixed but not critical
 
 ---
 
@@ -160,7 +157,7 @@
 - [ ] **CLEAN-003** — Dead service files that throw on import (`app/services/auth.js`, `app/services/api.js`, `app/services/socket.js`). Delete them.
 - [ ] **CLEAN-004** — Commented-out auth middleware with no explanation (`analyticsRoutes.js:14-15`)
 - [ ] **CLEAN-005** — 130 lines commented-out multi-currency code (`auction-app-embed.js:101-235`)
-- [ ] **CLEAN-006** — Stale config file `shopify(false).app.toml` with credentials. Delete it.
+- [x] **CLEAN-006** — Stale config file `shopify(false).app.toml` with credentials. Delete it. — **FIXED:** File removed from git and added to .gitignore
 - [ ] **CLEAN-007** — Inconsistent API response shapes across backend — some return `{ success, data }`, others `{ data }`, others raw arrays
 - [ ] **CLEAN-008** — Duplicate email generation logic (`controllers/auctionController.js:1149` and `1172-1173`)
 - [ ] **CLEAN-009** — Inconsistent error handling patterns — mix of `AppError`, `Error`, `next(error)`
