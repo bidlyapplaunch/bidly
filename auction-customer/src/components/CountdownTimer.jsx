@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Text, Badge } from '@shopify/polaris';
 import { t } from '../i18n';
 
 const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isExpired, setIsExpired] = useState(false);
+  const onTimeUpRef = useRef(onTimeUp);
+  onTimeUpRef.current = onTimeUp;
 
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
-      
+
       // For pending auctions, count down to start time
       // For active auctions, count down to end time
       const targetTime = status === 'pending' ? new Date(startTime).getTime() : new Date(endTime).getTime();
@@ -26,7 +28,7 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         setIsExpired(true);
-        if (onTimeUp) onTimeUp();
+        if (onTimeUpRef.current) onTimeUpRef.current();
       }
     };
 
@@ -37,7 +39,7 @@ const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [endTime, startTime, status, onTimeUp]);
+  }, [endTime, startTime, status]);
 
   if (isExpired) {
     if (status === 'pending') {

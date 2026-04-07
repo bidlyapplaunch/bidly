@@ -17,6 +17,7 @@ import AuctionTable from './AuctionTable';
 import AuctionForm from './AuctionForm';
 import AuctionDetails from './AuctionDetails';
 import Analytics from './Analytics';
+import { ErrorBoundary } from './ErrorBoundary';
 
 const Dashboard = () => {
   const app = useAppBridge();
@@ -91,6 +92,7 @@ const Dashboard = () => {
   };
 
   return (
+    <ErrorBoundary>
     <Page
       title="Auction Dashboard"
       subtitle={shopDomain ? `(${shopDomain})` : undefined}
@@ -186,6 +188,7 @@ const Dashboard = () => {
         />
       </BlockStack>
     </Page>
+    </ErrorBoundary>
   );
 };
 

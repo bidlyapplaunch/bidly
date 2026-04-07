@@ -86,13 +86,13 @@ export function t(key, params = {}, fallback = null) {
         if (value && typeof value === 'object' && fallbackKey in value) {
           value = value[fallbackKey];
         } else {
-          return fallback !== null ? fallback : key;
+          return fallback !== null ? fallback : '';
         }
       }
       break;
     }
   }
-  
+
   if (typeof value === 'string') {
     // Replace variables like {name}, {amount}, {shop}, etc.
     let result = value;
@@ -102,8 +102,8 @@ export function t(key, params = {}, fallback = null) {
     }
     return result;
   }
-  
-  return fallback !== null ? fallback : key;
+
+  return fallback !== null ? fallback : '';
 }
 
 export function getTranslationsForLocale(locale) {

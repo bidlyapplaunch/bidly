@@ -313,7 +313,15 @@
       const card = document.createElement('div');
       card.className = 'bidly-auction-card';
       card.dataset.auctionId = auction._id || auction.id;
-      
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+
       const status = this.computeAuctionStatus(auction);
       const timeLeft = this.formatTimeLeft(auction.endTime);
       const productImage = auction.productData?.images?.[0]?.src || '/placeholder-image.jpg';
@@ -322,8 +330,8 @@
       const currentBid = auction.currentBid || 0;
       const startingBid = auction.startingBid || 0;
       const displayPrice = currentBid > 0 ? currentBid : startingBid;
-      const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
-      
+      const priceLabel = currentBid > 0 ? (window.BidlyTranslate ? window.BidlyTranslate('widget.common.currentBid') : 'Current Bid') : (window.BidlyTranslate ? window.BidlyTranslate('widget.common.startingBid') : 'Starting Bid');
+
       card.innerHTML = `
         <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         <div class="bidly-auction-content">
@@ -355,18 +363,18 @@
       const currentBid = auction.currentBid || 0;
       const startingBid = auction.startingBid || 0;
       const displayPrice = currentBid > 0 ? currentBid : startingBid;
-      const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
-      
+      const priceLabel = currentBid > 0 ? (window.BidlyTranslate ? window.BidlyTranslate('widget.common.currentBid') : 'Current Bid') : (window.BidlyTranslate ? window.BidlyTranslate('widget.common.startingBid') : 'Starting Bid');
+
       containerEl.innerHTML = `
         <div class="bidly-auction-image-container">
           <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-info">
-          <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
+          <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}</h1>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
-            ${currentBid > 0 && startingBid > 0 ? `<div class="bidly-starting-bid">Starting: $${startingBid}</div>` : ''}
+            ${currentBid > 0 && startingBid > 0 ? `<div class="bidly-starting-bid">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.starting') : 'Starting'}: $${startingBid}</div>` : ''}
           </div>
           <div class="bidly-auction-time" data-end-time="${auction.endTime}">${timeLeft}</div>
           <div class="bidly-auction-status bidly-status-${status}">${status}</div>
@@ -375,29 +383,29 @@
         </div>
       `;
     },
-    
+
     // Render featured auction
     renderFeaturedAuction: function(blockId, auction) {
       const containerEl = document.getElementById(`bidly-featured-container-${blockId}`);
       if (!containerEl) return;
-      
+
       const status = this.computeAuctionStatus(auction);
       const timeLeft = this.formatTimeLeft(auction.endTime);
       const productImage = auction.productData?.images?.[0]?.src || '/placeholder-image.jpg';
-      
+
       // Calculate display values
       const currentBid = auction.currentBid || 0;
       const startingBid = auction.startingBid || 0;
       const displayPrice = currentBid > 0 ? currentBid : startingBid;
-      const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
-      
+      const priceLabel = currentBid > 0 ? (window.BidlyTranslate ? window.BidlyTranslate('widget.common.currentBid') : 'Current Bid') : (window.BidlyTranslate ? window.BidlyTranslate('widget.common.startingBid') : 'Starting Bid');
+
       containerEl.innerHTML = `
         <div class="bidly-featured-content">
           <div class="bidly-featured-image-container">
-            <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || 'Auction Item')}" class="bidly-featured-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
+            <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}" class="bidly-featured-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
           </div>
           <div class="bidly-featured-info">
-            <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
+            <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}</h1>
             <div class="bidly-featured-price">
               <div class="bidly-price-label">${priceLabel}</div>
               <div class="bidly-price-amount">$${displayPrice}</div>
@@ -469,11 +477,11 @@
       
       if (this.customer) {
         return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
-          <p>Logged in as: <strong>${this.customer.name}</strong></p>
-          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
+          <p>${window.BidlyTranslate ? window.BidlyTranslate('widget.common.loggedInAs') : 'Logged in as:'} <strong>${this.customer.name}</strong></p>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.logout') : 'Logout'}</button>
         </div>`;
       }
-      
+
       return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
         <input type="text" class="bidly-auth-input" placeholder="${window.BidlyTranslate ? window.BidlyTranslate('widget.common.yourName') : 'Your Name'}" id="page-customer-name">
         <input type="email" class="bidly-auth-input" placeholder="${window.BidlyTranslate ? window.BidlyTranslate('widget.common.yourEmail') : 'Your Email'}" id="page-customer-email">
@@ -832,15 +840,15 @@
       
       if (this.customer) {
         return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
-          <p>Logged in as: <strong>${this.customer.name}</strong></p>
-          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">Logout</button>
+          <p>${window.BidlyTranslate ? window.BidlyTranslate('widget.common.loggedInAs') : 'Logged in as:'} <strong>${this.customer.name}</strong></p>
+          <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.logout()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.logout') : 'Logout'}</button>
         </div>`;
       }
-      
+
       return `<div class="bidly-customer-auth" onclick="event.stopPropagation()">
-        <input type="text" class="bidly-auth-input" placeholder="Your Name" id="bidly-name-${blockId}" onclick="event.stopPropagation()">
-        <input type="email" class="bidly-auth-input" placeholder="Your Email" id="bidly-email-${blockId}" onclick="event.stopPropagation()">
-        <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.login('${blockId}')">Login to Bid</button>
+        <input type="text" class="bidly-auth-input" placeholder="${window.BidlyTranslate ? window.BidlyTranslate('widget.common.yourName') : 'Your Name'}" id="bidly-name-${blockId}" onclick="event.stopPropagation()">
+        <input type="email" class="bidly-auth-input" placeholder="${window.BidlyTranslate ? window.BidlyTranslate('widget.common.yourEmail') : 'Your Email'}" id="bidly-email-${blockId}" onclick="event.stopPropagation()">
+        <button class="bidly-auth-button" onclick="event.stopPropagation(); BidlyAuctionWidget.login('${blockId}')">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.loginToBid') : 'Login to Bid'}</button>
       </div>`;
     },
     
@@ -1646,10 +1654,10 @@
       containerEl.innerHTML = `
         <div class="auction-details-full">
           <div class="auction-details-image">
-            <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || 'Auction Item')}" class="auction-main-image">
+            <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}" class="auction-main-image">
           </div>
           <div class="auction-details-info">
-            <h1 class="auction-title">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
+            <h1 class="auction-title">${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}</h1>
             ${descriptionHTML}
             <div class="auction-price-section">
               <div class="auction-price">
@@ -2723,10 +2731,10 @@
       ${this.renderPageCustomerAuth()}
       <div class="auction-details-full">
         <div class="auction-details-image">
-          <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || 'Auction Item')}" class="auction-main-image" onerror="this.src='/placeholder-image.jpg'">
+          <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}" class="auction-main-image" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="auction-details-info">
-          <h1 class="auction-title">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
+          <h1 class="auction-title">${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}</h1>
           <div class="auction-price-section">
             <div class="auction-price">
               <div class="price-label">${priceLabel}</div>
@@ -2773,12 +2781,27 @@
         <div class="bidly-auth-form">
           <input type="text" placeholder="Your name" class="bidly-auth-input" id="bidly-page-name">
           <input type="email" placeholder="Your email" class="bidly-auth-input" id="bidly-page-email">
-          <button class="bidly-login-btn" onclick="BidlyAuctionWidget.loginPage()">Login</button>
+          <button class="bidly-login-btn" onclick="BidlyAuctionWidget.loginPage()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.loginToBid') : 'Login'}</button>
         </div>
       </div>
     `;
   };
   
+  // Cleanup event listeners and intervals on page unload
+  window.addEventListener('beforeunload', () => {
+    // Clear any polling intervals
+    if (window.BidlyAuctionWidget._pollingInterval) {
+      clearInterval(window.BidlyAuctionWidget._pollingInterval);
+    }
+    if (window.BidlyAuctionWidget._timerInterval) {
+      clearInterval(window.BidlyAuctionWidget._timerInterval);
+    }
+    // Clear countdown intervals
+    if (window.bidlyCountdownIntervals) {
+      Object.values(window.bidlyCountdownIntervals).forEach(id => clearInterval(id));
+    }
+  });
+
   // Show error on product page
   window.BidlyAuctionWidget.showPageError = function(message) {
     const container = document.getElementById('bidly-auction-detail-page');

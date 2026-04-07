@@ -98,7 +98,7 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
   };
 
   const rowMarkup = auctions.map((auction, index) => (
-    <IndexTable.Row id={auction._id || auction.id || index} key={auction._id || auction.id || index} position={index}>
+    <IndexTable.Row id={auction._id || auction.id || `auction-${index}`} key={auction._id || auction.id || `auction-${index}`} position={index}>
       <IndexTable.Cell>
         <BlockStack gap="050">
           <Text variant="bodyMd" fontWeight="semibold" as="span">

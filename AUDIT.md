@@ -115,15 +115,15 @@
 
 ### Performance
 
-- [ ] **PERF-001** — Each auction card runs its own `setInterval` for countdown. 100 auctions = 100 timers. Use single shared timer. (`auction-customer/src/components/CountdownTimer.jsx:9-40`, `auction_featured.liquid:407`, `auction_list.liquid:390`)
-- [ ] **PERF-002** — N+1 query: `decorateAuction()` maps over bidHistory per auction in list (`controllers/auctionController.js:57-73`). Use MongoDB aggregation.
-- [ ] **PERF-003** — No pagination in customer widget or admin dashboard auction lists
+- [—] **PERF-001** — Each auction card runs its own `setInterval` for countdown. 100 auctions = 100 timers. Use single shared timer. (`auction-customer/src/components/CountdownTimer.jsx:9-40`, `auction_featured.liquid:407`, `auction_list.liquid:390`) — **Deferred:** Complex refactor, needs careful testing with live auctions
+- [—] **PERF-002** — N+1 query: `decorateAuction()` maps over bidHistory per auction in list (`controllers/auctionController.js:57-73`). Use MongoDB aggregation. — **Deferred:** Query changes could break existing behavior
+- [—] **PERF-003** — No pagination in customer widget or admin dashboard auction lists — **Deferred:** Requires UI/UX design for pagination controls
 - [ ] **PERF-004** — 10-second silent refresh polls API even when Socket.IO connected (`auction-customer/src/App.jsx:290-293`)
-- [ ] **PERF-005** — No `AbortController` on any fetch calls — unmount during flight causes memory warnings (all React components)
+- [—] **PERF-005** — No `AbortController` on any fetch calls — unmount during flight causes memory warnings (all React components) — **Deferred:** Partially addressed by REACT-004 (product search AbortController)
 - [ ] **PERF-006** — No debouncing on product search — every keystroke fires API call (`auction-admin/src/components/AuctionForm.jsx:192-249`)
 - [ ] **PERF-007** — No image lazy loading on auction cards (`auction-customer/src/components/AuctionCard.jsx:72-113`)
 - [ ] **PERF-008** — Missing compound index on `{ status: 1, completedAt: 1 }` for ended auction queries
-- [ ] **PERF-009** — No API response caching — rapid re-renders cause duplicate calls (`auction-customer/src/services/api.js`)
+- [—] **PERF-009** — No API response caching — rapid re-renders cause duplicate calls (`auction-customer/src/services/api.js`) — **Deferred:** Needs caching strategy design
 - [ ] **PERF-010** — No request timeout on axios instance in customer widget (`auction-customer/src/services/api.js:17`)
 - [ ] **PERF-011** — `rows` array recreated on every render without `useMemo` in admin table (`auction-admin/src/components/AuctionTable.jsx:175-237`)
 - [ ] **PERF-012** — `resolvedShopDomain` created fresh each render, causing `useCallback` to recreate (`auction-customer/src/App.jsx:82-84,133`)
@@ -135,7 +135,7 @@
 - [ ] **MEM-003** — Socket event listeners not properly cleaned up in customer widget (`auction-customer/src/App.jsx:285-301`)
 - [ ] **MEM-004** — `MutationObserver` stored but never disconnected (`auction-app-embed.js:643`)
 - [ ] **MEM-005** — `languagechange` listener accumulates on mount/unmount cycles (`auction-admin/src/App.jsx:141-149`)
-- [ ] **MEM-006** — Singleton socket disconnect in one component disconnects all widgets (`auction-customer/src/App.jsx:298`)
+- [—] **MEM-006** — Singleton socket disconnect in one component disconnects all widgets (`auction-customer/src/App.jsx:298`) — **Deferred:** Needs socket architecture redesign
 
 ### React Issues
 
@@ -153,24 +153,24 @@
 ### Code Cleanup
 
 - [ ] **CLEAN-001** — Hundreds of `console.log` debug statements with emojis in production across ALL codebases
-- [ ] **CLEAN-002** — Sensitive PII logged in webhooks (`webhooks.customers.data_request.jsx:12,127`)
-- [ ] **CLEAN-003** — Dead service files that throw on import (`app/services/auth.js`, `app/services/api.js`, `app/services/socket.js`). Delete them.
+- [x] **CLEAN-002** — Sensitive PII logged in webhooks (`webhooks.customers.data_request.jsx:12,127`) — **FIXED:** Already addressed in P1 as GDPR-002
+- [x] **CLEAN-003** — Dead service files that throw on import (`app/services/auth.js`, `app/services/api.js`, `app/services/socket.js`). Delete them. — **FIXED:** Files and empty directory deleted
 - [ ] **CLEAN-004** — Commented-out auth middleware with no explanation (`analyticsRoutes.js:14-15`)
-- [ ] **CLEAN-005** — 130 lines commented-out multi-currency code (`auction-app-embed.js:101-235`)
+- [x] **CLEAN-005** — 130 lines commented-out multi-currency code (`auction-app-embed.js:101-235`) — **FIXED:** Removed all commented-out multi-currency blocks, kept clean USD-only functions
 - [x] **CLEAN-006** — Stale config file `shopify(false).app.toml` with credentials. Delete it. — **FIXED:** File removed from git and added to .gitignore
-- [ ] **CLEAN-007** — Inconsistent API response shapes across backend — some return `{ success, data }`, others `{ data }`, others raw arrays
-- [ ] **CLEAN-008** — Duplicate email generation logic (`controllers/auctionController.js:1149` and `1172-1173`)
-- [ ] **CLEAN-009** — Inconsistent error handling patterns — mix of `AppError`, `Error`, `next(error)`
+- [—] **CLEAN-007** — Inconsistent API response shapes across backend — some return `{ success, data }`, others `{ data }`, others raw arrays — **Deferred:** Breaking change, needs coordinated client+server update
+- [x] **CLEAN-008** — Duplicate email generation logic (`controllers/auctionController.js:1149` and `1172-1173`) — **FIXED:** Already addressed in P0 (email required in buyNow)
+- [—] **CLEAN-009** — Inconsistent error handling patterns — mix of `AppError`, `Error`, `next(error)` — **Deferred:** Broad refactor across all error handling
 - [ ] **CLEAN-010** — Magic numbers without named constants throughout (`server.js:967`, `models/Auction.js:195,201`)
 
 ### Dependency & Build Issues
 
 - [ ] **DEP-001** — Dockerfile uses Node 18, `package.json` requires `>=20.10` — version mismatch
-- [ ] **DEP-002** — React Router v6 in admin/customer vs v7 in root — incompatible APIs
-- [ ] **DEP-003** — Vite v6 in root vs v7 in admin/customer
-- [ ] **DEP-004** — `date-fns` v2 in admin/customer vs v3 in root — major version mismatch
-- [ ] **DEP-005** — Polaris version inconsistency (12.12.0 root vs 12.27.0 admin/customer)
-- [ ] **DEP-006** — No `lint`, `format`, or `typecheck` scripts in backend or sub-packages
+- [—] **DEP-002** — React Router v6 in admin/customer vs v7 in root — incompatible APIs — **Deferred:** Version upgrades risk breaking changes, needs testing
+- [—] **DEP-003** — Vite v6 in root vs v7 in admin/customer — **Deferred:** Version upgrades risk breaking changes, needs testing
+- [—] **DEP-004** — `date-fns` v2 in admin/customer vs v3 in root — major version mismatch — **Deferred:** Version upgrades risk breaking changes, needs testing
+- [—] **DEP-005** — Polaris version inconsistency (12.12.0 root vs 12.27.0 admin/customer) — **Deferred:** Version upgrades risk breaking changes, needs testing
+- [—] **DEP-006** — No `lint`, `format`, or `typecheck` scripts in backend or sub-packages — **Deferred:** Version upgrades risk breaking changes, needs testing
 - [ ] **DEP-007** — `npm remove @shopify/cli` in Dockerfile is fragile — fails if not installed
 
 ### Accessibility
@@ -179,31 +179,31 @@
 - [ ] **A11Y-002** — Missing ARIA labels on close buttons, modals, interactive elements (multiple files)
 - [ ] **A11Y-003** — Custom modals lack `role="dialog"` and `aria-modal="true"` (CustomerAuth modal)
 - [ ] **A11Y-004** — No keyboard navigation on auction cards — click handlers only, no Tab/Enter support
-- [ ] **A11Y-005** — Potential WCAG color contrast violations in customer widget and theme extension CSS
+- [—] **A11Y-005** — Potential WCAG color contrast violations in customer widget and theme extension CSS — **Deferred:** Needs visual testing and design review
 
 ### i18n
 
-- [ ] **I18N-001** — Translation function uses regex replacement — breaks with special chars, no pluralization support (`auction-app-embed.js:581-605`, `auction-customer/src/i18n/index.js:99-102`)
+- [—] **I18N-001** — Translation function uses regex replacement — breaks with special chars, no pluralization support (`auction-app-embed.js:581-605`, `auction-customer/src/i18n/index.js:99-102`) — **Deferred:** Translation system refactor, complex
 - [ ] **I18N-002** — Missing translation keys return raw key names to users (`auction-customer/src/i18n/index.js:89`)
 - [ ] **I18N-003** — Hardcoded English fallback strings mixed with locale files in theme JS
-- [ ] **I18N-004** — Inconsistent i18n usage in admin — some errors translated, some hardcoded (`auction-admin/src/components/OAuthSetup.jsx`)
+- [—] **I18N-004** — Inconsistent i18n usage in admin — some errors translated, some hardcoded (`auction-admin/src/components/OAuthSetup.jsx`) — **Deferred:** Requires audit of all i18n strings
 
 ### Theme Extension Specific
 
 - [ ] **THEME-001** — Global scope pollution: multiple `window.*` assignments without namespacing
 - [ ] **THEME-002** — Event listeners never cleaned up when widget destroyed (`bidly-widget.js`)
 - [ ] **THEME-003** — Unsafe `JSON.parse()` without try-catch in ~15 locations (`bidly-hybrid-login.js`, `auction-app-embed.js`, `bidly-widget.js`)
-- [ ] **THEME-004** — Excessive `!important` in CSS indicates specificity problems (`auction-app-embed.css`)
+- [—] **THEME-004** — Excessive `!important` in CSS indicates specificity problems (`auction-app-embed.css`) — **Deferred:** CSS specificity changes need visual testing
 - [ ] **THEME-005** — Hardcoded cache-bust version `?v=209` in asset URL (`auction-app-embed.js:559`)
-- [ ] **THEME-006** — Large unminified JS bundles (~8700 lines across 5 files)
+- [—] **THEME-006** — Large unminified JS bundles (~8700 lines across 5 files) — **Deferred:** Build tooling change, not a code fix
 - [ ] **THEME-007** — Sequential fetch calls in loop instead of `Promise.all()` (`bidly-hybrid-login.js:322-340`)
 
 ### Miscellaneous Config
 
 - [ ] **CFG-001** — No `.env.example` at root level or in admin/customer packages
-- [ ] **CFG-002** — Inconsistent webhook URI configs across TOML files
-- [ ] **CFG-003** — Vite admin config reads TOML files at build time for API keys — fragile (`auction-admin/vite.config.js:13-60`)
-- [ ] **CFG-004** — Dev proxy targets hardcoded ngrok URLs that expire (`auction-customer/vite.config.js:22`)
+- [—] **CFG-002** — Inconsistent webhook URI configs across TOML files — **Deferred:** Needs decision on webhook consolidation
+- [—] **CFG-003** — Vite admin config reads TOML files at build time for API keys — fragile (`auction-admin/vite.config.js:13-60`) — **Deferred:** Works currently, fragile but functional
+- [—] **CFG-004** — Dev proxy targets hardcoded ngrok URLs that expire (`auction-customer/vite.config.js:22`) — **Deferred:** Dev-only issue, ngrok URLs are temporary by nature
 - [ ] **CFG-005** — Both `resolutions` (yarn) and `overrides` (npm) specified for same packages (`package.json:76-85`)
 
 ---

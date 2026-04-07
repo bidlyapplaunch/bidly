@@ -225,6 +225,7 @@ api.interceptors.response.use(
       (lowercaseMessage.includes('token') || lowercaseMessage.includes('unauthorized'))
     ) {
       isHandlingAuthError = true;
+      setTimeout(() => { isHandlingAuthError = false; }, 5000); // Reset after 5s in case reload doesn't happen
       console.warn('🔐 Detected invalid auth token. Logging out and reloading.');
       authService.logout();
       const { origin, pathname, search } = window.location;
@@ -321,10 +322,11 @@ export const auctionAPI = {
 // Shopify API endpoints
 export const shopifyAPI = {
   // Product operations
-  searchProducts: async (query, limit = 10, shop = null) => {
+  searchProducts: async (query, limit = 10, shop = null, options = {}) => {
     const shopDomain = shop || getShopFromURL();
     const response = await api.get('/shopify/products/search', {
-      params: { q: query, limit, shop: shopDomain }
+      params: { q: query, limit, shop: shopDomain },
+      ...(options.signal ? { signal: options.signal } : {})
     });
     return response.data.data; // Return the actual products array
   },

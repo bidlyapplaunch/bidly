@@ -77,6 +77,10 @@
         BACKEND_URL: BACKEND_URL
     };
 
+    // Consolidate under window.Bidly namespace (keep existing name for backward compat)
+    window.Bidly = window.Bidly || {};
+    window.Bidly.BackendConfig = window.BidlyBackendConfig;
+
     console.log('✅ Bidly: Backend config loaded');
 })();
 

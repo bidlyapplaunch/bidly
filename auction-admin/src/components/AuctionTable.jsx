@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Card,
   DataTable,
@@ -172,7 +172,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     return format(new Date(date), formatStr);
   };
 
-  const rows = auctions.map((auction) => [
+  const rows = useMemo(() => auctions.map((auction) => [
     // Product Name - truncated for better fit
     (auction.productData?.title || auction.shopifyProductId || i18n.translate('admin.auctions.table.unknownProduct')).substring(0, 30) + 
     ((auction.productData?.title || auction.shopifyProductId || i18n.translate('admin.auctions.table.unknownProduct')).length > 30 ? '...' : ''),
@@ -234,7 +234,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         </Button>
       )}
     </div>
-  ]);
+  ]), [auctions, i18n, onEdit, onView]);
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);

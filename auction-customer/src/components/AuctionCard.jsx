@@ -83,7 +83,8 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
                 <img
                   src={auction.productData.image.src}
                   alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
-                  style={{ 
+                  loading="lazy"
+                  style={{
                     maxWidth: '100%',
                     maxHeight: '250px',
                     width: 'auto',
@@ -99,7 +100,8 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
               <img
                 src={auction.productData.image.src}
                 alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
-                style={{ 
+                loading="lazy"
+                style={{
                   maxWidth: '100%',
                   maxHeight: '250px',
                   width: 'auto',

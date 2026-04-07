@@ -229,6 +229,7 @@ auctionSchema.index(
   }
 );
 auctionSchema.index({ shopDomain: 1, endTime: 1, status: 1 });
+auctionSchema.index({ status: 1, completedAt: 1 });
 
 // Virtual for checking if auction is currently active
 auctionSchema.virtual('isActive').get(function() {

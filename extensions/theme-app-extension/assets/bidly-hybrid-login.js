@@ -204,12 +204,14 @@
 
             const candidates = getCustomerIdCandidates();
 
-            for (const candidate of candidates) {
-                const context = await requestCustomerContext(candidate);
-                if (context) {
-                    proxyPrefetchResult = context;
-                    return context;
-                }
+            // Fetch all candidates in parallel instead of sequentially
+            const results = await Promise.all(
+                candidates.map(candidate => requestCustomerContext(candidate).catch(() => null))
+            );
+            const validResult = results.find(r => r !== null);
+            if (validResult) {
+                proxyPrefetchResult = validResult;
+                return validResult;
             }
 
             const fallback = await requestCustomerContext(null);
@@ -830,6 +832,8 @@
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
         modal.id = 'bidly-register-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
         modal.innerHTML = `
             <div class="bidly-modal-content">
                 <form id="bidly-register-form" onsubmit="window.BidlyHybridLogin.submitRegisterForm(event)">
@@ -927,6 +931,8 @@
     function openGuestLogin() {
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
         const t = window.BidlyTranslate || ((key, params) => {
             // Fallback if translation not available
             const fallbacks = {
@@ -943,7 +949,7 @@
             <div class="bidly-modal-content">
                 <div class="bidly-modal-header">
                     <h3>${t('widget.guestLogin.title')}</h3>
-                    <button class="bidly-modal-close" onclick="window.BidlyHybridLogin.closeGuestLoginModal()">&times;</button>
+                    <button class="bidly-modal-close" aria-label="Close" onclick="window.BidlyHybridLogin.closeGuestLoginModal()">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
                     <form id="bidly-guest-login-form" onsubmit="window.BidlyHybridLogin.submitGuestLogin(event)">
@@ -1167,6 +1173,10 @@
         isUserLoggedIn,
         CONFIG
     };
+
+    // Consolidate under window.Bidly namespace (keep existing name for backward compat)
+    window.Bidly = window.Bidly || {};
+    window.Bidly.HybridLogin = window.BidlyHybridLogin;
 
     // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   AppProvider,
   Page,
@@ -80,8 +80,9 @@ function App() {
   };
 
   const { shop, shopName } = getShopInfo();
-  const resolvedShopDomain =
-    shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
+  const resolvedShopDomain = useMemo(() => {
+    return shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
+  }, []); // empty deps since shop domain doesn't change
 
   // Customer authentication state - declare before useCallback hooks that depend on them
   const [customer, setCustomer] = useState(null);
@@ -288,18 +289,25 @@ function App() {
     
     // Set up automatic refresh every 10 seconds to detect status changes (as backup)
     const refreshInterval = setInterval(() => {
-      console.log('🔄 Auto-refreshing auctions to check status changes...');
-      fetchVisibleAuctionsSilent();
+      // Only poll if socket is not connected
+      if (!socketService.isConnected) {
+        console.log('🔄 Auto-refreshing auctions to check status changes...');
+        fetchVisibleAuctionsSilent();
+      }
     }, 10000); // 10 seconds
     
     return () => {
       socketService.offBidUpdate(handleBidUpdate);
       socketService.offStatusUpdate(handleStatusUpdate);
+      socketService.offTimeExtension(handleTimeExtension);
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
       socketService.disconnect();
       clearInterval(refreshInterval);
       isMounted = false;
     };
-  }, []);
+  }, [resolvedShopDomain]);
 
   useEffect(() => {
     if (customer) {
@@ -386,10 +394,18 @@ function App() {
       return;
     }
 
+    // Verify auction is still active before submitting
+    const targetAuction = auctions.find(a => a._id === bidData.auctionId || a.id === bidData.auctionId);
+    if (!targetAuction || targetAuction.status !== 'active') {
+      setToastMessage('This auction has ended');
+      setShowToast(true);
+      return;
+    }
+
     try {
       setBidLoading(true);
       setError(null);
-      
+
       const auctionId = bidData.auctionId;
       const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       await auctionAPI.placeBid(auctionId, {

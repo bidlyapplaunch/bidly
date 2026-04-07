@@ -1030,7 +1030,7 @@ io.on('connection', (socket) => {
       chatRooms.set(productId, []);
     }
     
-    // Add message to room (keep last 100 messages per room)
+    // Add message to room (keep last MAX_CHAT_MESSAGES_PER_ROOM messages per room)
     const messages = chatRooms.get(productId);
     const newMessage = {
       id: `chat-${productId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -1041,8 +1041,8 @@ io.on('connection', (socket) => {
     
     messages.push(newMessage);
     
-    // Keep only last 100 messages per room
-    if (messages.length > 100) {
+    // Keep only last N messages per room
+    if (messages.length > MAX_CHAT_MESSAGES_PER_ROOM) {
       messages.shift();
     }
     
@@ -1067,6 +1067,23 @@ io.on('connection', (socket) => {
 // ===== CHAT FUNCTIONALITY =====
 // In-memory store for chat messages (per product room) - shared across all connections
 const chatRooms = new Map(); // productId -> [{ id, username, message, timestamp }]
+const MAX_CHAT_MESSAGES_PER_ROOM = 100;
+
+// Clean up expired chat rooms every hour
+setInterval(() => {
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  for (const [productId, messages] of chatRooms.entries()) {
+    if (messages.length === 0) {
+      chatRooms.delete(productId);
+      continue;
+    }
+    const lastMessage = messages[messages.length - 1];
+    if (now - new Date(lastMessage.timestamp).getTime() > ONE_DAY_MS) {
+      chatRooms.delete(productId);
+    }
+  }
+}, 60 * 60 * 1000); // Run every hour
 
 // Make io and chatRooms available to other modules (e.g. chat routes)
 app.set('io', io);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   FormLayout,
@@ -102,6 +102,8 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const [searching, setSearching] = useState(false);
   const [shopifyConfigured, setShopifyConfigured] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const searchTimeoutRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     if (!allowPopcorn && formData.popcornEnabled) {
@@ -189,59 +191,74 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   }, []);
 
 
-  const handleProductSearchChange = useCallback(async (value) => {
+  const handleProductSearchChange = useCallback((value) => {
     console.log('🔍 Search input changed:', value);
     setProductSearchQuery(value);
     setSearchError(null);
-    
+
+    // Clear any pending debounce timeout
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
     if (value.length > 2) {
-      console.log('🔍 Search query is long enough, starting search...');
+      console.log('🔍 Search query is long enough, debouncing search...');
       setSearching(true);
-      
-      // Try real API first
-      try {
-        console.log('🔍 Trying real Shopify API...');
-        console.log('🔍 API call details:', { query: value, endpoint: '/shopify/products/search' });
-        const response = await shopifyAPI.searchProducts(value);
-        console.log('🔍 Real API response:', response);
-        
-        // Check if the response has the expected structure
-        if (response && Array.isArray(response)) {
-          const products = response;
-          console.log('🔍 Products found:', products.length);
-          if (products.length > 0) {
-            setSearchResults(products);
-            console.log('✅ Using real Shopify data');
+
+      searchTimeoutRef.current = setTimeout(async () => {
+        // Abort any in-flight request
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+        abortControllerRef.current = new AbortController();
+        const { signal } = abortControllerRef.current;
+
+        // Try real API first
+        try {
+          console.log('🔍 Trying real Shopify API...');
+          console.log('🔍 API call details:', { query: value, endpoint: '/shopify/products/search' });
+          const response = await shopifyAPI.searchProducts(value, 10, null, { signal });
+          console.log('🔍 Real API response:', response);
+
+          // Check if the response has the expected structure
+          if (response && Array.isArray(response)) {
+            const products = response;
+            console.log('🔍 Products found:', products.length);
+            if (products.length > 0) {
+              setSearchResults(products);
+              console.log('✅ Using real Shopify data');
+            } else {
+              throw new Error('No products found from real API');
+            }
           } else {
-            throw new Error('No products found from real API');
+            console.log('🔍 Unexpected response structure:', response);
+            throw new Error('Invalid response structure from API');
           }
-        } else {
-          console.log('🔍 Unexpected response structure:', response);
-          throw new Error('Invalid response structure from API');
+        } catch (error) {
+          // Ignore AbortError — it means a newer search replaced this one
+          if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+            console.log('🔍 Search request aborted (superseded by newer search)');
+            return;
+          }
+          console.log('❌ Real API failed:', error);
+          console.log('❌ Error details:', {
+            message: error.message,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data
+          });
+          console.log('🔍 Falling back to mock data...');
+
+          // Fallback to mock data
+          const mockProducts = getMockProducts(value);
+          console.log('🔍 Mock products found:', mockProducts);
+          if (mockProducts.length > 0) {
+            setSearchResults(mockProducts);
+            setSearchError(null);
+          } else {
+            setSearchResults([]);
+            setSearchError(null);
+          }
+        } finally {
+          setSearching(false);
         }
-      } catch (error) {
-        console.log('❌ Real API failed:', error);
-        console.log('❌ Error details:', {
-          message: error.message,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data
-        });
-        console.log('🔍 Falling back to mock data...');
-        
-        // Fallback to mock data
-        const mockProducts = getMockProducts(value);
-        console.log('🔍 Mock products found:', mockProducts);
-        if (mockProducts.length > 0) {
-          setSearchResults(mockProducts);
-          setSearchError(null);
-        } else {
-          setSearchResults([]);
-          setSearchError(null);
-        }
-      } finally {
-        setSearching(false);
-      }
+      }, 300); // 300ms debounce
     } else {
       console.log('🔍 Search query too short, clearing results');
       setSearchResults([]);

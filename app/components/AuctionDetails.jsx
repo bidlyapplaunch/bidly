@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Modal,
   Card,
@@ -20,13 +20,7 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const [auctionData, setAuctionData] = useState(auction);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (auction && isOpen) {
-      fetchAuctionDetails();
-    }
-  }, [auction, isOpen]);
-
-  const fetchAuctionDetails = async () => {
+  const fetchAuctionDetails = useCallback(async () => {
     const auctionId = auction?.id || auction?._id;
     if (!auctionId) return;
     
@@ -45,7 +39,13 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [auction, authFetch]);
+
+  useEffect(() => {
+    if (auction && isOpen) {
+      fetchAuctionDetails();
+    }
+  }, [auction, isOpen, fetchAuctionDetails]);
 
   const handleCloseAuction = async () => {
     try {

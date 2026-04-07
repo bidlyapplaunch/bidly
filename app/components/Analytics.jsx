@@ -8,7 +8,8 @@ import {
   Layout,
   BlockStack,
   InlineStack,
-  IndexTable
+  IndexTable,
+  Badge
 } from '@shopify/polaris';
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { useAuthenticatedFetch } from "../utils/authenticatedFetch";
@@ -83,7 +84,7 @@ const Analytics = () => {
   const topAuctions = analytics.topAuctions || analytics.data?.topAuctions || [];
 
   const topAuctionsRows = topAuctions.map((auction, index) => (
-    <IndexTable.Row id={auction.id || index} key={auction.id || index} position={index}>
+    <IndexTable.Row id={auction.id || `auction-${index}`} key={auction.id || `auction-${index}`} position={index}>
       <IndexTable.Cell>
         <Text variant="bodyMd" as="span">
           {auction.productName || `Product ${auction.shopifyProductId}`}

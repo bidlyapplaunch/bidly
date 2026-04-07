@@ -104,141 +104,33 @@
         console.warn('⚠️ Bidly: Unable to detect shop domain, defaulting to hostname');
     }
 
-    // Currency formatting helper
-    // TODO: Multi-currency support - Currently disabled, using USD only
-    // In the future, uncomment the conversion logic to support store currency
-    // amount is in USD (backend currency)
+    // Currency formatting helper (USD only)
     function formatCurrency(amount) {
         if (typeof amount !== 'number' || isNaN(amount)) {
             return '0.00';
         }
-        
-        // TEMPORARILY DISABLED: Multi-currency conversion
-        // For now, always display as USD regardless of store currency
-        // When re-enabling multi-currency, uncomment the code below:
-        /*
-        if (window.Shopify?.currency) {
-            const currency = window.Shopify.currency;
-            const activeCurrency = currency.active || 'USD';
-            const rate = currency.rate || 1;
-            
-            // Apply currency rate if needed (convert from USD to store currency)
-            const convertedAmount = amount * parseFloat(rate);
-            
-            // Format based on currency
-            if (activeCurrency === 'PLN') {
-                return `${convertedAmount.toFixed(2)} zł`;
-            }
-            if (activeCurrency === 'EUR') {
-                return `€${convertedAmount.toFixed(2)}`;
-            }
-            if (activeCurrency === 'GBP') {
-                return `£${convertedAmount.toFixed(2)}`;
-            }
-            if (currency.money_format) {
-                return currency.money_format.replace('{{amount}}', convertedAmount.toFixed(2));
-            }
-            return `${convertedAmount.toFixed(2)} ${activeCurrency}`;
-        }
-        */
-        
+
         // Fallback: check for Shopify.money_format in theme
         if (window.Shopify?.formatMoney) {
             return window.Shopify.formatMoney(amount * 100); // formatMoney expects cents
         }
-        
-        // Always use dollar sign for now (USD only)
+
         return `$${amount.toFixed(2)}`;
     }
-    
-    // Format currency that's already in store currency (no conversion)
-    // TODO: Multi-currency support - Currently disabled, using USD only
+
+    // Format currency that's already in store currency (no conversion needed)
     function formatStoreCurrency(amount) {
-        // For now, just use formatCurrency (both are USD)
         return formatCurrency(amount);
-        
-        /* FUTURE: Multi-currency support
-        if (typeof amount !== 'number' || isNaN(amount)) {
-            return '0.00';
-        }
-        
-        if (window.Shopify?.currency) {
-            const currency = window.Shopify.currency;
-            const activeCurrency = currency.active || 'USD';
-            
-            if (activeCurrency === 'PLN') {
-                return `${amount.toFixed(2)} zł`;
-            }
-            if (activeCurrency === 'EUR') {
-                return `€${amount.toFixed(2)}`;
-            }
-            if (activeCurrency === 'GBP') {
-                return `£${amount.toFixed(2)}`;
-            }
-            if (currency.money_format) {
-                return currency.money_format.replace('{{amount}}', amount.toFixed(2));
-            }
-            return `${amount.toFixed(2)} ${activeCurrency}`;
-        }
-        
-        return `$${amount.toFixed(2)}`;
-        */
     }
-    
-    // Convert from store currency to USD (backend base currency)
-    // TODO: Multi-currency support - Currently disabled, returns value as-is
+
+    // Convert from store currency to USD (no-op, single currency)
     function convertToUSD(storeCurrencyAmount) {
-        // TEMPORARILY DISABLED: No conversion, return as-is (assuming USD)
         return storeCurrencyAmount;
-        
-        /* FUTURE: Multi-currency support
-        if (typeof storeCurrencyAmount !== 'number' || isNaN(storeCurrencyAmount)) {
-            return storeCurrencyAmount;
-        }
-        
-        if (!window.Shopify?.currency || !window.Shopify.currency.rate) {
-            return storeCurrencyAmount;
-        }
-        
-        const rate = parseFloat(window.Shopify.currency.rate) || 1;
-        const activeCurrency = window.Shopify.currency.active || 'USD';
-        
-        if (activeCurrency === 'USD') {
-            return storeCurrencyAmount;
-        }
-        
-        // Convert from store currency to USD
-        // rate = storeCurrency / USD, so USD = storeCurrency / rate
-        return Math.round((storeCurrencyAmount / rate) * 100) / 100;
-        */
     }
-    
-    // Convert from USD to store currency (for display and input validation)
-    // TODO: Multi-currency support - Currently disabled, returns value as-is
+
+    // Convert from USD to store currency (no-op, single currency)
     function convertFromUSD(usdAmount) {
-        // TEMPORARILY DISABLED: No conversion, return as-is (assuming USD)
         return usdAmount;
-        
-        /* FUTURE: Multi-currency support
-        if (typeof usdAmount !== 'number' || isNaN(usdAmount)) {
-            return usdAmount;
-        }
-        
-        if (!window.Shopify?.currency || !window.Shopify.currency.rate) {
-            return usdAmount;
-        }
-        
-        const rate = parseFloat(window.Shopify.currency.rate) || 1;
-        const activeCurrency = window.Shopify.currency.active || 'USD';
-        
-        if (activeCurrency === 'USD') {
-            return usdAmount;
-        }
-        
-        // Convert from USD to store currency
-        // rate = storeCurrency / USD, so storeCurrency = USD * rate
-        return Math.round((usdAmount * rate) * 100) / 100;
-        */
     }
 
     const PLAN_LEVELS = Object.freeze({
@@ -563,7 +455,7 @@
 
             try {
                 const response = await fetchWithTimeout(
-                    `/apps/bidly/assets/locales/${targetLocale}.json?v=209`,
+                    `/apps/bidly/assets/locales/${targetLocale}.json?v=${Date.now()}`,
                     {},
                     3500
                 );
@@ -714,6 +606,13 @@
         
         // Store observer for cleanup if needed
         widgetElement._bidlyObserver = observer;
+
+        // Disconnect observer on page unload to prevent memory leaks
+        window.addEventListener('beforeunload', () => {
+            if (widgetElement && widgetElement._bidlyObserver) {
+                widgetElement._bidlyObserver.disconnect();
+            }
+        });
     }
 
     function hideProductFormElements() {
@@ -2831,16 +2730,18 @@
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
         modal.setAttribute('data-auction-id', auctionId);
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
         modal.innerHTML = `
             <div class="bidly-modal-content">
                 <div class="bidly-modal-header">
                     <h3>${t('widget.buttons.placeBid')}</h3>
-                    <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBidModal('${auctionId}')">&times;</button>
+                    <button class="bidly-modal-close" aria-label="Close" onclick="window.BidlyAuctionWidget.closeBidModal('${auctionId}')">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
                     <div class="bidly-bidder-info">
-                        <p><strong>Bidding as:</strong> ${escapeHtml(customer.fullName)}</p>
-                        <p><strong>Email:</strong> ${escapeHtml(customer.email)}</p>
+                        <p><strong>${t('widget.labels.biddingAs')}:</strong> ${escapeHtml(customer.fullName)}</p>
+                        <p><strong>${t('widget.labels.email')}:</strong> ${escapeHtml(customer.email)}</p>
                     </div>
                     <form id="bidly-bid-form-${auctionId}" onsubmit="window.BidlyAuctionWidget.submitBid(event, '${auctionId}')">
                         <div class="bidly-form-group">
@@ -2863,15 +2764,17 @@
     function createBuyNowModal(auctionId, price) {
         const modal = document.createElement('div');
         modal.className = 'bidly-modal-overlay';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
         modal.innerHTML = `
             <div class="bidly-modal-content">
                 <div class="bidly-modal-header">
                     <h3>${t('widget.buttons.buyNow')}</h3>
-                    <button class="bidly-modal-close" onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">&times;</button>
+                    <button class="bidly-modal-close" aria-label="Close" onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">&times;</button>
                 </div>
                 <div class="bidly-modal-body">
-                    <p>Are you sure you want to buy this item for <strong>${formatCurrency(price)}</strong>?</p>
-                    <p>This will end the auction immediately and you will be the winner.</p>
+                    <p>${t('widget.buyNow.confirmMessage', { price: formatCurrency(price) })}</p>
+                    <p>${t('widget.buyNow.immediateEnd')}</p>
                     <div class="bidly-form-actions">
                         <button onclick="window.BidlyAuctionWidget.confirmBuyNow('${auctionId}', ${price})" class="bidly-confirm-buy">Yes, ${t('widget.buttons.buyNow')}</button>
                         <button onclick="window.BidlyAuctionWidget.closeBuyNowModal('${auctionId}')">Cancel</button>
@@ -2934,11 +2837,13 @@
                 const modal = document.createElement('div');
                 modal.className = 'bidly-modal-overlay';
                 modal.setAttribute('data-auction-id', auctionId);
+                modal.setAttribute('role', 'dialog');
+                modal.setAttribute('aria-modal', 'true');
                 modal.innerHTML = `
                     <div class="bidly-modal-content bidly-history-modal">
                         <div class="bidly-modal-header">
                             <h3>${t('widget.bidHistory.title')}</h3>
-                            <button class="bidly-modal-close">&times;</button>
+                            <button class="bidly-modal-close" aria-label="Close">&times;</button>
                         </div>
                         <div class="bidly-modal-body">
                             <div class="bidly-bid-history">
@@ -4193,5 +4098,11 @@
     } else {
         init();
     }
+
+    // Consolidate globals under window.Bidly namespace (keep existing names for backward compat)
+    window.Bidly = window.Bidly || {};
+    window.Bidly.Translate = window.BidlyTranslate;
+    window.Bidly.AuctionWidget = window.BidlyAuctionWidget;
+    window.Bidly.AuctionWidgetLogout = window.BidlyAuctionWidgetLogout;
 
 })();

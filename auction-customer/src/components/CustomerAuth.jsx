@@ -132,7 +132,7 @@ const CustomerAuth = ({ onLogin, onClose }) => {
 
   return (
     <div className="customer-auth-overlay">
-      <div className="customer-auth-modal">
+      <div className="customer-auth-modal" role="dialog" aria-modal="true" aria-label="Sign in to bid">
         <div className="customer-auth-header">
           <h2>{isLogin ? t('marketplace.auth.loginTitle') : t('marketplace.auth.registerTitle')}</h2>
           <button className="close-btn" onClick={onClose}>×</button>
@@ -148,10 +148,10 @@ const CustomerAuth = ({ onLogin, onClose }) => {
           
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
-              <label htmlFor="name">{t('marketplace.auth.fullName')}</label>
+              <label htmlFor="bidly-name">{t('marketplace.auth.fullName')}</label>
               <input
                 type="text"
-                id="name"
+                id="bidly-name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
@@ -160,12 +160,12 @@ const CustomerAuth = ({ onLogin, onClose }) => {
                 disabled={loading}
               />
             </div>
-            
+
             <div className="form-group">
-              <label htmlFor="email">{t('marketplace.auth.email')}</label>
+              <label htmlFor="bidly-email">{t('marketplace.auth.email')}</label>
               <input
                 type="email"
-                id="email"
+                id="bidly-email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
@@ -176,10 +176,10 @@ const CustomerAuth = ({ onLogin, onClose }) => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="phone">{t('marketplace.auth.phone') || 'Phone Number'}</label>
+              <label htmlFor="bidly-phone">{t('marketplace.auth.phone') || 'Phone Number'}</label>
               <input
                 type="tel"
-                id="phone"
+                id="bidly-phone"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
