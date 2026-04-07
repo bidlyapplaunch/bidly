@@ -176,7 +176,6 @@ api.interceptors.request.use(
       delete config.headers.Authorization;
     }
     
-    if (typeof window !== 'undefined' && window.console) {
     return config;
   },
   (error) => {
