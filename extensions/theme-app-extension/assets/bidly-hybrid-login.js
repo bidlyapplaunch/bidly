@@ -18,6 +18,19 @@
         };
     })();
 
+    // URL validation to prevent open redirect attacks
+    function isSafeRedirectUrl(url) {
+        try {
+            const parsed = new URL(url, window.location.origin);
+            // Only allow same-origin or Shopify domains
+            return parsed.origin === window.location.origin ||
+                   parsed.hostname.endsWith('.myshopify.com') ||
+                   parsed.hostname.endsWith('.shopify.com');
+        } catch {
+            return false;
+        }
+    }
+
     // Configuration
     const resolveShopDomain = () => {
         const candidates = [
@@ -880,13 +893,16 @@
             return;
         }
 
-        // Basic email format check
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        // Email format check (require 2+ char TLD)
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
             alert(t('widget.register.errorInvalidEmail'));
             return;
         }
 
-        const success = await registerToBid(name, email, phone);
+        // Strip non-numeric chars from phone (keep leading +)
+        const sanitizedPhone = phone.replace(/(?!^\+)\D/g, '').replace(/^(?!\+)/, '');
+
+        const success = await registerToBid(name, email, sanitizedPhone || phone);
         if (success) {
             closeRegisterModal();
             window.dispatchEvent(new CustomEvent('bidly-login-success', {
@@ -1064,9 +1080,16 @@
                     const thirtyMinutes = 30 * 60 * 1000;
                     // Only redirect if within 30 min and not already on that page
                     if (url && (Date.now() - timestamp) < thirtyMinutes && url !== window.location.href) {
-                        console.log('Bidly: Redirecting back to auction page:', url);
-                        window.location.href = url;
-                        return;
+                        // Validate redirect URL to prevent open redirect attacks
+                        if (isSafeRedirectUrl(url)) {
+                            console.log('Bidly: Redirecting back to auction page:', url);
+                            window.location.href = url;
+                            return;
+                        } else {
+                            console.warn('Bidly: Blocked unsafe redirect to:', url);
+                            window.location.href = '/';
+                            return;
+                        }
                     }
                 }
             } catch (e) {

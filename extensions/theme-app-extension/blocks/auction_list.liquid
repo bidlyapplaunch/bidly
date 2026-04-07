@@ -229,6 +229,13 @@
 
 <script>
   (function() {
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+
     function initAuctionList() {
       const blockId = '{{ block_id }}';
       const shopDomain = '{{ shop_domain }}';
@@ -328,9 +335,9 @@
         const auctionId = auction._id || auction.id || Math.random().toString(36);
         return `
           <div class="bidly-auction-card" data-product-url="${productUrl}" data-auction-id="${auctionId}" data-end-time="${auction.endTime || ''}">
-            ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-auction-card-image">` : '<div class="bidly-auction-card-image" style="display: flex; align-items: center; justify-content: center; color: #999;">{{ "bidly.ui.no_image" | t }}</div>'}
+            ${productImage ? `<img src="${productImage}" alt="${escapeHtml(productTitle)}" class="bidly-auction-card-image">` : '<div class="bidly-auction-card-image" style="display: flex; align-items: center; justify-content: center; color: #999;">{{ "bidly.ui.no_image" | t }}</div>'}
             <div class="bidly-auction-card-content">
-              <h3 class="bidly-auction-card-title">${productTitle}</h3>
+              <h3 class="bidly-auction-card-title">${escapeHtml(productTitle)}</h3>
               <div class="bidly-auction-card-status ${statusClass}">${statusText}</div>
               <div class="bidly-auction-card-price">
                 <div class="bidly-price-label">${priceLabel}</div>

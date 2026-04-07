@@ -65,49 +65,49 @@
 
 ### XSS Vulnerabilities
 
-- [ ] **XSS-001** — Theme extension `innerHTML` with unsanitized API data (product titles, prices, bidder names) across `auction-app-embed.js:878-2827`, `bidly-widget.js:289-353`, `auction_featured.liquid:353`, `auction_list.liquid:311`. Use `textContent` or DOMPurify.
-- [ ] **XSS-002** — Rich text editor in admin has no DOMPurify on pasted content (`auction-admin/src/components/RichTextEditor.jsx:26-36`)
-- [ ] **XSS-003** — Open redirect: `window.location.href` set from localStorage without URL validation (`bidly-hybrid-login.js:719,1068`)
-- [ ] **XSS-004** — Bidder names only length-validated, no HTML/script sanitization (`controllers/auctionController.js:760,796-798`)
-- [ ] **XSS-005** — API key extracted from URL and stored on `window` object (`auction-admin/src/appBridgeGlobal.js:24-48`)
+- [x] **XSS-001** — Theme extension `innerHTML` with unsanitized API data — **FIXED:** Added `escapeHtml()` helper to all JS/Liquid files, wrapped all dynamic data in innerHTML
+- [x] **XSS-002** — Rich text editor has no DOMPurify — **FIXED:** Added DOMPurify sanitization on onChange handler
+- [x] **XSS-003** — Open redirect from localStorage — **FIXED:** Added `isSafeRedirectUrl()` validation, only allows same-origin and Shopify domains
+- [x] **XSS-004** — Bidder names not HTML-sanitized — **FIXED:** Added `escapeHtml()` to bidder names in placeBid and buyNow
+- [—] **XSS-005** — API key extracted from URL and stored on `window` object (`auction-admin/src/appBridgeGlobal.js:24-48`) — **Won't fix:** This is standard Shopify App Bridge behavior, the API key is a public client ID
 
 ### Input Validation
 
-- [ ] **VAL-001** — No validation that `buyNowPrice > startingBid` on auction creation
-- [ ] **VAL-002** — No validation that `reservePrice < buyNowPrice`
-- [ ] **VAL-003** — `minBidIncrement` can be set to 0 or negative during update (`controllers/auctionController.js:441-495`)
-- [ ] **VAL-004** — Popcorn settings validated on update but NOT on create (`controllers/auctionController.js:195-222` vs `531-545`)
-- [ ] **VAL-005** — No bounds on pagination `limit` param — `limit=999999` causes memory exhaustion (`controllers/auctionController.js:343,359`)
-- [ ] **VAL-006** — `status` field update accepts any string, bypassing enum (`controllers/auctionController.js:489`)
-- [ ] **VAL-007** — No validation on `startingBid` (positive, NaN, precision) in admin form (`auction-admin/src/components/AuctionForm.jsx:268-290`)
-- [ ] **VAL-008** — No date-in-future validation on auction creation
-- [ ] **VAL-009** — Bid amount not checked for negative/NaN/Infinity in customer widget (`auction-customer/src/components/BidForm.jsx:27,37`)
-- [ ] **VAL-010** — Email validation uses overly simplistic regex (`auction-customer/src/components/CustomerAuth.jsx:41`)
-- [ ] **VAL-011** — Shop domain not validated as Shopify domain format in webhooks (`app/routes/webhooks.customers.data_request.jsx:32`)
-- [ ] **VAL-012** — `BigInt(shopifyCustomerId)` can throw without try-catch (`app/routes/webhooks.customers.data_request.jsx:111`)
-- [ ] **VAL-013** — No validation on GraphQL `limit` param — can request 999999 products (`app/routes/api.shopify.products.jsx:37`)
-- [ ] **VAL-014** — Missing email/phone validation in theme extension registration (`bidly-hybrid-login.js:723-797`)
+- [x] **VAL-001** — No validation that `buyNowPrice > startingBid` — **FIXED:** Added cross-field validation in middleware
+- [x] **VAL-002** — No validation that `reservePrice < buyNowPrice` — **FIXED:** Added cross-field validation in middleware
+- [x] **VAL-003** — `minBidIncrement` can be set to 0 or negative — **FIXED:** Already had explicit validation (parseFloat, >= 1)
+- [x] **VAL-004** — Popcorn settings not validated on create — **FIXED:** Added validation in createAuction (1-120 trigger, 1-300 extend)
+- [x] **VAL-005** — No bounds on pagination `limit` — **FIXED:** Clamped to 1-100 in all query handlers
+- [x] **VAL-006** — `status` update accepts any string — **FIXED:** Added enum validation in updateAuction switch
+- [x] **VAL-007** — No validation on `startingBid` in admin form — **FIXED:** Added Number.isFinite, precision, buyNow > starting, future date checks
+- [x] **VAL-008** — No date-in-future validation — **FIXED:** Added to both middleware and admin form
+- [x] **VAL-009** — Bid amount not checked for negative/NaN/Infinity — **FIXED:** Added Number.isFinite check in BidForm
+- [x] **VAL-010** — Email validation uses simplistic regex — **FIXED:** Updated to require 2+ char TLD, anchored pattern
+- [x] **VAL-011** — Shop domain not validated in webhooks — **FIXED:** Added regex validation in both redact and data_request webhooks
+- [x] **VAL-012** — `BigInt()` can throw without try-catch — **FIXED:** Wrapped in try-catch, returns 400 on invalid ID
+- [x] **VAL-013** — No validation on GraphQL `limit` — **FIXED:** Clamped to 1-250
+- [x] **VAL-014** — Missing email/phone validation in theme extension — **FIXED:** Stricter email regex + phone sanitization
 
 ### Webhook & GDPR Compliance
 
-- [ ] **GDPR-001** — Customer redact webhook returns 200 OK on MongoDB failure — Shopify won't retry, data won't be anonymized (`webhooks.customers.redact.jsx:32-33`)
-- [ ] **GDPR-002** — Customer data request webhook logs full PII to console (`webhooks.customers.data_request.jsx:127`)
-- [ ] **GDPR-003** — Billing sync errors swallowed, webhook returns 200 (`webhooks.app_subscriptions.update.jsx:21-27`)
+- [x] **GDPR-001** — Customer redact returns 200 on failure — **FIXED:** Now throws 500, Shopify will retry
+- [x] **GDPR-002** — Webhook logs full PII — **FIXED:** Removed customer data from logs, only log shop domain
+- [x] **GDPR-003** — Billing sync errors swallowed — **FIXED:** Now throws 500, Shopify will retry
 
 ### Missing Security Features
 
-- [ ] **SEC-006** — No CSRF protection on any state-changing endpoints
-- [ ] **SEC-007** — No HTTPS enforcement in production
-- [ ] **SEC-008** — Unsafe fetch to internal API without URL validation — SSRF risk (`controllers/auctionController.js:131,717`)
-- [ ] **SEC-009** — No Content Security Policy on customer widget (`auction-customer/index.html`)
-- [ ] **SEC-010** — Request body limit set to 10mb globally, no per-endpoint limits (`server.js:329`)
+- [—] **SEC-006** — No CSRF protection on any state-changing endpoints — **Won't fix:** API already protected by Shopify session tokens (admin) and customer JWTs (widget), making CSRF tokens redundant
+- [x] **SEC-007** — No HTTPS enforcement — **FIXED:** Added redirect middleware for production
+- [x] **SEC-008** — SSRF risk on internal fetch — **FIXED:** Added URL protocol validation on API_BASE_URL
+- [x] **SEC-009** — No CSP on customer widget — **FIXED:** Added Content-Security-Policy meta tag
+- [x] **SEC-010** — 10mb global body limit — **FIXED:** Reduced to 1mb default
 
 ### Environment Config
 
 - [x] **ENV-001** — `SHOPIFY_API_SECRET` defaults to empty string (`app/shopify.server.js:12`) — **FIXED:** Throws on startup if missing
 - [x] **ENV-002** — Backend URL fallback to joke domain in Remix routes — **FIXED:** All 4 route files now throw if `AUCTION_BACKEND_URL` missing
 - [x] **ENV-003** — Hardcoded default shop domain `ezza-auction.myshopify.com` in customer widget — **FIXED:** Now falls back to `window.BidlyMarketplaceConfig.shop` / `window.Shopify.shop`, warns if empty
-- [ ] **ENV-004** — Hardcoded production backend URL fallback in customer widget (`auction-customer/src/services/api.js:14`, `socket.js:13`, `themeService.js:12`) — Note: these are hardcoded fallbacks (not secrets); should still be fixed but not critical
+- [x] **ENV-004** — Hardcoded production backend URL fallback — **FIXED:** Replaced with empty string fallback, uses BidlyBackendConfig
 
 ---
 

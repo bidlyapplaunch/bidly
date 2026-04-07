@@ -10,6 +10,8 @@ import { getHigherPlans, planMeetsRequirement, sanitizePlan } from '../config/bi
 
 const ANONYMOUS_DISPLAY_NAME = 'Anonymous Bidder';
 
+const escapeHtml = (str) => str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
 const parseBooleanInput = (value) => {
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
@@ -101,6 +103,19 @@ const buildCustomerLookupQuery = ({ customerId, shopifyCustomerId, email, shopDo
   };
 };
 
+// Validate API_BASE_URL at startup to prevent SSRF
+const API_BASE_URL = process.env.API_BASE_URL;
+if (API_BASE_URL) {
+  try {
+    const parsed = new URL(API_BASE_URL);
+    if (!['https:', 'http:'].includes(parsed.protocol)) {
+      throw new Error('API_BASE_URL must use http or https protocol');
+    }
+  } catch (e) {
+    throw new Error(`Invalid API_BASE_URL: ${e.message}`);
+  }
+}
+
 // Helper function to update product metafields for auction widget
 const updateProductMetafields = async (auction, shopDomain) => {
   try {
@@ -127,8 +142,9 @@ const updateProductMetafields = async (auction, shopDomain) => {
       auctionDataStartTime: auctionData.startTime
     });
 
-    // Update metafields via API call
-    const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:5000'}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
+    // Update metafields via API call (server calls itself)
+    const baseUrl = API_BASE_URL || 'http://localhost:5000';
+    const response = await fetch(`${baseUrl}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -247,6 +263,19 @@ export const createAuction = async (req, res, next) => {
       // Product data can be refreshed later if needed
     }
     
+    // Validate popcorn settings before creating
+    const { popcornEnabled, popcornTriggerSeconds, popcornExtendSeconds } = req.body;
+    if (popcornEnabled) {
+      const triggerSeconds = parseInt(popcornTriggerSeconds, 10);
+      if (isNaN(triggerSeconds) || triggerSeconds < 1 || triggerSeconds > 120) {
+        throw new AppError('Popcorn trigger seconds must be between 1 and 120', 400);
+      }
+      const extendSeconds = parseInt(popcornExtendSeconds, 10);
+      if (isNaN(extendSeconds) || extendSeconds < 1 || extendSeconds > 300) {
+        throw new AppError('Popcorn extend seconds must be between 1 and 300', 400);
+      }
+    }
+
     const auction = new Auction({
       ...req.body,
       shopDomain: shopDomain, // Add store domain for isolation
@@ -254,7 +283,7 @@ export const createAuction = async (req, res, next) => {
       productData: productData, // Cache the product data
       minBidIncrement: Math.max(1, parseInt(req.body.minBidIncrement, 10) || 1)
     });
-    
+
     let savedAuction;
     try {
       savedAuction = await auction.save();
@@ -340,46 +369,48 @@ export const createAuction = async (req, res, next) => {
 // Get all auctions with optional filtering
 export const getAllAuctions = async (req, res, next) => {
   try {
-    const { status, shopifyProductId, page = 1, limit = 10 } = req.query;
+    const { status, shopifyProductId } = req.query;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
     const shopDomain = req.shopDomain; // Get from store middleware
-    
+
     if (!shopDomain) {
       throw new AppError('Store domain is required', 400);
     }
-    
+
     // Build filter object - ALWAYS filter by store domain and exclude soft-deleted auctions
-    const filter = { 
+    const filter = {
       shopDomain: shopDomain,
       isDeleted: { $ne: true } // Exclude soft-deleted auctions
     };
     if (status) filter.status = status;
     if (shopifyProductId) filter.shopifyProductId = shopifyProductId;
-    
+
     // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+    const skip = (page - 1) * limit;
+
     const auctions = await Auction.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limit)
       .lean();
-    
+
     const decoratedAuctions = auctions.map(decorateAuction);
-    
+
     // Compute real-time status for each auction
     const auctionsWithRealTimeStatus = decoratedAuctions.map(auction => ({
       ...auction,
       status: computeAuctionStatus(auction)
     }));
-    
+
     const total = await Auction.countDocuments(filter);
-    
+
     res.json({
       success: true,
       data: auctionsWithRealTimeStatus,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
+        current: page,
+        pages: Math.ceil(total / limit),
         total
       }
     });
@@ -560,6 +591,14 @@ export const updateAuction = async (req, res, next) => {
           setUpdates[field] = parsedValue;
           break;
         }
+        case 'status': {
+          const validStatuses = ['pending', 'active', 'ended', 'closed', 'reserve_not_met'];
+          if (!validStatuses.includes(rawValue)) {
+            throw new AppError('Invalid status value', 400);
+          }
+          setUpdates[field] = rawValue;
+          break;
+        }
         default:
           setUpdates[field] = rawValue;
       }
@@ -714,7 +753,8 @@ export const deleteAuction = async (req, res, next) => {
     
     // Clear product metafields so widget doesn't try to load the deleted auction
     try {
-      const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:5000'}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
+      const baseUrl = API_BASE_URL || 'http://localhost:5000';
+      const response = await fetch(`${baseUrl}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
@@ -757,7 +797,7 @@ export const placeBid = async (req, res, next) => {
     }
     
     // Input sanitization and validation
-    const sanitizedBidder = (bidder || bidderName)?.trim();
+    const sanitizedBidder = escapeHtml((bidder || bidderName)?.trim() || '');
     const sanitizedEmail = (customerEmail || bidderEmail)?.trim();
     const sanitizedAmount = parseFloat(amount);
     
@@ -1124,7 +1164,7 @@ export const buyNow = async (req, res, next) => {
       throw new AppError('Store domain is required', 400);
     }
     
-    const sanitizedBidder = bidder?.trim() || '';
+    const sanitizedBidder = escapeHtml(bidder?.trim() || '');
     const sanitizedEmail = customerEmail?.trim() || '';
     let effectiveBidder = sanitizedBidder;
     let effectiveEmail = sanitizedEmail;
@@ -1362,22 +1402,24 @@ export const refreshAllProductData = async (req, res, next) => {
 // Get auctions with fresh product data
 export const getAuctionsWithProductData = async (req, res, next) => {
   try {
-    const { status, shopifyProductId, page = 1, limit = 10, refresh = false } = req.query;
-    
+    const { status, shopifyProductId, refresh = false } = req.query;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+
     // Build filter object - exclude soft-deleted auctions
     const filter = {
       isDeleted: { $ne: true }
     };
     if (status) filter.status = status;
     if (shopifyProductId) filter.shopifyProductId = shopifyProductId;
-    
+
     // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+    const skip = (page - 1) * limit;
+
     let auctions = await Auction.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limit)
       .lean();
     
     // If refresh is requested, fetch fresh product data
@@ -1401,8 +1443,8 @@ export const getAuctionsWithProductData = async (req, res, next) => {
       success: true,
       data: auctions,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
+        current: page,
+        pages: Math.ceil(total / limit),
         total
       }
     });

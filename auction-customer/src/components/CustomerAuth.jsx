@@ -39,7 +39,7 @@ const CustomerAuth = ({ onLogin, onClose }) => {
       setError(t('marketplace.auth.emailRequired'));
       return false;
     }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email)) {
       setError(t('marketplace.auth.emailInvalid'));
       return false;
     }

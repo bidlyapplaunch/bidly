@@ -11,7 +11,7 @@ const resolveBackendUrl = (shopDomain) => {
   if (window.BidlyBackendConfig && typeof window.BidlyBackendConfig.getBackendUrl === 'function') {
     return window.BidlyBackendConfig.getBackendUrl(shopDomain);
   }
-  return 'https://bidly-auction-backend.onrender.com';
+  return '';
 };
 
 class ThemeService {

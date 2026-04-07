@@ -27,14 +27,9 @@ export const validateCreateAuction = [
     .withMessage('Start time is required')
     .isISO8601()
     .withMessage('Start time must be a valid ISO 8601 date')
-    .custom((value, { req }) => {
-      const startTime = new Date(value);
-      const now = new Date();
-      const status = req.body.status || 'pending';
-      
-      // Only require future start time for active auctions
-      if (status === 'active' && startTime <= now) {
-        throw new Error('Start time must be in the future for active auctions');
+    .custom((value) => {
+      if (new Date(value) < new Date()) {
+        throw new Error('Start time must be in the future');
       }
       return true;
     }),
@@ -66,7 +61,26 @@ export const validateCreateAuction = [
     .isNumeric()
     .withMessage('Buy now price must be a number')
     .isFloat({ min: 0 })
-    .withMessage('Buy now price must be a positive number'),
+    .withMessage('Buy now price must be a positive number')
+    .custom((value, { req }) => {
+      if (value && value <= req.body.startingBid) {
+        throw new Error('Buy now price must be greater than starting bid');
+      }
+      return true;
+    }),
+
+  body('reservePrice')
+    .optional()
+    .isNumeric()
+    .withMessage('Reserve price must be a number')
+    .isFloat({ min: 0 })
+    .withMessage('Reserve price must be a positive number')
+    .custom((value, { req }) => {
+      if (value && req.body.buyNowPrice && value >= req.body.buyNowPrice) {
+        throw new Error('Reserve price must be less than buy now price');
+      }
+      return true;
+    }),
 
   body('minBidIncrement')
     .optional()

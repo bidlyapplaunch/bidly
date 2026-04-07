@@ -139,6 +139,17 @@ connectDB()
   });
 
 const app = express();
+
+// HTTPS enforcement in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      return res.redirect(301, `https://${req.header('host')}${req.url}`);
+    }
+    next();
+  });
+}
+
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
@@ -389,8 +400,8 @@ app.post('/webhooks', express.raw({ type: '*/*' }), (req, res) => {
 });
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(identifyStore);
 
 // Health check endpoint

@@ -9,7 +9,6 @@ export const action = async ({ request }) => {
     const { shop, topic, payload } = await authenticate.webhook(request);
 
     console.log(`Received ${topic} webhook for ${shop}`);
-    console.log('Payload:', JSON.stringify(payload, null, 2));
     
     // Extract customer ID from payload
     // Shopify sends: { customer: { id: 191167, email: "john@example.com" }, orders_to_redact: [] }
@@ -24,12 +23,20 @@ export const action = async ({ request }) => {
     // Normalize shop domain
     const normalizedShop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
 
+    // Validate shop domain format
+    const shopDomainRegex = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i;
+    if (!shopDomainRegex.test(normalizedShop)) {
+      console.error('Invalid shop domain format:', normalizedShop);
+      throw new Response('Invalid shop domain', { status: 400 });
+    }
+
     // 1. Delete/Anonymize customer data from MongoDB
     let mongoCollections;
     try {
       mongoCollections = await getMongoCollections();
     } catch (mongoError) {
-      console.warn('⚠️ MongoDB not available for customer redact:', mongoError.message);
+      console.error('MongoDB not available for customer redact:', mongoError.message);
+      throw new Response('Failed to process customer redact', { status: 500 });
     }
     
     if (mongoCollections) {
@@ -107,21 +114,33 @@ export const action = async ({ request }) => {
 
     // 2. Delete session data from Prisma
     // Prisma deleteMany doesn't use 'where', it takes the filter directly
+    let shopifyCustomerBigInt;
+    try {
+      shopifyCustomerBigInt = BigInt(shopifyCustomerId);
+    } catch {
+      console.error('Invalid Shopify customer ID:', shopifyCustomerId);
+      throw new Response('Invalid customer ID', { status: 400 });
+    }
+
     await db.session.deleteMany({
       shop: normalizedShop,
-      userId: BigInt(shopifyCustomerId)
+      userId: shopifyCustomerBigInt
     });
 
     console.log(`✅ Deleted session data for customer ${shopifyCustomerId} in shop ${shop}`);
 
     return new Response(null, { status: 200 });
   } catch (error) {
+    // Re-throw Response objects (from validation/error handling above)
+    if (error instanceof Response) {
+      throw error;
+    }
     // HMAC verification failure or other authentication errors
     if (error.message?.includes('HMAC') || error.message?.includes('verification') || error.status === 401) {
-      console.error('❌ HMAC verification failed:', error.message);
+      console.error('HMAC verification failed:', error.message);
       return new Response(null, { status: 401 });
     }
-    console.error('❌ Error processing customer redact:', error);
+    console.error('Error processing customer redact:', error);
     return new Response(null, { status: 500 });
   }
 };

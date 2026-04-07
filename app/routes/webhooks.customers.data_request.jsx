@@ -9,7 +9,6 @@ export const action = async ({ request }) => {
     const { shop, topic, payload } = await authenticate.webhook(request);
 
     console.log(`Received ${topic} webhook for ${shop}`);
-    console.log('Payload:', JSON.stringify(payload, null, 2));
     
     // Extract customer ID from payload
     // Shopify sends: { customer: { id: 191167, email: "john@example.com" }, orders_requested: [] }
@@ -30,6 +29,13 @@ export const action = async ({ request }) => {
 
     // Normalize shop domain
     const normalizedShop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '').toLowerCase();
+
+    // Validate shop domain format
+    const shopDomainRegex = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i;
+    if (!shopDomainRegex.test(normalizedShop)) {
+      console.error('Invalid shop domain format:', normalizedShop);
+      throw new Response('Invalid shop domain', { status: 400 });
+    }
 
     // 1. Get customer data from MongoDB
     let mongoCollections;
@@ -105,10 +111,18 @@ export const action = async ({ request }) => {
     }
 
     // 2. Get session data from Prisma (if any)
+    let shopifyCustomerBigInt;
+    try {
+      shopifyCustomerBigInt = BigInt(shopifyCustomerId);
+    } catch {
+      console.error('Invalid Shopify customer ID:', shopifyCustomerId);
+      throw new Response('Invalid customer ID', { status: 400 });
+    }
+
     const sessions = await db.session.findMany({
       where: {
         shop: normalizedShop,
-        userId: BigInt(shopifyCustomerId)
+        userId: shopifyCustomerBigInt
       }
     });
 
@@ -124,7 +138,7 @@ export const action = async ({ request }) => {
     }
 
     // Log the data export (in production, you might want to send this to Shopify or store it)
-    console.log('📦 Customer data export:', JSON.stringify(customerData, null, 2));
+    console.log('Customer data export completed for shop:', shop);
 
     // Note: According to GDPR, you should provide this data to the customer
     // This webhook is just a notification - you may need to implement a separate endpoint
@@ -132,12 +146,16 @@ export const action = async ({ request }) => {
 
     return new Response(null, { status: 200 });
   } catch (error) {
+    // Re-throw Response objects (from validation/error handling above)
+    if (error instanceof Response) {
+      throw error;
+    }
     // HMAC verification failure or other authentication errors
     if (error.message?.includes('HMAC') || error.message?.includes('verification') || error.status === 401) {
-      console.error('❌ HMAC verification failed:', error.message);
+      console.error('HMAC verification failed:', error.message);
       return new Response(null, { status: 401 });
     }
-    console.error('❌ Error processing customer data request:', error);
+    console.error('Error processing customer data request:', error);
     return new Response(null, { status: 500 });
   }
 };

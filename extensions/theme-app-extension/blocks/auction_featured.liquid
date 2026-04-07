@@ -249,6 +249,13 @@
 
 <script>
   (function() {
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+
     function initFeaturedAuction() {
       const blockId = '{{ block_id }}';
       const shopDomain = '{{ shop_domain }}';
@@ -354,10 +361,10 @@
         <div class="bidly-featured-badge">{{ "bidly.ui.featured_badge" | t }}</div>
         <div class="bidly-featured-content">
           <div class="bidly-featured-image-container">
-            ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-featured-image">` : ''}
+            ${productImage ? `<img src="${productImage}" alt="${escapeHtml(productTitle)}" class="bidly-featured-image">` : ''}
           </div>
           <div class="bidly-featured-info">
-            <h2 class="bidly-featured-title">${productTitle}</h2>
+            <h2 class="bidly-featured-title">${escapeHtml(productTitle)}</h2>
             <div class="bidly-featured-price">
               <div class="bidly-price-label">${priceLabel}</div>
               <div class="bidly-price-amount">$${displayPrice.toFixed(2)}</div>

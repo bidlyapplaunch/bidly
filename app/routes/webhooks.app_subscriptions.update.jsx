@@ -22,13 +22,17 @@ export const action = async ({ request }) => {
       const result = await syncStorePlanFromShopify(store);
       console.log(`✅ Successfully synced plan for ${normalizedShop}: ${result.activePlan} (changed: ${result.changed})`);
     } catch (syncError) {
-      console.error(`❌ Failed to sync plan for ${normalizedShop}:`, syncError);
-      // Don't fail the webhook - log and continue
+      console.error(`Failed to sync plan for ${normalizedShop}:`, syncError.message);
+      throw new Response('Failed to sync billing', { status: 500 });
     }
 
     return new Response("OK", { status: 200 });
   } catch (error) {
-    console.error("❌ Webhook error:", error);
+    // Re-throw Response objects (from error handling above)
+    if (error instanceof Response) {
+      throw error;
+    }
+    console.error("Webhook error:", error);
     return new Response("Error processing webhook", { status: 500 });
   }
 };

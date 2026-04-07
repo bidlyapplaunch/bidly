@@ -18,6 +18,13 @@
         };
     })();
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, function(c) {
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+        });
+    }
+
     const PREVIEW_DATA = window.__BIDLY_PREVIEW__ || {};
     const PREVIEW_MODE = Boolean(PREVIEW_DATA.preview) || window.location.search.includes('preview=true') || window.location.search.includes('bidly_preview=1');
 
@@ -1475,7 +1482,7 @@
                               `<span class="bidly-status-ended">${t('widget.header.ended')}</span>`}
                         </div>
                         <div class="bidly-customer-info">
-                            <span class="bidly-customer-name">👤 ${getCurrentCustomer()?.displayName || getCurrentCustomer()?.fullName || getCurrentCustomer()?.name || t('widget.labels.guestUser')}</span>
+                            <span class="bidly-customer-name">👤 ${escapeHtml(getCurrentCustomer()?.displayName || getCurrentCustomer()?.fullName || getCurrentCustomer()?.name || t('widget.labels.guestUser'))}</span>
                             <button class="bidly-logout-btn" onclick="window.BidlyAuctionWidgetLogout && window.BidlyAuctionWidgetLogout(); return false;" title="${t('widget.buttons.logout')}">×</button>
                         </div>
                     </div>
@@ -2756,19 +2763,19 @@
         if (customMessage) {
             // Custom message (for time extension, etc.)
             messageContent = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${customMessage}</div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${escapeHtml(customMessage)}</div>
             `;
         } else if (typeof bidCount === 'string') {
             // Custom message (like "New bid placed!")
             messageContent = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${bidCount}</div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${escapeHtml(bidCount)}</div>
                 ${currentBid != null ? `<div>${t('widget.messages.currentBidLabel', { amount: currentBid.toFixed(2) })}</div>` : ''}
             `;
         } else if (bidderName && productTitle && currentBid != null) {
             // Enhanced notification with bidder name and product
             const firstName = bidderName.split(' ')[0]; // Get first name only
             messageContent = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${firstName} bid ${formatCurrency(currentBid)} on ${productTitle}</div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${escapeHtml(firstName)} bid ${formatCurrency(currentBid)} on ${escapeHtml(productTitle)}</div>
                 ${bidCount != null ? `<div style="font-size: 12px; opacity: 0.9;">Total Bids: ${bidCount}</div>` : ''}
             `;
         } else if (currentBid != null) {
@@ -2832,8 +2839,8 @@
                 </div>
                 <div class="bidly-modal-body">
                     <div class="bidly-bidder-info">
-                        <p><strong>Bidding as:</strong> ${customer.fullName}</p>
-                        <p><strong>Email:</strong> ${customer.email}</p>
+                        <p><strong>Bidding as:</strong> ${escapeHtml(customer.fullName)}</p>
+                        <p><strong>Email:</strong> ${escapeHtml(customer.email)}</p>
                     </div>
                     <form id="bidly-bid-form-${auctionId}" onsubmit="window.BidlyAuctionWidget.submitBid(event, '${auctionId}')">
                         <div class="bidly-form-group">
@@ -2945,7 +2952,7 @@
                                         return `
                                             <div class="bidly-bid-item ${isCurrentBid ? 'bidly-current-bid' : ''}">
                                                 <div class="bidly-bid-info">
-                                                    <span class="bidly-bidder">${bid.bidder}</span>
+                                                    <span class="bidly-bidder">${escapeHtml(bid.bidder)}</span>
                                                     <span class="bidly-bid-time">${new Date(bid.timestamp).toLocaleString()}</span>
                                                 </div>
                                                 <div class="bidly-bid-amount">${formatCurrency(bid.amount)}</div>
@@ -4115,14 +4122,7 @@
         }
     }
 
-    /**
-     * Escape HTML to prevent XSS
-     */
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+    // Note: escapeHtml is defined at the top of this IIFE for use throughout the module.
 
     // Initialize chat when widget is successfully injected
     // This will be called after injectWidget completes

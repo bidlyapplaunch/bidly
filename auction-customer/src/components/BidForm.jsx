@@ -24,7 +24,13 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
     e.preventDefault();
     setError('');
 
-    if (!amount || isNaN(amount) || parseFloat(amount) < minBid) {
+    const parsedAmount = parseFloat(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError(t('marketplace.bid_form.errorMinStarting', { amount: auction.startingBid }));
+      return;
+    }
+
+    if (parsedAmount < minBid) {
       if (auction.currentBid > 0) {
         setError(t('marketplace.bid_form.errorMinBid', { amount: auction.currentBid }));
       } else {
@@ -34,7 +40,7 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
     }
 
     onBidPlaced({
-      amount: parseFloat(amount)
+      amount: parsedAmount
     });
 
     // Reset form

@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
@@ -19,7 +20,8 @@ function RichTextEditor({ value, onChange, disabled = false, placeholder = '' })
 
   const handleChange = useCallback((content) => {
     if (onChange) {
-      onChange(content);
+      const sanitized = DOMPurify.sanitize(content);
+      onChange(sanitized);
     }
   }, [onChange]);
 

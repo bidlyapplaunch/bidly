@@ -4,8 +4,9 @@ export const loader = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
   
   const url = new URL(request.url);
-  const limit = url.searchParams.get('limit') || '20';
-  
+  const rawLimit = parseInt(url.searchParams.get('limit')) || 20;
+  const limit = Math.min(Math.max(rawLimit, 1), 250); // Shopify max is 250
+
   try {
     // Use Shopify GraphQL API directly
     const response = await admin.graphql(`
@@ -34,7 +35,7 @@ export const loader = async ({ request }) => {
         }
       }
     `, {
-      variables: { first: parseInt(limit) }
+      variables: { first: limit }
     });
 
     const responseJson = await response.json();

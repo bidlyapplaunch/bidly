@@ -8,6 +8,13 @@
   
   console.log('🚀 Bidly Widget v2000 - Loading with all fixes!');
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
   const resolveShopDomain = () => {
     const candidates = [
       window.Shopify?.shop?.permanent_domain,
@@ -318,9 +325,9 @@
       const priceLabel = currentBid > 0 ? 'Current Bid' : 'Starting Bid';
       
       card.innerHTML = `
-        <img src="${productImage}" alt="${auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item')}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
+        <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         <div class="bidly-auction-content">
-          <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item')}</h3>
+          <h3 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}</h3>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -352,10 +359,10 @@
       
       containerEl.innerHTML = `
         <div class="bidly-auction-image-container">
-          <img src="${productImage}" alt="${auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item')}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
+          <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || (window.BidlyTranslate ? window.BidlyTranslate('widget.common.auctionItem') : 'Auction Item'))}" class="bidly-auction-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="bidly-auction-info">
-          <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || 'Auction Item'}</h1>
+          <h1 class="bidly-auction-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
           <div class="bidly-auction-price">
             <div class="bidly-price-label">${priceLabel}</div>
             <div class="bidly-price-amount">$${displayPrice}</div>
@@ -387,10 +394,10 @@
       containerEl.innerHTML = `
         <div class="bidly-featured-content">
           <div class="bidly-featured-image-container">
-            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="bidly-featured-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
+            <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || 'Auction Item')}" class="bidly-featured-image" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')" onerror="this.src='/placeholder-image.jpg'">
           </div>
           <div class="bidly-featured-info">
-            <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${auction.productData?.title || 'Auction Item'}</h1>
+            <h1 class="bidly-featured-title" onclick="BidlyAuctionWidget.viewAuctionDetails('${auction._id || auction.id}', '${auction.shopifyProductId}')">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
             <div class="bidly-featured-price">
               <div class="bidly-price-label">${priceLabel}</div>
               <div class="bidly-price-amount">$${displayPrice}</div>
@@ -854,7 +861,7 @@
           return `
             <div class="bid-item">
               <span class="bid-amount">$${bid.amount}</span>
-              <span class="bid-bidder">${bid.bidder || 'Unknown'}</span>
+              <span class="bid-bidder">${escapeHtml(bid.bidder || 'Unknown')}</span>
               <span class="bid-time">${this.formatBidTime(bid.timestamp)}</span>
             </div>
           `;
@@ -1639,10 +1646,10 @@
       containerEl.innerHTML = `
         <div class="auction-details-full">
           <div class="auction-details-image">
-            <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="auction-main-image">
+            <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || 'Auction Item')}" class="auction-main-image">
           </div>
           <div class="auction-details-info">
-            <h1 class="auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+            <h1 class="auction-title">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
             ${descriptionHTML}
             <div class="auction-price-section">
               <div class="auction-price">
@@ -2056,7 +2063,7 @@
       
       notification.innerHTML = `
         <div style="font-weight: bold; margin-bottom: 5px;">💰 New Bid!</div>
-        <div>${bid.bidder || 'Someone'} bid $${bid.amount} on ${auction.productData?.title || 'this auction'}</div>
+        <div>${escapeHtml(bid.bidder || 'Someone')} bid $${bid.amount} on ${escapeHtml(auction.productData?.title || 'this auction')}</div>
         <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Just now</div>
       `;
       
@@ -2716,10 +2723,10 @@
       ${this.renderPageCustomerAuth()}
       <div class="auction-details-full">
         <div class="auction-details-image">
-          <img src="${productImage}" alt="${auction.productData?.title || 'Auction Item'}" class="auction-main-image" onerror="this.src='/placeholder-image.jpg'">
+          <img src="${productImage}" alt="${escapeHtml(auction.productData?.title || 'Auction Item')}" class="auction-main-image" onerror="this.src='/placeholder-image.jpg'">
         </div>
         <div class="auction-details-info">
-          <h1 class="auction-title">${auction.productData?.title || 'Auction Item'}</h1>
+          <h1 class="auction-title">${escapeHtml(auction.productData?.title || 'Auction Item')}</h1>
           <div class="auction-price-section">
             <div class="auction-price">
               <div class="price-label">${priceLabel}</div>
@@ -2754,7 +2761,7 @@
       return `
         <div class="bidly-page-customer-auth" style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
           <div class="bidly-customer-info">
-            <span class="bidly-customer-name">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.welcome', { name: this.customer.name }) : `Welcome, ${this.customer.name}!`}</span>
+            <span class="bidly-customer-name">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.welcome', { name: escapeHtml(this.customer.name) }) : `Welcome, ${escapeHtml(this.customer.name)}!`}</span>
             <button class="bidly-logout-btn" onclick="BidlyAuctionWidget.logout()">${window.BidlyTranslate ? window.BidlyTranslate('widget.common.logout') : 'Logout'}</button>
           </div>
         </div>

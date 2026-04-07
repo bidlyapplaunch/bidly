@@ -265,11 +265,34 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
     if (!formData.shopifyProductId) {
       newErrors.shopifyProductId = i18n.translate('admin.auctions.form.errors.productRequired');
     }
-    if (formData.startingBid <= 0) {
+    // Starting bid: must be a positive finite number
+    const parsedStartingBid = parseFloat(formData.startingBid);
+    if (!Number.isFinite(parsedStartingBid) || parsedStartingBid <= 0) {
       newErrors.startingBid = i18n.translate('admin.auctions.form.errors.startingBidPositive');
+    } else if (String(formData.startingBid).includes('.') && String(formData.startingBid).split('.')[1]?.length > 2) {
+      newErrors.startingBid = 'Starting bid cannot have more than 2 decimal places';
+    }
+    // Buy now price: must be greater than starting bid if provided
+    if (formData.buyNowPrice !== '' && formData.buyNowPrice != null) {
+      const parsedBuyNow = parseFloat(formData.buyNowPrice);
+      if (!Number.isFinite(parsedBuyNow) || parsedBuyNow <= 0) {
+        newErrors.buyNowPrice = 'Buy now price must be a positive number';
+      } else if (Number.isFinite(parsedStartingBid) && parsedBuyNow <= parsedStartingBid) {
+        newErrors.buyNowPrice = 'Buy now price must be greater than starting bid';
+      }
     }
     if (formData.endTime <= formData.startTime) {
       newErrors.endTime = i18n.translate('admin.auctions.form.errors.endTime');
+    }
+    // Dates must be in the future (only for new auctions)
+    if (!auction) {
+      const now = new Date();
+      if (formData.startTime <= now) {
+        newErrors.startTime = 'Start time must be in the future';
+      }
+      if (formData.endTime <= now) {
+        newErrors.endTime = newErrors.endTime || 'End time must be in the future';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -301,7 +324,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
       console.error('Error saving auction:', err);
       setErrors({ general: err.message || i18n.translate('admin.auctions.form.errors.save') });
     }
-  }, [formData, onSave, onClose, auctionHasBids, i18n]);
+  }, [formData, onSave, onClose, auction, auctionHasBids, i18n]);
 
   const today = new Date();
   const { month, year } = { month: today.getMonth(), year: today.getFullYear() };
@@ -452,6 +475,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                 const newDate = mergeDateWithExistingTime(dateOnly, formData.startTime);
                 handleChange(newDate, 'startTime');
               }}
+              error={errors.startTime}
             />
             <TextField
               label={i18n.translate('admin.auctions.form.fields.startTime')}
