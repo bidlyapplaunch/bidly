@@ -210,16 +210,16 @@
 
 ## P3: LOW — Backlog
 
-- [ ] **LOW-001** — No TypeScript despite it being in devDependencies
-- [ ] **LOW-002** — No PropTypes on any React components
-- [ ] **LOW-003** — No JSDoc on any functions
-- [ ] **LOW-004** — Inconsistent naming conventions (camelCase, snake_case, PascalCase mixed in theme JS)
-- [ ] **LOW-005** — Missing responsive CSS breakpoints for tablets and small phones
-- [ ] **LOW-006** — No retry logic for failed API requests in admin dashboard
-- [ ] **LOW-007** — Toast notifications never auto-dismiss in customer widget
-- [ ] **LOW-008** — `localStorage` used to store URL data controllable by attacker (`bidly-hybrid-login.js:694-696`)
-- [ ] **LOW-009** — No `loading="lazy"` on product images
-- [ ] **LOW-010** — Axios versions not pinned to exact — `^` allows auto-updates
+- [—] **LOW-001** — No TypeScript despite it being in devDependencies — **Deferred:** TypeScript migration is a large project, not a quick fix
+- [—] **LOW-002** — No PropTypes on any React components — **Deferred:** PropTypes add maintenance burden without TypeScript
+- [—] **LOW-003** — No JSDoc on any functions — **Deferred:** JSDoc across entire codebase is a separate initiative
+- [—] **LOW-004** — Inconsistent naming conventions (camelCase, snake_case, PascalCase mixed in theme JS) — **Deferred:** Naming convention changes risk breaking Liquid template references
+- [—] **LOW-005** — Missing responsive CSS breakpoints for tablets and small phones — **Deferred:** Needs design review for responsive breakpoints
+- [x] **LOW-006** — No retry logic for failed API requests in admin dashboard — **FIXED:** Added retry interceptor (2 retries, 5xx/network only)
+- [x] **LOW-007** — Toast notifications never auto-dismiss in customer widget — **FIXED:** Toast auto-dismisses after 5 seconds
+- [x] **LOW-008** — `localStorage` used to store URL data controllable by attacker (`bidly-hybrid-login.js:694-696`) — **FIXED:** URL validated before storing in localStorage
+- [x] **LOW-009** — No `loading="lazy"` on product images — **Already fixed in P2 as PERF-007**
+- [—] **LOW-010** — Axios versions not pinned to exact — `^` allows auto-updates — **Won't fix:** Caret ranges safe within major version, lock file pins exact
 
 ---
 

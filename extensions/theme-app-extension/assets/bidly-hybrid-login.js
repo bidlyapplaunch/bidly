@@ -706,10 +706,13 @@
         // Save current page URL so we can redirect back after login
         // (Shopify new customer accounts ignore return_to param)
         try {
-            localStorage.setItem('bidly_return_to', JSON.stringify({
-                url: window.location.href,
-                timestamp: Date.now()
-            }));
+            const currentUrl = window.location.href;
+            if (isSafeRedirectUrl(currentUrl)) {
+                localStorage.setItem('bidly_return_to', JSON.stringify({
+                    url: currentUrl,
+                    timestamp: Date.now()
+                }));
+            }
         } catch (e) {
             console.warn('Bidly: Could not save return URL:', e);
         }

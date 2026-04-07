@@ -184,6 +184,19 @@ api.interceptors.request.use(
   }
 );
 
+// Add retry logic for failed requests
+api.interceptors.response.use(null, async (error) => {
+  const config = error.config;
+  if (!config || config._retryCount >= 2) return Promise.reject(error);
+  // Only retry on network errors or 5xx
+  if (!error.response || error.response.status >= 500) {
+    config._retryCount = (config._retryCount || 0) + 1;
+    await new Promise(r => setTimeout(r, 1000 * config._retryCount));
+    return api(config);
+  }
+  return Promise.reject(error);
+});
+
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
