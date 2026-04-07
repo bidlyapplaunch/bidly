@@ -36,6 +36,7 @@ const corsOriginCheck = (origin, callback) => {
   } catch {
     // Invalid URL
   }
+  console.error(`CORS blocked origin: ${origin}`);
   callback(new Error('Not allowed by CORS'));
 };
 
