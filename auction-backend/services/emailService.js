@@ -165,53 +165,54 @@ function getTimeRemaining(endTime) {
   return `${minutes}m`;
 }
 
-/**
- * Load email template from locale-specific directory
- */
-async function loadLocalizedTemplate(shopDomain, templateKey) {
+const SUPPORTED_EMAIL_LOCALES = ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko'];
+
+// SVC-15: the on-disk locale templates are static (deployed with the app), so cache
+// them for the process lifetime instead of doing fs.existsSync + readFileSync (and a
+// JSON.parse of subject.json) for every template key on every email send.
+const localizedHtmlCache = new Map();   // `${locale}:${templateKey}` -> html | null
+const localizedSubjectCache = new Map(); // locale -> parsed subjects object | null
+
+function readLocalizedHtml(locale, templateKey) {
+  const cacheKey = `${locale}:${templateKey}`;
+  if (localizedHtmlCache.has(cacheKey)) return localizedHtmlCache.get(cacheKey);
+  const file = path.join(__dirname, '..', 'email-templates', locale, `${templateKey}.html`);
+  let html = null;
   try {
-    const store = await Store.findOne({ shopDomain }).lean();
-    const locale = (store?.primaryLanguage && ['en', 'pl', 'de', 'es', 'fr', 'it', 'nl', 'ar', 'ja', 'ko'].includes(store.primaryLanguage))
-      ? store.primaryLanguage
-      : 'en';
-    
-    const templateDir = path.join(__dirname, '..', 'email-templates', locale);
-    const templateFile = path.join(templateDir, `${templateKey}.html`);
-    const subjectFile = path.join(templateDir, 'subject.json');
-    
-    let html = null;
-    let subject = null;
-    
-    // Try to load localized template
-    if (fs.existsSync(templateFile)) {
-      html = fs.readFileSync(templateFile, 'utf8');
-    }
-    
-    // Try to load localized subject
-    if (fs.existsSync(subjectFile)) {
-      const subjects = JSON.parse(fs.readFileSync(subjectFile, 'utf8'));
-      subject = subjects[templateKey] || null;
-    }
-    
-    // Fallback to default if localized not found
-    if (!html || !subject) {
-      const defaults = DEFAULT_EMAIL_TEMPLATES[templateKey];
-      if (defaults) {
-        html = html || defaults.html;
-        subject = subject || defaults.subject;
-      }
-    }
-    
-    return { html, subject };
-  } catch (error) {
-    console.warn(`Failed to load localized template for ${templateKey} (shop: ${shopDomain}):`, error.message);
-    // Fallback to default
+    if (fs.existsSync(file)) html = fs.readFileSync(file, 'utf8');
+  } catch (_e) { /* fall through to default */ }
+  localizedHtmlCache.set(cacheKey, html);
+  return html;
+}
+
+function readLocalizedSubjects(locale) {
+  if (localizedSubjectCache.has(locale)) return localizedSubjectCache.get(locale);
+  const file = path.join(__dirname, '..', 'email-templates', locale, 'subject.json');
+  let subjects = null;
+  try {
+    if (fs.existsSync(file)) subjects = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (_e) { /* fall through to default */ }
+  localizedSubjectCache.set(locale, subjects);
+  return subjects;
+}
+
+/**
+ * Load email template (html + subject) for a resolved locale, from cache.
+ */
+function loadLocalizedTemplate(locale, templateKey) {
+  let html = readLocalizedHtml(locale, templateKey);
+  const subjects = readLocalizedSubjects(locale);
+  let subject = subjects ? (subjects[templateKey] || null) : null;
+
+  if (!html || !subject) {
     const defaults = DEFAULT_EMAIL_TEMPLATES[templateKey];
-    return {
-      html: defaults?.html || '',
-      subject: defaults?.subject || ''
-    };
+    if (defaults) {
+      html = html || defaults.html;
+      subject = subject || defaults.subject;
+    }
   }
+
+  return { html, subject };
 }
 
 function getDefaultTemplateConfig() {
@@ -258,11 +259,16 @@ async function getEffectiveEmailConfig(rawShopDomain) {
     settings.smtp?.pass;
   baseConfig.smtp = settings.smtp || {};
 
-  // Load localized templates
+  // Resolve the locale once from the store we already fetched (was a redundant
+  // Store.findOne per template key inside loadLocalizedTemplate). (SVC-15)
+  const locale = (store?.primaryLanguage && SUPPORTED_EMAIL_LOCALES.includes(store.primaryLanguage))
+    ? store.primaryLanguage
+    : 'en';
+
+  // Load localized templates (cached, synchronous)
   const localizedTemplates = {};
   for (const key of EMAIL_TEMPLATE_KEYS) {
-    const localized = await loadLocalizedTemplate(normalizedShop, key);
-    localizedTemplates[key] = localized;
+    localizedTemplates[key] = loadLocalizedTemplate(locale, key);
   }
 
   const mergedTemplates = {};
