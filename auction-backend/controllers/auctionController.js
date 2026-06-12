@@ -11,7 +11,10 @@ import { computeAuctionStatus } from '../utils/auctionStatus.js';
 
 const ANONYMOUS_DISPLAY_NAME = 'Anonymous Bidder';
 
-const escapeHtml = (str) => str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Safely embed JSON inside an inline <script> tag: escaping `<` prevents a value
+// containing "</script>" (e.g. a crafted product title) from breaking out of the tag.
+const safeJsonForScript = (data) => JSON.stringify(data).replace(/</g, '\\u003c');
 
 const parseBooleanInput = (value) => {
   if (typeof value === 'string') {
@@ -1542,7 +1545,7 @@ export const getAllAuctionsPage = async (req, res, next) => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Live Auctions - ${shopDomain}</title>
+        <title>Live Auctions - ${escapeHtml(shopDomain)}</title>
         <style>
           * {
             margin: 0;
@@ -1940,13 +1943,13 @@ export const getAllAuctionsPage = async (req, res, next) => {
               </div>
             ` : auctionsWithRealTimeStatus.map(auction => `
               <div class="auction-card" data-auction-id="${auction._id}">
-                <img src="${auction.productData?.image?.src || '/placeholder-image.jpg'}" 
-                     alt="${auction.productData?.title || 'Auction Item'}" 
+                <img src="${escapeHtml(auction.productData?.image?.src || '/placeholder-image.jpg')}"
+                     alt="${escapeHtml(auction.productData?.title || 'Auction Item')}"
                      class="auction-image"
                      onerror="this.src='/placeholder-image.jpg'">
-                
+
                 <div class="auction-content">
-                  <h3 class="auction-title">${auction.productData?.title || 'Auction Item'}</h3>
+                  <h3 class="auction-title">${escapeHtml(auction.productData?.title || 'Auction Item')}</h3>
                   
                   <div class="auction-price">
                     <span class="current-bid">$${auction.currentBid || auction.startingBid}</span>
@@ -2015,8 +2018,8 @@ export const getAllAuctionsPage = async (req, res, next) => {
         
         <script>
           // Auction data for JavaScript
-          window.auctionData = ${JSON.stringify(auctionsWithRealTimeStatus)};
-          window.shopDomain = '${shopDomain}';
+          window.auctionData = ${safeJsonForScript(auctionsWithRealTimeStatus)};
+          window.shopDomain = ${JSON.stringify(String(shopDomain ?? ''))};
           
           // Customer authentication
           let currentCustomer = null;
@@ -2740,7 +2743,7 @@ export const getAuctionDetailsPage = async (req, res, next) => {
               <div id="bidly-auction-detail-page" 
                    data-auction-id="${auction._id}" 
                    data-product-id="${auction.shopifyProductId}"
-                   data-shop="${shopDomain}">
+                   data-shop="${escapeHtml(shopDomain)}">
                 <div class="bidly-loading">
                   <div class="bidly-spinner"></div>
                   <p>Loading auction details...</p>
@@ -2751,10 +2754,10 @@ export const getAuctionDetailsPage = async (req, res, next) => {
           </div>
         </div>
         
-        <script src="/apps/bidly/assets/bidly-widget.js?v=2021&t=${Date.now()}&r=${Math.random()}"></script>
+        <script src="/apps/bidly/assets/bidly-widget.js?v=2021"></script>
         <script>
           // Pass auction data to JavaScript
-          window.auctionDataFromHTML = ${JSON.stringify(auction)};
+          window.auctionDataFromHTML = ${safeJsonForScript(auction)};
 
           document.addEventListener('DOMContentLoaded', function() {
             const auctionId = document.getElementById('bidly-auction-detail-page').dataset.auctionId;
