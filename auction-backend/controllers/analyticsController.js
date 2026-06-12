@@ -1,6 +1,7 @@
 import Auction from '../models/Auction.js';
 import User from '../models/User.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { computeAuctionStatus } from '../utils/auctionStatus.js';
 
 const normalizeShopDomain = (shop = '') =>
   shop
@@ -56,29 +57,13 @@ export const getAnalytics = async (req, res, next) => {
 
     const baseFilter = { shopDomain, isDeleted: false };
 
-    // Basic auction statistics - get all auctions and compute real-time status
-    const allAuctions = await Auction.find(baseFilter);
-    
-    // Compute real-time status for each auction
-    const computeAuctionStatus = (auction) => {
-      // If auction is manually closed by admin, keep it closed
-      if (auction.status === 'closed') {
-        return 'closed';
-      }
-      
-      const now = new Date();
-      const startTime = new Date(auction.startTime);
-      const endTime = new Date(auction.endTime);
-      
-      if (now < startTime) {
-        return 'pending';
-      } else if (now >= startTime && now < endTime) {
-        return 'active';
-      } else {
-        return 'ended';
-      }
-    };
-    
+    // Basic auction statistics — only load the fields needed to compute status counts.
+    // (BACKEND-04: previously loaded every auction with full bidHistory/productData into
+    // memory. BACKEND-13: status computed via the shared computeAuctionStatus util.)
+    const allAuctions = await Auction.find(baseFilter)
+      .select('status startTime endTime')
+      .lean();
+
     const totalAuctions = allAuctions.length;
     const activeAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'active').length;
     const endedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'ended').length;
@@ -318,36 +303,42 @@ export const getUserAnalytics = async (req, res, next) => {
 
 // Helper function to get daily statistics
 async function getDailyStats(baseFilter, startDate, endDate) {
+  // Single aggregation bucketed by day (BACKEND-03). Previously this ran one Auction.find()
+  // per day in a while-loop — up to 365 sequential queries (each pulling full documents) for
+  // a 1y range, which made the analytics dashboard extremely slow.
+  const results = await Auction.aggregate([
+    {
+      $match: {
+        ...baseFilter,
+        createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) }
+      }
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        auctions: { $sum: 1 },
+        revenue: { $sum: { $ifNull: ['$currentBid', 0] } },
+        bids: { $sum: { $size: { $ifNull: ['$bidHistory', []] } } }
+      }
+    }
+  ]);
+
+  const byDate = new Map(results.map(r => [r._id, r]));
+
+  // Fill the full day range so days with no activity still appear as zeros.
   const dailyStats = [];
   const currentDate = new Date(startDate);
-  
   while (currentDate <= endDate) {
-    const dayStart = new Date(currentDate);
-    const dayEnd = new Date(currentDate);
-    dayEnd.setHours(23, 59, 59, 999);
-    
-    const dayAuctions = await Auction.find({
-      ...baseFilter,
-      createdAt: { $gte: dayStart, $lte: dayEnd }
-    });
-    
-    const dayRevenue = dayAuctions.reduce((sum, auction) => {
-      return sum + (auction.currentBid || 0);
-    }, 0);
-    
-    const dayBids = dayAuctions.reduce((sum, auction) => {
-      return sum + (auction.bidHistory?.length || 0);
-    }, 0);
-    
+    const key = currentDate.toISOString().split('T')[0];
+    const entry = byDate.get(key);
     dailyStats.push({
-      date: currentDate.toISOString().split('T')[0],
-      auctions: dayAuctions.length,
-      revenue: dayRevenue,
-      bids: dayBids
+      date: key,
+      auctions: entry?.auctions || 0,
+      revenue: entry?.revenue || 0,
+      bids: entry?.bids || 0
     });
-    
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  
+
   return dailyStats;
 }

@@ -124,9 +124,11 @@ export const optionalAuth = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (token) {
-      const decoded = verifyToken(token);
+      // BACKEND-02: was calling an undefined verifyToken() which threw and was silently
+      // swallowed, so authenticated callers never had req.user populated. Use jwt.verify.
+      const decoded = jwt.verify(token, JWT_SECRET);
       const user = await User.findById(decoded.userId);
-      
+
       if (user && user.isActive) {
         req.user = user;
       }

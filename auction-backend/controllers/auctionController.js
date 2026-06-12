@@ -4,9 +4,8 @@ import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
 import emailService from '../services/emailService.js';
-import ProductDuplicationService from '../services/productDuplicationService.js';
-import AuctionEndService from '../services/auctionEndService.js';
 import { getHigherPlans, planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
+import { computeAuctionStatus } from '../utils/auctionStatus.js';
 
 const ANONYMOUS_DISPLAY_NAME = 'Anonymous Bidder';
 
@@ -19,31 +18,6 @@ const parseBooleanInput = (value) => {
     if (normalized === 'false') return false;
   }
   return Boolean(value);
-};
-
-// Helper function to compute real-time auction status
-const computeAuctionStatus = (auction) => {
-  // If auction is manually closed by admin, keep it closed
-  if (auction.status === 'closed') {
-    return 'closed';
-  }
-  
-  // Preserve reserve_not_met status (set by backend after processing)
-  if (auction.status === 'reserve_not_met') {
-    return 'reserve_not_met';
-  }
-  
-  const now = new Date();
-  const startTime = new Date(auction.startTime);
-  const endTime = new Date(auction.endTime);
-  
-  if (now < startTime) {
-    return 'pending';
-  } else if (now >= startTime && now < endTime) {
-    return 'active';
-  } else {
-    return 'ended';
-  }
 };
 
 const decorateBid = (bid) => {
@@ -153,34 +127,6 @@ const updateProductMetafields = async (auction, shopDomain) => {
     }
   } catch (error) {
     console.warn('Error updating product metafields:', error.message);
-  }
-};
-
-// Helper function to process ended auctions
-const processEndedAuctions = async () => {
-  try {
-    // Find auctions that have ended but haven't been processed
-    // Exclude soft-deleted auctions
-    const endedAuctions = await Auction.find({
-      status: 'ended',
-      completedAt: { $exists: false },
-      isDeleted: { $ne: true }
-    });
-
-    for (const auction of endedAuctions) {
-      try {
-        const result = await AuctionEndService.processAuctionEnd(auction);
-
-        if (result.success) {
-        } else {
-          console.error(`❌ Failed to process auction ${auction._id}: ${result.message}`);
-        }
-      } catch (error) {
-        console.error(`❌ Error processing auction ${auction._id}:`, error);
-      }
-    }
-  } catch (error) {
-    console.error('Error in processEndedAuctions:', error);
   }
 };
 
@@ -331,7 +277,7 @@ export const createAuction = async (req, res, next) => {
       });
 
       // Send global auction update
-      io.emit('auction-created', {
+      io.to('admin-room').emit('auction-created', {
         auctionId: savedAuction._id,
         productTitle: savedAuction.productData?.title,
         status: savedAuction.status,
@@ -919,8 +865,17 @@ export const placeBid = async (req, res, next) => {
         const currentEnd = new Date(updatedAuction.endTime);
         const baseTime = currentEnd > now ? currentEnd : now;
         const newEndTime = new Date(baseTime.getTime() + (updatedAuction.popcornExtendSeconds * 1000));
-        updatedAuction.endTime = newEndTime;
-        await updatedAuction.save();
+        // Atomic, forward-only extension (BACKEND-14): only push endTime further out, so
+        // two concurrent last-second bids can't clobber each other's extension via a full
+        // document re-save. The later (larger) endTime wins.
+        const extended = await Auction.findOneAndUpdate(
+          { _id: req.params.id, endTime: { $lt: newEndTime } },
+          { $set: { endTime: newEndTime, updatedAt: new Date() } },
+          { new: true }
+        );
+        if (extended) {
+          updatedAuction.endTime = extended.endTime;
+        }
         timeExtended = true;
         
         
@@ -935,8 +890,8 @@ export const placeBid = async (req, res, next) => {
             message: `Auction extended by ${updatedAuction.popcornExtendSeconds} seconds due to last-minute bid!`
           });
           
-          // Also broadcast globally
-          io.emit('auction-time-extended', {
+          // Mirror to admin dashboards only (BACKEND-06: not every connected socket)
+          io.to('admin-room').emit('auction-time-extended', {
             auctionId: req.params.id,
             newEndTime: newEndTime.toISOString(),
             extensionSeconds: updatedAuction.popcornExtendSeconds,
@@ -1046,18 +1001,20 @@ export const placeBid = async (req, res, next) => {
         auction: decoratedUpdatedAuction // Include full auction data for widget updates
       };
 
-      // Send to auction-specific room
+      // Send to auction-specific room (the customers actually watching this auction)
       io.to(`auction-${req.params.id}`).emit('bid-update', fullBidUpdate);
-      
-      // Also broadcast globally to ensure all clients receive updates
-      io.emit('bid-update', fullBidUpdate);
-      
+
+      // Mirror to the admin room for dashboards (BACKEND-06: was io.emit to EVERY
+      // connected socket across all stores, which leaked one store's bid data to other
+      // stores' shoppers).
+      io.to('admin-room').emit('bid-update', fullBidUpdate);
+
       // Also emit bid-placed event for frontend compatibility
       io.to(`auction-${req.params.id}`).emit('bid-placed', {
         auctionId: req.params.id,
         auction: decoratedUpdatedAuction
       });
-      io.emit('bid-placed', {
+      io.to('admin-room').emit('bid-placed', {
         auctionId: req.params.id,
         auction: decoratedUpdatedAuction
       });
@@ -1077,8 +1034,9 @@ export const placeBid = async (req, res, next) => {
         }
       });
 
-      // Send global auction update to all connected clients (include full auction data)
-      io.emit('auction-updated', {
+      // Send auction update to admin dashboards (BACKEND-06: scoped to admin-room
+      // instead of every connected socket across all stores)
+      io.to('admin-room').emit('auction-updated', {
         auctionId: req.params.id,
         auction: decoratedUpdatedAuction, // Include full auction data for widget updates
         status: updatedAuction.status,
@@ -1167,62 +1125,69 @@ export const buyNow = async (req, res, next) => {
       throw new AppError('Auction is not currently active', 400);
     }
     
-    // Temporarily update auction status to 'active' if real-time status is 'active'
-    // This allows the addBid method to work properly
-    const originalStatus = auction.status;
-    if (realTimeStatus === 'active' && auction.status !== 'active') {
-      auction.status = 'active';
-      await auction.save();
-    }
-    
     if (!effectiveEmail) {
       throw new AppError('A valid email address is required to complete a purchase', 400);
     }
     const finalEmail = effectiveEmail;
 
-    try {
-      // Add the buy now bid with customer email
-      await auction.addBid(effectiveBidder, auction.buyNowPrice, finalEmail, effectiveCustomerId);
-    } catch (error) {
-      // Restore original status if bid fails
-      if (originalStatus !== auction.status) {
-        auction.status = originalStatus;
-        await auction.save();
-      }
-      throw error;
+    const buyNowPrice = auction.buyNowPrice;
+    if (!buyNowPrice || buyNowPrice <= 0) {
+      throw new AppError('Buy Now is not available for this auction', 400);
     }
-    
-    // End the auction immediately
-    auction.status = 'ended';
-    auction.endTime = new Date();
-    await auction.save();
-    
+
+    const buyNowBid = {
+      bidder: effectiveBidder,
+      displayName: effectiveBidder,
+      customerEmail: finalEmail,
+      amount: buyNowPrice,
+      timestamp: now,
+      customerId: effectiveCustomerId || null
+    };
+
+    // Atomically end the auction and record the buy-now bid in a single operation,
+    // guarded on the auction still being active within its time window. Only the first
+    // concurrent Buy Now / bid wins; a racing request gets null. endTime is set to now so
+    // the real-time status correctly computes as 'ended'. (BACKEND-07)
+    const endedAuction = await Auction.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        shopDomain,
+        isDeleted: { $ne: true },
+        status: 'active',
+        startTime: { $lte: now },
+        endTime: { $gte: now }
+      },
+      {
+        $push: { bidHistory: buyNowBid },
+        $set: { currentBid: buyNowPrice, status: 'ended', endTime: now, updatedAt: now }
+      },
+      { new: true }
+    );
+
+    if (!endedAuction) {
+      throw new AppError('This auction is no longer available for Buy Now', 400);
+    }
+
     // Send email notifications
     try {
       const brandOptions = {
         plan: req.store?.plan,
         storeName: req.store?.storeName
       };
-      // Send auction won notification to the buyer
-      await emailService.sendAuctionWonNotification(
-        shopDomain,
-        finalEmail,
-        effectiveBidder,
-        auction,
-        auction.buyNowPrice,
-        brandOptions
-      );
+      // NOTE: the winner "you won" email is sent by winnerProcessingService after the
+      // draft order is created (triggered below), so it is intentionally NOT sent here to
+      // avoid duplicate emails.
 
       // Send outbid notification to previous highest bidder (if any)
-      if (auction.bidHistory.length > 1) {
-        const previousBid = auction.bidHistory[auction.bidHistory.length - 2];
+      if (endedAuction.bidHistory.length > 1) {
+        const previousBid = endedAuction.bidHistory[endedAuction.bidHistory.length - 2];
         if (previousBid.bidder !== effectiveBidder && previousBid.customerEmail) {
           await emailService.sendOutbidNotification(
             shopDomain,
             previousBid.customerEmail,
             previousBid.bidder,
-            auction,
-            auction.buyNowPrice,
+            endedAuction,
+            buyNowPrice,
             brandOptions
           );
         }
@@ -1232,44 +1197,51 @@ export const buyNow = async (req, res, next) => {
       await emailService.sendAdminNotification(
         shopDomain,
         'Auction Won via Buy Now',
-        `Auction "${auction.productData?.title || 'Unknown Product'}" was won by ${effectiveBidder} for $${auction.buyNowPrice}`,
-        auction
+        `Auction "${endedAuction.productData?.title || 'Unknown Product'}" was won by ${effectiveBidder} for $${buyNowPrice}`,
+        endedAuction
       );
 
     } catch (emailError) {
       console.error('Buy now email notification error (non-critical):', emailError);
       // Don't fail the buy now if email fails
     }
-    
+
+    // Trigger full winner processing (private product + draft order + invoice + winner
+    // email) immediately rather than waiting up to 5 minutes for the safety-net cron.
+    // Non-blocking so a downstream Shopify failure doesn't fail the Buy Now response.
+    import('../services/winnerProcessingService.js')
+      .then(({ default: winnerProcessingService }) =>
+        winnerProcessingService.processAuctionWinner(endedAuction._id, shopDomain))
+      .catch(processingError =>
+        console.error(`❌ Error processing Buy Now winner for auction ${endedAuction._id}:`, processingError));
+
     // Broadcast real-time update to all clients watching this auction
-    const decoratedAuction = decorateAuction(auction);
+    const decoratedAuction = decorateAuction(endedAuction);
 
     const io = req.app.get('io');
     if (io) {
       const buyNowData = {
         auctionId: req.params.id,
-        currentBid: auction.buyNowPrice,
+        currentBid: buyNowPrice,
         bidHistory: decoratedAuction.bidHistory,
         bidder: effectiveBidder,
         displayName: effectiveBidder,
-        amount: auction.buyNowPrice,
+        amount: buyNowPrice,
         timestamp: new Date().toISOString(),
         auctionEnded: true,
         winner: {
           bidder: effectiveBidder,
           displayName: effectiveBidder,
-          amount: auction.buyNowPrice,
+          amount: buyNowPrice,
           customerId: effectiveCustomerId
         },
         buyNow: true,
-        productTitle: auction.productData?.title || 'Unknown Product'
+        productTitle: endedAuction.productData?.title || 'Unknown Product'
       };
 
-      // Send to auction-specific room
+      // Send only to the auction-specific room (BACKEND-06: removed the global io.emit
+      // that broadcast this store's bid data to every connected client across all shops).
       io.to(`auction-${req.params.id}`).emit('bid-update', buyNowData);
-      
-      // Also broadcast globally to ensure all clients receive updates
-      io.emit('bid-update', buyNowData);
     }
     
     res.json({
@@ -1410,18 +1382,28 @@ export const getAuctionStats = async (req, res, next) => {
       throw new AppError('Store domain is required', 400);
     }
     
-    // Get all auctions for this store and compute real-time status
-    const allAuctions = await Auction.find({ shopDomain: shopDomain });
-    
+    // Get all live auctions for this store. (BACKEND-05/BACKEND-09: exclude soft-deleted,
+    // load only the fields needed via lean(), and compute status once per auction instead
+    // of ~13 times.)
+    const allAuctions = await Auction.find({ shopDomain, isDeleted: { $ne: true } })
+      .select('status startTime endTime bidHistory')
+      .lean();
+
     const totalAuctions = allAuctions.length;
-    const pendingAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'pending').length;
-    const activeAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'active').length;
-    const endedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'ended').length;
-    const closedAuctions = allAuctions.filter(auction => computeAuctionStatus(auction) === 'closed').length;
-    
-    // Calculate total bids across all auctions for this store
-    const totalBids = allAuctions.reduce((sum, auction) => sum + (auction.bidHistory?.length || 0), 0);
-    
+    const withStatus = allAuctions.map(a => ({
+      status: computeAuctionStatus(a),
+      bids: a.bidHistory?.length || 0
+    }));
+
+    const countFor = (s) => withStatus.filter(a => a.status === s);
+    const bidsFor = (s) => countFor(s).reduce((sum, a) => sum + a.bids, 0);
+
+    const pendingAuctions = countFor('pending').length;
+    const activeAuctions = countFor('active').length;
+    const endedAuctions = countFor('ended').length;
+    const closedAuctions = countFor('closed').length;
+    const totalBids = withStatus.reduce((sum, a) => sum + a.bids, 0);
+
     res.json({
       success: true,
       data: {
@@ -1432,10 +1414,10 @@ export const getAuctionStats = async (req, res, next) => {
         closedAuctions,
         totalBids,
         statusBreakdown: [
-          { _id: 'pending', count: pendingAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'pending').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) },
-          { _id: 'active', count: activeAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'active').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) },
-          { _id: 'ended', count: endedAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'ended').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) },
-          { _id: 'closed', count: closedAuctions, totalBids: allAuctions.filter(auction => computeAuctionStatus(auction) === 'closed').reduce((sum, a) => sum + (a.bidHistory?.length || 0), 0) }
+          { _id: 'pending', count: pendingAuctions, totalBids: bidsFor('pending') },
+          { _id: 'active', count: activeAuctions, totalBids: bidsFor('active') },
+          { _id: 'ended', count: endedAuctions, totalBids: bidsFor('ended') },
+          { _id: 'closed', count: closedAuctions, totalBids: bidsFor('closed') }
         ]
       }
     });

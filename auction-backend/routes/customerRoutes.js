@@ -436,7 +436,7 @@ router.get('/:id', verifyCustomerToken, async (req, res, next) => {
 });
 
 // Update customer bid history
-router.post('/:id/bid', async (req, res, next) => {
+router.post('/:id/bid', verifyCustomerToken, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { auctionId, amount, isWinning } = req.body;
@@ -446,9 +446,15 @@ router.post('/:id/bid', async (req, res, next) => {
       return next(new AppError('Shop domain is required (middleware)', 400));
     }
 
-    const customer = await Customer.findOne({ 
-      _id: id, 
-      shopDomain 
+    // Only the authenticated customer may append to their own bid history. Previously this
+    // route had no auth, letting anyone forge bids / inflate auctionsWon. (SVC-08)
+    if (req.customerAuth?.customerId !== id) {
+      return next(new AppError('You can only modify your own bid history', 403));
+    }
+
+    const customer = await Customer.findOne({
+      _id: id,
+      shopDomain
     });
 
     if (!customer) {

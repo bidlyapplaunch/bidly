@@ -1,11 +1,13 @@
 import express from 'express';
 import { subscribeToPlan, getCurrentPlan, confirmSubscription, syncPlan, getPlanCapabilitiesHandler, cancelCurrentSubscription } from '../controllers/billingController.js';
 import { identifyStore } from '../middleware/storeMiddleware.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Admin-triggered subscription creation (legacy embedded: no JWT required, store scoped)
-router.post('/subscribe', identifyStore, subscribeToPlan);
+// Admin-triggered subscription creation. requireAuth (Shopify session token) added so a
+// caller can't change a store's billing just by knowing its shop domain. (SVC-01)
+router.post('/subscribe', identifyStore, requireAuth, subscribeToPlan);
 
 // Current plan details for admin UI
 router.get('/current', identifyStore, getCurrentPlan);
@@ -14,16 +16,17 @@ router.get('/current', identifyStore, getCurrentPlan);
 router.get('/capabilities', identifyStore, getPlanCapabilitiesHandler);
 
 // Manual sync endpoint (admin)
-router.post('/sync', identifyStore, syncPlan);
+router.post('/sync', identifyStore, requireAuth, syncPlan);
 
 // Cancel current subscription
-router.post('/cancel', identifyStore, cancelCurrentSubscription);
+router.post('/cancel', identifyStore, requireAuth, cancelCurrentSubscription);
 
-// Shopify return URL after merchant approves billing
+// Shopify return URL after merchant approves billing (browser redirect — no auth header)
 router.get('/confirm', identifyStore, confirmSubscription);
 
-// Manual plan override (admin only - bypasses Shopify sync)
-router.post('/override', identifyStore, async (req, res, next) => {
+// Manual plan override (admin only - bypasses Shopify sync). Previously unauthenticated,
+// allowing anyone to grant a store free Enterprise. Now requires a Shopify session. (SVC-01)
+router.post('/override', identifyStore, requireAuth, async (req, res, next) => {
   try {
     if (!req.store) {
       return res.status(400).json({ success: false, message: 'Store context required' });
