@@ -4,6 +4,8 @@ import Customer from '../models/Customer.js';
 import { AppError } from '../middleware/errorHandler.js';
 import getShopifyService from '../services/shopifyService.js';
 import emailService from '../services/emailService.js';
+import shopifyGraphQLService from '../services/shopifyGraphQLService.js';
+import Store from '../models/Store.js';
 import { getHigherPlans, planMeetsRequirement, sanitizePlan } from '../config/billingPlans.js';
 import { computeAuctionStatus } from '../utils/auctionStatus.js';
 
@@ -109,22 +111,19 @@ const updateProductMetafields = async (auction, shopDomain) => {
       buyNowPrice: auction.buyNowPrice || 0
     };
 
-    // Update metafields via API call (server calls itself)
-    const baseUrl = API_BASE_URL || 'http://localhost:5000';
-    const response = await fetch(`${baseUrl}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        shop: shopDomain,
-        auctionData
-      })
-    });
-
-    if (!response.ok) {
-      console.warn('Failed to update product metafields:', await response.text());
+    // Set all metafields in a single in-process GraphQL call (BACKEND-12 + SVC-06:
+    // was an HTTP self-call that looped ~20 sequential REST requests per bid).
+    const store = await Store.findOne({ shopDomain }).select('+accessToken');
+    if (!store?.accessToken) {
+      console.warn('Skipping metafield update — no access token for', shopDomain);
+      return;
     }
+    await shopifyGraphQLService.setAuctionMetafields(
+      shopDomain,
+      store.accessToken,
+      auction.shopifyProductId,
+      auctionData
+    );
   } catch (error) {
     console.warn('Error updating product metafields:', error.message);
   }
@@ -663,18 +662,16 @@ export const deleteAuction = async (req, res, next) => {
     auction.deletedAt = new Date();
     await auction.save();
     
-    // Clear product metafields so widget doesn't try to load the deleted auction
+    // Clear product metafields so the widget doesn't load the deleted auction
+    // (in-process GraphQL, single call — BACKEND-12).
     try {
-      const baseUrl = API_BASE_URL || 'http://localhost:5000';
-      const response = await fetch(`${baseUrl}/api/metafields/products/${auction.shopifyProductId}/auction-metafields?shop=${encodeURIComponent(shopDomain)}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        console.warn('Failed to clear product metafields after soft delete:', await response.text());
+      const store = await Store.findOne({ shopDomain }).select('+accessToken');
+      if (store?.accessToken) {
+        await shopifyGraphQLService.clearAuctionMetafields(
+          shopDomain,
+          store.accessToken,
+          auction.shopifyProductId
+        );
       }
     } catch (metafieldError) {
       console.warn('Error clearing product metafields:', metafieldError.message);
