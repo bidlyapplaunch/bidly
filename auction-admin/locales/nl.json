@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "Bewaar e-mailinstellingen"
+      },
+      "tabs": {
+        "templates": "E-mailsjablonen",
+        "customers": "Klantenlijst",
+        "blast": "Bulk-e-mails"
+      },
+      "customers": {
+        "heading": "Klanten",
+        "subtitleOne": "{{count}} klant gekoppeld aan deze winkel",
+        "subtitleOther": "{{count}} klanten gekoppeld aan deze winkel",
+        "selectedBadge": "{{count}} geselecteerd",
+        "compose": "Bulk-e-mail opstellen",
+        "searchPlaceholder": "Zoeken op e-mail of naam...",
+        "loadError": "Klanten konden niet worden geladen",
+        "empty": "Geen klanten gevonden",
+        "columns": {
+          "email": "E-mail",
+          "displayName": "Weergavenaam",
+          "bids": "Biedingen",
+          "wins": "Gewonnen",
+          "status": "Status"
+        },
+        "status": {
+          "subscribed": "Geabonneerd",
+          "unsubscribed": "Afgemeld"
+        },
+        "pagination": {
+          "previous": "Vorige",
+          "next": "Volgende",
+          "page": "Pagina {{current}} van {{total}}"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "Upgrade vereist",
+        "upgradeDescription": "Bulk-e-mails zijn beschikbaar vanaf Pro-abonnementen.",
+        "composeTitle": "Bulk-e-mail opstellen",
+        "editTitle": "Concept bewerken",
+        "sendingTo": "Verzenden naar {{recipients}}",
+        "recipientsAll": "alle klanten",
+        "recipientsSelected": "{{count}} geselecteerde klant(en)",
+        "editRecipients": "Ontvangers bewerken",
+        "cancelEditing": "Bewerken annuleren",
+        "subject": "Onderwerp",
+        "editorMode": "Editormodus",
+        "richEditor": "Rich-editor",
+        "htmlEditor": "HTML",
+        "htmlBody": "HTML-inhoud",
+        "composePlaceholder": "Stel je bulk-e-mail op...",
+        "availableTokens": "Beschikbare tokens",
+        "deliveryMode": "Verzendmodus",
+        "sendAll": "Alles verzenden",
+        "trickle": "Gefaseerd",
+        "batchSize": "Batchgrootte",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "Interval (minuten)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "Opslaan als concept",
+        "sendNow": "Nu verzenden",
+        "confirmTitle": "Verzenden bevestigen",
+        "confirmSend": "Verzenden",
+        "confirmBody": "Deze e-mail naar {{recipients}} verzenden?",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "Verzendgeschiedenis",
+        "historyEmpty": "Nog geen bulk-e-mails",
+        "columns": {
+          "subject": "Onderwerp",
+          "date": "Datum",
+          "recipients": "Ontvangers",
+          "status": "Status",
+          "progress": "Voortgang",
+          "actions": "Acties"
+        },
+        "statusBadge": {
+          "draft": "Concept",
+          "sending": "Wordt verzonden",
+          "completed": "Voltooid",
+          "failed": "Mislukt"
+        },
+        "rowActions": {
+          "edit": "Bewerken",
+          "delete": "Verwijderen"
+        },
+        "preview": "E-mailvoorbeeld",
+        "recipientsCount": "Ontvangers ({{count}})",
+        "recipientEmail": "E-mail",
+        "recipientName": "Naam",
+        "recipientStatus": "Status",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "Onderwerp en inhoud zijn vereist",
+          "draftUpdated": "Concept bijgewerkt",
+          "draftSaved": "Concept opgeslagen",
+          "draftDeleted": "Concept verwijderd",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "Verzenden van bulk-e-mail gestart!",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {

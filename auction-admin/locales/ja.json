@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "メール設定を保存する"
+      },
+      "tabs": {
+        "templates": "メールテンプレート",
+        "customers": "顧客リスト",
+        "blast": "一斉メール"
+      },
+      "customers": {
+        "heading": "顧客",
+        "subtitleOne": "このストアにリンクされた顧客 {{count}} 件",
+        "subtitleOther": "このストアにリンクされた顧客 {{count}} 件",
+        "selectedBadge": "{{count}} 件選択中",
+        "compose": "一斉メールを作成",
+        "searchPlaceholder": "メールまたは名前で検索...",
+        "loadError": "顧客の読み込みに失敗しました",
+        "empty": "顧客が見つかりません",
+        "columns": {
+          "email": "メール",
+          "displayName": "表示名",
+          "bids": "入札",
+          "wins": "落札",
+          "status": "ステータス"
+        },
+        "status": {
+          "subscribed": "購読中",
+          "unsubscribed": "配信停止"
+        },
+        "pagination": {
+          "previous": "前へ",
+          "next": "次へ",
+          "page": "{{total}} ページ中 {{current}} ページ"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "アップグレードが必要です",
+        "upgradeDescription": "一斉メールは Pro プラン以上でご利用いただけます。",
+        "composeTitle": "一斉メールを作成",
+        "editTitle": "下書きを編集",
+        "sendingTo": "{{recipients}} に送信",
+        "recipientsAll": "すべての顧客",
+        "recipientsSelected": "選択した顧客 {{count}} 件",
+        "editRecipients": "受信者を編集",
+        "cancelEditing": "編集をキャンセル",
+        "subject": "件名",
+        "editorMode": "エディターモード",
+        "richEditor": "リッチエディター",
+        "htmlEditor": "HTML",
+        "htmlBody": "HTML 本文",
+        "composePlaceholder": "一斉メールを作成...",
+        "availableTokens": "利用可能なトークン",
+        "deliveryMode": "配信モード",
+        "sendAll": "すべて送信",
+        "trickle": "分割送信",
+        "batchSize": "バッチサイズ",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "間隔（分）",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "下書きとして保存",
+        "sendNow": "今すぐ送信",
+        "confirmTitle": "送信の確認",
+        "confirmSend": "送信",
+        "confirmBody": "このメールを {{recipients}} に送信しますか？",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "送信履歴",
+        "historyEmpty": "一斉メールはまだありません",
+        "columns": {
+          "subject": "件名",
+          "date": "日付",
+          "recipients": "受信者",
+          "status": "ステータス",
+          "progress": "進行状況",
+          "actions": "操作"
+        },
+        "statusBadge": {
+          "draft": "下書き",
+          "sending": "送信中",
+          "completed": "完了",
+          "failed": "失敗"
+        },
+        "rowActions": {
+          "edit": "編集",
+          "delete": "削除"
+        },
+        "preview": "メールプレビュー",
+        "recipientsCount": "受信者（{{count}}）",
+        "recipientEmail": "メール",
+        "recipientName": "名前",
+        "recipientStatus": "ステータス",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "件名と本文は必須です",
+          "draftUpdated": "下書きを更新しました",
+          "draftSaved": "下書きを保存しました",
+          "draftDeleted": "下書きを削除しました",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "一斉メールの送信を開始しました！",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {

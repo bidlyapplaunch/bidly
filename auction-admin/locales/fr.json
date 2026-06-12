@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "Enregistrer les paramètres mail"
+      },
+      "tabs": {
+        "templates": "Modèles d’e-mail",
+        "customers": "Liste des clients",
+        "blast": "E-mails groupés"
+      },
+      "customers": {
+        "heading": "Clients",
+        "subtitleOne": "{{count}} client lié à cette boutique",
+        "subtitleOther": "{{count}} clients liés à cette boutique",
+        "selectedBadge": "{{count}} sélectionnés",
+        "compose": "Rédiger un e-mail groupé",
+        "searchPlaceholder": "Rechercher par e-mail ou nom...",
+        "loadError": "Échec du chargement des clients",
+        "empty": "Aucun client trouvé",
+        "columns": {
+          "email": "E-mail",
+          "displayName": "Nom affiché",
+          "bids": "Enchères",
+          "wins": "Gains",
+          "status": "Statut"
+        },
+        "status": {
+          "subscribed": "Abonné",
+          "unsubscribed": "Désabonné"
+        },
+        "pagination": {
+          "previous": "Précédent",
+          "next": "Suivant",
+          "page": "Page {{current}} sur {{total}}"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "Mise à niveau requise",
+        "upgradeDescription": "Les e-mails groupés sont disponibles à partir des forfaits Pro.",
+        "composeTitle": "Rédiger un e-mail groupé",
+        "editTitle": "Modifier le brouillon",
+        "sendingTo": "Envoi à {{recipients}}",
+        "recipientsAll": "tous les clients",
+        "recipientsSelected": "{{count}} client(s) sélectionné(s)",
+        "editRecipients": "Modifier les destinataires",
+        "cancelEditing": "Annuler la modification",
+        "subject": "Objet",
+        "editorMode": "Mode d’éditeur",
+        "richEditor": "Éditeur enrichi",
+        "htmlEditor": "HTML",
+        "htmlBody": "Corps HTML",
+        "composePlaceholder": "Rédigez votre e-mail groupé...",
+        "availableTokens": "Jetons disponibles",
+        "deliveryMode": "Mode d’envoi",
+        "sendAll": "Tout envoyer",
+        "trickle": "Échelonné",
+        "batchSize": "Taille du lot",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "Intervalle (minutes)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "Enregistrer comme brouillon",
+        "sendNow": "Envoyer maintenant",
+        "confirmTitle": "Confirmer l’envoi",
+        "confirmSend": "Envoyer",
+        "confirmBody": "Envoyer cet e-mail à {{recipients}} ?",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "Historique des envois",
+        "historyEmpty": "Aucun e-mail groupé pour le moment",
+        "columns": {
+          "subject": "Objet",
+          "date": "Date",
+          "recipients": "Destinataires",
+          "status": "Statut",
+          "progress": "Progression",
+          "actions": "Actions"
+        },
+        "statusBadge": {
+          "draft": "Brouillon",
+          "sending": "Envoi en cours",
+          "completed": "Terminé",
+          "failed": "Échoué"
+        },
+        "rowActions": {
+          "edit": "Modifier",
+          "delete": "Supprimer"
+        },
+        "preview": "Aperçu de l’e-mail",
+        "recipientsCount": "Destinataires ({{count}})",
+        "recipientEmail": "E-mail",
+        "recipientName": "Nom",
+        "recipientStatus": "Statut",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "L’objet et le corps sont requis",
+          "draftUpdated": "Brouillon mis à jour",
+          "draftSaved": "Brouillon enregistré",
+          "draftDeleted": "Brouillon supprimé",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "L’envoi de l’e-mail groupé a commencé !",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {

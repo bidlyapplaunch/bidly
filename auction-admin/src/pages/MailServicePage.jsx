@@ -7,17 +7,17 @@ import BlastEmailTab from '../components/BlastEmailTab';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 import useAdminI18n from '../hooks/useAdminI18n';
 
-const TABS = [
-  { id: 'templates', label: 'Email Templates' },
-  { id: 'customers', label: 'Customer List' },
-  { id: 'blast', label: 'Blast Emails' }
-];
+const TAB_IDS = ['templates', 'customers', 'blast'];
 
 export default function MailServicePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const query = location.search || '';
   const i18n = useAdminI18n();
+  const TABS = TAB_IDS.map((id) => ({
+    id,
+    label: i18n.translate(`admin.mail_service.tabs.${id}`)
+  }));
   const [activeTab, setActiveTab] = useState('templates');
   const [recipientSelection, setRecipientSelection] = useState({ selectAll: true, recipientIds: [] });
   const [canCustomize, setCanCustomize] = useState(false);

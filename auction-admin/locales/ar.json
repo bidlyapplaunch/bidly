@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "حفظ إعدادات البريد"
+      },
+      "tabs": {
+        "templates": "قوالب البريد",
+        "customers": "قائمة العملاء",
+        "blast": "رسائل جماعية"
+      },
+      "customers": {
+        "heading": "العملاء",
+        "subtitleOne": "{{count}} عميل مرتبط بهذا المتجر",
+        "subtitleOther": "{{count}} عميل مرتبط بهذا المتجر",
+        "selectedBadge": "تم تحديد {{count}}",
+        "compose": "إنشاء رسالة جماعية",
+        "searchPlaceholder": "ابحث بالبريد الإلكتروني أو الاسم...",
+        "loadError": "تعذر تحميل العملاء",
+        "empty": "لم يتم العثور على عملاء",
+        "columns": {
+          "email": "البريد الإلكتروني",
+          "displayName": "الاسم المعروض",
+          "bids": "المزايدات",
+          "wins": "الفائزة",
+          "status": "الحالة"
+        },
+        "status": {
+          "subscribed": "مشترك",
+          "unsubscribed": "ألغى الاشتراك"
+        },
+        "pagination": {
+          "previous": "السابق",
+          "next": "التالي",
+          "page": "صفحة {{current}} من {{total}}"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "الترقية مطلوبة",
+        "upgradeDescription": "الرسائل الجماعية متاحة في خطط Pro وما فوقها.",
+        "composeTitle": "إنشاء رسالة جماعية",
+        "editTitle": "تعديل المسودة",
+        "sendingTo": "الإرسال إلى {{recipients}}",
+        "recipientsAll": "جميع العملاء",
+        "recipientsSelected": "{{count}} عميل محدد",
+        "editRecipients": "تعديل المستلمين",
+        "cancelEditing": "إلغاء التعديل",
+        "subject": "الموضوع",
+        "editorMode": "وضع المحرر",
+        "richEditor": "محرر متقدم",
+        "htmlEditor": "HTML",
+        "htmlBody": "محتوى HTML",
+        "composePlaceholder": "اكتب رسالتك الجماعية...",
+        "availableTokens": "الرموز المتاحة",
+        "deliveryMode": "وضع الإرسال",
+        "sendAll": "إرسال الكل",
+        "trickle": "تدريجي",
+        "batchSize": "حجم الدفعة",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "الفاصل (دقائق)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "حفظ كمسودة",
+        "sendNow": "إرسال الآن",
+        "confirmTitle": "تأكيد الإرسال",
+        "confirmSend": "إرسال",
+        "confirmBody": "إرسال هذا البريد إلى {{recipients}}؟",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "سجل الإرسال",
+        "historyEmpty": "لا توجد رسائل جماعية بعد",
+        "columns": {
+          "subject": "الموضوع",
+          "date": "التاريخ",
+          "recipients": "المستلمون",
+          "status": "الحالة",
+          "progress": "التقدم",
+          "actions": "الإجراءات"
+        },
+        "statusBadge": {
+          "draft": "مسودة",
+          "sending": "جارٍ الإرسال",
+          "completed": "مكتمل",
+          "failed": "فشل"
+        },
+        "rowActions": {
+          "edit": "تعديل",
+          "delete": "حذف"
+        },
+        "preview": "معاينة البريد",
+        "recipientsCount": "المستلمون ({{count}})",
+        "recipientEmail": "البريد الإلكتروني",
+        "recipientName": "الاسم",
+        "recipientStatus": "الحالة",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "الموضوع والمحتوى مطلوبان",
+          "draftUpdated": "تم تحديث المسودة",
+          "draftSaved": "تم حفظ المسودة",
+          "draftDeleted": "تم حذف المسودة",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "بدأ إرسال البريد الجماعي!",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {
