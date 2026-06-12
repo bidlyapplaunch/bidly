@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Banner } from '@shopify/polaris';
 
 /**
@@ -7,6 +7,13 @@ import { Banner } from '@shopify/polaris';
  */
 const AppBridgeToast = ({ message, isError = false, duration = 5000, onDismiss }) => {
   const [visible, setVisible] = useState(true);
+
+  // Keep the latest onDismiss in a ref so the auto-dismiss timer isn't reset by
+  // unrelated re-renders that pass a new inline callback.
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   useEffect(() => {
     if (!message) {
@@ -17,13 +24,13 @@ const AppBridgeToast = ({ message, isError = false, duration = 5000, onDismiss }
     setVisible(true);
     const timer = setTimeout(() => {
       setVisible(false);
-      if (onDismiss) {
-        onDismiss();
+      if (onDismissRef.current) {
+        onDismissRef.current();
       }
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [message, duration, onDismiss]);
+  }, [message, duration]);
 
   if (!visible || !message) {
     return null;
@@ -42,8 +49,8 @@ const AppBridgeToast = ({ message, isError = false, duration = 5000, onDismiss }
         tone={isError ? 'critical' : 'info'}
         onDismiss={() => {
           setVisible(false);
-          if (onDismiss) {
-            onDismiss();
+          if (onDismissRef.current) {
+            onDismissRef.current();
           }
         }}
       >

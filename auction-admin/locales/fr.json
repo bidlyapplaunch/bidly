@@ -628,7 +628,8 @@
           "debug": "Debug : {{count}} résultats",
           "resultsTitle": "Résultats de recherche",
           "resultLabel": "{{title}} (ID : {{id}}) - {{price}}",
-          "apiFallback": "API réelle indisponible : {{message}}. Utilisation de données démo."
+          "apiFallback": "API réelle indisponible : {{message}}. Utilisation de données démo.",
+          "error": "Impossible de rechercher des produits. Veuillez réessayer."
         },
         "selectedProduct": {
           "title": "Produit sélectionné",
@@ -879,5 +880,3 @@
     }
   }
 }
-
-

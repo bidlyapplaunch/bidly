@@ -628,7 +628,8 @@
           "debug": "Depuración: {{count}} resultados encontrados",
           "resultsTitle": "Resultados de Búsqueda",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "La API real falló: {{message}}. Usando datos de demostración."
+          "apiFallback": "La API real falló: {{message}}. Usando datos de demostración.",
+          "error": "No se pudieron buscar productos. Inténtalo de nuevo."
         },
         "selectedProduct": {
           "title": "Detalles del Producto Seleccionado",
@@ -673,72 +674,72 @@
         }
       },
       "table": {
-          "errors": {
-            "fetch": "Error al obtener subastas.",
-            "delete": "Error al eliminar subasta.",
-            "close": "Error al cerrar subasta.",
-            "closeMissingId": "Error al cerrar subasta: ID de subasta no encontrado.",
-            "noShop": "Error: No se encontró dominio de tienda.",
-            "noProductId": "Error: No se encontró ID de producto para esta subasta.",
-            "openInStore": "Error al abrir producto en la tienda."
-          },
-          "toast": {
-            "deleted": "Subasta eliminada exitosamente.",
-            "closed": "Subasta cerrada exitosamente."
-          },
-          "status": {
-            "reserveNotMet": "Finalizado · Reserva no alcanzada",
-            "noWinner": "Finalizado · Sin ganador",
-            "ended": "Finalizado"
-          },
-          "unknownProduct": "Producto Desconocido",
-          "actions": {
-            "viewInStore": "Ver en tienda",
-            "viewDetails": "Ver detalles de subasta",
-            "edit": "Editar subasta",
-            "delete": "Eliminar subasta",
-            "close": "Cerrar subasta"
-          },
-          "loading": "Cargando subastas...",
-          "empty": {
-            "title": "No se encontraron subastas",
-            "action": "Crear subasta",
-            "description": "Comienza creando tu primera subasta."
-          },
-          "filters": {
-            "open": "Filtrar",
-            "clear": "Limpiar filtros",
-            "title": "Filtrar Subastas",
-            "apply": "Aplicar Filtros",
-            "statusLabel": "Estado",
-            "productPlaceholder": "Ingresa ID de producto"
-          },
-          "columns": {
-            "product": "Producto",
-            "start": "Inicio",
-            "end": "Fin",
-            "startBid": "Puja Inicial",
-            "currentBid": "Puja Actual",
-            "buyNow": "Compra Inmediata",
-            "reserve": "Reserva",
-            "status": "Estado",
-            "bids": "Pujas",
-            "actions": "Acciones"
-          },
-          "footer": "Mostrando {{visible}} de {{total}} subastas",
-          "pagination": "Página {{current}} de {{total}}",
-          "delete": {
-            "title": "Eliminar Subasta",
-            "confirm": "Eliminar",
-            "message": "¿Estás seguro de que quieres eliminar esta subasta? Esta acción no se puede deshacer.",
-            "hasBids": "Nota: Esta subasta tiene pujas y no se puede eliminar."
-          },
-          "close": {
-            "title": "Cerrar Subasta",
-            "confirm": "Cerrar Subasta",
-            "message": "¿Estás seguro de que quieres cerrar esta subasta? Esto impedirá que se realicen nuevas pujas."
-          }
+        "errors": {
+          "fetch": "Error al obtener subastas.",
+          "delete": "Error al eliminar subasta.",
+          "close": "Error al cerrar subasta.",
+          "closeMissingId": "Error al cerrar subasta: ID de subasta no encontrado.",
+          "noShop": "Error: No se encontró dominio de tienda.",
+          "noProductId": "Error: No se encontró ID de producto para esta subasta.",
+          "openInStore": "Error al abrir producto en la tienda."
         },
+        "toast": {
+          "deleted": "Subasta eliminada exitosamente.",
+          "closed": "Subasta cerrada exitosamente."
+        },
+        "status": {
+          "reserveNotMet": "Finalizado · Reserva no alcanzada",
+          "noWinner": "Finalizado · Sin ganador",
+          "ended": "Finalizado"
+        },
+        "unknownProduct": "Producto Desconocido",
+        "actions": {
+          "viewInStore": "Ver en tienda",
+          "viewDetails": "Ver detalles de subasta",
+          "edit": "Editar subasta",
+          "delete": "Eliminar subasta",
+          "close": "Cerrar subasta"
+        },
+        "loading": "Cargando subastas...",
+        "empty": {
+          "title": "No se encontraron subastas",
+          "action": "Crear subasta",
+          "description": "Comienza creando tu primera subasta."
+        },
+        "filters": {
+          "open": "Filtrar",
+          "clear": "Limpiar filtros",
+          "title": "Filtrar Subastas",
+          "apply": "Aplicar Filtros",
+          "statusLabel": "Estado",
+          "productPlaceholder": "Ingresa ID de producto"
+        },
+        "columns": {
+          "product": "Producto",
+          "start": "Inicio",
+          "end": "Fin",
+          "startBid": "Puja Inicial",
+          "currentBid": "Puja Actual",
+          "buyNow": "Compra Inmediata",
+          "reserve": "Reserva",
+          "status": "Estado",
+          "bids": "Pujas",
+          "actions": "Acciones"
+        },
+        "footer": "Mostrando {{visible}} de {{total}} subastas",
+        "pagination": "Página {{current}} de {{total}}",
+        "delete": {
+          "title": "Eliminar Subasta",
+          "confirm": "Eliminar",
+          "message": "¿Estás seguro de que quieres eliminar esta subasta? Esta acción no se puede deshacer.",
+          "hasBids": "Nota: Esta subasta tiene pujas y no se puede eliminar."
+        },
+        "close": {
+          "title": "Cerrar Subasta",
+          "confirm": "Cerrar Subasta",
+          "message": "¿Estás seguro de que quieres cerrar esta subasta? Esto impedirá que se realicen nuevas pujas."
+        }
+      },
       "details": {
         "title": "Detalles de Subasta",
         "toast": {

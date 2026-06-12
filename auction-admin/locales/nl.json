@@ -628,7 +628,8 @@
           "debug": "Foutopsporing: {{count}} resultaten gevonden",
           "resultsTitle": "Zoekresultaten",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Echte API mislukt: {{message}}. Gebruik van demogegevens."
+          "apiFallback": "Echte API mislukt: {{message}}. Gebruik van demogegevens.",
+          "error": "Kan producten niet zoeken. Probeer het opnieuw."
         },
         "selectedProduct": {
           "title": "Geselecteerde productdetails",

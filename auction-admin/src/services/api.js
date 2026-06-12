@@ -57,9 +57,6 @@ const getShopFromURL = () => {
     }
   }
   
-  if (detectedShop) {
-  }
-
   const userShop = authService.getUser()?.shopDomain;
   if (userShop) {
     if (detectedShop && detectedShop !== userShop) {
@@ -77,6 +74,21 @@ const getShopFromURL = () => {
   // Fallback: return null (will use default backend)
   console.warn('Could not detect shop domain, using default backend');
   return null;
+};
+
+// Memoize the resolved shop so the ~70-line resolver above doesn't re-run on
+// every API request. The shop is stable for the lifetime of the session, so we
+// cache the first definitive (non-null) result and reuse it thereafter.
+let cachedShop = null;
+const getCachedShopFromURL = () => {
+  if (cachedShop) {
+    return cachedShop;
+  }
+  const resolved = getShopFromURL();
+  if (resolved) {
+    cachedShop = resolved;
+  }
+  return resolved;
 };
 
 // Create axios instance with dynamic baseURL
@@ -124,7 +136,7 @@ const getAppBridge = () => {
 api.interceptors.request.use(
   async (config) => {
     // Get shop domain and determine backend URL
-    const shopDomain = getShopFromURL();
+    const shopDomain = getCachedShopFromURL();
     const apiBaseUrl = getApiBaseUrl(shopDomain); // returns "/api" (relative)
     
     // Force relative base URL; frontend must never know backend domain
@@ -310,7 +322,7 @@ export const auctionAPI = {
 
   // Get Shopify product details for store redirect
   getShopifyProduct: async (productId, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get(`/shopify/products/${productId}`, {
       params: { shop: shopDomain }
     });
@@ -322,7 +334,7 @@ export const auctionAPI = {
 export const shopifyAPI = {
   // Product operations
   searchProducts: async (query, limit = 10, shop = null, options = {}) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get('/shopify/products/search', {
       params: { q: query, limit, shop: shopDomain },
       ...(options.signal ? { signal: options.signal } : {})
@@ -331,7 +343,7 @@ export const shopifyAPI = {
   },
 
   getProductSuggestions: async (query, limit = 20, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get('/shopify/products/suggestions', {
       params: { q: query, limit, shop: shopDomain }
     });
@@ -339,7 +351,7 @@ export const shopifyAPI = {
   },
 
   getProduct: async (productId, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get(`/shopify/products/${productId}`, {
       params: { shop: shopDomain }
     });
@@ -347,7 +359,7 @@ export const shopifyAPI = {
   },
 
   getAllProducts: async (limit = 50, pageInfo = null, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const params = { limit, shop: shopDomain };
     if (pageInfo) params.page_info = pageInfo;
     const response = await api.get('/shopify/products', { params });
@@ -355,7 +367,7 @@ export const shopifyAPI = {
   },
 
   validateProduct: async (productId, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get(`/shopify/products/${productId}/validate`, {
       params: { shop: shopDomain }
     });
@@ -363,7 +375,7 @@ export const shopifyAPI = {
   },
 
   getProductInventory: async (productId, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get(`/shopify/products/${productId}/inventory`, {
       params: { shop: shopDomain }
     });
@@ -371,13 +383,13 @@ export const shopifyAPI = {
   },
 
   getProducts: async (productIds, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.post('/shopify/products/batch', { productIds, shop: shopDomain });
     return response.data;
   },
 
   getProductByHandle: async (handle, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get(`/shopify/products/handle/${handle}`, {
       params: { shop: shopDomain }
     });
@@ -385,7 +397,7 @@ export const shopifyAPI = {
   },
 
   getProductsByVendor: async (vendor, limit = 50, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get(`/shopify/products/vendor/${vendor}`, {
       params: { limit, shop: shopDomain }
     });
@@ -393,7 +405,7 @@ export const shopifyAPI = {
   },
 
   getProductsByType: async (productType, limit = 50, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get(`/shopify/products/type/${productType}`, {
       params: { limit, shop: shopDomain }
     });
@@ -401,7 +413,7 @@ export const shopifyAPI = {
   },
 
   getProductsByTags: async (tags, limit = 50, shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.post('/shopify/products/tags', { tags, shop: shopDomain }, {
       params: { limit }
     });
@@ -409,7 +421,7 @@ export const shopifyAPI = {
   },
 
   getServiceStatus: async (shop = null) => {
-    const shopDomain = shop || getShopFromURL();
+    const shopDomain = shop || getCachedShopFromURL();
     const response = await api.get('/shopify/status', {
       params: { shop: shopDomain }
     });
@@ -474,7 +486,7 @@ export const customizationSettingsAPI = {
 
 export const marketplaceCustomizationAPI = {
   async getSettings() {
-    const shop = getShopFromURL();
+    const shop = getCachedShopFromURL();
     const response = await api.get('/marketplace-customization', {
       params: shop ? { shop } : undefined
     });
@@ -482,7 +494,7 @@ export const marketplaceCustomizationAPI = {
   },
 
   async saveSettings(settings) {
-    const shop = getShopFromURL();
+    const shop = getCachedShopFromURL();
     const response = await api.post('/marketplace-customization', settings, {
       params: shop ? { shop } : undefined
     });
@@ -537,7 +549,7 @@ export const onboardingAPI = {
     // No timeout - let axios handle it with its 10s global timeout
     // Backend endpoint is instant, but network latency may vary
     try {
-      const shop = getShopFromURL();
+      const shop = getCachedShopFromURL();
 
       const response = await api.get('/onboarding/status', {
         params: shop ? { shop } : {},

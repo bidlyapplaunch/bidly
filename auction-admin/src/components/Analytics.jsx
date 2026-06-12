@@ -38,9 +38,7 @@ const Analytics = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Debug authentication
-      const token = localStorage.getItem('authToken');
+
       const response = await analyticsAPI.getAnalytics(period);
       setAnalytics(response.data);
     } catch (err) {
@@ -111,7 +109,14 @@ const Analytics = () => {
     );
   }
 
-  const { summary, revenue, bidding, topAuctions, recentActivity, dailyStats } = analytics;
+  const {
+    summary = {},
+    revenue = {},
+    bidding = {},
+    topAuctions = [],
+    recentActivity = [],
+    dailyStats = []
+  } = analytics;
 
   // Prepare daily stats for the chart
   const recentDailyStats = dailyStats.slice(-7); // Last 7 days

@@ -628,7 +628,8 @@
           "debug": "デバッグ: {{count}} 結果が見つかりました",
           "resultsTitle": "検索結果",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "実際の API が失敗しました: {{message}}。デモデータを使用します。"
+          "apiFallback": "実際の API が失敗しました: {{message}}。デモデータを使用します。",
+          "error": "商品を検索できませんでした。もう一度お試しください。"
         },
         "selectedProduct": {
           "title": "選択した製品の詳細",

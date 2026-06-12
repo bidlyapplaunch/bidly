@@ -628,7 +628,8 @@
           "debug": "Debug: risultati {{count}} trovati",
           "resultsTitle": "Risultati della ricerca",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "API reale non riuscita: {{message}}. Utilizzo dei dati dimostrativi."
+          "apiFallback": "API reale non riuscita: {{message}}. Utilizzo dei dati dimostrativi.",
+          "error": "Impossibile cercare i prodotti. Riprova."
         },
         "selectedProduct": {
           "title": "Dettagli del prodotto selezionato",

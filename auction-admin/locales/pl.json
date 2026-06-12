@@ -628,7 +628,8 @@
           "debug": "Debug: znaleziono {{count}} wyników",
           "resultsTitle": "Wyniki wyszukiwania",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Prawdziwe API nie powiodło się: {{message}}. Używanie danych demonstracyjnych."
+          "apiFallback": "Prawdziwe API nie powiodło się: {{message}}. Używanie danych demonstracyjnych.",
+          "error": "Nie udało się wyszukać produktów. Spróbuj ponownie."
         },
         "selectedProduct": {
           "title": "Szczegóły wybranego produktu",

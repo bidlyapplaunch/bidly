@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Page,
   Layout,
@@ -6,7 +6,8 @@ import {
   Text,
   Button,
   Banner,
-  Tabs
+  Tabs,
+  Modal
 } from '@shopify/polaris';
 import { PlusMinor } from '@shopify/polaris-icons';
 import AuctionTable from './AuctionTable';
@@ -34,7 +35,8 @@ const Dashboard = ({ onLogout }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastError, setToastError] = useState(false);
-  
+  const [planLimitModalOpen, setPlanLimitModalOpen] = useState(false);
+
   // Get shop information from App Bridge
   const shopInfo = getShopInfo();
   const [shopifyProducts, setShopifyProducts] = useState([]);
@@ -44,44 +46,49 @@ const Dashboard = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Keep a stable ref to i18n so the socket effect can read the latest
+  // translations without re-subscribing on every locale/render change.
+  const i18nRef = useRef(i18n);
+  useEffect(() => {
+    i18nRef.current = i18n;
+  }, [i18n]);
+
   useEffect(() => {
     fetchStats();
     fetchShopifyProducts();
     fetchPlan();
-    
+
     // Set up WebSocket connection for real-time updates
-    const socket = socketService.connect();
-    
+    socketService.connect();
+
     // Listen for auction status updates
     const handleStatusUpdate = (statusData) => {
-      
       // Refresh stats and auction list when status changes
       fetchStats();
       setRefreshTrigger(prev => prev + 1);
-      
+
       // Show notification for status changes
-      setToastMessage(i18n.translate('admin.auctions.toast.statusUpdate', {
+      setToastMessage(i18nRef.current.translate('admin.auctions.toast.statusUpdate', {
         status: statusData.newStatus
       }));
       setShowToast(true);
     };
-    
+
     // Listen for bid updates
-    const handleBidUpdate = (bidData) => {
-      
+    const handleBidUpdate = () => {
       // Refresh stats and auction list when bids are placed
       fetchStats();
       setRefreshTrigger(prev => prev + 1);
     };
-    
+
     socketService.onStatusUpdate(handleStatusUpdate);
     socketService.onBidUpdate(handleBidUpdate);
-    
+
     return () => {
       socketService.offStatusUpdate(handleStatusUpdate);
       socketService.offBidUpdate(handleBidUpdate);
     };
-  }, [i18n]);
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -185,12 +192,8 @@ const Dashboard = ({ onLogout }) => {
         setToastMessage(`${limitMessage} ${upgradeMessage}`);
         setToastError(true);
         setShowToast(true);
-        // Show prompt after toast is visible
-        setTimeout(() => {
-          if (window.confirm(i18n.translate('admin.billing.planUpgradeConfirm'))) {
-            navigate(`/plans${location.search || ''}`);
-          }
-        }, 3000);
+        // Prompt the merchant to upgrade via an in-app modal
+        setPlanLimitModalOpen(true);
         return;
       }
       
@@ -221,7 +224,7 @@ const Dashboard = ({ onLogout }) => {
     }
 
     // Generate customer dashboard URL with shop parameter
-    const customerUrl = `https://${currentShop}/apps/bidly?shop=${currentShop}`;
+    const customerUrl = `https://${currentShop}/apps/bidly?shop=${encodeURIComponent(currentShop)}`;
     
     // Open in new tab
     window.open(customerUrl, '_blank');
@@ -419,6 +422,32 @@ const Dashboard = ({ onLogout }) => {
           auction={selectedAuction}
           onRefresh={handleRefresh}
         />
+
+        {/* Plan limit upgrade prompt */}
+        <Modal
+          open={planLimitModalOpen}
+          onClose={() => setPlanLimitModalOpen(false)}
+          title={i18n.translate('admin.billing.planUpgradeConfirm')}
+          primaryAction={{
+            content: i18n.translate('admin.common.viewPlans'),
+            onAction: () => {
+              setPlanLimitModalOpen(false);
+              navigate(`/plans${location.search || ''}`);
+            }
+          }}
+          secondaryActions={[
+            {
+              content: i18n.translate('admin.common.cancel'),
+              onAction: () => setPlanLimitModalOpen(false)
+            }
+          ]}
+        >
+          <Modal.Section>
+            <Text variant="bodyMd" as="p">
+              {i18n.translate('admin.billing.planUpgradePrompt')}
+            </Text>
+          </Modal.Section>
+        </Modal>
 
         {/* App Bridge Toast */}
         {showToast && (

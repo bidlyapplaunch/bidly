@@ -562,8 +562,8 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {(expandedBlast.recipients || []).slice(0, 50).map((r, i) => (
-                                      <tr key={i} style={{ borderTop: '1px solid #eee' }}>
+                                    {(expandedBlast.recipients || []).slice(0, 50).map((r) => (
+                                      <tr key={r.email} style={{ borderTop: '1px solid #eee' }}>
                                         <td style={{ padding: '4px 8px' }}>{r.email}</td>
                                         <td style={{ padding: '4px 8px' }}>{r.displayName}</td>
                                         <td style={{ padding: '4px 8px', textAlign: 'center' }}>

@@ -628,7 +628,8 @@
           "debug": "디버그: {{count}} 결과가 발견되었습니다.",
           "resultsTitle": "검색결과",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "실제 API 실패: {{message}}. 데모 데이터를 사용합니다."
+          "apiFallback": "실제 API 실패: {{message}}. 데모 데이터를 사용합니다.",
+          "error": "상품을 검색할 수 없습니다. 다시 시도해 주세요."
         },
         "selectedProduct": {
           "title": "선택한 제품 세부정보",

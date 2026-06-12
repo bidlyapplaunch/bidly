@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Card,
   DataTable,
@@ -116,7 +116,19 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
     }
   };
 
-  const getStatusBadge = (status, auction) => {
+  // Status map for non-ended statuses. Hoisted out of the per-row function so it
+  // isn't rebuilt for every row. The `ended` status is resolved by the
+  // reserve/winner-aware branch below and never reaches this map.
+  const statusMap = useMemo(
+    () => ({
+      pending: { status: 'warning', children: i18n.translate('admin.analytics.status.pending') },
+      active: { status: 'success', children: i18n.translate('admin.analytics.status.active') },
+      closed: { status: 'critical', children: i18n.translate('admin.analytics.status.closed') }
+    }),
+    [i18n]
+  );
+
+  const getStatusBadge = useCallback((status, auction) => {
     // Normalize legacy / special statuses into the same display rules
     if (status === 'reserve_not_met') {
       return <Badge status="warning">{i18n.translate('admin.auctions.table.status.reserveNotMet')}</Badge>;
@@ -140,25 +152,72 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
       return <Badge status="success">{i18n.translate('admin.auctions.table.status.ended')}</Badge>;
     }
 
-    const statusMap = {
-      pending: { status: 'warning', children: i18n.translate('admin.analytics.status.pending') },
-      active: { status: 'success', children: i18n.translate('admin.analytics.status.active') },
-      ended: { status: 'info', children: i18n.translate('admin.analytics.status.ended') },
-      closed: { status: 'critical', children: i18n.translate('admin.analytics.status.closed') }
-    };
     return <Badge {...statusMap[status]} />;
-  };
+  }, [i18n, statusMap]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = useCallback((amount) => {
     return new Intl.NumberFormat(i18n.locale || 'en', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
-  };
+  }, [i18n]);
 
-  const formatDate = (date, formatStr = 'MMM dd, yyyy HH:mm') => {
+  const formatDate = useCallback((date, formatStr = 'MMM dd, yyyy HH:mm') => {
     return format(new Date(date), formatStr);
-  };
+  }, []);
+
+  const handleViewInStore = useCallback(async (auction) => {
+    try {
+      // Get the shop domain from the current context
+      const urlParams = new URLSearchParams(window.location.search);
+      const shop = urlParams.get('shop');
+
+      if (!shop) {
+        console.error('No shop domain found in URL');
+        setToastMessage(i18n.translate('admin.auctions.table.errors.noShop'));
+        setToastError(true);
+        setShowToast(true);
+        return;
+      }
+
+      // Get the Shopify product ID
+      const shopifyProductId = auction.shopifyProductId;
+      if (!shopifyProductId) {
+        console.error('No Shopify product ID found for auction:', auction.id);
+        setToastMessage(i18n.translate('admin.auctions.table.errors.noProductId'));
+        setToastError(true);
+        setShowToast(true);
+        return;
+      }
+
+      const shopSegment = encodeURIComponent(shop);
+
+      // Try to get product details from Shopify API
+      try {
+        const response = await auctionAPI.getShopifyProduct(shopifyProductId, shop);
+        const product = response.data;
+
+        if (product && product.handle) {
+          // Use the product handle to construct the URL
+          const productUrl = `https://${shopSegment}/products/${encodeURIComponent(product.handle)}`;
+          window.open(productUrl, '_blank');
+        } else {
+          // Fallback: try to construct URL with product ID
+          const productUrl = `https://${shopSegment}/products/${encodeURIComponent(shopifyProductId)}`;
+          window.open(productUrl, '_blank');
+        }
+      } catch (apiError) {
+        // Fallback: construct URL with product ID
+        const productUrl = `https://${shopSegment}/products/${encodeURIComponent(shopifyProductId)}`;
+        window.open(productUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening product in store:', error);
+      setToastMessage(i18n.translate('admin.auctions.table.errors.openInStore'));
+      setToastError(true);
+      setShowToast(true);
+    }
+  }, [i18n]);
 
   const rows = useMemo(() => auctions.map((auction) => [
     // Product Name - truncated for better fit
@@ -222,7 +281,7 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
         </Button>
       )}
     </div>
-  ]), [auctions, i18n, onEdit, onView]);
+  ]), [auctions, i18n, onEdit, onView, handleViewInStore, getStatusBadge, formatCurrency, formatDate]);
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
@@ -233,59 +292,6 @@ const AuctionTable = ({ onEdit, onView, onRefresh, refreshTrigger }) => {
   const clearFilters = () => {
     setFilters({ status: '', shopifyProductId: '' });
     setCurrentPage(1);
-  };
-
-  const handleViewInStore = async (auction) => {
-    try {
-      
-      // Get the shop domain from the current context
-      const urlParams = new URLSearchParams(window.location.search);
-      const shop = urlParams.get('shop');
-      
-      if (!shop) {
-        console.error('No shop domain found in URL');
-        setToastMessage(i18n.translate('admin.auctions.table.errors.noShop'));
-        setToastError(true);
-        setShowToast(true);
-        return;
-      }
-
-      // Get the Shopify product ID
-      const shopifyProductId = auction.shopifyProductId;
-      if (!shopifyProductId) {
-        console.error('No Shopify product ID found for auction:', auction.id);
-        setToastMessage(i18n.translate('admin.auctions.table.errors.noProductId'));
-        setToastError(true);
-        setShowToast(true);
-        return;
-      }
-
-      // Try to get product details from Shopify API
-      try {
-        const response = await auctionAPI.getShopifyProduct(shopifyProductId, shop);
-        const product = response.data;
-        
-        if (product && product.handle) {
-          // Use the product handle to construct the URL
-          const productUrl = `https://${shop}/products/${product.handle}`;
-          window.open(productUrl, '_blank');
-        } else {
-          // Fallback: try to construct URL with product ID
-          const productUrl = `https://${shop}/products/${shopifyProductId}`;
-          window.open(productUrl, '_blank');
-        }
-      } catch (apiError) {
-        // Fallback: construct URL with product ID
-        const productUrl = `https://${shop}/products/${shopifyProductId}`;
-        window.open(productUrl, '_blank');
-      }
-      
-    } catch (error) {
-      console.error('Error opening product in store:', error);
-      setToastMessage(i18n.translate('admin.auctions.table.errors.openInStore'));
-      setToastError(true);
-      setShowToast(true);
-    }
   };
 
   if (error) {

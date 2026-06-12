@@ -16,39 +16,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { shopifyAPI } from '../services/api';
 import useAdminI18n from '../hooks/useAdminI18n';
 
-// Mock products for development
-const getMockProducts = (query) => {
-  const mockProducts = [
-    {
-      id: 1,
-      title: 'Yellow Snowboard',
-      vendor: 'SnowSports Co',
-      price: '$299.99',
-      images: [{ src: 'https://via.placeholder.com/150x150/FFFF00/000000?text=Yellow+Snowboard', alt: 'Yellow Snowboard' }]
-    },
-    {
-      id: 2,
-      title: 'Blue Winter Jacket',
-      vendor: 'WinterWear',
-      price: '$149.99',
-      images: [{ src: 'https://via.placeholder.com/150x150/0000FF/FFFFFF?text=Blue+Jacket', alt: 'Blue Winter Jacket' }]
-    },
-    {
-      id: 3,
-      title: 'Red Ski Boots',
-      vendor: 'SkiGear Pro',
-      price: '$199.99',
-      images: [{ src: 'https://via.placeholder.com/150x150/FF0000/FFFFFF?text=Red+Boots', alt: 'Red Ski Boots' }]
-    }
-  ];
-
-  // Filter based on query
-  return mockProducts.filter(product => 
-    product.title.toLowerCase().includes(query.toLowerCase()) ||
-    product.vendor.toLowerCase().includes(query.toLowerCase())
-  );
-};
-
 const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
   const i18n = useAdminI18n();
   const navigate = useNavigate();
@@ -178,7 +145,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         const isConfigured = status.configured === true || status.hasAccessToken === true;
         setShopifyConfigured(isConfigured);
       } catch (error) {
-        // On error, still allow search (will fallback to mock data if needed)
+        // On error, still allow search; the search itself surfaces failures
         setShopifyConfigured(true);
       }
     };
@@ -207,36 +174,22 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
         abortControllerRef.current = new AbortController();
         const { signal } = abortControllerRef.current;
 
-        // Try real API first
         try {
           const response = await shopifyAPI.searchProducts(value, 10, null, { signal });
 
-          // Check if the response has the expected structure
-          if (response && Array.isArray(response)) {
-            const products = response;
-            if (products.length > 0) {
-              setSearchResults(products);
-            } else {
-              throw new Error('No products found from real API');
-            }
-          } else {
-            throw new Error('Invalid response structure from API');
-          }
+          // Empty / unexpected response is treated as "no results", not an error
+          const products = Array.isArray(response) ? response : [];
+          setSearchResults(products);
+          setSearchError(null);
         } catch (error) {
           // Ignore AbortError -- it means a newer search replaced this one
           if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
             return;
           }
 
-          // Fallback to mock data
-          const mockProducts = getMockProducts(value);
-          if (mockProducts.length > 0) {
-            setSearchResults(mockProducts);
-            setSearchError(null);
-          } else {
-            setSearchResults([]);
-            setSearchError(null);
-          }
+          // Surface a real failure instead of falling back to fake products
+          setSearchResults([]);
+          setSearchError(i18n.translate('admin.auctions.form.search.error'));
         } finally {
           setSearching(false);
         }
@@ -400,7 +353,12 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave, planInfo }) => {
                 autoComplete="off"
                 placeholder={i18n.translate('admin.auctions.form.search.placeholder')}
               />
-              {!searching && searchResults.length === 0 && productSearchQuery.length > 2 && (
+              {searchError && (
+                <div style={{ marginTop: '8px' }}>
+                  <Banner status="critical">{searchError}</Banner>
+                </div>
+              )}
+              {!searching && !searchError && searchResults.length === 0 && productSearchQuery.length > 2 && (
                 <Text tone="subdued">{i18n.translate('admin.auctions.form.search.noResults')}</Text>
               )}
               {searchResults.length > 0 && (
