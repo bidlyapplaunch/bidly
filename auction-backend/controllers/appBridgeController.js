@@ -94,8 +94,10 @@ export const verifyAppBridgeToken = async (req, res, next) => {
     
     next();
   } catch (error) {
+    // BACKEND-18: return next(...) — throwing here inside an async middleware becomes an
+    // unhandled rejection instead of a clean 401 via the error handler.
     if (error.name === 'JsonWebTokenError') {
-      throw new AppError('Invalid App Bridge token', 401);
+      return next(new AppError('Invalid App Bridge token', 401));
     }
     next(error);
   }

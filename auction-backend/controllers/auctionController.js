@@ -1258,16 +1258,22 @@ export const buyNow = async (req, res, next) => {
 // Refresh Shopify product data for an auction
 export const refreshProductData = async (req, res, next) => {
   try {
-    const auction = await Auction.findById(req.params.id);
-    
+    // Scope by shop so one store can't refresh another store's auction.
+    const auction = await Auction.findOne({
+      _id: req.params.id,
+      shopDomain: req.shopDomain,
+      isDeleted: { $ne: true }
+    });
+
     if (!auction) {
       throw new AppError('Auction not found', 404);
     }
-    
-    // Fetch fresh product data from Shopify
+
+    // Fetch fresh product data from Shopify (BACKEND-17: getProduct takes
+    // (shopDomain, productId) — the single-arg call was silently broken).
     let productData = null;
     try {
-      productData = await getShopifyService().getProduct(auction.shopifyProductId);
+      productData = await getShopifyService().getProduct(auction.shopDomain, auction.shopifyProductId);
     } catch (shopifyError) {
       throw new AppError(`Failed to fetch Shopify product: ${shopifyError.message}`, 400);
     }
@@ -1290,12 +1296,14 @@ export const refreshProductData = async (req, res, next) => {
 // Refresh product data for multiple auctions
 export const refreshAllProductData = async (req, res, next) => {
   try {
-    const auctions = await Auction.find({});
+    // BACKEND-11: scope to the caller's store (was Auction.find({}) across ALL tenants)
+    // and skip soft-deleted auctions.
+    const auctions = await Auction.find({ shopDomain: req.shopDomain, isDeleted: { $ne: true } });
     const results = [];
-    
+
     for (const auction of auctions) {
       try {
-        const productData = await getShopifyService().getProduct(auction.shopifyProductId);
+        const productData = await getShopifyService().getProduct(auction.shopDomain, auction.shopifyProductId);
         auction.productData = productData;
         await auction.save();
         results.push({ auctionId: auction._id, success: true });
@@ -1346,7 +1354,7 @@ export const getAuctionsWithProductData = async (req, res, next) => {
     if (refresh === 'true') {
       for (let auction of auctions) {
         try {
-          const productData = await getShopifyService().getProduct(auction.shopifyProductId);
+          const productData = await getShopifyService().getProduct(auction.shopDomain, auction.shopifyProductId);
           auction.productData = productData;
           
           // Update in database

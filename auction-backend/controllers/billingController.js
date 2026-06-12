@@ -149,9 +149,22 @@ export const confirmSubscription = async (req, res, next) => {
       return res.redirect(redirectUrl.toString());
     }
 
-    const plan = BILLING_PLANS[sanitizePlan(req.query.plan)] || BILLING_PLANS.basic;
+    // Resolve the plan ONLY from the verified Shopify subscription name — never fall back
+    // to the attacker-controllable ?plan= query param, which would let a crafted redirect
+    // set a higher plan than was actually paid for. (BACKEND-16)
     const planFromName = sanitizePlan(subscription.name);
-    const resolvedPlanKey = planFromName in BILLING_PLANS ? planFromName : plan.key;
+    const resolvedPlanKey = planFromName in BILLING_PLANS ? planFromName : null;
+
+    if (!resolvedPlanKey) {
+      console.error('Unable to resolve plan from verified subscription name:', subscription.name);
+      if (!ADMIN_APP_URL) {
+        throw new AppError('ADMIN_APP_URL is not configured', 500);
+      }
+      const pendingUrl = new URL('/plans', ADMIN_APP_URL);
+      pendingUrl.searchParams.set('shop', shop);
+      pendingUrl.searchParams.set('billing', 'pending');
+      return res.redirect(pendingUrl.toString());
+    }
 
     const previousPlan = sanitizePlan(req.store.plan || DEFAULT_PLAN);
     req.store.plan = resolvedPlanKey;

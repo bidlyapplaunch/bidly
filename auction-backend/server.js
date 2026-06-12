@@ -965,6 +965,11 @@ io.on('connection', (socket) => {
     
     // Initialize room if it doesn't exist
     if (!chatRooms.has(productId)) {
+      // Evict the oldest-inserted room when at capacity (Map preserves insertion order).
+      if (chatRooms.size >= MAX_CHAT_ROOMS) {
+        const oldestKey = chatRooms.keys().next().value;
+        if (oldestKey !== undefined) chatRooms.delete(oldestKey);
+      }
       chatRooms.set(productId, []);
     }
     
@@ -1004,6 +1009,9 @@ io.on('connection', (socket) => {
 // In-memory store for chat messages (per product room) - shared across all connections
 const chatRooms = new Map(); // productId -> [{ id, username, message, timestamp }]
 const MAX_CHAT_MESSAGES_PER_ROOM = 100;
+// Hard cap on the number of rooms so a store browsing many products can't grow the map
+// without bound between the hourly idle-cleanup passes. (BACKEND-21)
+const MAX_CHAT_ROOMS = 1000;
 
 // Clean up expired chat rooms every hour
 setInterval(() => {
