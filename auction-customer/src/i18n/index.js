@@ -86,7 +86,8 @@ export function t(key, params = {}, fallback = null) {
         if (value && typeof value === 'object' && fallbackKey in value) {
           value = value[fallbackKey];
         } else {
-          return fallback !== null ? fallback : '';
+          // English also lacks the key: return the explicit fallback, or the key itself
+          return fallback !== null ? fallback : key;
         }
       }
       break;
@@ -103,7 +104,7 @@ export function t(key, params = {}, fallback = null) {
     return result;
   }
 
-  return fallback !== null ? fallback : '';
+  return fallback !== null ? fallback : key;
 }
 
 export function getTranslationsForLocale(locale) {

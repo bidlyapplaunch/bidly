@@ -78,8 +78,8 @@ api.interceptors.response.use(
 // Auction API endpoints
 export const auctionAPI = {
   // Get all visible auctions (pending and active)
-  getVisibleAuctions: async () => {
-    const response = await api.get('/auctions');
+  getVisibleAuctions: async (signal) => {
+    const response = await api.get('/auctions', { signal });
     return response.data;
   },
 

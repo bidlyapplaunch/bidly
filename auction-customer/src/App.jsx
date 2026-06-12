@@ -15,6 +15,7 @@ import socketService from './services/socket';
 import customerAuthService from './services/customerAuth';
 import AuctionCard from './components/AuctionCard';
 import CustomerAuth from './components/CustomerAuth';
+import ErrorBoundary from './components/ErrorBoundary';
 import themeService from './services/themeService';
 import { t } from './i18n';
 
@@ -84,6 +85,10 @@ function App() {
     return shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
   }, []); // empty deps since shop domain doesn't change
 
+  // Guard against setting state after unmount and abort in-flight fetches on unmount.
+  const isMountedRef = useRef(true);
+  const fetchAbortRef = useRef(null);
+
   // Customer authentication state - declare before useCallback hooks that depend on them
   const [customer, setCustomer] = useState(null);
   const [customerProfile, setCustomerProfile] = useState(null);
@@ -152,6 +157,7 @@ function App() {
 
   useEffect(() => {
     let isMounted = true;
+    isMountedRef.current = true;
 
     themeService.loadTheme(shop).then((theme) => {
       if (!isMounted || !theme) {
@@ -299,6 +305,10 @@ function App() {
       socketService.disconnect();
       clearInterval(refreshInterval);
       isMounted = false;
+      isMountedRef.current = false;
+      if (fetchAbortRef.current) {
+        fetchAbortRef.current.abort();
+      }
     };
   }, [resolvedShopDomain]);
 
@@ -318,47 +328,65 @@ function App() {
     }
   }, [customer, syncCustomerProfile]);
 
-  // Join auction rooms when auctions are loaded or updated
+  // Track which auction rooms we've already joined so we only emit join-auction
+  // for newly-added auction IDs (not on every bid/poll-triggered auctions change).
+  const joinedAuctionIdsRef = useRef(new Set());
+
   useEffect(() => {
     if (auctions.length > 0 && socketService.isSocketConnected()) {
       auctions.forEach(auction => {
         const auctionId = auction._id || auction.id;
-        if (auctionId) {
+        if (auctionId && !joinedAuctionIdsRef.current.has(auctionId)) {
           socketService.joinAuction(auctionId);
+          joinedAuctionIdsRef.current.add(auctionId);
         }
       });
     }
   }, [auctions]);
 
   const fetchVisibleAuctions = async () => {
+    // Abort any previous in-flight request and start a new one
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
     try {
       setLoading(true);
       setError(null);
-      const response = await auctionAPI.getVisibleAuctions();
+      const response = await auctionAPI.getVisibleAuctions(controller.signal);
+      if (!isMountedRef.current) return;
       // Filter to show pending, active, and ended auctions (exclude only closed)
-      const visibleAuctions = (response.data || []).filter(auction => 
+      const visibleAuctions = (response.data || []).filter(auction =>
         auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
       );
       setAuctions(visibleAuctions.map(normalizeAuction));
     } catch (err) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
+      if (!isMountedRef.current) return;
       console.error('Error fetching auctions:', err);
       setError(t('marketplace.errors.fetchFailed'));
       setAuctions([]);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   // Silent refresh for automatic status updates (no loading spinner)
   const fetchVisibleAuctionsSilent = async () => {
+    const controller = new AbortController();
     try {
-      const response = await auctionAPI.getVisibleAuctions();
+      const response = await auctionAPI.getVisibleAuctions(controller.signal);
+      if (!isMountedRef.current) return;
       // Filter to show pending, active, and ended auctions (exclude only closed)
-      const visibleAuctions = (response.data || []).filter(auction => 
+      const visibleAuctions = (response.data || []).filter(auction =>
         auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
       );
       setAuctions(visibleAuctions.map(normalizeAuction));
     } catch (err) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
       console.error('Error in silent refresh:', err);
       // Don't set error for silent refresh to avoid disrupting user experience
     }
@@ -408,19 +436,28 @@ function App() {
 
       const auctionId = bidData.auctionId;
       const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      await auctionAPI.placeBid(auctionId, {
+      const bidResponse = await auctionAPI.placeBid(auctionId, {
         amount: bidData.amount,
         customerId: activeProfile.id,
         idempotencyKey
       });
-      
+
       const bidderName = activeProfile.displayName || currentDisplayName;
       setToastMessage(t('marketplace.toasts.bidPlaced', { amount: bidData.amount, name: bidderName }));
       setShowToast(true);
-      
-      // Refresh auctions to get updated data
-      await fetchVisibleAuctions();
-      
+
+      // Update only the affected auction from the bid response instead of refetching
+      // all auctions. The incoming socket 'bid-update' also keeps state in sync.
+      const updatedAuction = bidResponse?.auction || bidResponse?.data;
+      if (updatedAuction) {
+        const normalized = normalizeAuction(updatedAuction);
+        setAuctions(prevAuctions =>
+          prevAuctions.map(a =>
+            (a._id === auctionId || a.id === auctionId) ? { ...a, ...normalized } : a
+          )
+        );
+      }
+
     } catch (err) {
       console.error('Error placing bid:', err);
       
@@ -482,19 +519,28 @@ function App() {
       setError(null);
       
       const { auctionId } = data;
-      
-      await auctionAPI.buyNow(auctionId, { customerId: activeProfile.id });
-      
+
+      const buyNowResponse = await auctionAPI.buyNow(auctionId, { customerId: activeProfile.id });
+
       // Find the auction to get product name
       const auction = auctions.find(a => (a._id || a.id) === auctionId);
       const productName = auction?.productData?.title || 'the item';
       const bidderName = activeProfile.displayName || currentDisplayName;
       setToastMessage(t('marketplace.toasts.buyNowSuccess', { name: bidderName, product: productName }));
       setShowToast(true);
-      
-      // Refresh auctions to get updated data
-      await fetchVisibleAuctions();
-      
+
+      // Update only the affected auction from the response instead of refetching all.
+      // The incoming socket 'bid-update' (buyNow) also keeps state in sync.
+      const updatedAuction = buyNowResponse?.auction || buyNowResponse?.data;
+      if (updatedAuction) {
+        const normalized = normalizeAuction(updatedAuction);
+        setAuctions(prevAuctions =>
+          prevAuctions.map(a =>
+            (a._id === auctionId || a.id === auctionId) ? { ...a, ...normalized } : a
+          )
+        );
+      }
+
     } catch (err) {
       console.error('Error buying now:', err);
       
@@ -615,13 +661,15 @@ function App() {
             <Layout>
               {auctions.map((auction) => (
                 <Layout.Section oneHalf key={auction._id || auction.id}>
-                  <AuctionCard 
-                    auction={auction} 
-                    shopDomain={resolvedShopDomain}
-                    onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
-                    onBuyNow={() => handleBuyNow({ auctionId: auction._id || auction.id })}
-                    isLoading={bidLoading || customerSyncing}
-                  />
+                  <ErrorBoundary>
+                    <AuctionCard
+                      auction={auction}
+                      shopDomain={resolvedShopDomain}
+                      onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
+                      onBuyNow={() => handleBuyNow({ auctionId: auction._id || auction.id })}
+                      isLoading={bidLoading || customerSyncing}
+                    />
+                  </ErrorBoundary>
                 </Layout.Section>
               ))}
             </Layout>

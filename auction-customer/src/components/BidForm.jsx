@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { 
   Card, 
   FormLayout, 
@@ -11,11 +11,25 @@ import {
 } from '@shopify/polaris';
 import { t } from '../i18n';
 
-const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
+const BidForm = forwardRef(({ auction, onBidPlaced, onBuyNow, isLoading }, ref) => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
   const formRef = useRef(null);
+
+  // Expose a submit method so a parent (e.g. the bid modal's primary action)
+  // can submit this specific form rather than the first <form> on the page.
+  useImperativeHandle(ref, () => ({
+    submit: () => {
+      const form = formRef.current;
+      if (!form) return;
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+      } else {
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      }
+    }
+  }), []);
 
   const increment = auction.minBidIncrement || 1;
   const minBid = auction.currentBid > 0 ? auction.currentBid + increment : auction.startingBid;
@@ -199,6 +213,8 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
     )}
     </>
   );
-};
+});
+
+BidForm.displayName = 'BidForm';
 
 export default BidForm;

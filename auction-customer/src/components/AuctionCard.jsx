@@ -19,6 +19,21 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
     : null;
   const [detailsModalOpen, setDetailsModalOpen] = React.useState(false);
   const [bidModalOpen, setBidModalOpen] = React.useState(false);
+  // Tracks whether a bid/buy-now submitted from this modal is in flight, so the
+  // modal stays open (showing a loading state) until the action resolves.
+  const [bidSubmitting, setBidSubmitting] = React.useState(false);
+  const bidFormRef = React.useRef(null);
+  const prevLoadingRef = React.useRef(isLoading);
+
+  // Close the bid modal once a submission we initiated has finished resolving
+  // (isLoading transitions from true back to false).
+  React.useEffect(() => {
+    if (bidSubmitting && prevLoadingRef.current && !isLoading) {
+      setBidSubmitting(false);
+      setBidModalOpen(false);
+    }
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, bidSubmitting]);
 
   const getBidderName = (bid) => bid?.displayName || bid?.bidder || t('marketplace.anonymous');
 
@@ -64,7 +79,7 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
             </Text>
           </div>
           <Badge status={getStatusColor(auction.status)}>
-            {t(`marketplace.status.${auction.status.toLowerCase()}`)}
+            {t(`marketplace.status.${(auction.status || 'pending').toLowerCase()}`)}
           </Badge>
         </div>
 
@@ -312,13 +327,12 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
         primaryAction={auction.status === 'active' ? {
           content: t('marketplace.auction_card.placeBid'),
           onAction: () => {
-            // Trigger form submission
-            const form = document.querySelector('form');
-            if (form) {
-              const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-              form.dispatchEvent(submitEvent);
+            // Submit this auction's specific bid form (via ref, not a global query)
+            if (bidFormRef.current) {
+              bidFormRef.current.submit();
             }
           },
+          loading: isLoading,
           disabled: isLoading
         } : undefined}
         secondaryActions={auction.status === 'active' && auction.buyNowPrice ? [{
@@ -328,6 +342,7 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
             const buyNowButton = document.querySelector('[data-buy-now-trigger]');
             if (buyNowButton) buyNowButton.click();
           },
+          loading: isLoading,
           disabled: isLoading,
           tone: 'critical'
         }] : undefined}
@@ -359,15 +374,18 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
 
           {/* Bid Form - Only shown for active auctions */}
           {auction.status === 'active' && (
-            <BidForm 
-              auction={auction} 
+            <BidForm
+              ref={bidFormRef}
+              auction={auction}
               onBidPlaced={(bidData) => {
+                // Keep the modal open until the bid resolves (closed by the effect
+                // watching isLoading). This surfaces loading state and failures.
+                setBidSubmitting(true);
                 onBidPlaced(bidData);
-                setBidModalOpen(false); // Close modal after successful bid
               }}
               onBuyNow={() => {
+                setBidSubmitting(true);
                 onBuyNow();
-                setBidModalOpen(false); // Close modal after buy now
               }}
               isLoading={isLoading}
             />
