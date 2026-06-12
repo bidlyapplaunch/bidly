@@ -97,12 +97,12 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      active: { status: 'success', children: 'Active' },
-      closed: { status: 'critical', children: 'Closed' },
-      ended: { status: 'info', children: 'Ended' },
-      draft: { status: 'warning', children: 'Draft' }
+      active: { tone: 'success', children: 'Active' },
+      closed: { tone: 'critical', children: 'Closed' },
+      ended: { tone: 'info', children: 'Ended' },
+      draft: { tone: 'warning', children: 'Draft' }
     };
-    const config = statusMap[status] || { status: 'info', children: status?.toUpperCase() || 'UNKNOWN' };
+    const config = statusMap[status] || { tone: 'info', children: status?.toUpperCase() || 'UNKNOWN' };
     return <Badge {...config} />;
   };
 
@@ -114,11 +114,11 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     const end = new Date(auctionData.endTime);
     
     if (now < start) {
-      return <Badge status="info">Not Started</Badge>;
+      return <Badge tone="info">Not Started</Badge>;
     } else if (now > end) {
-      return <Badge status="critical">Ended</Badge>;
+      return <Badge tone="critical">Ended</Badge>;
     } else {
-      return <Badge status="success">Live</Badge>;
+      return <Badge tone="success">Live</Badge>;
     }
   };
 

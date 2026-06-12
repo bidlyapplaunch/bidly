@@ -6,14 +6,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const repoRoot = join(__dirname, '..');
 
-const shouldSkip = process.env.SKIP_ADMIN_BUILD === '1';
+// The standalone `auction-admin` dashboard is an unrelated codebase that is
+// deployed separately. The Shopify/Remix app build must NOT depend on it, so we
+// skip it by default. Opt in explicitly with BUILD_ADMIN=1 if you really want
+// this script to also build auction-admin.
+const shouldBuildAdmin = process.env.BUILD_ADMIN === '1';
 
-if (shouldSkip) {
-  console.log('Skipping admin build because SKIP_ADMIN_BUILD=1');
+if (!shouldBuildAdmin) {
+  console.log('Skipping auction-admin build (set BUILD_ADMIN=1 to include it).');
   process.exit(0);
 }
 
-console.log('Building admin frontend...');
+console.log('Building auction-admin frontend...');
 const buildProcess = spawn('npm', ['run', 'build'], {
   cwd: join(repoRoot, 'auction-admin'),
   shell: true,
@@ -23,4 +27,3 @@ const buildProcess = spawn('npm', ['run', 'build'], {
 buildProcess.on('exit', (code) => {
   process.exit(code ?? 0);
 });
-

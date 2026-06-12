@@ -14,18 +14,41 @@ export async function connectMongoDB() {
   }
 
   if (mongoose.connection.readyState === 2) {
-    // Already connecting — wait for that attempt to finish
-    await new Promise(resolve => mongoose.connection.once('connected', resolve));
-    return mongoose.connection;
+    // Already connecting — wait for that attempt to finish, but never hang
+    // forever: bail out on connection errors or after a timeout.
+    try {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('Timed out waiting for in-progress MongoDB connection'));
+        }, 10000);
+
+        const onConnected = () => {
+          cleanup();
+          resolve();
+        };
+        const onError = (err) => {
+          cleanup();
+          reject(err);
+        };
+        const cleanup = () => {
+          clearTimeout(timer);
+          mongoose.connection.off('connected', onConnected);
+          mongoose.connection.off('error', onError);
+        };
+
+        mongoose.connection.once('connected', onConnected);
+        mongoose.connection.once('error', onError);
+      });
+      return mongoose.connection;
+    } catch (error) {
+      console.error('❌ MongoDB connection wait failed:', error.message);
+      return null;
+    }
   }
 
   try {
     const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/bidly-auctions';
-
-    if (!mongoURI) {
-      console.warn('MONGODB_URI not set, GDPR webhooks may not work correctly');
-      return null;
-    }
 
     await mongoose.connect(mongoURI);
     return mongoose.connection;

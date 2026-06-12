@@ -65,7 +65,7 @@ const Analytics = () => {
 
   if (error) {
     return (
-      <Banner status="critical">
+      <Banner tone="critical">
         <p>{error}</p>
       </Banner>
     );
@@ -99,7 +99,7 @@ const Analytics = () => {
         <Text variant="bodyMd" as="span">{auction.totalBids || 0}</Text>
       </IndexTable.Cell>
       <IndexTable.Cell>
-        <Badge status={auction.status === 'ended' ? 'success' : 'info'}>
+        <Badge tone={auction.status === 'ended' ? 'success' : 'info'}>
           {auction.status?.toUpperCase() || 'UNKNOWN'}
         </Badge>
       </IndexTable.Cell>

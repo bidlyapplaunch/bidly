@@ -3,6 +3,7 @@
  * This ensures all client-side requests include session tokens for Shopify compliance
  */
 
+import { useMemo } from "react";
 import { authenticatedFetch } from "@shopify/app-bridge/utilities";
 
 /**
@@ -24,9 +25,6 @@ export function createAuthenticatedFetch(app) {
  * Use this in React components
  */
 export function useAuthenticatedFetch(app) {
-  if (!app) {
-    return fetch;
-  }
-  return authenticatedFetch(app);
+  return useMemo(() => (app ? authenticatedFetch(app) : fetch), [app]);
 }
 
