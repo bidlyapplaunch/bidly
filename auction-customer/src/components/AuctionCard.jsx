@@ -38,6 +38,17 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
 
   const getBidderName = (bid) => bid?.displayName || bid?.bidder || t('marketplace.anonymous');
 
+  // Derive the winning bid as the entry with the highest amount rather than
+  // assuming the history is sorted ascending (bidHistory[length - 1]). Ordering
+  // changes (e.g. synthetic/socket-merged entries) cannot show the wrong winner.
+  const getWinningBid = (bidHistory) => {
+    if (!Array.isArray(bidHistory) || bidHistory.length === 0) return null;
+    return bidHistory.reduce(
+      (best, bid) => (Number(bid?.amount) > Number(best?.amount) ? bid : best),
+      bidHistory[0]
+    );
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -133,7 +144,7 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
               </Text>
               {auction.status === 'ended' && auction.bidHistory && auction.bidHistory.length > 0 && (
                 <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-accent, #2563eb)', fontWeight: 'bold' }}>
-                  {t('marketplace.auction_card.winner', { name: getBidderName(auction.bidHistory[auction.bidHistory.length - 1]) })}
+                  {t('marketplace.auction_card.winner', { name: getBidderName(getWinningBid(auction.bidHistory)) })}
                 </Text>
               )}
             </div>

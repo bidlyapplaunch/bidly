@@ -1,7 +1,9 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 import {
   getAllAuctions,
   getAuctionById,
@@ -20,6 +22,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+
+// INT-12: same bid rate limiter config as auctionRoutes.js (15 bids/min per shop+IP).
+// Defined inline here because the auctionRoutes limiter is not exported.
+const bidRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 15, // 15 bids per minute per shop+IP combo
+  keyGenerator: (req, res) => `${req.shopDomain || 'unknown'}:${rateLimit.ipKeyGenerator(req, res)}`,
+  message: { success: false, message: 'Too many bid attempts. Please wait a moment before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || '2025-10';
 // Require APP_URL - no hardcoded fallback
@@ -208,6 +221,10 @@ router.get('/', async (req, res) => {
 
     const shopDomain = req.shopDomain;
     const baseProxyPath = req.baseUrl || '/apps/bidly';
+    // Per-response nonce so the inline config <script> below is allowed by CSP without
+    // 'unsafe-inline'. Without this the script is blocked, BidlyBackendConfig/BidlyHybridLogin
+    // never initialize, and the marketplace can't resolve its API base or login state.
+    const cspNonce = crypto.randomBytes(16).toString('base64');
     const returnPath = `${baseProxyPath}?shop=${encodeURIComponent(shopDomain)}`;
     const loginUrl = `/account/login?return_to=${encodeURIComponent(returnPath)}`;
     const logoutUrl = `/account/logout?return_to=${encodeURIComponent(returnPath)}`;
@@ -279,7 +296,11 @@ router.get('/', async (req, res) => {
     const marketplaceConfig = {
       shopDomain,
       appProxyBasePath: baseProxyPath,
-      backendBaseUrl: BACKEND_BASE_URL,
+      // Use the SAME-ORIGIN app-proxy prefix as the API base (not the cross-origin backend
+      // URL). The marketplace runs on merchants' custom storefront domains, which can't be
+      // CORS-whitelisted; routing API calls back through the proxy avoids cross-origin/CORS
+      // entirely and works on every domain.
+      backendBaseUrl: baseProxyPath,
       enforceShopifyLogin: true,
       loginUrl,
       logoutUrl,
@@ -287,7 +308,7 @@ router.get('/', async (req, res) => {
     };
 
     const inlineScript = `
-    <script>
+    <script nonce="${cspNonce}">
       window.BidlyMarketplaceConfig = ${JSON.stringify(marketplaceConfig)};
       (function(config){
         const DEFAULT_BACKEND = config.backendBaseUrl;
@@ -365,6 +386,18 @@ router.get('/', async (req, res) => {
 
     const finalHtml = htmlOutput.replace('</body>', `${inlineScript}\n</body>`);
 
+    // Override the global helmet CSP for THIS response so the nonced inline config script
+    // runs and Google Fonts load. The bundle itself is same-origin ('self').
+    res.setHeader('Content-Security-Policy', [
+      "default-src 'self'",
+      `script-src 'self' 'nonce-${cspNonce}' https://cdn.shopify.com`,
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.shopify.com",
+      "font-src 'self' https://fonts.gstatic.com https://cdn.shopify.com data:",
+      "img-src 'self' data: https: blob:",
+      "connect-src 'self' https: wss: ws:",
+      "object-src 'none'",
+      "base-uri 'self'"
+    ].join('; '));
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Type', 'text/html');
     return res.send(finalHtml);
@@ -386,10 +419,10 @@ router.get('/api/auctions/:id', getAuctionById);
 
 // Place bid on auction
 // POST /apps/bidly/api/auctions/:id/bid?shop=store.myshopify.com
-router.post('/api/auctions/:id/bid', validateId, validatePlaceBid, placeBid);
+router.post('/api/auctions/:id/bid', bidRateLimit, validateId, validatePlaceBid, placeBid);
 
 // Buy now
 // POST /apps/bidly/api/auctions/:id/buy-now?shop=store.myshopify.com
-router.post('/api/auctions/:id/buy-now', validateId, validateBuyNow, buyNow);
+router.post('/api/auctions/:id/buy-now', bidRateLimit, validateId, validateBuyNow, buyNow);
 
 export default router;

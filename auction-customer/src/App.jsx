@@ -249,14 +249,39 @@ function App() {
       const normalizedBidHistory = normalizeBidHistory(bidData.bidHistory || []);
       const normalizedWinner = normalizeWinner(bidData.winner);
       const bidderName = getDisplayName(bidData);
-      
-      setAuctions(prevAuctions => 
+
+      setAuctions(prevAuctions =>
         prevAuctions.map(auction => {
           if (auction._id === bidData.auctionId || auction.id === bidData.auctionId) {
+            const nextCurrentBid =
+              typeof bidData.currentBid === 'number' ? bidData.currentBid : auction.currentBid;
+
+            // Keep the displayed bid history consistent with the new price. If the
+            // payload omits bidHistory, appending a synthetic entry derived from the
+            // payload (so the last-bidder/count reflect this bid) is better than
+            // leaving a stale tail that points at the previous, lower price.
+            let nextBidHistory;
+            if (normalizedBidHistory.length) {
+              nextBidHistory = normalizedBidHistory;
+            } else if (!bidData.buyNow && (auction.bidHistory || []).length) {
+              const syntheticAmount =
+                typeof bidData.amount === 'number' ? bidData.amount : nextCurrentBid;
+              const syntheticEntry = {
+                amount: syntheticAmount,
+                displayName: bidderName,
+                bidder: bidderName,
+                timestamp: new Date().toISOString(),
+                synthetic: true
+              };
+              nextBidHistory = [...auction.bidHistory, syntheticEntry];
+            } else {
+              nextBidHistory = auction.bidHistory;
+            }
+
             return {
               ...auction,
-              currentBid: typeof bidData.currentBid === 'number' ? bidData.currentBid : auction.currentBid,
-              bidHistory: normalizedBidHistory.length ? normalizedBidHistory : auction.bidHistory,
+              currentBid: nextCurrentBid,
+              bidHistory: nextBidHistory,
               status: bidData.auctionEnded ? 'ended' : auction.status,
               endTime: bidData.auctionEnded ? new Date().toISOString() : auction.endTime,
               winner: normalizedWinner || auction.winner

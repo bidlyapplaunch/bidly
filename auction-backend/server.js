@@ -24,7 +24,14 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   : [];
 
 const corsOriginCheck = (origin, callback) => {
-  // Allow requests with no origin (mobile apps, curl, server-to-server)
+  // SEC-20: Allow requests with no Origin header (native mobile apps, curl,
+  // server-to-server callers, and Shopify webhooks). We intentionally keep
+  // allowing these: a no-Origin request is, by definition, not a browser CORS
+  // request (browsers always send Origin for cross-origin fetches/XHR), so the
+  // `credentials: true` reflected by the cors() middleware is inert for them —
+  // there is no browser to honor Access-Control-Allow-Credentials. Denying
+  // no-Origin requests here would break those legitimate non-browser callers
+  // (including /webhooks) without adding real protection, so this is left as-is.
   if (!origin) return callback(null, true);
   try {
     const url = new URL(origin);
@@ -92,7 +99,9 @@ const remixRequestHandler = remixBuild
     })
   : null;
 
+import mongoose from 'mongoose';
 import connectDB from './config/database.js';
+import logger from './utils/logger.js';
 import { computeAuctionStatus } from './utils/auctionStatus.js';
 import Auction from './models/Auction.js';
 import Store from './models/Store.js';
@@ -118,18 +127,38 @@ import identifyStore from './middleware/storeMiddleware.js';
 
 // Load environment variables
 dotenv.config({ path: './.env' });
-// Connect to MongoDB (non-blocking)
+
+// OPS-05: process-level safety nets. An unhandled rejection or uncaught
+// exception leaves the process in an unknown state — log it. We deliberately
+// exit on uncaughtException (the process is no longer trustworthy) but only
+// log unhandledRejection to avoid taking the whole service down for a single
+// stray promise; Render will restart on a hard exit.
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled promise rejection:', reason instanceof Error ? reason.stack || reason.message : reason);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error?.stack || error?.message || error);
+  // The process is in an undefined state after an uncaught exception — exit so
+  // the orchestrator (Render) restarts a clean instance.
+  process.exit(1);
+});
+
+// OPS-05: Connect to MongoDB. If the INITIAL connection fails we must NOT serve
+// traffic — every request that needs the DB would error in confusing ways and
+// the multi-tenant guarantees can't hold without it. Log and exit so Render
+// restarts (and surfaces the failure) instead of silently running brokenly.
 connectDB()
   .then(async () => {
     await fixCustomerIndexes();
     // Resume any interrupted blast email sends
     resumeInterruptedBlasts().catch(err =>
-      console.error('Failed to resume interrupted blasts:', err)
+      logger.error('Failed to resume interrupted blasts:', err)
     );
   })
   .catch(error => {
-    console.error('MongoDB connection failed:', error.message);
-    console.warn('Server will continue without database connection');
+    logger.error('MongoDB connection failed on startup — refusing to serve traffic:', error.message);
+    process.exit(1);
   });
 
 const app = express();
@@ -152,6 +181,28 @@ const io = new Server(server, {
   }
 });
 
+// Normalize a raw shop value to a canonical lowercase domain (or null).
+// Used to derive a socket's tenant for cross-tenant join gating (SEC-18/SEC-17).
+const normalizeSocketShop = (raw) => {
+  if (!raw) return null;
+  const normalized = String(raw)
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '')
+    .toLowerCase();
+  return /^[a-z0-9.-]+$/.test(normalized) ? normalized : null;
+};
+
+// Best-effort tenant for a socket from the handshake (query or auth payload).
+// This is a FALLBACK only — authenticated customer tokens set socket.shopDomain
+// directly. Guests/admin sockets currently send no shop, so this is frequently
+// null; the join gates below are written to allow null (preserve live behavior)
+// and only reject on a concrete mismatch.
+const shopFromHandshake = (socket) => {
+  const q = socket.handshake?.query || {};
+  const a = socket.handshake?.auth || {};
+  return normalizeSocketShop(q.shop || q.shopDomain || a.shopDomain || a.shop);
+};
+
 // Socket.IO authentication middleware
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
@@ -161,6 +212,7 @@ io.use((socket, next) => {
     socket.userRole = 'guest';
     socket.userId = null;
     socket.customerId = null;
+    socket.shopDomain = shopFromHandshake(socket);
     return next();
   }
 
@@ -171,11 +223,12 @@ io.use((socket, next) => {
       socket.userRole = 'customer';
       socket.customerId = decoded.customerId;
       socket.customerEmail = decoded.email;
-      socket.shopDomain = decoded.shopDomain;
+      socket.shopDomain = normalizeSocketShop(decoded.shopDomain) || shopFromHandshake(socket);
     } else {
       // Admin/legacy JWT
       socket.userRole = decoded.role || 'user';
       socket.userId = decoded.userId;
+      socket.shopDomain = shopFromHandshake(socket);
     }
 
     next();
@@ -185,6 +238,7 @@ io.use((socket, next) => {
     socket.userRole = 'guest';
     socket.userId = null;
     socket.customerId = null;
+    socket.shopDomain = shopFromHandshake(socket);
     next();
   }
 });
@@ -286,11 +340,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.shopify.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.shopify.com", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'", "https://cdn.shopify.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: ["'self'", "https:", "wss:", "ws:"],
-      fontSrc: ["'self'", "https://cdn.shopify.com"],
+      fontSrc: ["'self'", "https://cdn.shopify.com", "https://fonts.gstatic.com", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'self'", "https://admin.shopify.com", "https://*.myshopify.com"],
@@ -391,14 +445,21 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(identifyStore);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
+// Health check endpoint (OPS-04). Always returns 200 so it can be used as a
+// liveness probe; the DB readiness is surfaced via `db` (mongoose readyState:
+// 0=disconnected, 1=connected, 2=connecting, 3=disconnecting).
+const healthHandler = (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  res.status(200).json({
     success: true,
+    status: dbState === 1 ? 'ok' : 'degraded',
+    db: dbState,
     message: 'Auction API is running',
     timestamp: new Date().toISOString()
   });
-});
+};
+app.get('/health', healthHandler);
+app.get('/healthz', healthHandler);
 
 // Render health check endpoint (for Render's health checks)
 app.get('/render-health', (req, res) => {
@@ -867,9 +928,42 @@ io.on('connection', (socket) => {
   socket.userRole = null;
   
   // Join auction room for real-time updates
-  socket.on('join-auction', (auctionId) => {
+  socket.on('join-auction', async (auctionId) => {
+    // SEC-18: prevent cross-tenant subscription. If this socket has a known
+    // tenant (shopDomain), the auction it subscribes to must belong to that
+    // same shop. We do NOT change the room naming scheme (bid broadcasts in
+    // another file target `auction-${id}`) — we only gate the join.
+    //
+    // Guests/admin sockets frequently have no shopDomain (the storefront and
+    // admin clients don't send one on the handshake today). Rejecting those
+    // would break the live storefront, so when socket.shopDomain is absent we
+    // allow the join (preserving current behavior) and only reject on a
+    // concrete shop mismatch.
+    if (socket.shopDomain) {
+      try {
+        const auction = await Auction.findById(auctionId).select('shopDomain').lean();
+        if (auction && auction.shopDomain && auction.shopDomain !== socket.shopDomain) {
+          socket.emit('auction-status', {
+            auctionId,
+            error: 'forbidden',
+            message: 'Auction does not belong to this store'
+          });
+          return;
+        }
+      } catch (err) {
+        // CastError on a malformed id, or a transient DB error. Be conservative:
+        // do not subscribe to a room we couldn't validate.
+        socket.emit('auction-status', {
+          auctionId,
+          error: 'invalid',
+          message: 'Could not validate auction'
+        });
+        return;
+      }
+    }
+
     socket.join(`auction-${auctionId}`);
-    
+
     // Send current auction status to the newly joined client
     socket.emit('auction-status', {
       auctionId,
@@ -930,16 +1024,51 @@ io.on('connection', (socket) => {
     return null;
   };
 
+  // SEC-17: resolve the owning shop for a product (via its auction record) so
+  // chat can be gated to the socket's tenant. We keep the room key as
+  // `chat-${productId}` (other code emits to that key — changing it desyncs),
+  // and only refuse to join/broadcast on a concrete cross-tenant mismatch.
+  //
+  // Returns:
+  //   true  -> ok to proceed (no concrete mismatch found)
+  //   false -> a known mismatch (different shop) — caller should reject
+  // Sockets without a shopDomain (guests/admin that send no shop) always pass,
+  // preserving the live storefront chat behavior.
+  const chatShopCache = new Map(); // productId -> shopDomain (or null if unknown)
+  const isChatProductAllowedForSocket = async (productId) => {
+    if (!socket.shopDomain) return true; // no tenant known — don't break guests
+    let auctionShop = chatShopCache.get(productId);
+    if (auctionShop === undefined) {
+      try {
+        const auction = await Auction.findOne({ shopifyProductId: productId })
+          .select('shopDomain')
+          .lean();
+        auctionShop = auction?.shopDomain || null;
+      } catch {
+        auctionShop = null; // transient/cast error — treat as unknown, allow
+      }
+      chatShopCache.set(productId, auctionShop);
+    }
+    // Unknown owner (no auction found) -> allow; known + mismatch -> reject.
+    if (auctionShop && auctionShop !== socket.shopDomain) return false;
+    return true;
+  };
+
   // Join product chat room
-  socket.on('join-chat-room', (_id) => {
+  socket.on('join-chat-room', async (_id) => {
     const productId = normalizeProductId(_id);
     if (!productId) {
       socket.emit('chat-error', { message: 'Invalid product ID for chat room' });
       return;
     }
 
+    if (!(await isChatProductAllowedForSocket(productId))) {
+      socket.emit('chat-error', { message: 'Chat does not belong to this store' });
+      return;
+    }
+
     socket.join(`chat-${productId}`);
-    
+
     // Send existing messages for this room (ensure all have id for future deletion)
     const messages = (chatRooms.get(productId) || []).map((msg) => {
       if (!msg.id) {
@@ -956,13 +1085,19 @@ io.on('connection', (socket) => {
   });
   
   // Handle new chat message
-  socket.on('new-chat-message', ({ productId: incomingId, username, message }) => {
+  socket.on('new-chat-message', async ({ productId: incomingId, username, message }) => {
     const productId = normalizeProductId(incomingId);
     if (!productId || !username || !message) {
       socket.emit('chat-error', { message: 'Missing required fields' });
       return;
     }
-    
+
+    // SEC-17: don't accept/broadcast a message into a room owned by a different shop.
+    if (!(await isChatProductAllowedForSocket(productId))) {
+      socket.emit('chat-error', { message: 'Chat does not belong to this store' });
+      return;
+    }
+
     // Initialize room if it doesn't exist
     if (!chatRooms.has(productId)) {
       // Evict the oldest-inserted room when at capacity (Map preserves insertion order).
@@ -1165,14 +1300,16 @@ setInterval(checkAuctionStatusChanges, 5000);
 
 // Start server first
 server.listen(PORT, '0.0.0.0', () => {
-  
+  logger.info(`Bidly auction backend listening on port ${PORT}`);
+
   // Start scheduled jobs after server is running
   setTimeout(async () => {
     try {
       const { default: scheduledJobsService } = await import('./services/scheduledJobsService.js');
       scheduledJobsService.start();
+      logger.info('Scheduled jobs started');
     } catch (error) {
-      console.error('Failed to start scheduled jobs:', error.message);
+      logger.error('Failed to start scheduled jobs:', error.message);
     }
   }, 2000); // Wait 2 seconds after server starts
 });
