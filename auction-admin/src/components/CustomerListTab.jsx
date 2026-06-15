@@ -11,7 +11,7 @@ import {
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 import useAdminI18n from '../hooks/useAdminI18n';
 
-function CustomerListTab({ onComposeBlast }) {
+function CustomerListTab({ onComposeBlast, composeDisabled = false }) {
   const i18n = useAdminI18n();
   const [customers, setCustomers] = useState([]);
   const [total, setTotal] = useState(0);
@@ -116,7 +116,7 @@ function CustomerListTab({ onComposeBlast }) {
                   {i18n.translate('admin.mail_service.customers.selectedBadge', { count: selectedIds.size })}
                 </Badge>
               )}
-              <Button primary onClick={handleCompose}>
+              <Button primary onClick={handleCompose} disabled={composeDisabled}>
                 {i18n.translate('admin.mail_service.customers.compose')}
               </Button>
             </div>

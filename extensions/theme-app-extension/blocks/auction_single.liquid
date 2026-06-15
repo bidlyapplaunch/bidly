@@ -346,7 +346,7 @@
       
       container.innerHTML = `
         <div class="bidly-auction-image-container">
-          ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-auction-image">` : '<div class="bidly-auction-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #999;">{{ "bidly.ui.no_image" | t }}</div>'}
+          ${productImage ? `<img src="${productImage}" alt="${productTitle}" class="bidly-auction-image" loading="lazy" decoding="async">` : '<div class="bidly-auction-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #999;">{{ "bidly.ui.no_image" | t }}</div>'}
         </div>
         <div class="bidly-auction-info">
           <h2 class="bidly-auction-title">${productTitle}</h2>

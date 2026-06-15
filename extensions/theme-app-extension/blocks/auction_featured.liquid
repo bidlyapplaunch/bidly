@@ -361,7 +361,7 @@
         <div class="bidly-featured-badge">{{ "bidly.ui.featured_badge" | t }}</div>
         <div class="bidly-featured-content">
           <div class="bidly-featured-image-container">
-            ${productImage ? `<img src="${productImage}" alt="${escapeHtml(productTitle)}" class="bidly-featured-image">` : ''}
+            ${productImage ? `<img src="${productImage}" alt="${escapeHtml(productTitle)}" class="bidly-featured-image" loading="lazy" decoding="async">` : ''}
           </div>
           <div class="bidly-featured-info">
             <h2 class="bidly-featured-title">${escapeHtml(productTitle)}</h2>
