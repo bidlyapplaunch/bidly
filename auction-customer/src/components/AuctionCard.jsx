@@ -12,6 +12,7 @@ import {
 import CountdownTimer from './CountdownTimer';
 import BidForm from './BidForm';
 import { t } from '../i18n';
+import './AuctionCard.css';
 
 const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) => {
   const productUrl = shopDomain && (auction.productData?.handle || auction.shopifyProductId)
@@ -19,6 +20,21 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
     : null;
   const [detailsModalOpen, setDetailsModalOpen] = React.useState(false);
   const [bidModalOpen, setBidModalOpen] = React.useState(false);
+  // Tracks whether a bid/buy-now submitted from this modal is in flight, so the
+  // modal stays open (showing a loading state) until the action resolves.
+  const [bidSubmitting, setBidSubmitting] = React.useState(false);
+  const bidFormRef = React.useRef(null);
+  const prevLoadingRef = React.useRef(isLoading);
+
+  // Close the bid modal once a submission we initiated has finished resolving
+  // (isLoading transitions from true back to false).
+  React.useEffect(() => {
+    if (bidSubmitting && prevLoadingRef.current && !isLoading) {
+      setBidSubmitting(false);
+      setBidModalOpen(false);
+    }
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, bidSubmitting]);
 
   const getBidderName = (bid) => bid?.displayName || bid?.bidder || t('marketplace.anonymous');
 
@@ -54,7 +70,7 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
   return (
     <>
       <Card sectioned>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+        <div className="bidly-card-header">
           <div>
             <Text variant="headingLg" as="h2">
               {auction.productData?.title || auction.shopifyProductId || t('marketplace.auction_card.unknownProduct')}
@@ -64,68 +80,44 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
             </Text>
           </div>
           <Badge status={getStatusColor(auction.status)}>
-            {t(`marketplace.status.${auction.status.toLowerCase()}`)}
+            {t(`marketplace.status.${(auction.status || 'pending').toLowerCase()}`)}
           </Badge>
         </div>
 
-        {/* Product Image - clickable to product page */}
+        {/* Product Image - clickable to product page.
+            The fixed-size box reserves layout space so lazy images don't cause
+            reflow/CLS as they load. */}
         {auction.productData?.image?.src ? (
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: 'var(--bidly-marketplace-spacing, 1rem)'
-            }}
-          >
-            {productUrl ? (
-              <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', cursor: 'pointer' }}>
+          <div className="bidly-card-image-wrap">
+            <div className="bidly-card-image-box">
+              {productUrl ? (
+                <a
+                  href={productUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bidly-card-image-link"
+                >
+                  <img
+                    src={auction.productData.image.src}
+                    alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
+                    loading="lazy"
+                    decoding="async"
+                    className="bidly-card-image"
+                  />
+                </a>
+              ) : (
                 <img
                   src={auction.productData.image.src}
                   alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
                   loading="lazy"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '250px',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
-                    border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
-                    backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
-                  }}
+                  decoding="async"
+                  className="bidly-card-image"
                 />
-              </a>
-            ) : (
-              <img
-                src={auction.productData.image.src}
-                alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
-                loading="lazy"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '250px',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
-                  border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
-                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
-                }}
-              />
-            )}
+              )}
+            </div>
           </div>
         ) : (
-          <div style={{ 
-            width: '100%', 
-            height: '200px', 
-            backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)', 
-            borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 'var(--bidly-marketplace-spacing, 1rem)',
-            border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)'
-          }}>
+          <div className="bidly-card-image-placeholder">
             <Text variant="bodyMd">
               {t('marketplace.auction_card.productImage')}
             </Text>
@@ -312,13 +304,12 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
         primaryAction={auction.status === 'active' ? {
           content: t('marketplace.auction_card.placeBid'),
           onAction: () => {
-            // Trigger form submission
-            const form = document.querySelector('form');
-            if (form) {
-              const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-              form.dispatchEvent(submitEvent);
+            // Submit this auction's specific bid form (via ref, not a global query)
+            if (bidFormRef.current) {
+              bidFormRef.current.submit();
             }
           },
+          loading: isLoading,
           disabled: isLoading
         } : undefined}
         secondaryActions={auction.status === 'active' && auction.buyNowPrice ? [{
@@ -328,6 +319,7 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
             const buyNowButton = document.querySelector('[data-buy-now-trigger]');
             if (buyNowButton) buyNowButton.click();
           },
+          loading: isLoading,
           disabled: isLoading,
           tone: 'critical'
         }] : undefined}
@@ -359,15 +351,18 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
 
           {/* Bid Form - Only shown for active auctions */}
           {auction.status === 'active' && (
-            <BidForm 
-              auction={auction} 
+            <BidForm
+              ref={bidFormRef}
+              auction={auction}
               onBidPlaced={(bidData) => {
+                // Keep the modal open until the bid resolves (closed by the effect
+                // watching isLoading). This surfaces loading state and failures.
+                setBidSubmitting(true);
                 onBidPlaced(bidData);
-                setBidModalOpen(false); // Close modal after successful bid
               }}
               onBuyNow={() => {
+                setBidSubmitting(true);
                 onBuyNow();
-                setBidModalOpen(false); // Close modal after buy now
               }}
               isLoading={isLoading}
             />

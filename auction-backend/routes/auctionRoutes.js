@@ -13,8 +13,6 @@ import {
   refreshProductData,
   refreshAllProductData,
   getAuctionsWithProductData,
-  getAllAuctionsPage,
-  getAuctionDetailsPage,
 } from '../controllers/auctionController.js';
 import {
   validateCreateAuction,
@@ -36,13 +34,6 @@ const bidRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-// Auction listing page route (all auctions) - MUST be first to avoid conflicts
-// This route doesn't need store identification middleware
-router.get('/list', getAllAuctionsPage);
-
-// Auction details page route (individual auction)
-router.get('/page/:id', validateId, getAuctionDetailsPage);
 
 // Auction CRUD routes
 // Free plan is allowed to create auctions, limited by enforceAuctionLimit

@@ -93,6 +93,7 @@ const remixRequestHandler = remixBuild
   : null;
 
 import connectDB from './config/database.js';
+import { computeAuctionStatus } from './utils/auctionStatus.js';
 import Auction from './models/Auction.js';
 import Store from './models/Store.js';
 import Customer from './models/Customer.js';
@@ -461,12 +462,10 @@ try {
       name: 'winner',
       import: () => import('./routes/winnerRoutes.js'),
       mount: (routes) => app.use('/api/winner', routes.default)
-    },
-    {
-      name: 'product-duplication',
-      import: () => import('./routes/productDuplication.js'),
-      mount: (routes) => app.use('/api/product-duplication', routes.default)
     }
+    // Removed dead 'product-duplication' loader (SVC-04): the service threw on call
+    // (require() in an ESM module) and its winner flow is superseded by
+    // winnerProcessingService (Shopify draft order + invoice).
   ];
 
   // Use Promise.allSettled to load all routes without blocking, even if some fail
@@ -496,10 +495,6 @@ try {
         } else if (loader.name === 'metafields') {
           app.use('/api/metafields', (req, res) => {
             res.status(500).json({ success: false, message: 'Metafields routes not available' });
-          });
-        } else if (loader.name === 'product-duplication') {
-          app.use('/api/product-duplication', (req, res) => {
-            res.status(500).json({ success: false, message: 'Product duplication routes not available' });
           });
         }
         return { name: loader.name, success: false, error: error.message };
@@ -697,8 +692,14 @@ app.use('/app-bridge', appBridgeRoutes);
 // App Proxy routes for theme integration
 app.use('/apps/bidly', appProxyRoutes);
 
-// Debug routes (development only)
-app.use('/api/debug', debugRoutes);
+// Debug routes — only mounted outside production. These expose per-store access-token
+// previews/scopes, force-uninstall (DELETE /clear-store/:shop) and plan overrides, so they
+// must never be reachable in a production deployment. (SVC-02)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/debug', debugRoutes);
+} else {
+  console.log('ℹ️ Debug routes are disabled in production');
+}
 
 // Serve static files from the legacy admin build at the root
 const frontendDistPath = path.join(__dirname, '../auction-admin/dist');
@@ -964,6 +965,11 @@ io.on('connection', (socket) => {
     
     // Initialize room if it doesn't exist
     if (!chatRooms.has(productId)) {
+      // Evict the oldest-inserted room when at capacity (Map preserves insertion order).
+      if (chatRooms.size >= MAX_CHAT_ROOMS) {
+        const oldestKey = chatRooms.keys().next().value;
+        if (oldestKey !== undefined) chatRooms.delete(oldestKey);
+      }
       chatRooms.set(productId, []);
     }
     
@@ -1003,6 +1009,9 @@ io.on('connection', (socket) => {
 // In-memory store for chat messages (per product room) - shared across all connections
 const chatRooms = new Map(); // productId -> [{ id, username, message, timestamp }]
 const MAX_CHAT_MESSAGES_PER_ROOM = 100;
+// Hard cap on the number of rooms so a store browsing many products can't grow the map
+// without bound between the hourly idle-cleanup passes. (BACKEND-21)
+const MAX_CHAT_ROOMS = 1000;
 
 // Clean up expired chat rooms every hour
 setInterval(() => {
@@ -1036,29 +1045,17 @@ global.broadcastAuctionStatusUpdate = (auctionId, newStatus, auctionData) => {
     
     // Broadcast to specific auction room
     io.to(`auction-${auctionId}`).emit('auction-status-update', statusUpdateData);
-    
-    // Also broadcast globally for admin dashboard updates
-    io.emit('auction-status-update', statusUpdateData);
+
+    // Mirror to admin dashboards only (BACKEND-06: was a global io.emit to every
+    // connected socket across all stores)
+    io.to('admin-room').emit('auction-status-update', statusUpdateData);
     
   }
 };
 
-// Helper function to compute real-time auction status
-const computeAuctionStatus = (auction) => {
-  if (auction.status === 'closed') {
-    return 'closed';
-  }
-  const now = new Date();
-  const startTime = new Date(auction.startTime);
-  const endTime = new Date(auction.endTime);
-  if (now < startTime) {
-    return 'pending';
-  } else if (now >= startTime && now < endTime) {
-    return 'active';
-  } else {
-    return 'ended';
-  }
-};
+// computeAuctionStatus is imported from utils/auctionStatus.js (BACKEND-13) — the local
+// copy here previously did not preserve reserve_not_met, so a reserve_not_met auction was
+// incorrectly reclassified as 'ended' by the poller.
 
 // Function to check and broadcast auction status changes
 const checkAuctionStatusChanges = async () => {
@@ -1073,48 +1070,51 @@ const checkAuctionStatusChanges = async () => {
         
         // Update the auction status in the database
         auction.status = computedStatus;
-        if (computedStatus === 'ended') {
-          auction.endTime = new Date(); // Set actual end time
-        }
+        // Note: we intentionally do NOT overwrite endTime here — it holds the
+        // scheduled end time and is used for "ended at" display and history.
         await auction.save();
         
         // Send email notifications if auction ended
         if (computedStatus === 'ended' && auction.bidHistory.length > 0) {
           try {
-            // Get the winning bid (highest bid)
-            const winningBid = auction.bidHistory[auction.bidHistory.length - 1];
-                const store = await Store.findByDomain(auction.shopDomain);
-                const brandOptions = {
-                  plan: store?.plan,
-                  storeName: store?.storeName
-                };
-            
-            // Send auction won notification to the winner
-            if (winningBid.customerEmail) {
-              await emailService.sendAuctionWonNotification(
-                auction.shopDomain,
-                winningBid.customerEmail,
-                winningBid.bidder,
-                auction,
-                winningBid.amount,
-                brandOptions
-              );
-            }
+            // Determine the winning bid the same way winnerProcessingService does:
+            // highest amount, earliest timestamp on a tie. Do NOT assume the last
+            // appended bid is the winner.
+            const winningBid = [...auction.bidHistory].sort((a, b) => {
+              if (b.amount !== a.amount) return b.amount - a.amount;
+              return new Date(a.timestamp) - new Date(b.timestamp);
+            })[0];
+            const store = await Store.findByDomain(auction.shopDomain);
+            const brandOptions = {
+              plan: store?.plan,
+              storeName: store?.storeName
+            };
 
-            // Send outbid notification to all other bidders
-            for (let i = 0; i < auction.bidHistory.length - 1; i++) {
-              const bid = auction.bidHistory[i];
-              if (bid.customerEmail && bid.bidder !== winningBid.bidder) {
-                await emailService.sendOutbidNotification(
+            // NOTE: the winner "you won" email is sent by winnerProcessingService
+            // (sendWinnerNotification) after the draft order is created, so it is
+            // intentionally NOT sent here — otherwise the winner gets two emails.
+
+            // Send outbid notification to each unique losing bidder (deduped + batched,
+            // so a bidder who bid multiple times only gets one email and slow SMTP
+            // round-trips don't serialize inside the 5s polling tick).
+            const loserEmails = new Map();
+            for (const bid of auction.bidHistory) {
+              if (bid.customerEmail && bid.bidder !== winningBid.bidder && !loserEmails.has(bid.customerEmail)) {
+                loserEmails.set(bid.customerEmail, bid.bidder);
+              }
+            }
+            await Promise.allSettled(
+              [...loserEmails].map(([email, bidder]) =>
+                emailService.sendOutbidNotification(
                   auction.shopDomain,
-                  bid.customerEmail,
-                  bid.bidder,
+                  email,
+                  bidder,
                   auction,
                   winningBid.amount,
                   brandOptions
-                );
-              }
-            }
+                )
+              )
+            );
 
             // Send admin notification
             await emailService.sendAdminNotification(

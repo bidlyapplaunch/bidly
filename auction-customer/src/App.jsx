@@ -15,6 +15,7 @@ import socketService from './services/socket';
 import customerAuthService from './services/customerAuth';
 import AuctionCard from './components/AuctionCard';
 import CustomerAuth from './components/CustomerAuth';
+import ErrorBoundary from './components/ErrorBoundary';
 import themeService from './services/themeService';
 import { t } from './i18n';
 
@@ -36,7 +37,27 @@ function App() {
 
   const ANONYMOUS_BIDDER = t('marketplace.anonymous');
 
-  const getDisplayName = (entity) => {
+  // Resolve shop info from the URL once. window.location.search and the
+  // marketplace config are stable for the page's lifetime, so compute these
+  // a single time rather than recreating helpers/memos with empty deps.
+  const { shop, shopName, resolvedShopDomain } = useMemo(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shopParam = urlParams.get('shop');
+    const resolvedShop = shopParam || null;
+    const resolvedShopName = shopParam ? shopParam.replace('.myshopify.com', '') : null;
+    return {
+      shop: resolvedShop,
+      shopName: resolvedShopName,
+      resolvedShopDomain:
+        resolvedShop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null
+    };
+    // marketplaceConfig comes from window and does not change for the page's
+    // lifetime; the URL search string is likewise fixed. Computing once is
+    // intentional and correct.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getDisplayName = useCallback((entity) => {
     if (!entity) return ANONYMOUS_BIDDER;
     return (
       entity.displayName ||
@@ -45,44 +66,30 @@ function App() {
       entity.name ||
       ANONYMOUS_BIDDER
     );
-  };
+  }, [ANONYMOUS_BIDDER]);
 
-  const normalizeBid = (bid = {}) => {
-    const displayName = getDisplayName(bid);
-    return { ...bid, displayName };
-  };
+  const normalizeBidHistory = useCallback(
+    (history = []) => history.map((bid = {}) => ({ ...bid, displayName: getDisplayName(bid) })),
+    [getDisplayName]
+  );
 
-  const normalizeBidHistory = (history = []) => history.map(normalizeBid);
-
-  const normalizeWinner = (winner) => {
+  const normalizeWinner = useCallback((winner) => {
     if (!winner) return null;
     return { ...winner, displayName: getDisplayName(winner) };
-  };
+  }, [getDisplayName]);
 
-  const normalizeAuction = (auction = {}) => {
+  const normalizeAuction = useCallback((auction = {}) => {
     if (!auction) return auction;
     return {
       ...auction,
       bidHistory: normalizeBidHistory(auction.bidHistory || []),
       winner: normalizeWinner(auction.winner)
     };
-  };
+  }, [normalizeBidHistory, normalizeWinner]);
 
-  // Get shop information from URL parameters before defining hooks that depend on it
-  const getShopInfo = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shopParam = urlParams.get('shop');
-    if (shopParam) {
-      const shopNameParam = shopParam.replace('.myshopify.com', '');
-      return { shop: shopParam, shopName: shopNameParam };
-    }
-    return { shop: null, shopName: null };
-  };
-
-  const { shop, shopName } = getShopInfo();
-  const resolvedShopDomain = useMemo(() => {
-    return shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
-  }, []); // empty deps since shop domain doesn't change
+  // Guard against setting state after unmount and abort in-flight fetches on unmount.
+  const isMountedRef = useRef(true);
+  const fetchAbortRef = useRef(null);
 
   // Customer authentication state - declare before useCallback hooks that depend on them
   const [customer, setCustomer] = useState(null);
@@ -150,8 +157,57 @@ function App() {
     customer?.email ||
     ANONYMOUS_BIDDER;
 
+  const fetchVisibleAuctions = useCallback(async () => {
+    // Abort any previous in-flight request and start a new one
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await auctionAPI.getVisibleAuctions(controller.signal);
+      if (!isMountedRef.current) return;
+      // Filter to show pending, active, and ended auctions (exclude only closed)
+      const visibleAuctions = (response.data || []).filter(auction =>
+        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
+      );
+      setAuctions(visibleAuctions.map(normalizeAuction));
+    } catch (err) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
+      if (!isMountedRef.current) return;
+      console.error('Error fetching auctions:', err);
+      setError(t('marketplace.errors.fetchFailed'));
+      setAuctions([]);
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [normalizeAuction]);
+
+  // Silent refresh for automatic status updates (no loading spinner)
+  const fetchVisibleAuctionsSilent = useCallback(async () => {
+    const controller = new AbortController();
+    try {
+      const response = await auctionAPI.getVisibleAuctions(controller.signal);
+      if (!isMountedRef.current) return;
+      // Filter to show pending, active, and ended auctions (exclude only closed)
+      const visibleAuctions = (response.data || []).filter(auction =>
+        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
+      );
+      setAuctions(visibleAuctions.map(normalizeAuction));
+    } catch (err) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
+      console.error('Error in silent refresh:', err);
+      // Don't set error for silent refresh to avoid disrupting user experience
+    }
+  }, [normalizeAuction]);
+
   useEffect(() => {
     let isMounted = true;
+    isMountedRef.current = true;
 
     themeService.loadTheme(shop).then((theme) => {
       if (!isMounted || !theme) {
@@ -299,8 +355,24 @@ function App() {
       socketService.disconnect();
       clearInterval(refreshInterval);
       isMounted = false;
+      isMountedRef.current = false;
+      if (fetchAbortRef.current) {
+        fetchAbortRef.current.abort();
+      }
     };
-  }, [resolvedShopDomain]);
+    // These deps are all stable for the page's lifetime (shop/resolvedShopDomain
+    // are computed once; the helpers are memoized useCallbacks), so the socket
+    // connection is set up once and torn down on unmount as intended.
+  }, [
+    shop,
+    resolvedShopDomain,
+    fetchVisibleAuctions,
+    fetchVisibleAuctionsSilent,
+    getDisplayName,
+    normalizeBidHistory,
+    normalizeWinner,
+    normalizeAuction
+  ]);
 
   // Auto-dismiss toast after 5 seconds
   useEffect(() => {
@@ -318,51 +390,21 @@ function App() {
     }
   }, [customer, syncCustomerProfile]);
 
-  // Join auction rooms when auctions are loaded or updated
+  // Track which auction rooms we've already joined so we only emit join-auction
+  // for newly-added auction IDs (not on every bid/poll-triggered auctions change).
+  const joinedAuctionIdsRef = useRef(new Set());
+
   useEffect(() => {
     if (auctions.length > 0 && socketService.isSocketConnected()) {
       auctions.forEach(auction => {
         const auctionId = auction._id || auction.id;
-        if (auctionId) {
+        if (auctionId && !joinedAuctionIdsRef.current.has(auctionId)) {
           socketService.joinAuction(auctionId);
+          joinedAuctionIdsRef.current.add(auctionId);
         }
       });
     }
   }, [auctions]);
-
-  const fetchVisibleAuctions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await auctionAPI.getVisibleAuctions();
-      // Filter to show pending, active, and ended auctions (exclude only closed)
-      const visibleAuctions = (response.data || []).filter(auction => 
-        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
-      );
-      setAuctions(visibleAuctions.map(normalizeAuction));
-    } catch (err) {
-      console.error('Error fetching auctions:', err);
-      setError(t('marketplace.errors.fetchFailed'));
-      setAuctions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Silent refresh for automatic status updates (no loading spinner)
-  const fetchVisibleAuctionsSilent = async () => {
-    try {
-      const response = await auctionAPI.getVisibleAuctions();
-      // Filter to show pending, active, and ended auctions (exclude only closed)
-      const visibleAuctions = (response.data || []).filter(auction => 
-        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
-      );
-      setAuctions(visibleAuctions.map(normalizeAuction));
-    } catch (err) {
-      console.error('Error in silent refresh:', err);
-      // Don't set error for silent refresh to avoid disrupting user experience
-    }
-  };
 
   const handleBidPlaced = async (bidData) => {
     // Check if customer is authenticated
@@ -408,19 +450,28 @@ function App() {
 
       const auctionId = bidData.auctionId;
       const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      await auctionAPI.placeBid(auctionId, {
+      const bidResponse = await auctionAPI.placeBid(auctionId, {
         amount: bidData.amount,
         customerId: activeProfile.id,
         idempotencyKey
       });
-      
+
       const bidderName = activeProfile.displayName || currentDisplayName;
       setToastMessage(t('marketplace.toasts.bidPlaced', { amount: bidData.amount, name: bidderName }));
       setShowToast(true);
-      
-      // Refresh auctions to get updated data
-      await fetchVisibleAuctions();
-      
+
+      // Update only the affected auction from the bid response instead of refetching
+      // all auctions. The incoming socket 'bid-update' also keeps state in sync.
+      const updatedAuction = bidResponse?.auction || bidResponse?.data;
+      if (updatedAuction) {
+        const normalized = normalizeAuction(updatedAuction);
+        setAuctions(prevAuctions =>
+          prevAuctions.map(a =>
+            (a._id === auctionId || a.id === auctionId) ? { ...a, ...normalized } : a
+          )
+        );
+      }
+
     } catch (err) {
       console.error('Error placing bid:', err);
       
@@ -482,19 +533,28 @@ function App() {
       setError(null);
       
       const { auctionId } = data;
-      
-      await auctionAPI.buyNow(auctionId, { customerId: activeProfile.id });
-      
+
+      const buyNowResponse = await auctionAPI.buyNow(auctionId, { customerId: activeProfile.id });
+
       // Find the auction to get product name
       const auction = auctions.find(a => (a._id || a.id) === auctionId);
       const productName = auction?.productData?.title || 'the item';
       const bidderName = activeProfile.displayName || currentDisplayName;
       setToastMessage(t('marketplace.toasts.buyNowSuccess', { name: bidderName, product: productName }));
       setShowToast(true);
-      
-      // Refresh auctions to get updated data
-      await fetchVisibleAuctions();
-      
+
+      // Update only the affected auction from the response instead of refetching all.
+      // The incoming socket 'bid-update' (buyNow) also keeps state in sync.
+      const updatedAuction = buyNowResponse?.auction || buyNowResponse?.data;
+      if (updatedAuction) {
+        const normalized = normalizeAuction(updatedAuction);
+        setAuctions(prevAuctions =>
+          prevAuctions.map(a =>
+            (a._id === auctionId || a.id === auctionId) ? { ...a, ...normalized } : a
+          )
+        );
+      }
+
     } catch (err) {
       console.error('Error buying now:', err);
       
@@ -615,13 +675,15 @@ function App() {
             <Layout>
               {auctions.map((auction) => (
                 <Layout.Section oneHalf key={auction._id || auction.id}>
-                  <AuctionCard 
-                    auction={auction} 
-                    shopDomain={resolvedShopDomain}
-                    onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
-                    onBuyNow={() => handleBuyNow({ auctionId: auction._id || auction.id })}
-                    isLoading={bidLoading || customerSyncing}
-                  />
+                  <ErrorBoundary>
+                    <AuctionCard
+                      auction={auction}
+                      shopDomain={resolvedShopDomain}
+                      onBidPlaced={(bidData) => handleBidPlaced({ ...bidData, auctionId: auction._id || auction.id })}
+                      onBuyNow={() => handleBuyNow({ auctionId: auction._id || auction.id })}
+                      isLoading={bidLoading || customerSyncing}
+                    />
+                  </ErrorBoundary>
                 </Layout.Section>
               ))}
             </Layout>

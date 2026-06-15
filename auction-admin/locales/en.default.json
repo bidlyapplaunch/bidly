@@ -88,7 +88,8 @@
     },
     "mail_service": {
       "page": {
-        "title": "Mail Service"
+        "title": "Mail Service",
+        "settingsError": "Couldn't load your mail settings, so blast emails may be unavailable. Please reload the page to try again."
       },
       "messages": {
         "loadError": "Failed to load mail settings.",
@@ -163,6 +164,106 @@
       },
       "actions": {
         "save": "Save mail settings"
+      },
+      "tabs": {
+        "templates": "Email Templates",
+        "customers": "Customer List",
+        "blast": "Blast Emails"
+      },
+      "customers": {
+        "heading": "Customers",
+        "subtitleOne": "{{count}} customer linked to this store",
+        "subtitleOther": "{{count}} customers linked to this store",
+        "selectedBadge": "{{count}} selected",
+        "compose": "Compose Blast Email",
+        "searchPlaceholder": "Search by email or name...",
+        "loadError": "Failed to load customers",
+        "empty": "No customers found",
+        "columns": {
+          "email": "Email",
+          "displayName": "Display Name",
+          "bids": "Bids",
+          "wins": "Wins",
+          "status": "Status"
+        },
+        "status": {
+          "subscribed": "Subscribed",
+          "unsubscribed": "Unsubscribed"
+        },
+        "pagination": {
+          "previous": "Previous",
+          "next": "Next",
+          "page": "Page {{current}} of {{total}}"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "Upgrade Required",
+        "upgradeDescription": "Blast emails are available on Pro plans and above.",
+        "composeTitle": "Compose Blast Email",
+        "editTitle": "Edit Draft",
+        "sendingTo": "Sending to {{recipients}}",
+        "recipientsAll": "all customers",
+        "recipientsSelected": "{{count}} selected customer(s)",
+        "editRecipients": "Edit recipients",
+        "cancelEditing": "Cancel editing",
+        "subject": "Subject",
+        "editorMode": "Editor Mode",
+        "richEditor": "Rich Editor",
+        "htmlEditor": "HTML",
+        "htmlBody": "HTML Body",
+        "composePlaceholder": "Compose your blast email...",
+        "availableTokens": "Available Tokens",
+        "deliveryMode": "Delivery Mode",
+        "sendAll": "Send All",
+        "trickle": "Trickle",
+        "batchSize": "Batch Size",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "Interval (minutes)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "Save as Draft",
+        "sendNow": "Send Now",
+        "confirmTitle": "Confirm Send",
+        "confirmSend": "Send",
+        "confirmBody": "Send this email to {{recipients}}?",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "Blast History",
+        "historyEmpty": "No blast emails yet",
+        "columns": {
+          "subject": "Subject",
+          "date": "Date",
+          "recipients": "Recipients",
+          "status": "Status",
+          "progress": "Progress",
+          "actions": "Actions"
+        },
+        "statusBadge": {
+          "draft": "Draft",
+          "sending": "Sending",
+          "completed": "Completed",
+          "failed": "Failed"
+        },
+        "rowActions": {
+          "edit": "Edit",
+          "delete": "Delete"
+        },
+        "preview": "Email Preview",
+        "recipientsCount": "Recipients ({{count}})",
+        "recipientEmail": "Email",
+        "recipientName": "Name",
+        "recipientStatus": "Status",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "Subject and body are required",
+          "draftUpdated": "Draft updated",
+          "draftSaved": "Draft saved",
+          "draftDeleted": "Draft deleted",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "Blast email sending started!",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {
@@ -646,7 +747,8 @@
           "resultsCount": "{count} products found",
           "resultsTitle": "Search Results",
           "resultLabel": "{title} (ID: {id}) - {price}",
-          "noResults": "No products found"
+          "noResults": "No products found",
+          "error": "Could not search products. Please try again."
         },
         "selectedProduct": {
           "title": "Selected Product Details",
@@ -693,72 +795,72 @@
         }
       },
       "table": {
-          "errors": {
-            "fetch": "Failed to fetch auctions.",
-            "delete": "Failed to delete auction.",
-            "close": "Failed to close auction.",
-            "closeMissingId": "Failed to close auction: Auction ID not found.",
-            "noShop": "Error: No shop domain found.",
-            "noProductId": "Error: No product ID found for this auction.",
-            "openInStore": "Error opening product in store."
-          },
-          "toast": {
-            "deleted": "Auction deleted successfully.",
-            "closed": "Auction closed successfully."
-          },
-          "status": {
-            "reserveNotMet": "Ended · Reserve not met",
-            "noWinner": "Ended · No winner",
-            "ended": "Ended"
-          },
-          "unknownProduct": "Unknown Product",
-          "actions": {
-            "viewInStore": "View in store",
-            "viewDetails": "View auction details",
-            "edit": "Edit auction",
-            "delete": "Delete auction",
-            "close": "Close auction"
-          },
-          "loading": "Loading auctions...",
-          "empty": {
-            "title": "No auctions found",
-            "action": "Create auction",
-            "description": "Get started by creating your first auction."
-          },
-          "filters": {
-            "open": "Filter",
-            "clear": "Clear filters",
-            "title": "Filter Auctions",
-            "apply": "Apply Filters",
-            "statusLabel": "Status",
-            "productPlaceholder": "Enter product ID"
-          },
-          "columns": {
-            "product": "Product",
-            "start": "Start",
-            "end": "End",
-            "startBid": "Start Bid",
-            "currentBid": "Current Bid",
-            "buyNow": "Buy Now",
-            "reserve": "Reserve",
-            "status": "Status",
-            "bids": "Bids",
-            "actions": "Actions"
-          },
-          "footer": "Showing {{visible}} of {{total}} auctions",
-          "pagination": "Page {{current}} of {{total}}",
-          "delete": {
-            "title": "Delete Auction",
-            "confirm": "Delete",
-            "message": "Are you sure you want to delete this auction? This action cannot be undone.",
-            "hasBids": "Note: This auction has bids and cannot be deleted."
-          },
-          "close": {
-            "title": "Close Auction",
-            "confirm": "Close Auction",
-            "message": "Are you sure you want to close this auction? This will prevent new bids from being placed."
-          }
+        "errors": {
+          "fetch": "Failed to fetch auctions.",
+          "delete": "Failed to delete auction.",
+          "close": "Failed to close auction.",
+          "closeMissingId": "Failed to close auction: Auction ID not found.",
+          "noShop": "Error: No shop domain found.",
+          "noProductId": "Error: No product ID found for this auction.",
+          "openInStore": "Error opening product in store."
         },
+        "toast": {
+          "deleted": "Auction deleted successfully.",
+          "closed": "Auction closed successfully."
+        },
+        "status": {
+          "reserveNotMet": "Ended · Reserve not met",
+          "noWinner": "Ended · No winner",
+          "ended": "Ended"
+        },
+        "unknownProduct": "Unknown Product",
+        "actions": {
+          "viewInStore": "View in store",
+          "viewDetails": "View auction details",
+          "edit": "Edit auction",
+          "delete": "Delete auction",
+          "close": "Close auction"
+        },
+        "loading": "Loading auctions...",
+        "empty": {
+          "title": "No auctions found",
+          "action": "Create auction",
+          "description": "Get started by creating your first auction."
+        },
+        "filters": {
+          "open": "Filter",
+          "clear": "Clear filters",
+          "title": "Filter Auctions",
+          "apply": "Apply Filters",
+          "statusLabel": "Status",
+          "productPlaceholder": "Enter product ID"
+        },
+        "columns": {
+          "product": "Product",
+          "start": "Start",
+          "end": "End",
+          "startBid": "Start Bid",
+          "currentBid": "Current Bid",
+          "buyNow": "Buy Now",
+          "reserve": "Reserve",
+          "status": "Status",
+          "bids": "Bids",
+          "actions": "Actions"
+        },
+        "footer": "Showing {{visible}} of {{total}} auctions",
+        "pagination": "Page {{current}} of {{total}}",
+        "delete": {
+          "title": "Delete Auction",
+          "confirm": "Delete",
+          "message": "Are you sure you want to delete this auction? This action cannot be undone.",
+          "hasBids": "Note: This auction has bids and cannot be deleted."
+        },
+        "close": {
+          "title": "Close Auction",
+          "confirm": "Close Auction",
+          "message": "Are you sure you want to close this auction? This will prevent new bids from being placed."
+        }
+      },
       "details": {
         "title": "Auction Details",
         "toast": {
@@ -773,8 +875,8 @@
           "productId": "Product ID",
           "status": "Status",
           "timeStatus": "Time Status",
-        "chat": "Live Chat"
-      },
+          "chat": "Live Chat"
+        },
         "timeStatus": {
           "notStarted": "Not Started",
           "live": "Live"
@@ -899,4 +1001,3 @@
     }
   }
 }
-

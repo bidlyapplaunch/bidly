@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Modal,
   TextField,
@@ -26,6 +26,17 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await authFetch('/api/shopify/products?limit=20');
+      const data = await response.json();
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+      setProducts([]);
+    }
+  }, [authFetch]);
+
   useEffect(() => {
     if (isOpen) {
       fetchProducts();
@@ -49,18 +60,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         });
       }
     }
-  }, [isOpen, auction]);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await authFetch('/api/shopify/products?limit=20');
-      const data = await response.json();
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-      setProducts([]);
-    }
-  };
+  }, [isOpen, auction, fetchProducts]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -116,7 +116,7 @@ const AuctionForm = ({ isOpen, onClose, auction, onSave }) => {
         <Modal.Section>
           <BlockStack gap="400">
             {error && (
-              <Banner status="critical">
+              <Banner tone="critical">
                 <p>{error}</p>
               </Banner>
             )}

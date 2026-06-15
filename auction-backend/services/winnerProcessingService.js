@@ -384,14 +384,25 @@ class WinnerProcessingService {
             }
 
             if (claimedAuction) {
-                await Auction.findByIdAndUpdate(auctionId, {
+                // Release the lock but also count the attempt. After MAX_PROCESSING_ATTEMPTS
+                // consecutive failures, mark the auction 'failed' so the 5-minute cron stops
+                // retrying the same broken auction forever (e.g. a deleted source product). (SVC-18)
+                const MAX_PROCESSING_ATTEMPTS = 5;
+                const updated = await Auction.findByIdAndUpdate(auctionId, {
                     $set: {
                         winnerProcessingLock: false,
+                        processingError: error.message,
                         updatedAt: new Date()
-                    }
-                });
+                    },
+                    $inc: { processingAttempts: 1 }
+                }, { new: true });
+
+                if (updated && (updated.processingAttempts || 0) >= MAX_PROCESSING_ATTEMPTS) {
+                    console.error(`❌ Auction ${auctionId} has failed winner processing ${updated.processingAttempts} times — marking as failed to stop retries.`);
+                    await this.markAuctionAsFailed(auctionId, error.message);
+                }
             }
-            
+
             throw error;
         } finally {
             this.isProcessing.delete(processingKey);
@@ -656,17 +667,21 @@ class WinnerProcessingService {
 
             console.log(`🔄 Processing ${endedAuctions.length} ended auctions for ${shopDomain}`);
 
+            let processedCount = 0;
             for (const auction of endedAuctions) {
                 try {
                     await this.processAuctionWinner(auction._id, shopDomain);
+                    processedCount++;
                 } catch (error) {
                     console.error(`Failed to process auction ${auction._id}:`, error);
                     // Continue with other auctions
                 }
             }
 
-            console.log(`✅ Batch processing completed for ${shopDomain}`);
-            
+            console.log(`✅ Batch processing completed for ${shopDomain} (${processedCount}/${endedAuctions.length})`);
+
+            // Return a real count so the scheduled cron can report accurately (SVC-11)
+            return processedCount;
         } catch (error) {
             console.error('Error in batch processing:', error);
             throw error;

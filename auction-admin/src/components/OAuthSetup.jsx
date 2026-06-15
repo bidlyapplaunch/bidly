@@ -181,7 +181,6 @@ const OAuthSetup = ({ onComplete }) => {
 
     if (shopFromUrl) {
       setShopDomain(shopFromUrl);
-    } else {
     }
 
     if (installed && success) {
@@ -199,20 +198,17 @@ const OAuthSetup = ({ onComplete }) => {
     // Try to get shop from multiple sources
     let shop = null;
     
-    // Method 1: Use stored shop from state (if we found it earlier) - THIS SHOULD WORK
+    // Method 1: Use stored shop from state (if we found it earlier)
     if (shopDomain) {
       shop = shopDomain;
-    } else {
     }
-    
+
     // Method 2: Try current URL search params directly (multiple ways)
     if (!shop) {
       // Try URLSearchParams
       try {
         const urlParams = new URLSearchParams(window.location.search);
         shop = urlParams.get('shop');
-        if (shop) {
-        }
       } catch (e) {
         console.error('Error with URLSearchParams:', e);
       }
@@ -238,31 +234,25 @@ const OAuthSetup = ({ onComplete }) => {
     if (!shop) {
       const shopInfo = getShopInfo();
       shop = shopInfo?.shop;
-      if (shop) {
-      }
     }
-    
+
     // Method 4: Try parent window if in iframe
     if (!shop) {
       try {
         if (window.self !== window.top) {
           const parentUrl = new URL(window.top.location.href);
           shop = parentUrl.searchParams.get('shop');
-          if (shop) {
-          }
         }
       } catch (e) {
         // Cross-origin, can't access parent
       }
     }
-    
+
     // Method 5: Try document referrer
     if (!shop && document.referrer) {
       try {
         const referrerUrl = new URL(document.referrer);
         shop = referrerUrl.searchParams.get('shop');
-        if (shop) {
-        }
       } catch (e) {
         // Can't parse referrer
       }

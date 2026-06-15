@@ -1,0 +1,30 @@
+/* Countdown timer styles. Static parts extracted from inline style objects
+   (CUST-20) so they are not rebuilt on every render/tick. Values mirror the
+   previous inline styles, including the --bidly-* theme variable fallbacks. */
+
+.bidly-countdown-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bidly-countdown {
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: var(--bidly-marketplace-border-radius, 4px);
+  font-family: var(--bidly-marketplace-font-family, Inter, sans-serif);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.bidly-countdown--active {
+  background-color: var(--bidly-marketplace-color-accent, #00b894);
+}
+
+.bidly-countdown--started {
+  background-color: var(--bidly-marketplace-color-success, #00c851);
+}
+
+.bidly-countdown--ended {
+  background-color: var(--bidly-marketplace-color-error, #ff4444);
+}

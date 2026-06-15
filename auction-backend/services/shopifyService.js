@@ -253,9 +253,12 @@ class ShopifyService {
     } catch (error) {
       console.error('Error searching products:', error.response?.data || error.message);
       
-      // If store is not found or not installed, return mock data
-      if (error.message.includes('not found') || error.message.includes('not installed')) {
-        console.log('Store not found, returning mock data for:', query);
+      // If store is not found or not installed, return mock data — DEV ONLY. In production
+      // surface the real error rather than fake "Yellow Snowboard" products in the admin
+      // product picker. (SVC-24)
+      if ((error.message.includes('not found') || error.message.includes('not installed'))
+          && process.env.NODE_ENV !== 'production') {
+        console.log('Store not found, returning mock data (dev only) for:', query);
         return this.getMockProducts(query, limit);
       }
       

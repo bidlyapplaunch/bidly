@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "메일 설정 저장"
+      },
+      "tabs": {
+        "templates": "이메일 템플릿",
+        "customers": "고객 목록",
+        "blast": "대량 이메일"
+      },
+      "customers": {
+        "heading": "고객",
+        "subtitleOne": "이 스토어에 연결된 고객 {{count}}명",
+        "subtitleOther": "이 스토어에 연결된 고객 {{count}}명",
+        "selectedBadge": "{{count}}개 선택됨",
+        "compose": "대량 이메일 작성",
+        "searchPlaceholder": "이메일 또는 이름으로 검색...",
+        "loadError": "고객을 불러오지 못했습니다",
+        "empty": "고객을 찾을 수 없습니다",
+        "columns": {
+          "email": "이메일",
+          "displayName": "표시 이름",
+          "bids": "입찰",
+          "wins": "낙찰",
+          "status": "상태"
+        },
+        "status": {
+          "subscribed": "구독 중",
+          "unsubscribed": "수신 거부"
+        },
+        "pagination": {
+          "previous": "이전",
+          "next": "다음",
+          "page": "{{total}} 페이지 중 {{current}} 페이지"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "업그레이드 필요",
+        "upgradeDescription": "대량 이메일은 Pro 요금제 이상에서 사용할 수 있습니다.",
+        "composeTitle": "대량 이메일 작성",
+        "editTitle": "초안 편집",
+        "sendingTo": "{{recipients}}에게 전송",
+        "recipientsAll": "모든 고객",
+        "recipientsSelected": "선택한 고객 {{count}}명",
+        "editRecipients": "수신자 편집",
+        "cancelEditing": "편집 취소",
+        "subject": "제목",
+        "editorMode": "편집기 모드",
+        "richEditor": "리치 편집기",
+        "htmlEditor": "HTML",
+        "htmlBody": "HTML 본문",
+        "composePlaceholder": "대량 이메일을 작성하세요...",
+        "availableTokens": "사용 가능한 토큰",
+        "deliveryMode": "전송 모드",
+        "sendAll": "전체 전송",
+        "trickle": "분할 전송",
+        "batchSize": "배치 크기",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "간격(분)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "초안으로 저장",
+        "sendNow": "지금 보내기",
+        "confirmTitle": "전송 확인",
+        "confirmSend": "보내기",
+        "confirmBody": "이 이메일을 {{recipients}}에게 보내시겠습니까?",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "전송 기록",
+        "historyEmpty": "아직 대량 이메일이 없습니다",
+        "columns": {
+          "subject": "제목",
+          "date": "날짜",
+          "recipients": "수신자",
+          "status": "상태",
+          "progress": "진행률",
+          "actions": "작업"
+        },
+        "statusBadge": {
+          "draft": "초안",
+          "sending": "전송 중",
+          "completed": "완료",
+          "failed": "실패"
+        },
+        "rowActions": {
+          "edit": "편집",
+          "delete": "삭제"
+        },
+        "preview": "이메일 미리보기",
+        "recipientsCount": "수신자 ({{count}})",
+        "recipientEmail": "이메일",
+        "recipientName": "이름",
+        "recipientStatus": "상태",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "제목과 본문은 필수입니다",
+          "draftUpdated": "초안이 업데이트되었습니다",
+          "draftSaved": "초안이 저장되었습니다",
+          "draftDeleted": "초안이 삭제되었습니다",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "대량 이메일 전송을 시작했습니다!",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {
@@ -628,7 +728,8 @@
           "debug": "디버그: {{count}} 결과가 발견되었습니다.",
           "resultsTitle": "검색결과",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "실제 API 실패: {{message}}. 데모 데이터를 사용합니다."
+          "apiFallback": "실제 API 실패: {{message}}. 데모 데이터를 사용합니다.",
+          "error": "상품을 검색할 수 없습니다. 다시 시도해 주세요."
         },
         "selectedProduct": {
           "title": "선택한 제품 세부정보",

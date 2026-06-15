@@ -12,6 +12,7 @@ import {
 import DOMPurify from 'dompurify';
 import RichTextEditor from './RichTextEditor';
 import { blastEmailAPI } from '../services/blastEmailApi';
+import useAdminI18n from '../hooks/useAdminI18n';
 
 const BLAST_TOKENS = [
   '{{customer_name}}',
@@ -20,6 +21,7 @@ const BLAST_TOKENS = [
 ];
 
 function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false }) {
+  const i18n = useAdminI18n();
   // ── Compose state ──
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -98,8 +100,10 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
 
   // ── Recipient count display ──
   const recipientLabel = recipientSelection?.selectAll
-    ? 'all customers'
-    : `${recipientSelection?.recipientIds?.length || 0} selected customer(s)`;
+    ? i18n.translate('admin.mail_service.blast.recipientsAll')
+    : i18n.translate('admin.mail_service.blast.recipientsSelected', {
+        count: recipientSelection?.recipientIds?.length || 0
+      });
 
   // ── Handlers ──
   const resetCompose = () => {
@@ -126,22 +130,22 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
 
   const handleSaveDraft = async () => {
     if (!subject.trim() || !body.trim()) {
-      setMessage({ tone: 'warning', content: 'Subject and body are required' });
+      setMessage({ tone: 'warning', content: i18n.translate('admin.mail_service.blast.messages.subjectBodyRequired') });
       return;
     }
     try {
       setSavingDraft(true);
       if (editingDraftId) {
         await blastEmailAPI.update(editingDraftId, buildPayload(true));
-        setMessage({ tone: 'success', content: 'Draft updated' });
+        setMessage({ tone: 'success', content: i18n.translate('admin.mail_service.blast.messages.draftUpdated') });
       } else {
         await blastEmailAPI.create(buildPayload(true));
-        setMessage({ tone: 'success', content: 'Draft saved' });
+        setMessage({ tone: 'success', content: i18n.translate('admin.mail_service.blast.messages.draftSaved') });
       }
       resetCompose();
       loadHistory();
     } catch (err) {
-      setMessage({ tone: 'critical', content: err.response?.data?.error || err.message || 'Failed to save draft' });
+      setMessage({ tone: 'critical', content: err.response?.data?.error || err.message || i18n.translate('admin.mail_service.blast.messages.saveDraftError') });
     } finally {
       setSavingDraft(false);
     }
@@ -149,7 +153,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
 
   const handleSendNow = async () => {
     if (!subject.trim() || !body.trim()) {
-      setMessage({ tone: 'warning', content: 'Subject and body are required' });
+      setMessage({ tone: 'warning', content: i18n.translate('admin.mail_service.blast.messages.subjectBodyRequired') });
       return;
     }
     setConfirmSend(true);
@@ -165,11 +169,11 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
       } else {
         await blastEmailAPI.create(buildPayload(false));
       }
-      setMessage({ tone: 'success', content: 'Blast email sending started!' });
+      setMessage({ tone: 'success', content: i18n.translate('admin.mail_service.blast.messages.sendStarted') });
       resetCompose();
       loadHistory();
     } catch (err) {
-      setMessage({ tone: 'critical', content: err.response?.data?.error || err.message || 'Failed to send' });
+      setMessage({ tone: 'critical', content: err.response?.data?.error || err.message || i18n.translate('admin.mail_service.blast.messages.sendError') });
     } finally {
       setSending(false);
     }
@@ -187,17 +191,17 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
       setEditingDraftId(full._id);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setMessage({ tone: 'critical', content: 'Failed to load draft' });
+      setMessage({ tone: 'critical', content: i18n.translate('admin.mail_service.blast.messages.loadDraftError') });
     }
   };
 
   const handleDeleteDraft = async (id) => {
     try {
       await blastEmailAPI.delete(id);
-      setMessage({ tone: 'success', content: 'Draft deleted' });
+      setMessage({ tone: 'success', content: i18n.translate('admin.mail_service.blast.messages.draftDeleted') });
       loadHistory();
     } catch (err) {
-      setMessage({ tone: 'critical', content: 'Failed to delete draft' });
+      setMessage({ tone: 'critical', content: i18n.translate('admin.mail_service.blast.messages.deleteDraftError') });
     }
   };
 
@@ -212,7 +216,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
       setExpandedBlast(data.blast);
       setExpandedBlastId(id);
     } catch (err) {
-      setMessage({ tone: 'critical', content: 'Failed to load blast details' });
+      setMessage({ tone: 'critical', content: i18n.translate('admin.mail_service.blast.messages.loadDetailsError') });
     }
   };
 
@@ -223,10 +227,10 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
 
   const statusBadge = (status) => {
     const map = {
-      draft: { tone: 'info', label: 'Draft' },
-      sending: { tone: 'attention', label: 'Sending' },
-      completed: { tone: 'success', label: 'Completed' },
-      failed: { tone: 'critical', label: 'Failed' }
+      draft: { tone: 'info', label: i18n.translate('admin.mail_service.blast.statusBadge.draft') },
+      sending: { tone: 'attention', label: i18n.translate('admin.mail_service.blast.statusBadge.sending') },
+      completed: { tone: 'success', label: i18n.translate('admin.mail_service.blast.statusBadge.completed') },
+      failed: { tone: 'critical', label: i18n.translate('admin.mail_service.blast.statusBadge.failed') }
     };
     const config = map[status] || { tone: 'info', label: status };
     return <Badge tone={config.tone}>{config.label}</Badge>;
@@ -243,8 +247,8 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
       )}
 
       {disabled && (
-        <Banner tone="warning" title="Upgrade Required">
-          <p>Blast emails are available on Pro plans and above.</p>
+        <Banner tone="warning" title={i18n.translate('admin.mail_service.blast.upgradeTitle')}>
+          <p>{i18n.translate('admin.mail_service.blast.upgradeDescription')}</p>
         </Banner>
       )}
 
@@ -254,23 +258,25 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <Text variant="headingMd">
-                {editingDraftId ? 'Edit Draft' : 'Compose Blast Email'}
+                {editingDraftId
+                  ? i18n.translate('admin.mail_service.blast.editTitle')
+                  : i18n.translate('admin.mail_service.blast.composeTitle')}
               </Text>
               <Text tone="subdued">
-                Sending to {recipientLabel}
+                {i18n.translate('admin.mail_service.blast.sendingTo', { recipients: recipientLabel })}
                 {' '}
                 <Button size="slim" plain onClick={onEditRecipients}>
-                  Edit recipients
+                  {i18n.translate('admin.mail_service.blast.editRecipients')}
                 </Button>
               </Text>
             </div>
             {editingDraftId && (
-              <Button size="slim" onClick={resetCompose}>Cancel editing</Button>
+              <Button size="slim" onClick={resetCompose}>{i18n.translate('admin.mail_service.blast.cancelEditing')}</Button>
             )}
           </div>
 
           <TextField
-            label="Subject"
+            label={i18n.translate('admin.mail_service.blast.subject')}
             value={subject}
             onChange={setSubject}
             maxLength={200}
@@ -281,7 +287,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
 
           {/* Editor mode toggle */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Text variant="bodySm" fontWeight="bold">Editor Mode</Text>
+            <Text variant="bodySm" fontWeight="bold">{i18n.translate('admin.mail_service.blast.editorMode')}</Text>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button
                 size="slim"
@@ -290,7 +296,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                 onClick={() => setEditorMode('rich')}
                 disabled={disabled}
               >
-                Rich Editor
+                {i18n.translate('admin.mail_service.blast.richEditor')}
               </Button>
               <Button
                 size="slim"
@@ -299,14 +305,14 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                 onClick={() => setEditorMode('html')}
                 disabled={disabled}
               >
-                HTML
+                {i18n.translate('admin.mail_service.blast.htmlEditor')}
               </Button>
             </div>
           </div>
 
           {editorMode === 'html' ? (
             <TextField
-              label="HTML Body"
+              label={i18n.translate('admin.mail_service.blast.htmlBody')}
               value={body}
               onChange={setBody}
               multiline={10}
@@ -319,13 +325,13 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
               value={body}
               onChange={setBody}
               disabled={disabled}
-              placeholder="Compose your blast email..."
+              placeholder={i18n.translate('admin.mail_service.blast.composePlaceholder')}
             />
           )}
 
           {/* Tokens */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Text variant="bodySm" fontWeight="bold">Available Tokens</Text>
+            <Text variant="bodySm" fontWeight="bold">{i18n.translate('admin.mail_service.blast.availableTokens')}</Text>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {BLAST_TOKENS.map(token => (
                 <code
@@ -355,7 +361,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
 
           {/* Delivery mode */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Text variant="bodySm" fontWeight="bold">Delivery Mode</Text>
+            <Text variant="bodySm" fontWeight="bold">{i18n.translate('admin.mail_service.blast.deliveryMode')}</Text>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button
                 size="slim"
@@ -364,7 +370,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                 onClick={() => setDeliveryMode('all')}
                 disabled={disabled}
               >
-                Send All
+                {i18n.translate('admin.mail_service.blast.sendAll')}
               </Button>
               <Button
                 size="slim"
@@ -373,7 +379,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                 onClick={() => setDeliveryMode('trickle')}
                 disabled={disabled}
               >
-                Trickle
+                {i18n.translate('admin.mail_service.blast.trickle')}
               </Button>
             </div>
           </div>
@@ -382,7 +388,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 120 }}>
                 <TextField
-                  label="Batch Size"
+                  label={i18n.translate('admin.mail_service.blast.batchSize')}
                   type="number"
                   value={batchSize}
                   onChange={setBatchSize}
@@ -390,12 +396,12 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                   max={500}
                   autoComplete="off"
                   disabled={disabled}
-                  helpText="1\u2013500 emails per batch"
+                  helpText={i18n.translate('admin.mail_service.blast.batchHelp')}
                 />
               </div>
               <div style={{ flex: 1, minWidth: 120 }}>
                 <TextField
-                  label="Interval (minutes)"
+                  label={i18n.translate('admin.mail_service.blast.intervalLabel')}
                   type="number"
                   value={intervalMinutes}
                   onChange={setIntervalMinutes}
@@ -403,7 +409,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                   max={60}
                   autoComplete="off"
                   disabled={disabled}
-                  helpText="1\u201360 minutes between batches"
+                  helpText={i18n.translate('admin.mail_service.blast.intervalHelp')}
                 />
               </div>
             </div>
@@ -412,10 +418,10 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <Button onClick={handleSaveDraft} loading={savingDraft} disabled={disabled}>
-              Save as Draft
+              {i18n.translate('admin.mail_service.blast.saveDraft')}
             </Button>
             <Button primary onClick={handleSendNow} loading={sending} disabled={disabled}>
-              Send Now
+              {i18n.translate('admin.mail_service.blast.sendNow')}
             </Button>
           </div>
         </div>
@@ -425,21 +431,21 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
       <Modal
         open={confirmSend}
         onClose={() => setConfirmSend(false)}
-        title="Confirm Send"
+        title={i18n.translate('admin.mail_service.blast.confirmTitle')}
         primaryAction={{
-          content: 'Send',
+          content: i18n.translate('admin.mail_service.blast.confirmSend'),
           onAction: handleConfirmSend,
           loading: sending
         }}
         secondaryActions={[{
-          content: 'Cancel',
+          content: i18n.translate('admin.common.cancel'),
           onAction: () => setConfirmSend(false)
         }]}
       >
         <Modal.Section>
           <Text>
-            Send this email to {recipientLabel}?
-            {deliveryMode === 'trickle' && ` (Trickle: ${batchSize} per batch, every ${intervalMinutes} min)`}
+            {i18n.translate('admin.mail_service.blast.confirmBody', { recipients: recipientLabel })}
+            {deliveryMode === 'trickle' && i18n.translate('admin.mail_service.blast.confirmTrickle', { batchSize, interval: intervalMinutes })}
           </Text>
         </Modal.Section>
       </Modal>
@@ -447,7 +453,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
       {/* ── History Section ── */}
       <Card sectioned>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Text variant="headingMd">Blast History</Text>
+          <Text variant="headingMd">{i18n.translate('admin.mail_service.blast.history')}</Text>
 
           {historyLoading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
@@ -455,19 +461,19 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
             </div>
           ) : blasts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40 }}>
-              <Text tone="subdued">No blast emails yet</Text>
+              <Text tone="subdued">{i18n.translate('admin.mail_service.blast.historyEmpty')}</Text>
             </div>
           ) : (
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--p-color-border-subdued, #dfe3e8)' }}>
-                    <th style={{ padding: '8px 12px', textAlign: 'left' }}><Text variant="headingSm">Subject</Text></th>
-                    <th style={{ padding: '8px 12px', textAlign: 'left' }}><Text variant="headingSm">Date</Text></th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}><Text variant="headingSm">Recipients</Text></th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}><Text variant="headingSm">Status</Text></th>
-                    <th style={{ padding: '8px 12px', textAlign: 'center' }}><Text variant="headingSm">Progress</Text></th>
-                    <th style={{ padding: '8px 12px', textAlign: 'right' }}><Text variant="headingSm">Actions</Text></th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left' }}><Text variant="headingSm">{i18n.translate('admin.mail_service.blast.columns.subject')}</Text></th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left' }}><Text variant="headingSm">{i18n.translate('admin.mail_service.blast.columns.date')}</Text></th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}><Text variant="headingSm">{i18n.translate('admin.mail_service.blast.columns.recipients')}</Text></th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}><Text variant="headingSm">{i18n.translate('admin.mail_service.blast.columns.status')}</Text></th>
+                    <th style={{ padding: '8px 12px', textAlign: 'center' }}><Text variant="headingSm">{i18n.translate('admin.mail_service.blast.columns.progress')}</Text></th>
+                    <th style={{ padding: '8px 12px', textAlign: 'right' }}><Text variant="headingSm">{i18n.translate('admin.mail_service.blast.columns.actions')}</Text></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -524,8 +530,8 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                             {blast.status === 'draft' && (
                               <>
-                                <Button size="slim" onClick={() => handleEditDraft(blast)}>Edit</Button>
-                                <Button size="slim" tone="critical" onClick={() => handleDeleteDraft(blast._id)}>Delete</Button>
+                                <Button size="slim" onClick={() => handleEditDraft(blast)}>{i18n.translate('admin.mail_service.blast.rowActions.edit')}</Button>
+                                <Button size="slim" tone="critical" onClick={() => handleDeleteDraft(blast._id)}>{i18n.translate('admin.mail_service.blast.rowActions.delete')}</Button>
                               </>
                             )}
                           </div>
@@ -535,7 +541,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                         <tr key={`${blast._id}-detail`}>
                           <td colSpan={6} style={{ padding: '12px 24px', background: 'var(--p-color-bg-subdued, #f6f6f7)' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                              <Text variant="headingSm">Email Preview</Text>
+                              <Text variant="headingSm">{i18n.translate('admin.mail_service.blast.preview')}</Text>
                               <div
                                 style={{
                                   background: '#fff',
@@ -550,20 +556,20 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                                 }}
                               />
                               <Text variant="headingSm">
-                                Recipients ({expandedBlast.recipients?.length || 0})
+                                {i18n.translate('admin.mail_service.blast.recipientsCount', { count: expandedBlast.recipients?.length || 0 })}
                               </Text>
                               <div style={{ maxHeight: 200, overflow: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                                   <thead>
                                     <tr>
-                                      <th style={{ padding: '4px 8px', textAlign: 'left' }}>Email</th>
-                                      <th style={{ padding: '4px 8px', textAlign: 'left' }}>Name</th>
-                                      <th style={{ padding: '4px 8px', textAlign: 'center' }}>Status</th>
+                                      <th style={{ padding: '4px 8px', textAlign: 'left' }}>{i18n.translate('admin.mail_service.blast.recipientEmail')}</th>
+                                      <th style={{ padding: '4px 8px', textAlign: 'left' }}>{i18n.translate('admin.mail_service.blast.recipientName')}</th>
+                                      <th style={{ padding: '4px 8px', textAlign: 'center' }}>{i18n.translate('admin.mail_service.blast.recipientStatus')}</th>
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {(expandedBlast.recipients || []).slice(0, 50).map((r, i) => (
-                                      <tr key={i} style={{ borderTop: '1px solid #eee' }}>
+                                    {(expandedBlast.recipients || []).slice(0, 50).map((r) => (
+                                      <tr key={r.email} style={{ borderTop: '1px solid #eee' }}>
                                         <td style={{ padding: '4px 8px' }}>{r.email}</td>
                                         <td style={{ padding: '4px 8px' }}>{r.displayName}</td>
                                         <td style={{ padding: '4px 8px', textAlign: 'center' }}>
@@ -575,7 +581,7 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
                                 </table>
                                 {(expandedBlast.recipients?.length || 0) > 50 && (
                                   <Text tone="subdued" variant="bodySm">
-                                    Showing first 50 of {expandedBlast.recipients.length} recipients
+                                    {i18n.translate('admin.mail_service.blast.showingFirst', { total: expandedBlast.recipients.length })}
                                   </Text>
                                 )}
                               </div>
@@ -591,11 +597,11 @@ function BlastEmailTab({ recipientSelection, onEditRecipients, disabled = false 
               {historyPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, paddingTop: 8 }}>
                   <Button size="slim" disabled={historyPage <= 1} onClick={() => setHistoryPage(p => p - 1)}>
-                    Previous
+                    {i18n.translate('admin.mail_service.customers.pagination.previous')}
                   </Button>
-                  <Text>Page {historyPage} of {historyPages}</Text>
+                  <Text>{i18n.translate('admin.mail_service.customers.pagination.page', { current: historyPage, total: historyPages })}</Text>
                   <Button size="slim" disabled={historyPage >= historyPages} onClick={() => setHistoryPage(p => p + 1)}>
-                    Next
+                    {i18n.translate('admin.mail_service.customers.pagination.next')}
                   </Button>
                 </div>
               )}

@@ -123,7 +123,7 @@ const auctionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'active', 'ended', 'closed', 'reserve_not_met'],
+    enum: ['pending', 'active', 'ended', 'closed', 'reserve_not_met', 'failed'],
     default: 'pending',
     index: true
   },
@@ -183,7 +183,18 @@ const auctionSchema = new mongoose.Schema({
   winnerProcessedAt: {
     type: Date
   },
-  
+
+  // Retry/failure tracking for winner processing (SVC-18).
+  // Declared here so Mongoose persists them instead of silently dropping them.
+  processingAttempts: {
+    type: Number,
+    default: 0
+  },
+  processingError: {
+    type: String,
+    default: null
+  },
+
   // Popcorn auction settings
   popcornEnabled: {
     type: Boolean,
@@ -229,7 +240,10 @@ auctionSchema.index(
   }
 );
 auctionSchema.index({ shopDomain: 1, endTime: 1, status: 1 });
-auctionSchema.index({ status: 1, completedAt: 1 });
+// Used by the winner-processing safety net: { status: 'ended', winnerProcessed: { $ne: true } }
+auctionSchema.index({ status: 1, winnerProcessed: 1 });
+// Speeds up analytics/day-bucketed queries that scan a shop's auctions by date
+auctionSchema.index({ shopDomain: 1, createdAt: 1 });
 
 // Virtual for checking if auction is currently active
 auctionSchema.virtual('isActive').get(function() {

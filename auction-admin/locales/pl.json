@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "Zapisz ustawienia poczty"
+      },
+      "tabs": {
+        "templates": "Szablony e-mail",
+        "customers": "Lista klientów",
+        "blast": "E-maile masowe"
+      },
+      "customers": {
+        "heading": "Klienci",
+        "subtitleOne": "{{count}} klient powiązany z tym sklepem",
+        "subtitleOther": "{{count}} klientów powiązanych z tym sklepem",
+        "selectedBadge": "Wybrano: {{count}}",
+        "compose": "Utwórz e-mail masowy",
+        "searchPlaceholder": "Szukaj po e-mailu lub nazwie...",
+        "loadError": "Nie udało się załadować klientów",
+        "empty": "Nie znaleziono klientów",
+        "columns": {
+          "email": "E-mail",
+          "displayName": "Nazwa wyświetlana",
+          "bids": "Oferty",
+          "wins": "Wygrane",
+          "status": "Status"
+        },
+        "status": {
+          "subscribed": "Subskrybuje",
+          "unsubscribed": "Wypisany"
+        },
+        "pagination": {
+          "previous": "Poprzednia",
+          "next": "Następna",
+          "page": "Strona {{current}} z {{total}}"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "Wymagana aktualizacja",
+        "upgradeDescription": "E-maile masowe są dostępne w planach Pro i wyższych.",
+        "composeTitle": "Utwórz e-mail masowy",
+        "editTitle": "Edytuj wersję roboczą",
+        "sendingTo": "Wysyłanie do {{recipients}}",
+        "recipientsAll": "wszyscy klienci",
+        "recipientsSelected": "{{count}} wybranych klientów",
+        "editRecipients": "Edytuj odbiorców",
+        "cancelEditing": "Anuluj edycję",
+        "subject": "Temat",
+        "editorMode": "Tryb edytora",
+        "richEditor": "Edytor wizualny",
+        "htmlEditor": "HTML",
+        "htmlBody": "Treść HTML",
+        "composePlaceholder": "Napisz swój e-mail masowy...",
+        "availableTokens": "Dostępne tokeny",
+        "deliveryMode": "Tryb dostarczania",
+        "sendAll": "Wyślij wszystko",
+        "trickle": "Stopniowo",
+        "batchSize": "Rozmiar partii",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "Odstęp (minuty)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "Zapisz jako wersję roboczą",
+        "sendNow": "Wyślij teraz",
+        "confirmTitle": "Potwierdź wysyłkę",
+        "confirmSend": "Wyślij",
+        "confirmBody": "Wysłać ten e-mail do {{recipients}}?",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "Historia wysyłek",
+        "historyEmpty": "Brak e-maili masowych",
+        "columns": {
+          "subject": "Temat",
+          "date": "Data",
+          "recipients": "Odbiorcy",
+          "status": "Status",
+          "progress": "Postęp",
+          "actions": "Akcje"
+        },
+        "statusBadge": {
+          "draft": "Wersja robocza",
+          "sending": "Wysyłanie",
+          "completed": "Ukończono",
+          "failed": "Niepowodzenie"
+        },
+        "rowActions": {
+          "edit": "Edytuj",
+          "delete": "Usuń"
+        },
+        "preview": "Podgląd e-maila",
+        "recipientsCount": "Odbiorcy ({{count}})",
+        "recipientEmail": "E-mail",
+        "recipientName": "Nazwa",
+        "recipientStatus": "Status",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "Temat i treść są wymagane",
+          "draftUpdated": "Zaktualizowano wersję roboczą",
+          "draftSaved": "Zapisano wersję roboczą",
+          "draftDeleted": "Usunięto wersję roboczą",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "Rozpoczęto wysyłanie e-maila masowego!",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {
@@ -628,7 +728,8 @@
           "debug": "Debug: znaleziono {{count}} wyników",
           "resultsTitle": "Wyniki wyszukiwania",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Prawdziwe API nie powiodło się: {{message}}. Używanie danych demonstracyjnych."
+          "apiFallback": "Prawdziwe API nie powiodło się: {{message}}. Używanie danych demonstracyjnych.",
+          "error": "Nie udało się wyszukać produktów. Spróbuj ponownie."
         },
         "selectedProduct": {
           "title": "Szczegóły wybranego produktu",

@@ -476,20 +476,30 @@
     // Initialize translations immediately (non-blocking)
     loadTranslations();
     
-    // Translation function
-    function t(key, params = {}) {
-        const keys = key.split('.');
-        let value = translations;
-        
+    // Resolve a dotted key against a translations object, returning the string or null.
+    function resolveTranslationValue(source, keys) {
+        let value = source;
         for (const k of keys) {
             if (value && typeof value === 'object' && k in value) {
                 value = value[k];
             } else {
-                // Fallback to English key or return key itself
-                return key;
+                return null;
             }
         }
-        
+        return typeof value === 'string' ? value : null;
+    }
+
+    // Translation function
+    function t(key, params = {}) {
+        const keys = key.split('.');
+
+        // Look up the active locale first, then fall back to the English (embedded) string
+        // before giving up and returning the raw key.
+        let value = resolveTranslationValue(translations, keys);
+        if (value == null) {
+            value = resolveTranslationValue(EMBEDDED_TRANSLATIONS, keys);
+        }
+
         if (typeof value === 'string') {
             // Replace variables like {amount}, ${amount}, etc.
             let result = value;
@@ -499,7 +509,7 @@
             }
             return result;
         }
-        
+
         return key;
     }
 
@@ -1709,6 +1719,31 @@
         }
     }
 
+    // Re-check the auction and refresh the widget in place instead of reloading the
+    // merchant's storefront (preserves scroll position and avoids re-running theme JS).
+    let bidlyStatusRefreshInProgress = false;
+    async function refreshWidgetAfterStatusChange() {
+        if (bidlyStatusRefreshInProgress) return;
+        bidlyStatusRefreshInProgress = true;
+        try {
+            const auctionCheck = await checkProductForAuction();
+            const existingWidget = document.querySelector('.bidly-auction-app-embed');
+            if (auctionCheck && auctionCheck.hasAuction) {
+                window.currentAuctionCheck = auctionCheck;
+                const settings = { ...DEFAULT_WIDGET_SETTINGS };
+                if (existingWidget) {
+                    refreshWidgetContent(existingWidget, auctionCheck, settings);
+                } else {
+                    injectWidget(auctionCheck, settings);
+                }
+            }
+        } catch (error) {
+            console.warn('Bidly: Error refreshing widget after status change:', error);
+        } finally {
+            bidlyStatusRefreshInProgress = false;
+        }
+    }
+
     // Initialize countdown timer for pending auctions
     function initializeCountdownTimer(auctionId, startTime) {
         const countdownElement = document.getElementById(`bidly-countdown-${auctionId}`);
@@ -1747,10 +1782,10 @@
             if (minutesSpan) minutesSpan.textContent = '';
             if (secondsSpan) secondsSpan.textContent = '';
             
-            // Refresh page in 30 seconds to check for status update
+            // Refresh widget in 30 seconds to check for status update (in-place, no page reload)
             setTimeout(() => {
-                console.log('Bidly: Refreshing page to check auction status...');
-                window.location.reload();
+                console.log('Bidly: Refreshing widget to check auction status...');
+                refreshWidgetAfterStatusChange();
             }, 30000);
             return;
         }
@@ -1759,12 +1794,14 @@
             const now = new Date();
             const timeLeft = startDate - now;
 
-            console.log('Bidly: Countdown update - Time left:', timeLeft, 'Start:', startDate, 'Now:', now);
-
             if (timeLeft <= 0) {
-                // Auction should start - refresh the page to get updated status
-                console.log('Bidly: Auction should start now, refreshing...');
-                window.location.reload();
+                // Auction should start - refresh the widget in place to get updated status
+                console.log('Bidly: Auction should start now, refreshing widget...');
+                if (window.bidlyCountdownIntervals && window.bidlyCountdownIntervals[auctionId]) {
+                    clearInterval(window.bidlyCountdownIntervals[auctionId]);
+                    delete window.bidlyCountdownIntervals[auctionId];
+                }
+                refreshWidgetAfterStatusChange();
                 return;
             }
 
@@ -1784,8 +1821,6 @@
             if (hoursSpan) hoursSpan.textContent = `${hours}h`;
             if (minutesSpan) minutesSpan.textContent = `${minutes}m`;
             if (secondsSpan) secondsSpan.textContent = `${seconds}s`;
-
-            console.log('Bidly: Countdown updated:', `${days}d ${hours}h ${minutes}m ${seconds}s`);
         }
 
         // Update immediately
@@ -2097,7 +2132,8 @@
     // Initialize real-time updates via WebSocket
     let socket = null;
     let pollingInterval = null;
-    
+    let pollingFallbackTimeout = null;
+
     function initializeRealTimeUpdates(auctionId) {
         // Connect to WebSocket if not already connected
         if (!socket && window.io) {
@@ -2110,12 +2146,24 @@
             
             socket.on('connect', () => {
                 console.log('Bidly: WebSocket connected');
+                // Socket push is the primary update path: clear any polling fallback
+                if (pollingFallbackTimeout) {
+                    clearTimeout(pollingFallbackTimeout);
+                    pollingFallbackTimeout = null;
+                }
+                if (pollingInterval) {
+                    console.log('Bidly: WebSocket connected, stopping polling fallback');
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
                 // Join auction room for real-time updates
                 socket.emit('join-auction', auctionId);
             });
-            
+
             socket.on('disconnect', () => {
                 console.log('Bidly: WebSocket disconnected');
+                // Connection lost: start polling fallback until reconnected
+                startPollingFallback();
             });
             
             socket.on('bid-placed', (data) => {
@@ -2287,27 +2335,37 @@
             
             socket.on('connect_error', (error) => {
                 console.warn('Bidly: WebSocket connection error:', error);
+                // Socket failed to connect: fall back to polling
+                startPollingFallback();
             });
+
+            // If the socket hasn't connected within the timeout window, fall back to polling.
+            // Socket push remains primary; this only covers connect failures/timeouts.
+            if (pollingFallbackTimeout) {
+                clearTimeout(pollingFallbackTimeout);
+            }
+            pollingFallbackTimeout = setTimeout(() => {
+                if (!socket || !socket.connected) {
+                    console.warn('Bidly: WebSocket did not connect in time, starting polling fallback');
+                    startPollingFallback();
+                }
+            }, 20000);
         } else if (!window.io) {
             console.warn('Bidly: Socket.IO not available, using polling only');
+            // No WebSocket available at all: poll immediately
+            startPollingFallback();
         }
-        
-        // Use polling only if WebSocket is not available or not connected
-        // If WebSocket is connected, skip polling to avoid redundant requests
-        if (socket && socket.connected) {
-            console.log('Bidly: WebSocket connected, skipping polling to avoid redundancy');
-            // Don't start polling if WebSocket is working
-            return; // Exit early if WebSocket is connected
-        }
-        
-        // Start polling as fallback
+
+        // Start polling as a fallback only when the socket is not delivering updates.
+        // Safe to call repeatedly: it no-ops if polling is already running.
+        function startPollingFallback() {
         if (pollingInterval) {
-            clearInterval(pollingInterval);
+            return; // Already polling
         }
-        
+
         // Store previous auction data to detect changes
         let previousAuctionData = null;
-        
+
         pollingInterval = setInterval(async () => {
             try {
                 const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}?shop=${CONFIG.shopDomain}`);
@@ -2419,9 +2477,14 @@
                 console.warn('Bidly: Error updating auction data:', error);
             }
         }, 5000); // Poll every 5 seconds (reduced from 2 seconds for better performance)
-        
+        } // end startPollingFallback
+
         // Clean up polling when widget is removed
         return () => {
+            if (pollingFallbackTimeout) {
+                clearTimeout(pollingFallbackTimeout);
+                pollingFallbackTimeout = null;
+            }
             if (pollingInterval) {
                 clearInterval(pollingInterval);
                 pollingInterval = null;
@@ -2901,45 +2964,47 @@
             }
         },
 
-        submitBid: async function(event, auctionId) {
+        // Shared bid submission logic for both the modal and inline bid forms.
+        // options.onSuccess(result) runs after a successful bid (e.g. close modal / clear input).
+        _submitBidRequest: async function(event, auctionId, options = {}) {
             event.preventDefault();
-            
-            // Check if user is logged in
+
+            // Check if user is logged in (pre-submit guard, kept as blocking prompt)
             if (!isUserLoggedIn() || !getCurrentCustomer()) {
                 alert('Please log in to place a bid');
                 return;
             }
-            
+
             const customer = getCurrentCustomer();
-            
+
             // Validate customer has required fields
             if (!customer.email) {
                 alert('Customer email is required to place a bid. Please log in again.');
                 console.error('Bidly: Customer missing email:', customer);
                 return;
             }
-            
+
             const form = event.target;
             const formData = new FormData(form);
             // TODO: Multi-currency - Currently using USD directly, no conversion
             const bidAmount = parseFloat(formData.get('amount'));
-            
+
             if (isNaN(bidAmount) || bidAmount <= 0) {
                 alert('Please enter a valid bid amount.');
                 return;
             }
-            
+
             // Only include customerId if it's a valid MongoDB ObjectId
             // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
             const isValidObjectId = customer.id && /^[0-9a-fA-F]{24}$/.test(customer.id);
-            
+
             const bidData = {
                 amount: bidAmount,
                 bidder: customer.displayName || customer.fullName || 'Guest User',
                 bidderEmail: customer.email,
                 customerEmail: customer.email // Send both for backend compatibility
             };
-            
+
             // Only add customerId if it's a valid MongoDB ObjectId
             if (isValidObjectId) {
                 bidData.customerId = customer.id;
@@ -2959,36 +3024,50 @@
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
                     console.error('Bidly: Bid failed:', response.status, errorData);
-                    alert(`${t('widget.errors.bidFailed')}: ${errorData.message || ''}`);
+                    // Non-blocking feedback instead of alert()
+                    showBidNotification(null, null, null, null, `${t('widget.errors.bidFailed')}: ${errorData.message || ''}`);
                     return;
                 }
 
                 const result = await response.json();
                 if (result.success) {
-                    alert(t('widget.messages.bidPlaced'));
-                    this.closeBidModal(auctionId);
-                    
+                    // Per-form success behavior (close modal / clear input)
+                    if (typeof options.onSuccess === 'function') {
+                        options.onSuccess(result);
+                    }
+
                     // Show immediate notification for the bid just placed
                     console.log('Bidly: Showing notification for bid just placed');
-                    
+
                     // Get product title for the notification
                     let productTitle = 'this item';
                     const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
                     if (productTitleElement) {
                         productTitle = productTitleElement.textContent.trim();
                     }
-                    
+
                     showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
-                    
+
                     // Update widget with data from bid response (no additional fetch needed)
                     if (result.auction) {
-                        updateWidgetData(auctionId, result.auction);
+                        // Validate status before updating - don't let backend incorrectly end auctions
+                        const auctionData = { ...result.auction };
+                        if (auctionData.status === 'ended' && auctionData.endTime) {
+                            const endTime = new Date(auctionData.endTime);
+                            const now = new Date();
+                            if (endTime > now) {
+                                console.warn('Bidly: Bid response says auction ended but endTime hasn\'t passed. Correcting to active.');
+                                auctionData.status = 'active';
+                            }
+                        }
+
+                        updateWidgetData(auctionId, auctionData);
                         // Also update cached auction check for future refreshes
                         if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
-                            window.currentAuctionCheck = { ...window.currentAuctionCheck, ...result.auction };
+                            window.currentAuctionCheck = { ...window.currentAuctionCheck, ...auctionData };
                         }
                     }
-                    
+
                     // Update customer bid history in background (non-blocking)
                     fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
                         method: 'POST',
@@ -3004,12 +3083,20 @@
                         console.warn('Bidly: Error updating customer bid history (non-blocking):', error);
                     });
                 } else {
-                    alert('Error placing bid: ' + result.message);
+                    showBidNotification(null, null, null, null, `${t('widget.errors.bidFailed')}: ${result.message || ''}`);
                 }
             } catch (error) {
                 console.error('Error placing bid:', error);
-                alert('Error placing bid. Please try again.');
+                showBidNotification(null, null, null, null, t('widget.errors.bidFailed'));
             }
+        },
+
+        submitBid: async function(event, auctionId) {
+            return this._submitBidRequest(event, auctionId, {
+                onSuccess: () => {
+                    this.closeBidModal(auctionId);
+                }
+            });
         },
 
         quickBid: function(auctionId, amount) {
@@ -3021,128 +3108,15 @@
         },
 
         submitInlineBid: async function(event, auctionId) {
-            event.preventDefault();
-            
-            // Check if user is logged in
-            if (!isUserLoggedIn() || !getCurrentCustomer()) {
-                alert('Please log in to place a bid');
-                return;
-            }
-            
-            const customer = getCurrentCustomer();
-            const form = event.target;
-            const formData = new FormData(form);
-            // TODO: Multi-currency - Currently using USD directly, no conversion
-            const bidAmount = parseFloat(formData.get('amount'));
-            
-            if (isNaN(bidAmount) || bidAmount <= 0) {
-                alert('Please enter a valid bid amount.');
-                return;
-            }
-
-            // Only include customerId if it's a valid MongoDB ObjectId
-            // customer.id might be a Shopify ID (numeric string), not a MongoDB ObjectId
-            const isValidObjectId = customer.id && /^[0-9a-fA-F]{24}$/.test(customer.id);
-            
-            // Validate customer has required fields
-            if (!customer.email) {
-                alert('Customer email is required to place a bid. Please log in again.');
-                console.error('Bidly: Customer missing email:', customer);
-                return;
-            }
-            
-            const bidData = {
-                amount: bidAmount,
-                bidder: customer.displayName || customer.fullName || 'Guest User',
-                bidderEmail: customer.email,
-                customerEmail: customer.email // Send both for backend compatibility
-            };
-            
-            // Only add customerId if it's a valid MongoDB ObjectId
-            if (isValidObjectId) {
-                bidData.customerId = customer.id;
-            }
-
-            console.log('Bidly: Submitting bid with data:', { ...bidData, bidderEmail: '[REDACTED]', customerEmail: '[REDACTED]' });
-
-            try {
-                const response = await fetch(`${CONFIG.backendUrl}/api/auctions/${auctionId}/bid?shop=${CONFIG.shopDomain}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(bidData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-                    console.error('Bidly: Bid failed:', response.status, errorData);
-                    alert(`${t('widget.errors.bidFailed')}: ${errorData.message || ''}`);
-                    return;
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
+            return this._submitBidRequest(event, auctionId, {
+                onSuccess: () => {
                     // Clear the input field
                     const inputField = document.getElementById(`bidly-bid-amount-${auctionId}`);
                     if (inputField) {
                         inputField.value = '';
                     }
-                    
-                    // Show immediate notification for the bid just placed
-                    console.log('Bidly: Showing notification for bid just placed');
-                    
-                    // Get product title for the notification
-                    let productTitle = 'this item';
-                    const productTitleElement = document.querySelector('h1.product-title, h1.product__title, .product-single__title, h1');
-                    if (productTitleElement) {
-                        productTitle = productTitleElement.textContent.trim();
-                    }
-                    
-                    showBidNotification(bidData.amount, 'New bid placed!', customer.fullName, productTitle);
-                    
-                    // Update widget with data from bid response (no additional fetch needed)
-                    if (result.auction) {
-                        // Validate status before updating - don't let backend incorrectly end auctions
-                        const auctionData = { ...result.auction };
-                        if (auctionData.status === 'ended' && auctionData.endTime) {
-                            const endTime = new Date(auctionData.endTime);
-                            const now = new Date();
-                            if (endTime > now) {
-                                console.warn('Bidly: Bid response (submitBid) says auction ended but endTime hasn\'t passed. Correcting to active.');
-                                auctionData.status = 'active';
-                            }
-                        }
-                        
-                        updateWidgetData(auctionId, auctionData);
-                        // Also update cached auction check for future refreshes
-                        if (window.currentAuctionCheck && window.currentAuctionCheck.auctionId === auctionId) {
-                            window.currentAuctionCheck = { ...window.currentAuctionCheck, ...auctionData };
-                        }
-                    }
-                    
-                    // Update customer's bid history in background (non-blocking)
-                    fetch(`${CONFIG.backendUrl}/api/customers/${customer.id}/bid?shop=${CONFIG.shopDomain}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            auctionId: auctionId,
-                            amount: bidData.amount,
-                            isWinning: result.isWinning || false
-                        })
-                    }).catch(error => {
-                        console.warn('Bidly: Error updating customer bid history (non-blocking):', error);
-                    });
-                } else {
-                    alert(`${t('widget.errors.bidFailed')}: ${result.message}`);
                 }
-            } catch (error) {
-                console.error('Error placing bid:', error);
-                alert(t('widget.errors.bidFailed'));
-            }
+            });
         },
 
         confirmBuyNow: async function(auctionId, price) {

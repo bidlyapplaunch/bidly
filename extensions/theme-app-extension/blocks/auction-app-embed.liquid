@@ -65,14 +65,16 @@
     first_name: {{ customer.first_name | json }},
     last_name: {{ customer.last_name | json }}
   };
-  console.log('Bidly: Shopify customer data injected:', window.customerData);
+  // Only log customer data when Bidly debug is explicitly enabled (avoid leaking PII to console)
+  if (window.BidlyDebugUtils && window.BidlyDebugUtils.isEnabled && window.BidlyDebugUtils.isEnabled()) {
+    console.log('Bidly: Shopify customer data injected:', window.customerData);
+  }
 </script>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" defer></script>
 <script src="{{ 'bidly-debug-utils.js' | asset_url }}?v={{ bidly_asset_v }}" defer></script>
 <script src="{{ 'backendConfig.js' | asset_url }}?v={{ bidly_asset_v }}" defer></script>
 <script src="{{ 'bidly-hybrid-login.js' | asset_url }}?v={{ bidly_asset_v }}" defer></script>
-<script src="{{ 'auction-widget-simple.js' | asset_url }}?v={{ bidly_asset_v }}" defer></script>
 <script src="{{ 'auction-app-embed.js' | asset_url }}?v={{ bidly_asset_v }}" defer></script>
 
 <script>

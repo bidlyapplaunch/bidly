@@ -140,6 +140,11 @@ async function sendOneEmail(shopDomain, storeName, blast, recipient, transport) 
   return { success: true, messageId: result.messageId };
 }
 
+// Throttle between individual sends so a large blast doesn't hammer the SMTP provider
+// into a rate-limit/ban. ~120ms ≈ 8 messages/sec. (SVC-10)
+const PER_MESSAGE_DELAY_MS = 120;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Send a batch of recipients. Updates DB after each send.
  */
@@ -174,6 +179,11 @@ async function sendBatch(blastId, startIndex, batchSize) {
       recipient.error = err.message;
       blast.stats.failed += 1;
       batchFailed += 1;
+    }
+
+    // Throttle between real sends (skip in demo mode where nothing is sent)
+    if (!transport.demo) {
+      await sleep(PER_MESSAGE_DELAY_MS);
     }
   }
 
@@ -264,11 +274,22 @@ export async function sendBlast(blastId) {
   blast.sentAt = new Date();
   await blast.save();
 
-  if (blast.deliveryMode === 'trickle') {
-    sendTrickleBatch(blastId, 0);
-  } else {
-    sendAllAtOnce(blastId);
-  }
+  // Fire-and-forget, but attach a .catch so a rejection doesn't become an
+  // unhandledRejection that can crash the process. (SVC-10)
+  const runner = blast.deliveryMode === 'trickle'
+    ? sendTrickleBatch(blastId, 0)
+    : sendAllAtOnce(blastId);
+
+  Promise.resolve(runner).catch(async (err) => {
+    console.error(`❌ Blast ${blastId} failed:`, err.message);
+    try {
+      const failed = await BlastEmail.findById(blastId);
+      if (failed && failed.status === 'sending') {
+        failed.status = 'failed';
+        await failed.save();
+      }
+    } catch (_e) { /* best effort */ }
+  });
 }
 
 /**

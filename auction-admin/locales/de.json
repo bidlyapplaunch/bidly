@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "Mail-Einstellungen speichern"
+      },
+      "tabs": {
+        "templates": "E-Mail-Vorlagen",
+        "customers": "Kundenliste",
+        "blast": "Massen-E-Mails"
+      },
+      "customers": {
+        "heading": "Kunden",
+        "subtitleOne": "{{count}} Kunde mit diesem Shop verknüpft",
+        "subtitleOther": "{{count}} Kunden mit diesem Shop verknüpft",
+        "selectedBadge": "{{count}} ausgewählt",
+        "compose": "Massen-E-Mail verfassen",
+        "searchPlaceholder": "Nach E-Mail oder Name suchen...",
+        "loadError": "Kunden konnten nicht geladen werden",
+        "empty": "Keine Kunden gefunden",
+        "columns": {
+          "email": "E-Mail",
+          "displayName": "Anzeigename",
+          "bids": "Gebote",
+          "wins": "Gewinne",
+          "status": "Status"
+        },
+        "status": {
+          "subscribed": "Abonniert",
+          "unsubscribed": "Abgemeldet"
+        },
+        "pagination": {
+          "previous": "Zurück",
+          "next": "Weiter",
+          "page": "Seite {{current}} von {{total}}"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "Upgrade erforderlich",
+        "upgradeDescription": "Massen-E-Mails sind ab dem Pro-Tarif verfügbar.",
+        "composeTitle": "Massen-E-Mail verfassen",
+        "editTitle": "Entwurf bearbeiten",
+        "sendingTo": "Senden an {{recipients}}",
+        "recipientsAll": "alle Kunden",
+        "recipientsSelected": "{{count}} ausgewählte(r) Kunde(n)",
+        "editRecipients": "Empfänger bearbeiten",
+        "cancelEditing": "Bearbeitung abbrechen",
+        "subject": "Betreff",
+        "editorMode": "Editor-Modus",
+        "richEditor": "Rich-Editor",
+        "htmlEditor": "HTML",
+        "htmlBody": "HTML-Inhalt",
+        "composePlaceholder": "Verfassen Sie Ihre Massen-E-Mail...",
+        "availableTokens": "Verfügbare Platzhalter",
+        "deliveryMode": "Versandmodus",
+        "sendAll": "Alle senden",
+        "trickle": "Gestaffelt",
+        "batchSize": "Stapelgröße",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "Intervall (Minuten)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "Als Entwurf speichern",
+        "sendNow": "Jetzt senden",
+        "confirmTitle": "Senden bestätigen",
+        "confirmSend": "Senden",
+        "confirmBody": "Diese E-Mail an {{recipients}} senden?",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "Versandverlauf",
+        "historyEmpty": "Noch keine Massen-E-Mails",
+        "columns": {
+          "subject": "Betreff",
+          "date": "Datum",
+          "recipients": "Empfänger",
+          "status": "Status",
+          "progress": "Fortschritt",
+          "actions": "Aktionen"
+        },
+        "statusBadge": {
+          "draft": "Entwurf",
+          "sending": "Wird gesendet",
+          "completed": "Abgeschlossen",
+          "failed": "Fehlgeschlagen"
+        },
+        "rowActions": {
+          "edit": "Bearbeiten",
+          "delete": "Löschen"
+        },
+        "preview": "E-Mail-Vorschau",
+        "recipientsCount": "Empfänger ({{count}})",
+        "recipientEmail": "E-Mail",
+        "recipientName": "Name",
+        "recipientStatus": "Status",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "Betreff und Inhalt sind erforderlich",
+          "draftUpdated": "Entwurf aktualisiert",
+          "draftSaved": "Entwurf gespeichert",
+          "draftDeleted": "Entwurf gelöscht",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "Versand der Massen-E-Mail gestartet!",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {
@@ -628,7 +728,8 @@
           "debug": "Debug: {{count}} Ergebnisse gefunden",
           "resultsTitle": "Suchergebnisse",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "Echtes API fehlgeschlagen: {{message}}. Demodaten werden verwendet."
+          "apiFallback": "Echtes API fehlgeschlagen: {{message}}. Demodaten werden verwendet.",
+          "error": "Produkte konnten nicht durchsucht werden. Bitte versuchen Sie es erneut."
         },
         "selectedProduct": {
           "title": "Details ausgewähltes Produkt",
@@ -879,5 +980,3 @@
     }
   }
 }
-
-

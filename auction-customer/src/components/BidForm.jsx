@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { 
   Card, 
   FormLayout, 
@@ -11,11 +11,25 @@ import {
 } from '@shopify/polaris';
 import { t } from '../i18n';
 
-const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
+const BidForm = forwardRef(({ auction, onBidPlaced, onBuyNow, isLoading }, ref) => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
   const formRef = useRef(null);
+
+  // Expose a submit method so a parent (e.g. the bid modal's primary action)
+  // can submit this specific form rather than the first <form> on the page.
+  useImperativeHandle(ref, () => ({
+    submit: () => {
+      const form = formRef.current;
+      if (!form) return;
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+      } else {
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      }
+    }
+  }), []);
 
   const increment = auction.minBidIncrement || 1;
   const minBid = auction.currentBid > 0 ? auction.currentBid + increment : auction.startingBid;
@@ -115,29 +129,20 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
           <div style={{ marginTop: '0.5rem' }}>
             <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>{t('marketplace.bid_form.quickBid')}</Text>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <Button 
-                size="slim" 
+              {/* Polaris v12 Button does not accept a `style` prop (it is not
+                  forwarded), so the previous inline style objects here were dead
+                  code. Removed for consistency; appearance is unchanged. */}
+              <Button
+                size="slim"
                 onClick={() => handleQuickBid(minBid)}
                 disabled={isLoading}
-                style={{
-                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
-                  borderColor: 'var(--bidly-marketplace-color-border, #dddddd)',
-                  color: 'var(--bidly-marketplace-color-text-primary, #222222)',
-                  fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
-                }}
               >
                 ${minBid}
               </Button>
-              <Button 
-                size="slim" 
+              <Button
+                size="slim"
                 onClick={() => handleQuickBid(minBid + increment)}
                 disabled={isLoading}
-                style={{
-                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
-                  borderColor: 'var(--bidly-marketplace-color-border, #dddddd)',
-                  color: 'var(--bidly-marketplace-color-text-primary, #222222)',
-                  fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
-                }}
               >
                 ${minBid + increment}
               </Button>
@@ -199,6 +204,8 @@ const BidForm = ({ auction, onBidPlaced, onBuyNow, isLoading }) => {
     )}
     </>
   );
-};
+});
+
+BidForm.displayName = 'BidForm';
 
 export default BidForm;

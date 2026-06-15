@@ -335,7 +335,7 @@
         const auctionId = auction._id || auction.id || Math.random().toString(36);
         return `
           <div class="bidly-auction-card" data-product-url="${productUrl}" data-auction-id="${auctionId}" data-end-time="${auction.endTime || ''}">
-            ${productImage ? `<img src="${productImage}" alt="${escapeHtml(productTitle)}" class="bidly-auction-card-image">` : '<div class="bidly-auction-card-image" style="display: flex; align-items: center; justify-content: center; color: #999;">{{ "bidly.ui.no_image" | t }}</div>'}
+            ${productImage ? `<img src="${productImage}" alt="${escapeHtml(productTitle)}" class="bidly-auction-card-image" loading="lazy" decoding="async">` : '<div class="bidly-auction-card-image" style="display: flex; align-items: center; justify-content: center; color: #999;">{{ "bidly.ui.no_image" | t }}</div>'}
             <div class="bidly-auction-card-content">
               <h3 class="bidly-auction-card-title">${escapeHtml(productTitle)}</h3>
               <div class="bidly-auction-card-status ${statusClass}">${statusText}</div>

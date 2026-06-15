@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Page } from '@shopify/polaris';
+import { Page, Banner } from '@shopify/polaris';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MailServiceSettings from '../components/MailServiceSettings';
 import CustomerListTab from '../components/CustomerListTab';
@@ -7,26 +7,32 @@ import BlastEmailTab from '../components/BlastEmailTab';
 import { emailSettingsAPI } from '../services/emailSettingsApi';
 import useAdminI18n from '../hooks/useAdminI18n';
 
-const TABS = [
-  { id: 'templates', label: 'Email Templates' },
-  { id: 'customers', label: 'Customer List' },
-  { id: 'blast', label: 'Blast Emails' }
-];
+const TAB_IDS = ['templates', 'customers', 'blast'];
 
 export default function MailServicePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const query = location.search || '';
   const i18n = useAdminI18n();
+  const TABS = TAB_IDS.map((id) => ({
+    id,
+    label: i18n.translate(`admin.mail_service.tabs.${id}`)
+  }));
   const [activeTab, setActiveTab] = useState('templates');
   const [recipientSelection, setRecipientSelection] = useState({ selectAll: true, recipientIds: [] });
   const [canCustomize, setCanCustomize] = useState(false);
+  const [settingsError, setSettingsError] = useState(false);
 
   // Load plan context to determine if blast emails are available
   useEffect(() => {
     emailSettingsAPI.getSettings()
-      .then(res => setCanCustomize(res.canCustomize ?? false))
-      .catch(() => {});
+      .then(res => {
+        setCanCustomize(res.canCustomize ?? false);
+        setSettingsError(false);
+      })
+      // ADMIN-13: surface the failure instead of silently leaving blast disabled with
+      // no explanation (which otherwise looks like a plan-upgrade prompt).
+      .catch(() => setSettingsError(true));
   }, []);
 
   const handleComposeBlast = useCallback((selection) => {
@@ -47,6 +53,11 @@ export default function MailServicePage() {
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {settingsError && (
+          <Banner tone="warning" onDismiss={() => setSettingsError(false)}>
+            {i18n.translate('admin.mail_service.page.settingsError')}
+          </Banner>
+        )}
         {/* Tab bar */}
         <div style={{
           display: 'flex',
@@ -82,7 +93,7 @@ export default function MailServicePage() {
         {/* Tab content */}
         {activeTab === 'templates' && <MailServiceSettings />}
         {activeTab === 'customers' && (
-          <CustomerListTab onComposeBlast={handleComposeBlast} />
+          <CustomerListTab onComposeBlast={handleComposeBlast} composeDisabled={!canCustomize} />
         )}
         {activeTab === 'blast' && (
           <BlastEmailTab

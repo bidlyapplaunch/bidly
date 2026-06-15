@@ -9,6 +9,7 @@ import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import OAuthSetup from './components/OAuthSetup';
 import AppBridgeProvider from './components/AppBridgeProvider';
+import ErrorBoundary from './components/ErrorBoundary';
 import authService from './services/auth';
 import MarketplaceCustomizationSettings from './components/MarketplaceCustomizationSettings';
 import WidgetCustomizationSettings from './components/WidgetCustomizationSettings';
@@ -200,7 +201,7 @@ function AppContent() {
           // Ensure response has expected structure
           const status = {
             success: response?.success !== false,
-            onboardingComplete: response?.onboardingComplete || response?.data?.onboardingComplete || true,
+            onboardingComplete: response?.onboardingComplete ?? response?.data?.onboardingComplete ?? false,
             widgetActive: response?.widgetActive || response?.data?.widgetActive || false,
             ...response
           };
@@ -297,8 +298,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AppBridgeProvider>
-      <LocaleAwareApp />
-    </AppBridgeProvider>
+    <ErrorBoundary>
+      <AppBridgeProvider>
+        <LocaleAwareApp />
+      </AppBridgeProvider>
+    </ErrorBoundary>
   );
 }

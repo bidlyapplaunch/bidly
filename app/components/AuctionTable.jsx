@@ -44,14 +44,14 @@ const AuctionTable = ({ initialAuctions = [], onEdit, onView, onRefresh }) => {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      'draft': { status: 'warning', children: 'DRAFT' },
-      'active': { status: 'success', children: 'ACTIVE' },
-      'ended': { status: 'info', children: 'ENDED' },
-      'closed': { status: 'critical', children: 'CLOSED' },
-      'cancelled': { status: 'critical', children: 'CANCELLED' }
+      'draft': { tone: 'warning', children: 'DRAFT' },
+      'active': { tone: 'success', children: 'ACTIVE' },
+      'ended': { tone: 'info', children: 'ENDED' },
+      'closed': { tone: 'critical', children: 'CLOSED' },
+      'cancelled': { tone: 'critical', children: 'CANCELLED' }
     };
-    
-    const config = statusMap[status?.toLowerCase()] || { status: 'info', children: status?.toUpperCase() || 'UNKNOWN' };
+
+    const config = statusMap[status?.toLowerCase()] || { tone: 'info', children: status?.toUpperCase() || 'UNKNOWN' };
     return <Badge {...config} />;
   };
 

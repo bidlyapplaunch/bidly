@@ -71,5 +71,5 @@ function runRemixBuild() {
       process.exit(0);
     });
   });
-});
+}
 

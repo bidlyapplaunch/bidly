@@ -146,6 +146,106 @@
       },
       "actions": {
         "save": "Salva le impostazioni della posta"
+      },
+      "tabs": {
+        "templates": "Modelli e-mail",
+        "customers": "Elenco clienti",
+        "blast": "E-mail di massa"
+      },
+      "customers": {
+        "heading": "Clienti",
+        "subtitleOne": "{{count}} cliente collegato a questo negozio",
+        "subtitleOther": "{{count}} clienti collegati a questo negozio",
+        "selectedBadge": "{{count}} selezionati",
+        "compose": "Componi e-mail di massa",
+        "searchPlaceholder": "Cerca per e-mail o nome...",
+        "loadError": "Impossibile caricare i clienti",
+        "empty": "Nessun cliente trovato",
+        "columns": {
+          "email": "E-mail",
+          "displayName": "Nome visualizzato",
+          "bids": "Offerte",
+          "wins": "Vinte",
+          "status": "Stato"
+        },
+        "status": {
+          "subscribed": "Iscritto",
+          "unsubscribed": "Annullato"
+        },
+        "pagination": {
+          "previous": "Precedente",
+          "next": "Successivo",
+          "page": "Pagina {{current}} di {{total}}"
+        }
+      },
+      "blast": {
+        "upgradeTitle": "Aggiornamento richiesto",
+        "upgradeDescription": "Le e-mail di massa sono disponibili dai piani Pro in su.",
+        "composeTitle": "Componi e-mail di massa",
+        "editTitle": "Modifica bozza",
+        "sendingTo": "Invio a {{recipients}}",
+        "recipientsAll": "tutti i clienti",
+        "recipientsSelected": "{{count}} cliente/i selezionato/i",
+        "editRecipients": "Modifica destinatari",
+        "cancelEditing": "Annulla modifica",
+        "subject": "Oggetto",
+        "editorMode": "Modalità editor",
+        "richEditor": "Editor avanzato",
+        "htmlEditor": "HTML",
+        "htmlBody": "Corpo HTML",
+        "composePlaceholder": "Componi la tua e-mail di massa...",
+        "availableTokens": "Token disponibili",
+        "deliveryMode": "Modalità di invio",
+        "sendAll": "Invia tutto",
+        "trickle": "Graduale",
+        "batchSize": "Dimensione lotto",
+        "batchHelp": "1–500 emails per batch",
+        "intervalLabel": "Intervallo (minuti)",
+        "intervalHelp": "1–60 minutes between batches",
+        "saveDraft": "Salva come bozza",
+        "sendNow": "Invia ora",
+        "confirmTitle": "Conferma invio",
+        "confirmSend": "Invia",
+        "confirmBody": "Inviare questa e-mail a {{recipients}}?",
+        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "history": "Cronologia invii",
+        "historyEmpty": "Nessuna e-mail di massa ancora",
+        "columns": {
+          "subject": "Oggetto",
+          "date": "Data",
+          "recipients": "Destinatari",
+          "status": "Stato",
+          "progress": "Avanzamento",
+          "actions": "Azioni"
+        },
+        "statusBadge": {
+          "draft": "Bozza",
+          "sending": "Invio in corso",
+          "completed": "Completato",
+          "failed": "Non riuscito"
+        },
+        "rowActions": {
+          "edit": "Modifica",
+          "delete": "Elimina"
+        },
+        "preview": "Anteprima e-mail",
+        "recipientsCount": "Destinatari ({{count}})",
+        "recipientEmail": "E-mail",
+        "recipientName": "Nome",
+        "recipientStatus": "Stato",
+        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "messages": {
+          "subjectBodyRequired": "Oggetto e corpo sono obbligatori",
+          "draftUpdated": "Bozza aggiornata",
+          "draftSaved": "Bozza salvata",
+          "draftDeleted": "Bozza eliminata",
+          "saveDraftError": "Failed to save draft",
+          "sendStarted": "Invio dell’e-mail di massa avviato!",
+          "sendError": "Failed to send",
+          "loadDraftError": "Failed to load draft",
+          "deleteDraftError": "Failed to delete draft",
+          "loadDetailsError": "Failed to load blast details"
+        }
       }
     },
     "marketplace": {
@@ -628,7 +728,8 @@
           "debug": "Debug: risultati {{count}} trovati",
           "resultsTitle": "Risultati della ricerca",
           "resultLabel": "{{title}} (ID: {{id}}) - {{price}}",
-          "apiFallback": "API reale non riuscita: {{message}}. Utilizzo dei dati dimostrativi."
+          "apiFallback": "API reale non riuscita: {{message}}. Utilizzo dei dati dimostrativi.",
+          "error": "Impossibile cercare i prodotti. Riprova."
         },
         "selectedProduct": {
           "title": "Dettagli del prodotto selezionato",

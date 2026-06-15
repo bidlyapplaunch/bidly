@@ -201,12 +201,7 @@ class ShopifyOAuthService {
   verifyHmac(query) {
     try {
       const { hmac, ...rest } = query;
-      
-      console.log('🔐 HMAC verification debug:');
-      console.log('  - Provided HMAC:', hmac);
-      console.log('  - Client Secret present:', !!this.clientSecret);
-      console.log('  - Query params:', rest);
-      
+
       if (!hmac) {
         console.warn('⚠️ No HMAC signature provided');
         return false;
@@ -223,21 +218,23 @@ class ShopifyOAuthService {
         .map(key => `${key}=${rest[key]}`)
         .join('&');
 
-      console.log('  - Sorted params string:', sortedParams);
-
       // Generate HMAC using the client secret
       const calculatedHmac = crypto
         .createHmac('sha256', this.clientSecret)
         .update(sortedParams)
         .digest('hex');
 
-      console.log('  - Calculated HMAC:', calculatedHmac);
-      console.log('  - Provided HMAC:  ', hmac);
+      // Constant-time comparison (SVC-17). timingSafeEqual throws on length mismatch,
+      // so compare lengths first. Also: do NOT log the HMACs / params (leaks signing
+      // material).
+      const provided = Buffer.from(hmac, 'utf8');
+      const calculated = Buffer.from(calculatedHmac, 'utf8');
+      const isValid = provided.length === calculated.length &&
+        crypto.timingSafeEqual(provided, calculated);
 
-      // Compare the calculated HMAC with the provided one
-      const isValid = calculatedHmac === hmac;
-      
-      console.log('🔐 HMAC verification result:', isValid ? 'Valid' : 'Invalid');
+      if (!isValid) {
+        console.warn('⚠️ HMAC verification failed');
+      }
       return isValid;
     } catch (error) {
       console.error('❌ Error verifying HMAC:', error.message);

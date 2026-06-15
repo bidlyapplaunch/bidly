@@ -10,62 +10,153 @@ class ShopifyGraphQLService {
     }
 
     /**
-     * Execute GraphQL mutation/query
+     * Execute GraphQL mutation/query with throttle-aware retry (SVC-07).
+     * Retries on HTTP 429/5xx and on GraphQL `THROTTLED` cost errors with exponential
+     * backoff, so winner-product creation / variant updates don't fail hard under load.
      */
-    async executeGraphQL(storeDomain, accessToken, query, variables = {}) {
-        try {
-            const response = await axios.post(
-                `https://${storeDomain}/admin/api/2025-10/graphql.json`,
-                {
-                    query,
-                    variables
-                },
-                {
-                    headers: {
-                        'X-Shopify-Access-Token': accessToken,
-                        'Content-Type': 'application/json'
+    async executeGraphQL(storeDomain, accessToken, query, variables = {}, options = {}) {
+        const maxAttempts = options.maxAttempts || 4;
+        const backoff = (attempt, retryAfterSec) => {
+            if (Number.isFinite(retryAfterSec)) return retryAfterSec * 1000;
+            return Math.min(2000 * Math.pow(2, attempt - 1), 10000);
+        };
+
+        let attempt = 0;
+        while (attempt < maxAttempts) {
+            attempt++;
+            try {
+                const response = await axios.post(
+                    `https://${storeDomain}/admin/api/2025-10/graphql.json`,
+                    { query, variables },
+                    {
+                        headers: {
+                            'X-Shopify-Access-Token': accessToken,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (response.data.errors) {
+                    const errors = response.data.errors;
+                    const isThrottled = errors.some(e => e.extensions?.code === 'THROTTLED');
+                    if (isThrottled && attempt < maxAttempts) {
+                        const delay = backoff(attempt);
+                        console.warn(`⏳ Shopify GraphQL throttled, retrying in ${delay}ms (attempt ${attempt}/${maxAttempts})`);
+                        await new Promise(r => setTimeout(r, delay));
+                        continue;
+                    }
+
+                    console.error('GraphQL Errors:', errors);
+                    const firstError = errors[0];
+                    const error = new Error(`GraphQL Error: ${firstError.message}`);
+                    error.graphqlErrors = errors;
+                    error.isPermissionError = firstError.extensions?.code === 'ACCESS_DENIED' ||
+                                             firstError.message.includes('ACCESS_DENIED') ||
+                                             firstError.message.includes('access scope') ||
+                                             firstError.message.includes('permission');
+                    throw error;
+                }
+
+                return response.data.data;
+            } catch (error) {
+                // Retry transient transport failures (429 / 5xx)
+                const status = error.response?.status;
+                const isTransient = status === 429 || (status >= 500 && status < 600);
+                if (isTransient && attempt < maxAttempts) {
+                    const retryAfter = parseFloat(error.response?.headers?.['retry-after']);
+                    const delay = backoff(attempt, retryAfter);
+                    console.warn(`⏳ Shopify GraphQL HTTP ${status}, retrying in ${delay}ms (attempt ${attempt}/${maxAttempts})`);
+                    await new Promise(r => setTimeout(r, delay));
+                    continue;
+                }
+
+                console.error('GraphQL Request Failed:', error.message);
+
+                if (error.isPermissionError) {
+                    throw error;
+                }
+
+                // Surface permission errors from an Axios response body
+                if (error.response?.data?.errors) {
+                    const firstError = error.response.data.errors[0];
+                    if (firstError.extensions?.code === 'ACCESS_DENIED' ||
+                        firstError.message?.includes('ACCESS_DENIED') ||
+                        firstError.message?.includes('access scope') ||
+                        firstError.message?.includes('permission')) {
+                        error.isPermissionError = true;
+                        error.graphqlErrors = error.response.data.errors;
                     }
                 }
-            );
 
-            if (response.data.errors) {
-                console.error('GraphQL Errors:', response.data.errors);
-                const firstError = response.data.errors[0];
-                
-                // Create error with more details for permission errors
-                const error = new Error(`GraphQL Error: ${firstError.message}`);
-                error.graphqlErrors = response.data.errors;
-                error.isPermissionError = firstError.extensions?.code === 'ACCESS_DENIED' || 
-                                         firstError.message.includes('ACCESS_DENIED') ||
-                                         firstError.message.includes('access scope') ||
-                                         firstError.message.includes('permission');
-                
                 throw error;
             }
-
-            return response.data.data;
-        } catch (error) {
-            console.error('GraphQL Request Failed:', error.message);
-            
-            // Preserve permission error flag if it exists
-            if (error.isPermissionError) {
-                throw error;
-            }
-            
-            // Check if it's a permission error from Axios response
-            if (error.response?.data?.errors) {
-                const firstError = error.response.data.errors[0];
-                if (firstError.extensions?.code === 'ACCESS_DENIED' || 
-                    firstError.message?.includes('ACCESS_DENIED') ||
-                    firstError.message?.includes('access scope') ||
-                    firstError.message?.includes('permission')) {
-                    error.isPermissionError = true;
-                    error.graphqlErrors = error.response.data.errors;
-                }
-            }
-            
-            throw error;
         }
+    }
+
+    /**
+     * Build a product GID from a numeric id (or pass through an existing gid).
+     */
+    toProductGid(productId) {
+        const value = productId?.toString() || '';
+        return value.includes('gid://') ? value : `gid://shopify/Product/${value}`;
+    }
+
+    /**
+     * Set ALL auction metafields for a product in a single metafieldsSet call.
+     * (SVC-06/BACKEND-12: replaces ~20 sequential REST calls — a list + put/post per field —
+     * that previously ran on every bid via an HTTP self-call.)
+     */
+    async setAuctionMetafields(storeDomain, accessToken, productId, auctionData) {
+        const ownerId = this.toProductGid(productId);
+        const toIso = (v) => (v instanceof Date ? v.toISOString() : v);
+
+        const metafields = [
+            { key: 'is_auction', value: 'true', type: 'boolean' },
+            { key: 'auction_id', value: auctionData.auctionId.toString(), type: 'single_line_text_field' },
+            { key: 'status', value: auctionData.status, type: 'single_line_text_field' },
+            { key: 'current_bid', value: (auctionData.currentBid || 0).toString(), type: 'number_decimal' },
+            { key: 'starting_bid', value: auctionData.startingBid.toString(), type: 'number_decimal' },
+            { key: 'reserve_price', value: (auctionData.reservePrice || 0).toString(), type: 'number_decimal' },
+            { key: 'start_time', value: toIso(auctionData.startTime), type: 'date_time' },
+            { key: 'end_time', value: toIso(auctionData.endTime), type: 'date_time' },
+            { key: 'bid_count', value: (auctionData.bidCount || 0).toString(), type: 'number_integer' },
+            { key: 'buy_now_price', value: (auctionData.buyNowPrice || 0).toString(), type: 'number_decimal' }
+        ].map(m => ({ ...m, namespace: 'auction', ownerId }));
+
+        return this.writeMetafields(storeDomain, accessToken, metafields);
+    }
+
+    /**
+     * Mark a product as no longer an auction (single call) — used after soft delete so the
+     * storefront widget stops loading it.
+     */
+    async clearAuctionMetafields(storeDomain, accessToken, productId) {
+        const ownerId = this.toProductGid(productId);
+        const metafields = [
+            { namespace: 'auction', key: 'is_auction', value: 'false', type: 'boolean', ownerId },
+            { namespace: 'auction', key: 'status', value: 'deleted', type: 'single_line_text_field', ownerId }
+        ];
+        return this.writeMetafields(storeDomain, accessToken, metafields);
+    }
+
+    /**
+     * Internal: run a metafieldsSet mutation and surface userErrors.
+     */
+    async writeMetafields(storeDomain, accessToken, metafields) {
+        const mutation = `
+            mutation SetMetafields($metafields: [MetafieldsSetInput!]!) {
+                metafieldsSet(metafields: $metafields) {
+                    metafields { id key namespace }
+                    userErrors { field message }
+                }
+            }`;
+
+        const data = await this.executeGraphQL(storeDomain, accessToken, mutation, { metafields });
+        const userErrors = data?.metafieldsSet?.userErrors || [];
+        if (userErrors.length > 0) {
+            throw new Error(`metafieldsSet userErrors: ${userErrors.map(e => e.message).join('; ')}`);
+        }
+        return data?.metafieldsSet?.metafields || [];
     }
 
     /**

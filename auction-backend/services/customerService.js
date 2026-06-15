@@ -21,106 +21,91 @@ export async function ensureCustomer(shopDomain, email, firstName = null, lastNa
 
   const normalizedEmail = email.toLowerCase().trim();
 
-  // Step 1: Find or create GlobalCustomer by email
-  let globalCustomer = await GlobalCustomer.findOne({ email: normalizedEmail });
-  
-  if (!globalCustomer) {
-    // Create new global customer identity
-    globalCustomer = new GlobalCustomer({
-      email: normalizedEmail,
-      names: {
-        first: firstName || null,
-        last: lastName || null
+  // Step 1: Find or create GlobalCustomer by email. Atomic upsert avoids the
+  // duplicate-key race when two first-time requests for the same email arrive
+  // concurrently (e.g. a customer's first bid double-fires). (SVC-16)
+  let globalCustomer = await GlobalCustomer.findOneAndUpdate(
+    { email: normalizedEmail },
+    {
+      $setOnInsert: {
+        email: normalizedEmail,
+        names: { first: firstName || null, last: lastName || null }
       }
-    });
-    await globalCustomer.save();
-    console.log(`✅ Created new GlobalCustomer for ${normalizedEmail}`);
-  } else {
-    // Update names if we have better data (non-null values)
-    let shouldUpdate = false;
-    if (firstName && !globalCustomer.names.first) {
-      globalCustomer.names.first = firstName;
-      shouldUpdate = true;
-    }
-    if (lastName && !globalCustomer.names.last) {
-      globalCustomer.names.last = lastName;
-      shouldUpdate = true;
-    }
-    if (shouldUpdate) {
-      await globalCustomer.save();
-    }
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  // Fill in missing global names if we now have better data
+  const globalNameUpdate = {};
+  if (firstName && !globalCustomer.names?.first) globalNameUpdate['names.first'] = firstName;
+  if (lastName && !globalCustomer.names?.last) globalNameUpdate['names.last'] = lastName;
+  if (Object.keys(globalNameUpdate).length > 0) {
+    globalCustomer = await GlobalCustomer.findByIdAndUpdate(
+      globalCustomer._id,
+      { $set: globalNameUpdate },
+      { new: true }
+    );
   }
 
-  // Step 2: Find or create per-store Customer profile
-  let customer = await Customer.findOne({
-    email: normalizedEmail,
-    shopDomain
-  });
+  // Step 2: Find or create per-store Customer profile (atomic upsert). displayName is
+  // generated once on insert only. (SVC-16)
+  let customer = await Customer.findOneAndUpdate(
+    { email: normalizedEmail, shopDomain },
+    {
+      $setOnInsert: {
+        globalCustomerId: globalCustomer._id,
+        email: normalizedEmail,
+        shopDomain,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        displayName: generateRandomName(normalizedEmail),
+        shopifyId: shopifyId || null,
+        isTemp: isTemp,
+        phone: phone || null,
+        lastLoginAt: new Date()
+      }
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
-  if (!customer) {
-    // Create new per-store customer profile
-    // Always generate a random displayName for new store profiles
-    const displayName = generateRandomName(normalizedEmail);
-    
-    customer = new Customer({
-      globalCustomerId: globalCustomer._id,
-      email: normalizedEmail,
-      shopDomain,
-      firstName: firstName || null,
-      lastName: lastName || null,
-      displayName: displayName,
-      shopifyId: shopifyId || null,
-      isTemp: isTemp,
-      phone: phone || null,
-      lastLoginAt: new Date()
-    });
-    
-    await customer.save();
-    console.log(`✅ Created new Customer profile for ${normalizedEmail} in shop ${shopDomain} with displayName: ${displayName}`);
-  } else {
-    // Ensure existing customer has globalCustomerId (migration for old customers)
-    if (!customer.globalCustomerId) {
-      customer.globalCustomerId = globalCustomer._id;
-      await customer.save();
-    }
-    // Update existing customer profile if needed
-    let shouldUpdate = false;
-    
-    // Update firstName/lastName if provided and different
-    if (firstName !== null && customer.firstName !== firstName) {
-      customer.firstName = firstName;
-      shouldUpdate = true;
-    }
-    if (lastName !== null && customer.lastName !== lastName) {
-      customer.lastName = lastName;
-      shouldUpdate = true;
-    }
-    if (phone !== null && customer.phone !== phone) {
-      customer.phone = phone;
-      shouldUpdate = true;
-    }
+  // Update profile fields where we now have better data. Idempotent for a freshly
+  // inserted doc (those values were just set via $setOnInsert).
+  let shouldUpdate = false;
 
-    // Update shopifyId if provided and different
-    if (shopifyId && customer.shopifyId !== shopifyId) {
-      customer.shopifyId = shopifyId;
-      customer.isTemp = false; // If they have a shopifyId, they're not temp
-      shouldUpdate = true;
-    }
-    
-    // Ensure displayName exists (should always exist, but safety check)
-    if (!customer.displayName || customer.displayName.trim() === '') {
-      customer.displayName = generateRandomName(normalizedEmail);
-      shouldUpdate = true;
-      console.log(`⚠️ Customer ${normalizedEmail} in shop ${shopDomain} had no displayName, generated: ${customer.displayName}`);
-    }
-    
-    // Update lastLoginAt
-    customer.lastLoginAt = new Date();
+  // Ensure existing customer has globalCustomerId (migration for old customers)
+  if (!customer.globalCustomerId) {
+    customer.globalCustomerId = globalCustomer._id;
     shouldUpdate = true;
-    
-    if (shouldUpdate) {
-      await customer.save();
-    }
+  }
+  if (firstName !== null && customer.firstName !== firstName) {
+    customer.firstName = firstName;
+    shouldUpdate = true;
+  }
+  if (lastName !== null && customer.lastName !== lastName) {
+    customer.lastName = lastName;
+    shouldUpdate = true;
+  }
+  if (phone !== null && customer.phone !== phone) {
+    customer.phone = phone;
+    shouldUpdate = true;
+  }
+  if (shopifyId && customer.shopifyId !== shopifyId) {
+    customer.shopifyId = shopifyId;
+    customer.isTemp = false; // If they have a shopifyId, they're not temp
+    shouldUpdate = true;
+  }
+  // Safety: displayName should always exist
+  if (!customer.displayName || customer.displayName.trim() === '') {
+    customer.displayName = generateRandomName(normalizedEmail);
+    shouldUpdate = true;
+  }
+
+  // Always refresh lastLoginAt
+  customer.lastLoginAt = new Date();
+  shouldUpdate = true;
+
+  if (shouldUpdate) {
+    await customer.save();
   }
 
   return customer;
