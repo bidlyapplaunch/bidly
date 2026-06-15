@@ -33,26 +33,26 @@ const corsOriginCheck = (origin, callback) => {
   // no-Origin requests here would break those legitimate non-browser callers
   // (including /webhooks) without adding real protection, so this is left as-is.
   if (!origin) return callback(null, true);
+
+  // Known-good Shopify/app origins are always allowed (kept explicit for clarity).
   try {
     const url = new URL(origin);
-    // Allow Shopify domains (stores, admin, CDN)
     if (url.hostname.endsWith('.myshopify.com')) return callback(null, true);
     if (url.hostname.endsWith('.shopify.com')) return callback(null, true);
-    // Allow the app's own domain (Cloudflare-proxied)
     if (url.hostname.endsWith('.hiiiiiiiiiii.com')) return callback(null, true);
-    // Allow explicitly whitelisted origins (admin dashboard, custom domains)
     if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
   } catch {
-    // Invalid URL
+    // Invalid URL — fall through to the storefront-origin allowance below.
   }
-  // Disallowed origin: deny CORS by NOT setting Access-Control-Allow-Origin, but DO NOT
-  // throw. Throwing turned a CORS rejection into a 500 for every request carrying a
-  // non-whitelisted Origin — which broke the storefront marketplace on merchants' custom
-  // domains (e.g. true-nordic.com), where assets are same-origin and don't even need CORS
-  // headers. callback(null, false) lets the request proceed without CORS headers so
-  // same-origin loads succeed, while genuine cross-origin requests are still denied by the
-  // browser (correctly, with no 500).
-  return callback(null, false);
+
+  // Storefront widgets + marketplace run on merchants' ARBITRARY custom domains
+  // (e.g. true-nordic.com) and call this backend cross-origin for public auction data,
+  // widget config, and bids. Those domains cannot be enumerated in a whitelist, and a
+  // whitelist here previously broke the widget on EVERY custom domain. Auth is enforced
+  // by Shopify session tokens / customer JWTs sent in headers (NOT cookies), so CORS is
+  // not the security boundary — a foreign origin still can't forge a valid token. So we
+  // reflect any origin. (Public storefront API; see also the no-Origin note above.)
+  return callback(null, true);
 };
 
 // IMPORTANT:
