@@ -211,8 +211,30 @@ export const createAuction = async (req, res, next) => {
       }
     }
 
+    // SEC-12: build the auction from an explicit allow-list. Never accept server-controlled
+    // fields (bidHistory, winner, status, invoiceSent, winnerProcessed, currentBid, etc.)
+    // from the request body — mass-assignment of those would let a client forge auction state.
+    const CREATE_ALLOWED_FIELDS = [
+      'shopifyProductId',
+      'startTime',
+      'endTime',
+      'startingBid',
+      'buyNowPrice',
+      'reservePrice',
+      'popcornEnabled',
+      'popcornTriggerSeconds',
+      'popcornExtendSeconds',
+      'chatEnabled'
+    ];
+    const auctionData = {};
+    for (const field of CREATE_ALLOWED_FIELDS) {
+      if (req.body[field] !== undefined) {
+        auctionData[field] = req.body[field];
+      }
+    }
+
     const auction = new Auction({
-      ...req.body,
+      ...auctionData,
       shopDomain: shopDomain, // Add store domain for isolation
       currentBid: 0, // Ensure currentBid starts at 0
       productData: productData, // Cache the product data
@@ -777,8 +799,12 @@ export const placeBid = async (req, res, next) => {
     
     // Check idempotency — if this bid was already placed, return success
     if (idempotencyKey) {
+      // SEC-07/INT-02: scope the pre-check by shopDomain + isDeleted so one tenant cannot
+      // probe another tenant's auctions via a guessed key.
       const existing = await Auction.findOne({
         _id: req.params.id,
+        shopDomain,
+        isDeleted: { $ne: true },
         'bidHistory.idempotencyKey': idempotencyKey
       });
       if (existing) {
@@ -805,6 +831,26 @@ export const placeBid = async (req, res, next) => {
       idempotencyKey: idempotencyKey || null
     };
 
+    // SEC-07/INT-02: when an idempotencyKey is supplied, refuse to push if it is already
+    // present in bidHistory. This closes the race where two concurrent retries both pass
+    // the pre-check findOne above and would otherwise each append the same bid.
+    const idempotencyGuard = idempotencyKey
+      ? { 'bidHistory.idempotencyKey': { $ne: idempotencyKey } }
+      : {};
+
+    // Min-bid validation in application code. (A $expr filter previously did this, but
+    // this Mongoose version's $expr caster throws "Cannot read properties of undefined
+    // (reading 'path')" on the $cond/literal comparison — it crashed every bid.)
+    const requiredMinBid = auction.currentBid > 0
+      ? auction.currentBid + (auction.minBidIncrement || 1)
+      : auction.startingBid;
+    if (sanitizedAmount < requiredMinBid) {
+      throw new AppError(
+        `Bid must be at least ${requiredMinBid}. Current highest bid is ${auction.currentBid}.`,
+        400
+      );
+    }
+
     const updatedAuction = await Auction.findOneAndUpdate(
       {
         _id: req.params.id,
@@ -813,18 +859,11 @@ export const placeBid = async (req, res, next) => {
         status: 'active',
         startTime: { $lte: now },
         endTime: { $gte: now },
-        $expr: {
-          $gte: [
-            sanitizedAmount,
-            {
-              $cond: {
-                if: { $gt: ['$currentBid', 0] },
-                then: { $add: ['$currentBid', '$minBidIncrement'] },
-                else: '$startingBid'
-              }
-            }
-          ]
-        }
+        ...idempotencyGuard,
+        // Optimistic concurrency instead of $expr: only succeed if currentBid hasn't
+        // moved since we read it. If a competing bid landed first, this filter won't
+        // match → updatedAuction is null → the re-fetch below returns the new minimum.
+        currentBid: auction.currentBid
       },
       {
         $push: { bidHistory: bidDoc },
@@ -851,6 +890,18 @@ export const placeBid = async (req, res, next) => {
 
     const decoratedUpdatedAuction = decorateAuction(updatedAuction);
 
+    // INT-09: atomically increment the bidder's lifetime bid stats. Uses $inc (not a
+    // read-modify-write) so concurrent bids can't clobber the counters, and is scoped by
+    // shopDomain for tenant isolation. Non-blocking — a stats failure must not fail the bid.
+    if (effectiveCustomerId) {
+      Customer.updateOne(
+        { _id: effectiveCustomerId, shopDomain },
+        { $inc: { totalBids: 1, totalBidAmount: sanitizedAmount } }
+      ).catch(statsError => {
+        console.warn('Failed to update customer bid stats (non-blocking):', statsError.message);
+      });
+    }
+
     // Track if auction ended (e.g., via Buy Now) — declare BEFORE any checks that reference it
     let auctionEnded = false;
 
@@ -873,31 +924,34 @@ export const placeBid = async (req, res, next) => {
           { $set: { endTime: newEndTime, updatedAt: new Date() } },
           { new: true }
         );
+        // INT-07: only mark the auction as extended and broadcast the extension when the
+        // conditional, forward-only update actually moved endTime. If a concurrent bid had
+        // already pushed endTime to/past newEndTime, `extended` is null and we must NOT
+        // report a (false) extension to clients.
         if (extended) {
           updatedAuction.endTime = extended.endTime;
-        }
-        timeExtended = true;
-        
-        
-        // Broadcast time extension to all clients
-        const io = req.app.get('io');
-        if (io) {
-          io.to(`auction-${req.params.id}`).emit('auction-time-extended', {
-            auctionId: req.params.id,
-            newEndTime: newEndTime.toISOString(),
-            extensionSeconds: updatedAuction.popcornExtendSeconds,
-            bidder: sanitizedBidder,
-            message: `Auction extended by ${updatedAuction.popcornExtendSeconds} seconds due to last-minute bid!`
-          });
-          
-          // Mirror to admin dashboards only (BACKEND-06: not every connected socket)
-          io.to('admin-room').emit('auction-time-extended', {
-            auctionId: req.params.id,
-            newEndTime: newEndTime.toISOString(),
-            extensionSeconds: updatedAuction.popcornExtendSeconds,
-            bidder: sanitizedBidder,
-            message: `Auction extended by ${updatedAuction.popcornExtendSeconds} seconds due to last-minute bid!`
-          });
+          timeExtended = true;
+
+          // Broadcast time extension to all clients
+          const io = req.app.get('io');
+          if (io) {
+            io.to(`auction-${req.params.id}`).emit('auction-time-extended', {
+              auctionId: req.params.id,
+              newEndTime: extended.endTime.toISOString(),
+              extensionSeconds: updatedAuction.popcornExtendSeconds,
+              bidder: sanitizedBidder,
+              message: `Auction extended by ${updatedAuction.popcornExtendSeconds} seconds due to last-minute bid!`
+            });
+
+            // Mirror to admin dashboards only (BACKEND-06: not every connected socket)
+            io.to('admin-room').emit('auction-time-extended', {
+              auctionId: req.params.id,
+              newEndTime: extended.endTime.toISOString(),
+              extensionSeconds: updatedAuction.popcornExtendSeconds,
+              bidder: sanitizedBidder,
+              message: `Auction extended by ${updatedAuction.popcornExtendSeconds} seconds due to last-minute bid!`
+            });
+          }
         }
       }
     }
@@ -1135,6 +1189,13 @@ export const buyNow = async (req, res, next) => {
       throw new AppError('Buy Now is not available for this auction', 400);
     }
 
+    // INT-01: never end an auction below the live high bid. If bidding has already met or
+    // exceeded the buy-now price, reject the buy-now (409) and let bidding continue so the
+    // current high bid is never overwritten downward.
+    if (typeof auction.currentBid === 'number' && auction.currentBid >= buyNowPrice) {
+      throw new AppError('The current highest bid has reached or exceeded the Buy Now price. Buy Now is no longer available; bidding continues.', 409);
+    }
+
     const buyNowBid = {
       bidder: effectiveBidder,
       displayName: effectiveBidder,
@@ -1143,6 +1204,12 @@ export const buyNow = async (req, res, next) => {
       timestamp: now,
       customerId: effectiveCustomerId || null
     };
+
+    // INT-01: don't let Buy Now overwrite a live bid that already met/exceeded the
+    // buy-now price. Check in app code (a $expr here crashed Mongoose's $expr caster).
+    if ((auction.currentBid || 0) >= buyNowPrice) {
+      throw new AppError('A bid has already reached the Buy Now price for this auction', 400);
+    }
 
     // Atomically end the auction and record the buy-now bid in a single operation,
     // guarded on the auction still being active within its time window. Only the first
@@ -1155,7 +1222,10 @@ export const buyNow = async (req, res, next) => {
         isDeleted: { $ne: true },
         status: 'active',
         startTime: { $lte: now },
-        endTime: { $gte: now }
+        endTime: { $gte: now },
+        // Optimistic concurrency (replaces the $expr): only succeed if currentBid hasn't
+        // moved since we read it, so a competing bid can't be overwritten downward.
+        currentBid: auction.currentBid
       },
       {
         $push: { bidHistory: buyNowBid },
@@ -1298,7 +1368,10 @@ export const refreshAllProductData = async (req, res, next) => {
   try {
     // BACKEND-11: scope to the caller's store (was Auction.find({}) across ALL tenants)
     // and skip soft-deleted auctions.
-    const auctions = await Auction.find({ shopDomain: req.shopDomain, isDeleted: { $ne: true } });
+    // SCALE-04: bound the result set so this admin sweep can't load an unbounded number of
+    // documents (and fire that many sequential Shopify product fetches) for a large store.
+    const auctions = await Auction.find({ shopDomain: req.shopDomain, isDeleted: { $ne: true } })
+      .limit(500);
     const results = [];
 
     for (const auction of auctions) {
@@ -1334,8 +1407,16 @@ export const getAuctionsWithProductData = async (req, res, next) => {
     const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
     const page = Math.max(parseInt(req.query.page) || 1, 1);
 
+    // SEC-03: scope to the caller's store. Without this the query spanned ALL tenants,
+    // leaking other shops' auctions (and triggering cross-tenant Shopify product fetches).
+    const shopDomain = req.shopDomain;
+    if (!shopDomain) {
+      throw new AppError('Store domain is required', 400);
+    }
+
     // Build filter object - exclude soft-deleted auctions
     const filter = {
+      shopDomain,
       isDeleted: { $ne: true }
     };
     if (status) filter.status = status;
@@ -1393,8 +1474,11 @@ export const getAuctionStats = async (req, res, next) => {
     // Get all live auctions for this store. (BACKEND-05/BACKEND-09: exclude soft-deleted,
     // load only the fields needed via lean(), and compute status once per auction instead
     // of ~13 times.)
+    // SCALE-04: cap the number of auctions scanned for stats so a very large store can't
+    // pull an unbounded result set into memory on every dashboard load.
     const allAuctions = await Auction.find({ shopDomain, isDeleted: { $ne: true } })
       .select('status startTime endTime bidHistory')
+      .limit(500)
       .lean();
 
     const totalAuctions = allAuctions.length;
@@ -1484,12 +1568,35 @@ export const relistAuction = async (req, res, next) => {
       processingError: ''
     };
     
+    // SEC-11: only persist an explicit allow-list of merchant-editable fields from the body.
+    // Server-controlled fields (shopDomain, winner, winnerProcessed, invoiceSent, isDeleted,
+    // bidHistory, currentBid, status) are set deliberately below and must never be forgeable
+    // via the request body.
+    const RELIST_ALLOWED_FIELDS = [
+      'startTime',
+      'endTime',
+      'startingBid',
+      'buyNowPrice',
+      'reservePrice',
+      'minBidIncrement',
+      'popcornEnabled',
+      'popcornTriggerSeconds',
+      'popcornExtendSeconds',
+      'chatEnabled'
+    ];
+    const relistUpdates = {};
+    for (const field of RELIST_ALLOWED_FIELDS) {
+      if (req.body[field] !== undefined) {
+        relistUpdates[field] = req.body[field];
+      }
+    }
+
     // Update auction with new data and reactivate
     const updatedAuction = await Auction.findByIdAndUpdate(
       req.params.id,
       {
         $set: {
-          ...req.body,
+          ...relistUpdates,
           status: newStatus,
           bidHistory: [], // Reset bid history
           currentBid: 0, // Reset current bid to 0 (no bids yet)
