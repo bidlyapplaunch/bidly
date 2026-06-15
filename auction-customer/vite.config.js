@@ -15,6 +15,19 @@ export default defineConfig({
       '@shared': sharedPath
     }
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Code-split heavy third-party deps out of the single ~605KB app bundle
+        // so they can be cached independently. Behavior is unchanged.
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          polaris: ['@shopify/polaris'],
+          socket: ['socket.io-client']
+        }
+      }
+    }
+  },
   server: {
     port: 3002,
     proxy: {

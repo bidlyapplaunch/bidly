@@ -9,9 +9,18 @@ const getShopFromURL = () => {
 };
 
 const getBackendUrl = () => {
+  // The marketplace is served via the Shopify app proxy (e.g. /apps/bidly). Route API
+  // calls back through that SAME-ORIGIN prefix so they work on any custom storefront
+  // domain without cross-origin/CORS — and even if the inline config <script> is blocked
+  // by CSP (in which case BidlyBackendConfig would be undefined). Derive the prefix from
+  // the current path first; only fall back to the injected config otherwise.
+  if (typeof window !== 'undefined') {
+    const proxyMatch = window.location.pathname.match(/^\/apps\/[^/]+/);
+    if (proxyMatch) return proxyMatch[0];
+  }
   const shopDomain = getShopFromURL();
   if (window.BidlyBackendConfig && typeof window.BidlyBackendConfig.getBackendUrl === 'function') {
-    return window.BidlyBackendConfig.getBackendUrl(shopDomain);
+    return window.BidlyBackendConfig.getBackendUrl(shopDomain) || '';
   }
   return '';
 };
