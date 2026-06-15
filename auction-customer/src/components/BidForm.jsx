@@ -129,29 +129,20 @@ const BidForm = forwardRef(({ auction, onBidPlaced, onBuyNow, isLoading }, ref) 
           <div style={{ marginTop: '0.5rem' }}>
             <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>{t('marketplace.bid_form.quickBid')}</Text>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <Button 
-                size="slim" 
+              {/* Polaris v12 Button does not accept a `style` prop (it is not
+                  forwarded), so the previous inline style objects here were dead
+                  code. Removed for consistency; appearance is unchanged. */}
+              <Button
+                size="slim"
                 onClick={() => handleQuickBid(minBid)}
                 disabled={isLoading}
-                style={{
-                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
-                  borderColor: 'var(--bidly-marketplace-color-border, #dddddd)',
-                  color: 'var(--bidly-marketplace-color-text-primary, #222222)',
-                  fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
-                }}
               >
                 ${minBid}
               </Button>
-              <Button 
-                size="slim" 
+              <Button
+                size="slim"
                 onClick={() => handleQuickBid(minBid + increment)}
                 disabled={isLoading}
-                style={{
-                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)',
-                  borderColor: 'var(--bidly-marketplace-color-border, #dddddd)',
-                  color: 'var(--bidly-marketplace-color-text-primary, #222222)',
-                  fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)'
-                }}
               >
                 ${minBid + increment}
               </Button>

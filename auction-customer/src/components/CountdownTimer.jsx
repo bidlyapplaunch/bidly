@@ -1,104 +1,73 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Text, Badge } from '@shopify/polaris';
+import React, { useEffect, useRef } from 'react';
+import { Text } from '@shopify/polaris';
 import { t } from '../i18n';
+import { useNow } from '../hooks/useNow';
+import './CountdownTimer.css';
 
 const CountdownTimer = ({ endTime, startTime, status, onTimeUp }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [isExpired, setIsExpired] = useState(false);
+  // Consume the single shared ticker instead of owning a per-instance setInterval.
+  const now = useNow();
+
   const onTimeUpRef = useRef(onTimeUp);
   onTimeUpRef.current = onTimeUp;
 
+  // Guard so onTimeUp fires exactly once when the timer crosses zero, even
+  // though we now recompute remaining time from shared `now` on every tick.
+  const firedTimeUpRef = useRef(false);
+
+  // For pending auctions, count down to start time; for active, to end time.
+  const targetTime = status === 'pending'
+    ? new Date(startTime).getTime()
+    : new Date(endTime).getTime();
+  const difference = targetTime - now;
+  const isExpired = !(difference > 0);
+
+  // Reset the one-shot guard if the target changes (e.g. popcorn extension
+  // pushes endTime into the future, or status flips pending -> active).
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-
-      // For pending auctions, count down to start time
-      // For active auctions, count down to end time
-      const targetTime = status === 'pending' ? new Date(startTime).getTime() : new Date(endTime).getTime();
-      const difference = targetTime - now;
-
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-        setTimeLeft({ days, hours, minutes, seconds });
-        setIsExpired(false);
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        setIsExpired(true);
-        if (onTimeUpRef.current) onTimeUpRef.current();
-      }
-    };
-
-    // Calculate immediately
-    calculateTimeLeft();
-
-    // Update every second
-    const timer = setInterval(calculateTimeLeft, 1000);
-
-    return () => clearInterval(timer);
+    firedTimeUpRef.current = false;
   }, [endTime, startTime, status]);
+
+  // Fire onTimeUp exactly once when we cross zero.
+  useEffect(() => {
+    if (isExpired && !firedTimeUpRef.current) {
+      firedTimeUpRef.current = true;
+      if (onTimeUpRef.current) onTimeUpRef.current();
+    }
+  }, [isExpired]);
 
   if (isExpired) {
     if (status === 'pending') {
       return (
-        <div
-          style={{
-            backgroundColor: 'var(--bidly-marketplace-color-success, #00c851)',
-            color: '#ffffff',
-            padding: '4px 8px',
-            borderRadius: 'var(--bidly-marketplace-border-radius, 4px)',
-            fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
+        <div className="bidly-countdown bidly-countdown--started">
           {t('marketplace.countdown.auctionStarted')}
         </div>
       );
-    } else {
-      return (
-        <div
-          style={{
-            backgroundColor: 'var(--bidly-marketplace-color-error, #ff4444)',
-            color: '#ffffff',
-            padding: '4px 8px',
-            borderRadius: 'var(--bidly-marketplace-border-radius, 4px)',
-            fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
-          {t('marketplace.countdown.auctionEnded')}
-        </div>
-      );
     }
+    return (
+      <div className="bidly-countdown bidly-countdown--ended">
+        {t('marketplace.countdown.auctionEnded')}
+      </div>
+    );
   }
+
+  const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
   const formatTime = (value) => value.toString().padStart(2, '0');
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <div
-        style={{
-          backgroundColor: 'var(--bidly-marketplace-color-accent, #00b894)',
-          color: '#ffffff',
-          padding: '4px 8px',
-          borderRadius: 'var(--bidly-marketplace-border-radius, 4px)',
-          fontFamily: 'var(--bidly-marketplace-font-family, Inter, sans-serif)',
-          fontSize: '14px',
-          fontWeight: 'bold'
-        }}
-      >
-        {timeLeft.days > 0 && `${timeLeft.days}d `}
-        {formatTime(timeLeft.hours)}:{formatTime(timeLeft.minutes)}:{formatTime(timeLeft.seconds)}
+    <div className="bidly-countdown-wrap">
+      <div className="bidly-countdown bidly-countdown--active">
+        {days > 0 && `${days}d `}
+        {formatTime(hours)}:{formatTime(minutes)}:{formatTime(seconds)}
       </div>
       <Text variant="bodySm" style={{ color: 'var(--bidly-marketplace-color-text-secondary, #666666)' }}>
-        {status === 'pending' ? 
-          t('marketplace.countdown.untilStart') : 
-          (timeLeft.days > 0 ? t('marketplace.countdown.remaining') : t('marketplace.countdown.left'))
+        {status === 'pending' ?
+          t('marketplace.countdown.untilStart') :
+          (days > 0 ? t('marketplace.countdown.remaining') : t('marketplace.countdown.left'))
         }
       </Text>
     </div>

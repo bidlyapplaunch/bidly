@@ -37,7 +37,27 @@ function App() {
 
   const ANONYMOUS_BIDDER = t('marketplace.anonymous');
 
-  const getDisplayName = (entity) => {
+  // Resolve shop info from the URL once. window.location.search and the
+  // marketplace config are stable for the page's lifetime, so compute these
+  // a single time rather than recreating helpers/memos with empty deps.
+  const { shop, shopName, resolvedShopDomain } = useMemo(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shopParam = urlParams.get('shop');
+    const resolvedShop = shopParam || null;
+    const resolvedShopName = shopParam ? shopParam.replace('.myshopify.com', '') : null;
+    return {
+      shop: resolvedShop,
+      shopName: resolvedShopName,
+      resolvedShopDomain:
+        resolvedShop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null
+    };
+    // marketplaceConfig comes from window and does not change for the page's
+    // lifetime; the URL search string is likewise fixed. Computing once is
+    // intentional and correct.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getDisplayName = useCallback((entity) => {
     if (!entity) return ANONYMOUS_BIDDER;
     return (
       entity.displayName ||
@@ -46,44 +66,26 @@ function App() {
       entity.name ||
       ANONYMOUS_BIDDER
     );
-  };
+  }, [ANONYMOUS_BIDDER]);
 
-  const normalizeBid = (bid = {}) => {
-    const displayName = getDisplayName(bid);
-    return { ...bid, displayName };
-  };
+  const normalizeBidHistory = useCallback(
+    (history = []) => history.map((bid = {}) => ({ ...bid, displayName: getDisplayName(bid) })),
+    [getDisplayName]
+  );
 
-  const normalizeBidHistory = (history = []) => history.map(normalizeBid);
-
-  const normalizeWinner = (winner) => {
+  const normalizeWinner = useCallback((winner) => {
     if (!winner) return null;
     return { ...winner, displayName: getDisplayName(winner) };
-  };
+  }, [getDisplayName]);
 
-  const normalizeAuction = (auction = {}) => {
+  const normalizeAuction = useCallback((auction = {}) => {
     if (!auction) return auction;
     return {
       ...auction,
       bidHistory: normalizeBidHistory(auction.bidHistory || []),
       winner: normalizeWinner(auction.winner)
     };
-  };
-
-  // Get shop information from URL parameters before defining hooks that depend on it
-  const getShopInfo = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shopParam = urlParams.get('shop');
-    if (shopParam) {
-      const shopNameParam = shopParam.replace('.myshopify.com', '');
-      return { shop: shopParam, shopName: shopNameParam };
-    }
-    return { shop: null, shopName: null };
-  };
-
-  const { shop, shopName } = getShopInfo();
-  const resolvedShopDomain = useMemo(() => {
-    return shop || marketplaceConfig.shopDomain || marketplaceConfig.shop || null;
-  }, []); // empty deps since shop domain doesn't change
+  }, [normalizeBidHistory, normalizeWinner]);
 
   // Guard against setting state after unmount and abort in-flight fetches on unmount.
   const isMountedRef = useRef(true);
@@ -154,6 +156,54 @@ function App() {
     customer?.name ||
     customer?.email ||
     ANONYMOUS_BIDDER;
+
+  const fetchVisibleAuctions = useCallback(async () => {
+    // Abort any previous in-flight request and start a new one
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await auctionAPI.getVisibleAuctions(controller.signal);
+      if (!isMountedRef.current) return;
+      // Filter to show pending, active, and ended auctions (exclude only closed)
+      const visibleAuctions = (response.data || []).filter(auction =>
+        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
+      );
+      setAuctions(visibleAuctions.map(normalizeAuction));
+    } catch (err) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
+      if (!isMountedRef.current) return;
+      console.error('Error fetching auctions:', err);
+      setError(t('marketplace.errors.fetchFailed'));
+      setAuctions([]);
+    } finally {
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [normalizeAuction]);
+
+  // Silent refresh for automatic status updates (no loading spinner)
+  const fetchVisibleAuctionsSilent = useCallback(async () => {
+    const controller = new AbortController();
+    try {
+      const response = await auctionAPI.getVisibleAuctions(controller.signal);
+      if (!isMountedRef.current) return;
+      // Filter to show pending, active, and ended auctions (exclude only closed)
+      const visibleAuctions = (response.data || []).filter(auction =>
+        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
+      );
+      setAuctions(visibleAuctions.map(normalizeAuction));
+    } catch (err) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
+      console.error('Error in silent refresh:', err);
+      // Don't set error for silent refresh to avoid disrupting user experience
+    }
+  }, [normalizeAuction]);
 
   useEffect(() => {
     let isMounted = true;
@@ -310,7 +360,19 @@ function App() {
         fetchAbortRef.current.abort();
       }
     };
-  }, [resolvedShopDomain]);
+    // These deps are all stable for the page's lifetime (shop/resolvedShopDomain
+    // are computed once; the helpers are memoized useCallbacks), so the socket
+    // connection is set up once and torn down on unmount as intended.
+  }, [
+    shop,
+    resolvedShopDomain,
+    fetchVisibleAuctions,
+    fetchVisibleAuctionsSilent,
+    getDisplayName,
+    normalizeBidHistory,
+    normalizeWinner,
+    normalizeAuction
+  ]);
 
   // Auto-dismiss toast after 5 seconds
   useEffect(() => {
@@ -343,54 +405,6 @@ function App() {
       });
     }
   }, [auctions]);
-
-  const fetchVisibleAuctions = async () => {
-    // Abort any previous in-flight request and start a new one
-    if (fetchAbortRef.current) {
-      fetchAbortRef.current.abort();
-    }
-    const controller = new AbortController();
-    fetchAbortRef.current = controller;
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await auctionAPI.getVisibleAuctions(controller.signal);
-      if (!isMountedRef.current) return;
-      // Filter to show pending, active, and ended auctions (exclude only closed)
-      const visibleAuctions = (response.data || []).filter(auction =>
-        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
-      );
-      setAuctions(visibleAuctions.map(normalizeAuction));
-    } catch (err) {
-      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
-      if (!isMountedRef.current) return;
-      console.error('Error fetching auctions:', err);
-      setError(t('marketplace.errors.fetchFailed'));
-      setAuctions([]);
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  };
-
-  // Silent refresh for automatic status updates (no loading spinner)
-  const fetchVisibleAuctionsSilent = async () => {
-    const controller = new AbortController();
-    try {
-      const response = await auctionAPI.getVisibleAuctions(controller.signal);
-      if (!isMountedRef.current) return;
-      // Filter to show pending, active, and ended auctions (exclude only closed)
-      const visibleAuctions = (response.data || []).filter(auction =>
-        auction.status === 'pending' || auction.status === 'active' || auction.status === 'ended'
-      );
-      setAuctions(visibleAuctions.map(normalizeAuction));
-    } catch (err) {
-      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
-      console.error('Error in silent refresh:', err);
-      // Don't set error for silent refresh to avoid disrupting user experience
-    }
-  };
 
   const handleBidPlaced = async (bidData) => {
     // Check if customer is authenticated

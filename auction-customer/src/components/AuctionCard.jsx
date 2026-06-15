@@ -12,6 +12,7 @@ import {
 import CountdownTimer from './CountdownTimer';
 import BidForm from './BidForm';
 import { t } from '../i18n';
+import './AuctionCard.css';
 
 const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) => {
   const productUrl = shopDomain && (auction.productData?.handle || auction.shopifyProductId)
@@ -69,7 +70,7 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
   return (
     <>
       <Card sectioned>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+        <div className="bidly-card-header">
           <div>
             <Text variant="headingLg" as="h2">
               {auction.productData?.title || auction.shopifyProductId || t('marketplace.auction_card.unknownProduct')}
@@ -83,64 +84,40 @@ const AuctionCard = ({ auction, shopDomain, onBidPlaced, onBuyNow, isLoading }) 
           </Badge>
         </div>
 
-        {/* Product Image - clickable to product page */}
+        {/* Product Image - clickable to product page.
+            The fixed-size box reserves layout space so lazy images don't cause
+            reflow/CLS as they load. */}
         {auction.productData?.image?.src ? (
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: 'var(--bidly-marketplace-spacing, 1rem)'
-            }}
-          >
-            {productUrl ? (
-              <a href={productUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', cursor: 'pointer' }}>
+          <div className="bidly-card-image-wrap">
+            <div className="bidly-card-image-box">
+              {productUrl ? (
+                <a
+                  href={productUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bidly-card-image-link"
+                >
+                  <img
+                    src={auction.productData.image.src}
+                    alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
+                    loading="lazy"
+                    decoding="async"
+                    className="bidly-card-image"
+                  />
+                </a>
+              ) : (
                 <img
                   src={auction.productData.image.src}
                   alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
                   loading="lazy"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '250px',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
-                    border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
-                    backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
-                  }}
+                  decoding="async"
+                  className="bidly-card-image"
                 />
-              </a>
-            ) : (
-              <img
-                src={auction.productData.image.src}
-                alt={auction.productData?.title || t('marketplace.auction_card.productImage')}
-                loading="lazy"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '250px',
-                  width: 'auto',
-                  height: 'auto',
-                  objectFit: 'contain',
-                  borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
-                  border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)',
-                  backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)'
-                }}
-              />
-            )}
+              )}
+            </div>
           </div>
         ) : (
-          <div style={{ 
-            width: '100%', 
-            height: '200px', 
-            backgroundColor: 'var(--bidly-marketplace-color-surface, #ffffff)', 
-            borderRadius: 'var(--bidly-marketplace-border-radius, 8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 'var(--bidly-marketplace-spacing, 1rem)',
-            border: '1px solid var(--bidly-marketplace-color-border, #d4d8dd)'
-          }}>
+          <div className="bidly-card-image-placeholder">
             <Text variant="bodyMd">
               {t('marketplace.auction_card.productImage')}
             </Text>
