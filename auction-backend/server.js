@@ -38,7 +38,14 @@ const corsOriginCheck = (origin, callback) => {
   } catch {
     // Invalid URL
   }
-  callback(new Error('Not allowed by CORS'));
+  // Disallowed origin: deny CORS by NOT setting Access-Control-Allow-Origin, but DO NOT
+  // throw. Throwing turned a CORS rejection into a 500 for every request carrying a
+  // non-whitelisted Origin — which broke the storefront marketplace on merchants' custom
+  // domains (e.g. true-nordic.com), where assets are same-origin and don't even need CORS
+  // headers. callback(null, false) lets the request proceed without CORS headers so
+  // same-origin loads succeed, while genuine cross-origin requests are still denied by the
+  // browser (correctly, with no 500).
+  return callback(null, false);
 };
 
 // IMPORTANT:
