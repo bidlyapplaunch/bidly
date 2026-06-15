@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopify Product Search Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f6f6f7;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .product-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .product-item:hover {
+            background: #e9e9e9;
+        }
+        .product-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .product-details {
+            color: #666;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: #d82c0d;
+            background: #fef7f7;
+            border: 1px solid #fecaca;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #008060;
+            background: #f0f9f5;
+            border: 1px solid #a7f3d0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button {
+            background: #008060;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #006b52;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Shopify Product Search Test</h1>
+        <p>This page tests the Shopify product search functionality directly.</p>
+        
+        <div id="status" class="success" style="display: none;"></div>
+        
+        <input 
+            type="text" 
+            id="searchInput" 
+            class="search-box" 
+            placeholder="Type to search for Shopify products..."
+            autocomplete="off"
+        >
+        
+        <button onclick="testConnection()">Test Backend Connection</button>
+        
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = type;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Test backend connection
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost:5000/api/shopify/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus(`✅ Backend connected! Shop: ${data.shopDomain}`, 'success');
+                } else {
+                    showStatus(`❌ Backend error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Cannot connect to backend: ${error.message}`, 'error');
+            }
+        }
+        
+        // Search products
+        async function searchProducts(query) {
+            if (!query.trim()) {
+                document.getElementById('results').innerHTML = '';
+                return;
+            }
+            
+            document.getElementById('results').innerHTML = '<div class="loading">Searching products...</div>';
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/shopify/search?query=${encodeURIComponent(query)}&limit=10`);
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    displayResults(data.data);
+                    showStatus(`Found ${data.data.length} products`, 'success');
+                } else {
+                    document.getElementById('results').innerHTML = '<div class="error">No products found</div>';
+                }
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<div class="error">Search error: ${error.message}</div>`;
+            }
+        }
+        
+        // Display search results
+        function displayResults(products) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = products.map(product => `
+                <div class="product-item" onclick="selectProduct('${product.id}', '${product.title}')">
+                    <div class="product-title">${product.title}</div>
+                    <div class="product-details">
+                        ID: ${product.id} | Price: $${product.price || 'N/A'}
+                        ${product.vendor ? ` | Vendor: ${product.vendor}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Select a product
+        function selectProduct(id, title) {
+            document.getElementById('searchInput').value = title;
+            showStatus(`Selected: ${title} (ID: ${id})`, 'success');
+        }
+        
+        // Set up search input listener
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchProducts(e.target.value);
+            }, 300);
+        });
+        
+        // Test connection on page load
+        window.addEventListener('load', () => {
+            testConnection();
+        });
+    </script>
+</body>
+</html>
