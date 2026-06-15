@@ -7,10 +7,10 @@ export const errorHandler = async (err, req, res, next) => {
   const shopDomain = req.shopDomain || null;
 
   // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const errors = Object.values(err.errors).map(e => ({
-      field: e.path,
-      message: e.message
+  if (err.name === 'ValidationError' && err.errors) {
+    const errors = Object.values(err.errors).filter(Boolean).map(e => ({
+      field: e?.path,
+      message: e?.message
     }));
     
     const message = shopDomain 
