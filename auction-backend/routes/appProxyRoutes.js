@@ -10,6 +10,7 @@ import {
   placeBid,
   buyNow
 } from '../controllers/auctionController.js';
+import marketplaceCustomizationRouter from './marketplaceCustomization.js';
 import {
   validatePlaceBid,
   validateBuyNow,
@@ -408,6 +409,11 @@ router.get('/', async (req, res) => {
       .send('Failed to load the marketplace. Please try again or contact the store owner.');
   }
 });
+
+// Marketplace customization (theme/branding) — used by themeService.js in the customer widget
+// GET /apps/bidly/api/marketplace-customization?shop=store.myshopify.com
+// POST /apps/bidly/api/marketplace-customization?shop=store.myshopify.com
+router.use('/api/marketplace-customization', marketplaceCustomizationRouter);
 
 // Get all auctions for theme display
 // GET /apps/bidly/api/auctions?shop=store.myshopify.com
