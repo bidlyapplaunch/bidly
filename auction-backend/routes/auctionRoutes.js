@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import {
   createAuction,
   getAllAuctions,
@@ -22,6 +22,7 @@ import {
   validateId
 } from '../middleware/validation.js';
 import { checkPlan, enforceAuctionLimit } from '../middleware/planGuard.js';
+import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = express.Router();
@@ -29,7 +30,7 @@ const router = express.Router();
 const bidRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute window
   max: 15, // 15 bids per minute per shop+IP combo
-  keyGenerator: (req, res) => `${req.shopDomain || 'unknown'}:${rateLimit.ipKeyGenerator(req, res)}`,
+  keyGenerator: (req) => `${req.shopDomain || 'unknown'}:${ipKeyGenerator(req.ip)}`,
   message: { success: false, message: 'Too many bid attempts. Please wait a moment before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -37,10 +38,10 @@ const bidRateLimit = rateLimit({
 
 // Auction CRUD routes
 // Free plan is allowed to create auctions, limited by enforceAuctionLimit
-router.post('/', enforceAuctionLimit, validateCreateAuction, createAuction);
+router.post('/', requireAuth, enforceAuctionLimit, validateCreateAuction, createAuction);
 router.get('/', getAllAuctions);
-router.get('/stats', getAuctionStats);
-router.get('/with-product-data', getAuctionsWithProductData);
+router.get('/stats', requireAuth, getAuctionStats);
+router.get('/with-product-data', requireAuth, getAuctionsWithProductData);
 
 // Get auction by Shopify product ID (for widget) - MUST be before /:id route
 router.get('/by-product/:productId', async (req, res, next) => {
@@ -109,8 +110,8 @@ router.get('/by-product/:productId', async (req, res, next) => {
 });
 
 router.get('/:id', validateId, getAuctionById);
-router.put('/:id', checkPlan('free'), validateUpdateAuction, updateAuction);
-router.delete('/:id', validateId, deleteAuction);
+router.put('/:id', requireAuth, checkPlan('free'), validateUpdateAuction, updateAuction);
+router.delete('/:id', requireAuth, validateId, deleteAuction);
 
 // Bid placement route
 router.post('/:id/bid', bidRateLimit, validatePlaceBid, placeBid);
@@ -119,10 +120,10 @@ router.post('/:id/bid', bidRateLimit, validatePlaceBid, placeBid);
 router.post('/:id/buy-now', bidRateLimit, validateBuyNow, buyNow);
 
 // Relist auction route
-router.put('/:id/relist', checkPlan('free'), enforceAuctionLimit, validateCreateAuction, relistAuction);
+router.put('/:id/relist', requireAuth, checkPlan('free'), enforceAuctionLimit, validateCreateAuction, relistAuction);
 
 // Shopify product data routes
-router.put('/:id/refresh-product', validateId, refreshProductData);
-router.put('/refresh-all-products', refreshAllProductData);
+router.put('/:id/refresh-product', requireAuth, validateId, refreshProductData);
+router.put('/refresh-all-products', requireAuth, refreshAllProductData);
 
 export default router;

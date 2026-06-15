@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -28,7 +28,7 @@ const router = express.Router();
 const bidRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute window
   max: 15, // 15 bids per minute per shop+IP combo
-  keyGenerator: (req, res) => `${req.shopDomain || 'unknown'}:${rateLimit.ipKeyGenerator(req, res)}`,
+  keyGenerator: (req) => `${req.shopDomain || 'unknown'}:${ipKeyGenerator(req.ip)}`,
   message: { success: false, message: 'Too many bid attempts. Please wait a moment before trying again.' },
   standardHeaders: true,
   legacyHeaders: false,
