@@ -113,11 +113,6 @@ const PlansPage = () => {
   const [cancelling, setCancelling] = useState(false);
   const [upgradeInstructionsModal, setUpgradeInstructionsModal] = useState({ open: false, planKey: null, isUpgrade: true });
 
-  // Block rendering until i18n is ready
-  if (!i18n || !i18n.translate) {
-    return null;
-  }
-
   // Optional: Verify billing namespace is loaded
   useEffect(() => {
     if (i18n && i18n.translations) {
@@ -531,6 +526,11 @@ const PlansPage = () => {
     );
   }, []);
 
+  // All hooks above run unconditionally (Rules of Hooks). Now that the hook list is
+  // stable across every render, block the actual render until i18n is ready.
+  if (!i18n || !i18n.translate) {
+    return null;
+  }
 
   return (
     <>
