@@ -501,11 +501,12 @@
         }
 
         if (typeof value === 'string') {
-            // Replace variables like {amount}, ${amount}, etc.
+            // Replace variables — ${key} must be replaced before {key} so the leading $
+            // isn't left behind as a stray character (e.g. "$$8200.00").
             let result = value;
             for (const [paramKey, paramValue] of Object.entries(params)) {
-                result = result.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), paramValue);
                 result = result.replace(new RegExp(`\\$\\{${paramKey}\\}`, 'g'), paramValue);
+                result = result.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), paramValue);
             }
             return result;
         }
