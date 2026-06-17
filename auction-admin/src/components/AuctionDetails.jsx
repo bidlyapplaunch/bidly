@@ -21,6 +21,8 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastError, setToastError] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [removingBidId, setRemovingBidId] = useState(null);
+  const [confirmBidId, setConfirmBidId] = useState(null);
 
   useEffect(() => {
     if (auction && isOpen) {
@@ -91,6 +93,27 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
     }
   };
 
+  const handleRemoveBid = async (bidId) => {
+    const auctionId = auctionData?._id || auctionData?.id;
+    if (!auctionId) return;
+    setRemovingBidId(bidId);
+    setConfirmBidId(null);
+    try {
+      await auctionAPI.removeBid(auctionId, bidId);
+      setToastMessage('Bid removed successfully.');
+      setToastError(false);
+      setShowToast(true);
+      fetchAuctionDetails();
+      onRefresh?.();
+    } catch (error) {
+      setToastMessage(error.response?.data?.message || 'Failed to remove bid.');
+      setToastError(true);
+      setShowToast(true);
+    } finally {
+      setRemovingBidId(null);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat(i18n.locale || 'en', {
       style: 'currency',
@@ -142,13 +165,46 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
 
     return auctionData.bidHistory
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .map((bid, index) => [
-        index + 1,
-        bid.bidder,
-        bid.customerEmail || i18n.translate('admin.common.notAvailable'), // Show customer email for admin
-        formatCurrency(bid.amount),
-        formatDate(bid.timestamp)
-      ]);
+      .map((bid, index) => {
+        const bidId = bid._id || bid.id;
+        const isConfirming = confirmBidId === bidId;
+        const isRemoving = removingBidId === bidId;
+
+        const actionCell = isConfirming ? (
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <Button
+              size="slim"
+              tone="critical"
+              loading={isRemoving}
+              onClick={() => handleRemoveBid(bidId)}
+            >
+              Confirm
+            </Button>
+            <Button size="slim" onClick={() => setConfirmBidId(null)}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button
+            size="slim"
+            tone="critical"
+            plain
+            loading={isRemoving}
+            onClick={() => setConfirmBidId(bidId)}
+          >
+            Remove
+          </Button>
+        );
+
+        return [
+          index + 1,
+          bid.bidder,
+          bid.customerEmail || i18n.translate('admin.common.notAvailable'),
+          formatCurrency(bid.amount),
+          formatDate(bid.timestamp),
+          actionCell
+        ];
+      });
   };
 
   if (!auctionData) {
@@ -285,13 +341,14 @@ const AuctionDetails = ({ isOpen, onClose, auction, onRefresh }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <Text variant="headingMd">{i18n.translate('admin.auctions.details.bidHistory.title')}</Text>
                   <DataTable
-                    columnContentTypes={['numeric', 'text', 'text', 'text', 'text']}
+                    columnContentTypes={['numeric', 'text', 'text', 'text', 'text', 'text']}
                     headings={[
                       i18n.translate('admin.auctions.details.bidHistory.columns.index'),
                       i18n.translate('admin.auctions.details.bidHistory.columns.bidder'),
                       i18n.translate('admin.auctions.details.bidHistory.columns.email'),
                       i18n.translate('admin.auctions.details.bidHistory.columns.amount'),
-                      i18n.translate('admin.auctions.details.bidHistory.columns.time')
+                      i18n.translate('admin.auctions.details.bidHistory.columns.time'),
+                      'Actions'
                     ]}
                     rows={bidHistoryRows}
                   />

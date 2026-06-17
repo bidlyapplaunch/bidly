@@ -116,6 +116,68 @@ router.delete('/:id', requireAuth, validateId, deleteAuction);
 // Bid placement route
 router.post('/:id/bid', bidRateLimit, validatePlaceBid, placeBid);
 
+// Admin: remove a specific bid from an auction's history
+router.delete('/:id/bids/:bidId', requireAuth, validateId, async (req, res, next) => {
+  try {
+    const { id, bidId } = req.params;
+    const shopDomain = req.shopDomain;
+
+    const Auction = (await import('../models/Auction.js')).default;
+    const auction = await Auction.findOne({ _id: id, shopDomain, isDeleted: { $ne: true } });
+    if (!auction) return next(new AppError('Auction not found', 404));
+
+    const bid = auction.bidHistory.id(bidId);
+    if (!bid) return next(new AppError('Bid not found', 404));
+
+    const removedEmail = bid.customerEmail;
+    const removedAmount = bid.amount;
+    const removedCustomerId = bid.customerId;
+
+    // Remove the subdocument
+    auction.bidHistory.pull({ _id: bidId });
+
+    // Recalculate currentBid from remaining history
+    auction.currentBid = auction.bidHistory.length > 0
+      ? Math.max(...auction.bidHistory.map(b => b.amount))
+      : 0;
+
+    await auction.save();
+
+    // Decrement customer stats
+    if (removedCustomerId || removedEmail) {
+      const Customer = (await import('../models/Customer.js')).default;
+      const q = removedCustomerId
+        ? { _id: removedCustomerId, shopDomain }
+        : { email: removedEmail, shopDomain };
+      const customer = await Customer.findOne(q);
+      if (customer) {
+        customer.totalBids = Math.max(0, (customer.totalBids || 1) - 1);
+        customer.totalBidAmount = Math.max(0, (customer.totalBidAmount || removedAmount) - removedAmount);
+        await customer.save();
+      }
+    }
+
+    // Notify connected clients
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`auction_${id}`).emit('bidRemoved', {
+        auctionId: id,
+        currentBid: auction.currentBid,
+        bidCount: auction.bidHistory.length
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Bid removed successfully',
+      currentBid: auction.currentBid,
+      bidCount: auction.bidHistory.length
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Buy now route
 router.post('/:id/buy-now', bidRateLimit, validateBuyNow, buyNow);
 

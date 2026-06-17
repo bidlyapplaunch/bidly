@@ -293,6 +293,12 @@ export const auctionAPI = {
     return response.data;
   },
 
+  // Remove a specific bid from an auction (admin only)
+  removeBid: async (auctionId, bidId) => {
+    const response = await api.delete(`/auctions/${auctionId}/bids/${bidId}`);
+    return response.data;
+  },
+
   // Close auction (update status to closed)
   closeAuction: async (id) => {
     const response = await api.put(`/auctions/${id}`, { status: 'closed' });
