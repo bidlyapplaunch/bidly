@@ -363,6 +363,9 @@ const Dashboard = ({ onLogout }) => {
                 <Button onClick={() => navigate(`/mail-service${location.search || ''}`)}>
                   {i18n.translate('admin.auctions.dashboard.quickLinkMail')}
                 </Button>
+                <Button onClick={() => navigate(`/bidders${location.search || ''}`)}>
+                  {i18n.translate('admin.auctions.dashboard.quickLinkBidders')}
+                </Button>
               </div>
             </Card>
           </Layout.Section>

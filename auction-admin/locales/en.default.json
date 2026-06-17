@@ -1,4 +1,4 @@
-{
+﻿{
   "admin": {
     "common": {
       "loadingApp": "Loading Bidly…",
@@ -83,8 +83,8 @@
       },
       "demo": {
         "title": "Demo Credentials:",
-        "email": "Email: {{value}}",
-        "password": "Password: {{value}}"
+        "email": "Email: {value}",
+        "password": "Password: {value}"
       }
     },
     "mail_service": {
@@ -101,7 +101,7 @@
         "upgradeForTests": "Upgrade to a Pro or Enterprise plan to send template tests.",
         "recipientRequired": "Enter a test email recipient.",
         "templateMissing": "Template not found.",
-        "templateTestSuccess": "Template test sent to {{recipient}}.",
+        "templateTestSuccess": "Template test sent to {recipient}.",
         "templateTestError": "Template test failed.",
         "selectFieldForToken": "Select a template subject or HTML field to insert tokens."
       },
@@ -173,9 +173,9 @@
       },
       "customers": {
         "heading": "Customers",
-        "subtitleOne": "{{count}} customer linked to this store",
-        "subtitleOther": "{{count}} customers linked to this store",
-        "selectedBadge": "{{count}} selected",
+        "subtitleOne": "{count} customer linked to this store",
+        "subtitleOther": "{count} customers linked to this store",
+        "selectedBadge": "{count} selected",
         "compose": "Compose Blast Email",
         "searchPlaceholder": "Search by email or name...",
         "loadError": "Failed to load customers",
@@ -194,7 +194,7 @@
         "pagination": {
           "previous": "Previous",
           "next": "Next",
-          "page": "Page {{current}} of {{total}}"
+          "page": "Page {current} of {total}"
         }
       },
       "blast": {
@@ -202,9 +202,9 @@
         "upgradeDescription": "Blast emails are available on Pro plans and above.",
         "composeTitle": "Compose Blast Email",
         "editTitle": "Edit Draft",
-        "sendingTo": "Sending to {{recipients}}",
+        "sendingTo": "Sending to {recipients}",
         "recipientsAll": "all customers",
-        "recipientsSelected": "{{count}} selected customer(s)",
+        "recipientsSelected": "{count} selected customer(s)",
         "editRecipients": "Edit recipients",
         "cancelEditing": "Cancel editing",
         "subject": "Subject",
@@ -225,8 +225,8 @@
         "sendNow": "Send Now",
         "confirmTitle": "Confirm Send",
         "confirmSend": "Send",
-        "confirmBody": "Send this email to {{recipients}}?",
-        "confirmTrickle": " (Trickle: {{batchSize}} per batch, every {{interval}} min)",
+        "confirmBody": "Send this email to {recipients}?",
+        "confirmTrickle": " (Trickle: {batchSize} per batch, every {interval} min)",
         "history": "Blast History",
         "historyEmpty": "No blast emails yet",
         "columns": {
@@ -248,11 +248,11 @@
           "delete": "Delete"
         },
         "preview": "Email Preview",
-        "recipientsCount": "Recipients ({{count}})",
+        "recipientsCount": "Recipients ({count})",
         "recipientEmail": "Email",
         "recipientName": "Name",
         "recipientStatus": "Status",
-        "showingFirst": "Showing first 50 of {{total}} recipients",
+        "showingFirst": "Showing first 50 of {total} recipients",
         "messages": {
           "subjectBodyRequired": "Subject and body are required",
           "draftUpdated": "Draft updated",
@@ -416,7 +416,7 @@
         "templates": {
           "title": "Templates",
           "description": "Start from a professionally designed preset. You can still adjust individual settings after selecting a template.",
-          "cardLabel": "Template {{id}} · {{name}}"
+          "cardLabel": "Template {id} · {name}"
         },
         "typography": {
           "title": "Typography & layout",
@@ -496,13 +496,13 @@
         "title": "Choose your Bidly plan",
         "subtitle": "Manage your subscription and unlock premium auction features."
       },
-      "planLimitReached": "You've reached your auction limit ({{limit}} auctions) for your current plan.",
+      "planLimitReached": "You've reached your auction limit ({limit} auctions) for your current plan.",
       "planUpgradePrompt": "Please upgrade your plan to create more auctions, or wait for existing auctions to end or close them manually.",
       "planUpgradeConfirm": "Would you like to view available plans to upgrade?",
       "currentPlan": {
         "title": "Current plan",
-        "active": "Active: {{plan}}",
-        "pending": "Pending: {{plan}}",
+        "active": "Active: {plan}",
+        "pending": "Pending: {plan}",
         "loading": "Loading…",
         "cancelSubscription": "Cancel subscription"
       },
@@ -575,7 +575,7 @@
         },
         "subscriptionCancelled": {
           "title": "Subscription cancelled",
-          "message": "{{message}}"
+          "message": "{message}"
         },
         "loadError": {
           "title": "We couldn't load your plan",
@@ -588,14 +588,14 @@
         }
       },
       "downgrade": {
-        "title": "Downgrade to {{plan}}",
+        "title": "Downgrade to {plan}",
         "confirm": "Confirm downgrade",
         "cancel": "Cancel",
-        "message": "You are downgrading from {{current}} to {{target}}.",
-        "featureRemoved": "Feature removed: {{feature}}",
+        "message": "You are downgrading from {current} to {target}.",
+        "featureRemoved": "Feature removed: {feature}",
         "noFeaturesRemoved": "No premium features will be removed.",
-        "auctionsToClose": "We will automatically close {{count}} scheduled auction{{plural}} to meet the {{limit}} limit.",
-        "auctionsFit": "Your current auction count already fits the {{limit}} limit.",
+        "auctionsToClose": "We will automatically close {count} scheduled auction{plural} to meet the {limit} limit.",
+        "auctionsFit": "Your current auction count already fits the {limit} limit.",
         "unlimitedLimit": "The new plan includes an unlimited auction limit.",
         "warning": "Downgrading takes effect immediately and cannot be undone automatically."
       },
@@ -619,7 +619,7 @@
       },
       "formatLimit": {
         "unlimited": "unlimited",
-        "activeAuctions": "{{count}} active auctions"
+        "activeAuctions": "{count} active auctions"
       }
     },
     "analytics": {
@@ -694,19 +694,19 @@
     "auctions": {
       "errors": {
         "loadStats": "Failed to load dashboard statistics.",
-        "save": "Error saving auction: {{message}}",
+        "save": "Error saving auction: {message}",
         "unknownStore": "Unable to determine store information."
       },
       "toast": {
-        "statusUpdate": "🔄 Auction status updated: {{status}}",
+        "statusUpdate": "🔄 Auction status updated: {status}",
         "updated": "Auction updated successfully.",
         "created": "Auction created successfully.",
         "marketplaceOpen": "Opening auction marketplace in a new tab."
       },
       "dashboard": {
         "title": "Auction Dashboard",
-        "titleWithShop": "Auction Dashboard - {{shop}}",
-        "subtitleStore": "Store: {{store}}",
+        "titleWithShop": "Auction Dashboard - {shop}",
+        "subtitleStore": "Store: {store}",
         "subtitleDefault": "Manage your auctions and monitor performance.",
         "subtitleNeedPlan": "Upgrade to a plan to start hosting auctions.",
         "primaryCreate": "Create Auction",
@@ -722,6 +722,7 @@
         "quickLinkChatMonitor": "💬 Chat monitor",
         "quickLinkPlans": "🧾 Plans",
         "quickLinkMail": "📧 Mail service",
+        "quickLinkBidders": "👥 Bidders",
         "tabAuctions": "📋 Auctions",
         "tabAnalytics": "📊 Analytics"
       },
@@ -753,9 +754,9 @@
         },
         "selectedProduct": {
           "title": "Selected Product Details",
-          "name": "Title: {{value}}",
-          "vendor": "Vendor: {{value}}",
-          "price": "Price: {{value}}"
+          "name": "Title: {value}",
+          "vendor": "Vendor: {value}",
+          "price": "Price: {value}"
         },
         "fields": {
           "productId": "Shopify Product ID",
@@ -848,8 +849,8 @@
           "bids": "Bids",
           "actions": "Actions"
         },
-        "footer": "Showing {{visible}} of {{total}} auctions",
-        "pagination": "Page {{current}} of {{total}}",
+        "footer": "Showing {visible} of {total} auctions",
+        "pagination": "Page {current} of {total}",
         "delete": {
           "title": "Delete Auction",
           "confirm": "Delete",
@@ -869,7 +870,7 @@
         },
         "errors": {
           "missingId": "Error: Auction ID not found.",
-          "close": "Error closing auction: {{message}}"
+          "close": "Error closing auction: {message}"
         },
         "overview": {
           "title": "Auction Overview",
@@ -895,7 +896,7 @@
           "reserve": "Reserve Price",
           "popcorn": "Popcorn Bidding",
           "popcornSettings": "Popcorn Settings",
-          "popcornSummary": "Trigger: {{trigger}}s · Extend: +{{extend}}s"
+          "popcornSummary": "Trigger: {trigger}s · Extend: +{extend}s"
         },
         "bidHistory": {
           "title": "Bid History",
@@ -926,7 +927,7 @@
         "description": "Activate the Bidly widget in your Online Store so it can appear on your product pages. This opens the Shopify theme editor where you can enable the app embed.",
         "detected": "We detected the widget is enabled in your theme.",
         "notDetected": "If you have already enabled the widget, you can mark this step as complete manually.",
-        "error": "We couldn't confirm the widget automatically: {{error}}",
+        "error": "We couldn't confirm the widget automatically: {error}",
         "completed": "Completed",
         "pending": "Pending",
         "actions": {
@@ -941,7 +942,7 @@
       "step2": {
         "title": "Step 2 · Add the Auction Marketplace to your menu",
         "description": "Open your Online Store navigation and add a new menu item linking to your auction marketplace.",
-        "descriptionWithShop": "Open your Online Store navigation and add a new menu item linking to the marketplace. We've generated the URL for {{shop}}.",
+        "descriptionWithShop": "Open your Online Store navigation and add a new menu item linking to the marketplace. We've generated the URL for {shop}.",
         "completed": "Completed",
         "pending": "Pending",
         "marketplaceUrl": "Marketplace URL",
@@ -994,8 +995,8 @@
         "errors": {
           "noShop": "Unable to get shop information. Please enter your shop domain manually below.",
           "invalidShop": "Invalid shop parameter. Please refresh the page or access the app through Shopify admin.",
-          "invalidFormat": "Invalid shop domain format: {{shop}}. Expected format: store.myshopify.com",
-          "validationFailed": "Shop domain validation failed. Received: {{shop}}",
+          "invalidFormat": "Invalid shop domain format: {shop}. Expected format: store.myshopify.com",
+          "validationFailed": "Shop domain validation failed. Received: {shop}",
           "urlConstruction": "Error constructing OAuth URL. Please try again."
         }
       }
