@@ -227,13 +227,14 @@ api.interceptors.response.use(
     }
     
     const status = error.response?.status;
-    const message = error.response?.data?.message || '';
-    const lowercaseMessage = typeof message === 'string' ? message.toLowerCase() : '';
 
+    // Trigger auth recovery on ANY 401/403 response, regardless of the server's
+    // error message wording. Matching on message strings ("token"/"unauthorized")
+    // missed responses whose body phrased the error differently, leaving the user
+    // stuck on a stale/expired session. Status code is the reliable signal.
     if (
-      status === 401 &&
-      !isHandlingAuthError &&
-      (lowercaseMessage.includes('token') || lowercaseMessage.includes('unauthorized'))
+      (status === 401 || status === 403) &&
+      !isHandlingAuthError
     ) {
       isHandlingAuthError = true;
       setTimeout(() => { isHandlingAuthError = false; }, 5000); // Reset after 5s in case reload doesn't happen
@@ -525,6 +526,18 @@ export const billingAPI = {
 
   async cancelSubscription() {
     const response = await api.post('/billing/cancel');
+    return response.data;
+  }
+};
+
+export const biddersAPI = {
+  async getAllBidders(params = {}) {
+    const response = await api.get('/email-settings/customers', { params });
+    return response.data;
+  },
+
+  async getAuctionBidders(auctionId) {
+    const response = await api.get(`/email-settings/auction-bidders/${auctionId}`);
     return response.data;
   }
 };

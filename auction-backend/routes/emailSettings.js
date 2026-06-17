@@ -378,7 +378,7 @@ router.get('/customers', requireAuth, async (req, res) => {
 
     const [customers, total] = await Promise.all([
       Customer.find(query)
-        .select('email displayName firstName lastName totalBids auctionsWon unsubscribed')
+        .select('email displayName firstName lastName phone totalBids auctionsWon totalBidAmount unsubscribed')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -390,6 +390,62 @@ router.get('/customers', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Failed to load customers:', error);
     res.status(500).json({ error: 'Failed to load customers' });
+  }
+});
+
+// ── Ranked bidder list for a specific auction ────────────────────
+router.get('/auction-bidders/:auctionId', requireAuth, async (req, res) => {
+  try {
+    const shopDomain = req.shopDomain;
+    const { auctionId } = req.params;
+
+    if (!shopDomain) return res.status(400).json({ error: 'Shop domain is required' });
+
+    const Auction = (await import('../models/Auction.js')).default;
+    const auction = await Auction.findOne({ _id: auctionId, shopDomain }).lean();
+
+    if (!auction) return res.status(404).json({ error: 'Auction not found' });
+
+    if (!auction.bidHistory || auction.bidHistory.length === 0) {
+      return res.json({ success: true, bidders: [], auctionTitle: auction.productTitle });
+    }
+
+    // Group by email (fallback: bidder name), keep highest bid per person
+    const bidderMap = new Map();
+    for (const bid of auction.bidHistory) {
+      const key = (bid.customerEmail || bid.bidder || '').toLowerCase();
+      if (!bidderMap.has(key) || bid.amount > bidderMap.get(key).amount) {
+        bidderMap.set(key, {
+          name: bid.displayName || bid.bidder,
+          email: bid.customerEmail || null,
+          amount: bid.amount,
+          timestamp: bid.timestamp
+        });
+      }
+    }
+
+    const ranked = Array.from(bidderMap.values()).sort((a, b) => b.amount - a.amount);
+
+    // Join phone numbers from Customer records
+    const emails = ranked.filter(b => b.email).map(b => b.email);
+    const customerDocs = emails.length
+      ? await Customer.find({ email: { $in: emails }, shopDomain }).select('email phone').lean()
+      : [];
+    const phoneByEmail = Object.fromEntries(customerDocs.map(c => [c.email, c.phone || null]));
+
+    const bidders = ranked.map((b, i) => ({
+      rank: i + 1,
+      name: b.name,
+      email: b.email,
+      phone: b.email ? (phoneByEmail[b.email] ?? null) : null,
+      highestBid: b.amount,
+      timestamp: b.timestamp
+    }));
+
+    res.json({ success: true, bidders, auctionTitle: auction.productTitle });
+  } catch (error) {
+    console.error('Failed to load auction bidders:', error);
+    res.status(500).json({ error: 'Failed to load auction bidders' });
   }
 });
 

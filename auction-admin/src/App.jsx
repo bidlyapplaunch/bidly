@@ -15,6 +15,7 @@ import MarketplaceCustomizationSettings from './components/MarketplaceCustomizat
 import WidgetCustomizationSettings from './components/WidgetCustomizationSettings';
 import MailServicePage from './pages/MailServicePage';
 import ChatMonitorPage from './pages/ChatMonitorPage';
+import BiddersPage from './pages/BiddersPage';
 import PlansPage from './components/PlansPage';
 import AppNavigationMenu from './components/AppNavigationMenu';
 import OnboardingPage from './components/OnboardingPage';
@@ -279,6 +280,7 @@ function AppContent() {
         <Route path="/chat-monitor" element={<ChatMonitorPage />} />
         <Route path="/customization/widget" element={<WidgetCustomizationSettings />} />
         <Route path="/mail-service" element={<MailServicePage />} />
+        <Route path="/bidders" element={<BiddersPage />} />
         <Route path="/plans" element={<PlansPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -32,6 +32,7 @@
       "marketplaceStyles": "Marketplace styles",
       "chatMonitor": "Chat Monitor",
       "mailService": "Mail service",
+      "bidders": "Bidders",
       "plans": "Plans"
     },
     "chatMonitor": {
